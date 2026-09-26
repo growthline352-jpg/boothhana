@@ -49,7 +49,7 @@ def roster(path: Path, source_url: str, start_date: str, end_date: str) -> list[
                 "warnings": ["2026-09-27 공식 참가기업표·배치도 기준이며 행사 당일 변경될 수 있습니다."],
                 "identity": {
                     "sourceSystem": "https://jipconomy.kr",
-                    "entryId": f"2026:{code}",
+                    "entryId": f"jipconomy-2026:{code}",
                     "detailUrl": source_url,
                 },
             })

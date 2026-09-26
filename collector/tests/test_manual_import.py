@@ -17,6 +17,7 @@ class ManualParticipantImportTests(unittest.TestCase):
         self.assertIn('E-01',codes)
         self.assertNotIn('E-02',codes)
         self.assertTrue(all(row['sources'][0]['access']=='ORIGINAL' for row in rows))
+        self.assertTrue(all(row['sourceEntryId']==row['identity']['entryId'] for row in rows))
 
 
 if __name__=='__main__':unittest.main()
