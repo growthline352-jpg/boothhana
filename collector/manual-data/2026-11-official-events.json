@@ -1,12 +1,14 @@
 {
   "schemaVersion": "1",
   "searchStatus": "COMPLETE",
-  "summary": "2026년 11월 서울시 FUN SEOUL, COEX, COEX 마곡, SETEC 공식 일정에서 직접 확인한 누락 행사 보강",
+  "summary": "2026년 11월 서울시 FUN SEOUL, COEX, COEX 마곡, SETEC, aT센터, KINTEX 권역의 공식 일정에서 직접 확인한 누락 행사 보강",
   "queries": [
     "FUN SEOUL 2026년 11월 공식 축제 일정",
     "COEX 2026년 11월 공식 전시 일정",
     "COEX 마곡 2026년 11월 공식 전시 일정",
-    "SETEC 2026년 11월 공식 전시 일정"
+    "SETEC 2026년 11월 공식 전시 일정",
+    "데이터센터코리아 2026 공식 관람 일정",
+    "K-GEO Festa 2026 공식 행사 일정"
   ],
   "events": [
     {
@@ -426,6 +428,44 @@
       "eventFormat": "MULTI_BOOTH",
       "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://magok.coex.co.kr/", "status": "PUBLISHED", "note": "코엑스 마곡 공식 일정"}],
       "operationStatus": {"state": "SCHEDULED", "note": "코엑스 마곡 공식 일정에 등록", "sourceUrl": "https://magok.coex.co.kr/", "checkedOn": "2026-09-27"}
+    },
+    {
+      "name": "2026 데이터센터코리아",
+      "subcategory": "BUSINESS",
+      "organizer": "대한설비융합협회, 메쎄이상",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "aT센터",
+      "address": "서울특별시 서초구 강남대로 27",
+      "description": "데이터센터 인프라, 전력, 냉각, 네트워크 기술과 솔루션을 소개하는 전문 전시·컨퍼런스다.",
+      "admission": "사전등록 무료",
+      "subjects": ["데이터센터", "AI 인프라", "산업전시"],
+      "occurrences": [{"startDate": "2026-11-04", "endDate": "2026-11-06", "startTime": null, "endTime": null}],
+      "sources": [{"url": "https://datacenterkorea.kr/visitor/guide/", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "행사 공식 관람안내가 2026-11-04~06, aT센터 개최와 사전등록 무료 관람을 안내한다."}],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://datacenterkorea.kr/visitor/guide/", "status": "PUBLISHED", "note": "행사 공식 관람안내"}],
+      "operationStatus": {"state": "SCHEDULED", "note": "행사 공식 일정에 등록", "sourceUrl": "https://datacenterkorea.kr/visitor/guide/", "checkedOn": "2026-09-27"}
+    },
+    {
+      "name": "2026 K-GEO Festa",
+      "subcategory": "BUSINESS",
+      "organizer": "한국국토정보공사",
+      "edition": "제18회",
+      "region": "GYEONGGI",
+      "venueName": "킨텍스 제2전시장 10홀",
+      "address": "경기도 고양시 일산서구 킨텍스로 217-60",
+      "description": "공간정보 산업의 기술과 서비스를 전시하고 정책·산업 교류 프로그램을 운영하는 행사다.",
+      "admission": null,
+      "subjects": ["공간정보", "측량", "산업전시"],
+      "occurrences": [{"startDate": "2026-11-04", "endDate": "2026-11-06", "startTime": null, "endTime": null}],
+      "sources": [{"url": "https://www.gtp.or.kr/web/bbs/noticeView.jsp?cPage=1&gubun=news&no=29732", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "경기테크노파크 공식 안내가 2026-11-04~06, 킨텍스 제2전시장 10홀 개최와 행사 공식 홈페이지를 명시한다."}],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://www.gtp.or.kr/web/bbs/noticeView.jsp?cPage=1&gubun=news&no=29732", "status": "PUBLISHED", "note": "공공기관 공식 행사 안내"}],
+      "operationStatus": {"state": "SCHEDULED", "note": "공공기관 공식 일정에 등록", "sourceUrl": "https://www.gtp.or.kr/web/bbs/noticeView.jsp?cPage=1&gubun=news&no=29732", "checkedOn": "2026-09-27"}
     }
   ]
 }
