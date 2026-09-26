@@ -94,7 +94,7 @@ export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highl
     <button className="btn secondary" type="button" onClick={()=>scale(zoom+.5)} disabled={zoom>=12} aria-label="배치도 확대">＋</button>
     <button className="btn secondary" type="button" onClick={()=>{zoomRef.current=1;setZoom(1);viewport.current?.scrollTo(0,0)}}>전체 보기</button>
     <button className="btn secondary" type="button" disabled={!selected} onClick={focus}>선택 위치로</button>
-    <label><input type="checkbox" checked={original} onChange={ev=>setOriginal(ev.target.checked)}/> 원본 배경</label>
+    {imageUrl&&<label><input type="checkbox" checked={original} onChange={ev=>setOriginal(ev.target.checked)}/> 원본 배경</label>}
     {!editable&&<button ref={!expanded?fullButton:undefined} className="btn secondary" type="button" onClick={()=>setExpanded(!expanded)}>{expanded?'전체화면 닫기':'배치도 전체화면'}</button>}
     {editable&&<button type="button" className={`btn ${drawing?'primary':'secondary'}`} onClick={()=>setDrawing(!drawing)}>{drawing?'영역 그리기 중':'사각 부스 추가'}</button>}
   </div><div className="floorplan-viewport" ref={viewport} tabIndex={0} aria-label="배치도. 손가락 두 개로 확대하고 끌어서 이동할 수 있어요." style={{aspectRatio:`${w}/${h}`}}>

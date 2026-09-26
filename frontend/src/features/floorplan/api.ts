@@ -15,7 +15,7 @@ export interface Source { asset:Asset; scope:PlanScope; canTransform:boolean; so
 export interface Roster {id:number; name:string; locations:{code:string;hall:string|null;zone:string|null;dates:string[]}[]}
 export interface Workspace { watch:{revision:number;disabled:boolean;last_status:string;last_error:string;lastCheckedAt:string;nextCheckAt:string;result:{warnings?:string[]}}|null; sources:Source[]; versions:PlanVersionSummary[]; roster:Roster[] }
 export interface PublicShape {id:string;label:string|null;points:Point[];status:string;links:PlanLink[];issues:string[]}
-export interface PublicPlan {sourceSha256?:string; offlineAllowed?:boolean; id:string;assetId:number;scope:PlanScope;state:string;publishedAt:string;sourceUrl:string;credit:string;width?:number;height?:number;imageUrl:string|null;shapes:PublicShape[];partial?:boolean}
+export interface PublicPlan {sourceSha256?:string; offlineAllowed?:boolean; schematic?:boolean; id:string;assetId:number;scope:PlanScope;state:string;publishedAt:string;sourceUrl:string;credit:string;width?:number;height?:number;imageUrl:string|null;shapes:PublicShape[];partial?:boolean}
 export interface PublicPlans {plans:PublicPlan[];managedAssetIds:number[]}
 const base='/api/admin/subculture/v4/floorplans'
 export const floorplanApi={
