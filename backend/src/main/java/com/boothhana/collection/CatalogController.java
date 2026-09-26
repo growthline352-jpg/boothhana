@@ -21,6 +21,7 @@ public class CatalogController {
     @PostMapping("/pipelines/{id}/events/{eventId}/cursors") public List<Map<String,Object>> cursors(@PathVariable String id,@PathVariable long eventId){return service.participantCursors(id,eventId);}
     @PostMapping("/pipelines/{id}/participants/{participantId}/attempt") public Map<String,Object> attempt(@PathVariable String id,@PathVariable long participantId,@RequestBody SalesAttemptInput input){return service.salesAttempt(id,participantId,input);}
     @PostMapping("/stages") public StageReceipt stage(@RequestBody StageBatch batch){return service.ingest(batch);}
+    @PostMapping("/manual-stages") public StageReceipt manualStage(@RequestBody StageBatch batch){return service.ingestManual(batch);}
     @GetMapping("/assets") public List<AssetView> assets(@RequestParam(defaultValue="100") int limit){return media.pending(limit);}
     @PostMapping("/assets/{id}/content") public AssetView content(@PathVariable long id,@RequestHeader("X-Asset-Revision") long revision,
         @RequestHeader("X-Image-SHA256") String digest,@RequestHeader("X-Image-Size") long size,HttpServletRequest request) throws IOException {

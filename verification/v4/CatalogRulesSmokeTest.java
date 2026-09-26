@@ -51,6 +51,8 @@ public class CatalogRulesSmokeTest {
         for(String url:List.of("http://127.0.0.1/x","https://169.254.169.254/x","file:///etc/passwd","javascript:alert(1)","https://a.local/x"))fails(()->CatalogRules.images(List.of(with(image(),"imageUrl",url))),"unsafe image");
         fails(()->CatalogRules.images(List.of(with(image(),"type","SVG_SCRIPT"))),"image kind invalid");
         fails(()->CatalogRules.stage(with(batch(),"webSearchObserved",false)),"no actual search audit");
+        CatalogRules.manualStage(with(batch(),"webSearchObserved",false));ok(true,"manual review import keeps truthful audit flag");
+        fails(()->CatalogRules.manualStage(batch()),"manual import cannot impersonate CLI search");
         fails(()->CatalogRules.stage(with(batch(),"eventId",0L)),"missing parent");
         fails(()->CatalogRules.stage(with(batch(),"participantId",1L)),"participant stage cannot change parent type");
         fails(()->CatalogRules.stage(with(batch(),"runId","1-1-1-1-1")),"canonical UUID");

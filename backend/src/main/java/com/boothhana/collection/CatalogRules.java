@@ -79,7 +79,11 @@ public final class CatalogRules {
         require(!"COMPLETE".equals(c.completeness())||c.nextPageUrl()==null,"다음 페이지가 남은 명단은 전체 완료가 아닙니다.");
         strings(c.warnings(),30,500);
     }
-    public static void stage(StageBatch b) {
+    public static void stage(StageBatch b) { stage(b,false); }
+    /** Review-only import for research packages collected outside the CLI pipeline.
+     * The request must keep the audit flag false; manual data is never relabelled as CLI-observed. */
+    public static void manualStage(StageBatch b) { stage(b,true); }
+    private static void stage(StageBatch b,boolean manualImport) {
         require(b!=null&&Set.of("4","5").contains(b.schemaVersion()),"v4/v5 수집 규격 필요");require(UUID.fromString(b.runId()).toString().equals(b.runId())&&UUID.fromString(b.pipelineId()).toString().equals(b.pipelineId()),"정규 UUID 필요");
         choice(b.stage(),"PARTICIPANTS","SALES");require(b.eventId()>0&&b.targetRevision()>0,"대상 ID/버전 오류");
         require("SALES".equals(b.stage())?(b.participantId()!=null&&b.participantId()>0):b.participantId()==null,"단계별 부모 ID 오류");
@@ -91,7 +95,11 @@ public final class CatalogRules {
         }
         if("5".equals(b.schemaVersion())&&"PARTICIPANTS".equals(b.stage())) require(b.cursor()!=null,"v5 명단 진행 커서 필요");
         StageResult r=b.result();require(r!=null,"결과 없음");choice(r.searchStatus(),"COMPLETE","PARTIAL","FAILED");text(r.summary(),2000,false);strings(r.queries(),50,300);coverage(r.coverage());items(r.participants(),100);
-        if(!"FAILED".equals(r.searchStatus())) require(b.webSearchObserved()&&!r.queries().isEmpty(),"실제 CLI 웹 검색 기록 필요");
+        if(!"FAILED".equals(r.searchStatus())) {
+            require(!r.queries().isEmpty(),"검색 기록 필요");
+            if(manualImport) require(!b.webSearchObserved(),"수동 수입은 CLI 검색 관측으로 표시할 수 없습니다.");
+            else require(b.webSearchObserved(),"실제 CLI 웹 검색 기록 필요");
+        }
         if("FAILED".equals(r.searchStatus())) require(r.participants().isEmpty()&&r.sales()==null,"실패를 정상 데이터로 저장할 수 없습니다.");
         require("PARTICIPANTS".equals(b.stage())?r.sales()==null:r.participants().isEmpty(),"단계 데이터 혼합 금지");
     }

@@ -158,8 +158,12 @@ public class CatalogService {
         return Map.of("registeredCandidates",count);
     }
     @Transactional(timeout=45)
-    public StageReceipt ingest(StageBatch b) {
-        try { CatalogRules.stage(b); } catch(RuntimeException e) { throw ApiException.badRequest("단계별 JSON 형식 또는 대상/출처를 확인하세요."); }
+    public StageReceipt ingest(StageBatch b) { return ingest(b,false); }
+    @Transactional(timeout=45)
+    public StageReceipt ingestManual(StageBatch b) { return ingest(b,true); }
+    private StageReceipt ingest(StageBatch b,boolean manualImport) {
+        try { if(manualImport) CatalogRules.manualStage(b); else CatalogRules.stage(b); }
+        catch(RuntimeException e) { throw ApiException.badRequest("단계별 JSON 형식 또는 대상/출처를 확인하세요."); }
         String payload=encode(b),hash=CollectionRules.sha(payload);UUID run=UUID.fromString(b.runId());lock();
         var old=db.queryForList("select request_hash,request_json,receipt_json from subculture_stage_run where id=?",run);
         if(!old.isEmpty()) {
@@ -185,6 +189,7 @@ public class CatalogService {
                 throw ApiException.conflict("명단 진행 지점이 변경되었습니다. 새 커서로 이어서 실행하세요.");
         }
         int inserted=0,changed=0,unchanged=0,rejected=0;List<String> issues=new ArrayList<>();List<Long> ids=new ArrayList<>();
+        if(manualImport) issues.add("MANUAL_IMPORT: CLI 웹 검색 관측 없이 검토형 데이터로 저장됨");
         if("PARTICIPANTS".equals(b.stage())) {
             Set<Long> seen=new HashSet<>();
             var participantRows=db.queryForList("select * from subculture_participant where event_id=? for update",b.eventId());
