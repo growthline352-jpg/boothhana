@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "build:hosting": "pnpm run build && node scripts/prepare-hosting.mjs"
+    "build:hosting": "pnpm run build && node scripts/prepare-hosting.mjs && node scripts/test-page-handler.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",

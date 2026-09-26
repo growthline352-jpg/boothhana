@@ -1,5 +1,4 @@
 import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { injectMetadata, normalizePath, pageMetadata, siteOrigin } from '../seo/metadata.mjs'
 
 const MAX_RESPONSE = 4 * 1024 * 1024
@@ -65,7 +64,7 @@ export default async function handler(req, res) {
     const search = new URLSearchParams(request.search)
     search.delete('path') // framework routing parameter is not a user-visible search filter
     const siteUrl = siteOrigin(process.env.PUBLIC_SITE_URL || '')
-    const template = await readFile(join(process.cwd(), 'seo-template', 'index.html'), 'utf8')
+    const template = await readFile(new URL('../seo-template/index.html', import.meta.url), 'utf8')
     const page = await renderPage({ path, search: search.toString(), template, siteUrl, apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '' })
     res.statusCode = page.status
     res.setHeader('X-Robots-Tag', page.meta.robots)
