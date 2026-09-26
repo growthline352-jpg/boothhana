@@ -34,4 +34,4 @@ export function ProductCard({product,images=[],verification,reportTarget,memoryT
    </details>{reportTarget&&<ReportLink target={reportTarget} label="상품 정보 신고"/>}{reportTarget&&images[0]&&<ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:reportTarget.eventId,id:images[0].id}} label="이미지 문제 신고"/>}{images[0]&&<small>{images[0].credit} · <SafeLink url={images[0].attribution}>이미지 출처</SafeLink></small>}
   </div></article>
 }
-export function StoredImage({url,alt}:{url:string;alt:string}){try{const u=new URL(url);if(!['https:','http:'].includes(u.protocol))return null}catch{return null}return <img src={url} alt={alt} loading="lazy" referrerPolicy="no-referrer"/>}
+export function StoredImage({url,alt,loading='lazy',fetchPriority='auto'}:{url:string;alt:string;loading?:'eager'|'lazy';fetchPriority?:'high'|'low'|'auto'}){try{const u=new URL(url);if(!['https:','http:'].includes(u.protocol))return null}catch{return null}return <img src={url} alt={alt} loading={loading} fetchPriority={fetchPriority} referrerPolicy="no-referrer"/>}

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "vitest run",
     "lint": "oxlint",
     "preview": "vite preview",
     "build:hosting": "pnpm run build && node scripts/prepare-hosting.mjs && node scripts/test-page-handler.mjs"
@@ -24,7 +25,8 @@
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
     "typescript": "~6.0.2",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "vitest": "^5.0.2"
   },
   "packageManager": "pnpm@10.13.1"
 }

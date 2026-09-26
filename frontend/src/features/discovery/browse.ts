@@ -61,7 +61,7 @@ export function dateLabel(value: string): string {
   return Number.isNaN(d.getTime()) ? '날짜 미확인' : new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short', timeZone: 'Asia/Seoul' }).format(d)
 }
 export function occurrenceLabel(o: Occurrence): string {
-  return o.startDate === o.endDate ? dateLabel(o.startDate) : `${dateLabel(o.startDate)} – ${dateLabel(o.endDate)}`
+  return o.startDate === o.endDate ? dateLabel(o.startDate) : `${dateLabel(o.startDate)} - ${dateLabel(o.endDate)}`
 }
 
 /** Select display dates without modifying or coalescing the source's discrete operating days. */

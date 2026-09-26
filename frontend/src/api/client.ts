@@ -12,6 +12,7 @@ export function normalizeApiBase(value: string): string {
   return url.origin
 }
 const API_BASE_URL = normalizeApiBase(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080')
+export const DEFAULT_API_TIMEOUT_MS = 20_000
 
 export class ApiError extends Error {
   status: number
@@ -115,7 +116,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       headers.set('Content-Type', 'application/json')
     }
     if (token) headers.set('X-XSRF-TOKEN', token)
-    const response = await fetch(`${API_BASE_URL}${path}`, { ...init, method, headers, credentials: 'include' })
+    const signal = init?.signal ?? AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS)
+    const response = await fetch(`${API_BASE_URL}${path}`, { ...init, method, headers, credentials: 'include', signal })
     requireSameSession()
     if (!response.ok) {
       const error = await readError(response)
