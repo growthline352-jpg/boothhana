@@ -692,12 +692,12 @@
       "admission": null,
       "subjects": ["스마트제조", "AI", "자동화"],
       "occurrences": [{"startDate": "2026-11-18", "endDate": "2026-11-20", "startTime": null, "endTime": null}],
-      "sources": [{"url": "https://www.showala.com/ex/ex_detail.php?idx=3446&sp=1", "kind": "ORGANIZER", "access": "ORIGINAL", "evidence": "행사 상세가 2026-11-18~20, 수원컨벤션센터 개최와 전시 분야를 안내한다."}],
+      "sources": [{"url": "https://www.suwon.go.kr/web/board/BD_board.view.do?bbsCd=1043&seq=20260916095320218", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "수원특례시 공식 보도자료가 2026-11-18~20, 수원컨벤션센터 개최와 수원시 공동관 참가 모집을 안내한다."}],
       "banners": [],
       "warnings": ["주최 행사 상세와 수원시 공식 참가 모집 공지로 일정 교차 확인"],
       "eventFormat": "MULTI_BOOTH",
-      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://www.showala.com/ex/ex_detail.php?idx=3446&sp=1", "status": "PUBLISHED", "note": "행사 상세"}],
-      "operationStatus": {"state": "SCHEDULED", "note": "행사 일정과 수원시 모집 공지 확인", "sourceUrl": "https://www.showala.com/ex/ex_detail.php?idx=3446&sp=1", "checkedOn": "2026-09-27"}
+      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://www.suwon.go.kr/web/board/BD_board.view.do?bbsCd=1043&seq=20260916095320218", "status": "PUBLISHED", "note": "수원특례시 공식 보도자료"}],
+      "operationStatus": {"state": "SCHEDULED", "note": "수원특례시 공식 참가 모집 공지 확인", "sourceUrl": "https://www.suwon.go.kr/web/board/BD_board.view.do?bbsCd=1043&seq=20260916095320218", "checkedOn": "2026-09-27"}
     },
     {
       "name": "제58회 서울국제유아교육전",
