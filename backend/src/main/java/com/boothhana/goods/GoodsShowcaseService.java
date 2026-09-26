@@ -14,7 +14,7 @@ import java.util.*;
 public class GoodsShowcaseService {
     private final JdbcTemplate db;
     private final String imageBase;
-    public GoodsShowcaseService(JdbcTemplate db,@Value("${app.r2.public-url:}") String imageBase) {
+    public GoodsShowcaseService(JdbcTemplate db,@Value("${app.storage.public-url:}") String imageBase) {
         this.db=db; this.imageBase=imageBase.replaceAll("/+$", "");
     }
     public record Item(int rank,long productId,long eventProductId,String name,long price,String imageUrl,

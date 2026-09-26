@@ -85,10 +85,10 @@ class RunnerTests(unittest.TestCase):
     def test_reverse_window(self): self.assertRaises(RunError,date_window,None,'2026-10-31','2026-10-01')
     def test_missing_end(self): self.assertRaises(RunError,date_window,None,'2026-10-01',None)
     def test_child_secrets_not_inherited(self):
-        env=child_environment(Path('/tmp/fake'),{'PATH':'/bin','DATABASE_URL':'secret','R2_SECRET_ACCESS_KEY':'secret','BOOTH_COLLECTOR_TOKEN':'secret','CODEX_API_KEY':'provider','HOME':'/private','CUSTOM_VAR':'secret'})
+        home=Path('/tmp/fake');env=child_environment(home,{'PATH':'/bin','DATABASE_URL':'secret','GOOGLE_APPLICATION_CREDENTIALS':'secret','BOOTH_COLLECTOR_TOKEN':'secret','CODEX_API_KEY':'provider','HOME':'/private','CUSTOM_VAR':'secret'})
         self.assertEqual(env['CODEX_API_KEY'],'provider')
-        for key in ['DATABASE_URL','R2_SECRET_ACCESS_KEY','BOOTH_COLLECTOR_TOKEN','CUSTOM_VAR']: self.assertNotIn(key,env)
-        self.assertEqual(env['HOME'],'/tmp/fake')
+        for key in ['DATABASE_URL','GOOGLE_APPLICATION_CREDENTIALS','BOOTH_COLLECTOR_TOKEN','CUSTOM_VAR']: self.assertNotIn(key,env)
+        self.assertEqual(env['HOME'],str(home))
     def test_safe_codex_args(self):
         cmd=codex_command('/codex',Path('/s.json'),Path('/o.json'))
         self.assertIn('web_search="live"',cmd);self.assertIn('features.shell_tool=false',cmd);self.assertEqual(cmd[-1],'-');self.assertNotIn('--yolo',cmd)

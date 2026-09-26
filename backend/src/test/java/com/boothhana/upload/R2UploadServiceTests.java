@@ -13,7 +13,7 @@ import java.util.*;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
-/** Service tests with mocked storage and repositories. No real R2 call. */
+/** Service tests with mocked storage and repositories. No real GCS call. */
 class R2UploadServiceTests {
     final ImageUploadRepository uploads = mock(ImageUploadRepository.class);
     final UserAccountRepository users = mock(UserAccountRepository.class);
@@ -84,7 +84,7 @@ class R2UploadServiceTests {
         verifyNoInteractions(storage);
     }
     @Test void completeRecoversPutSuccessFollowedByDatabaseRollback() {
-        var value=ticket(); // REGISTERED in DB, valid immutable bytes already in R2.
+        var value=ticket(); // REGISTERED in DB, valid immutable bytes already in object storage.
         assertThat(service.complete(42L,id).objectKey()).isEqualTo(value.objectKey);
         assertThat(value.state).isEqualTo(ImageUpload.State.COMPLETE);
         verify(storage).verify(value.objectKey,value.contentType,value.fileSize,value.sha256);

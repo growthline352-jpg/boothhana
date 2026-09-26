@@ -124,5 +124,5 @@ public class LibraryTargets {
         return url==null?null:new Image(((Number)row.get("image_id")).longValue(),url,LibraryRules.str(row.get("image_credit")),LibraryRules.url(LibraryRules.str(row.get("image_page"))));
     }
     private String publicUrl="";
-    @org.springframework.beans.factory.annotation.Value("${app.r2.public-url:}") public void publicUrl(String value){publicUrl=value==null?"":value;}
+    @org.springframework.beans.factory.annotation.Value("${app.storage.public-url:}") public void publicUrl(String value){publicUrl=value==null?"":value;}
 }

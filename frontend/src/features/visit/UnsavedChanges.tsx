@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { useBlocker } from 'react-router'
 import { sameValue } from '../catalog/reviewChanges'
 const warning='저장하지 않은 변경사항이 있어요. 저장하지 않고 이동할까요?'
-const Context=createContext({set:(_key:string,_dirty:boolean)=>{},confirm:()=>true,hasUnsaved:false})
+interface UnsavedContextValue {set:(_key:string,_dirty:boolean)=>void;confirm:()=>boolean;hasUnsaved:boolean}
+const Context=createContext<UnsavedContextValue>({set:(_key:string,_dirty:boolean)=>{},confirm:()=>true,hasUnsaved:false})
 export function UnsavedChangesProvider({children}:{children:ReactNode}) {
   const values=useRef(new Map<string,boolean>()),[count,setCount]=useState(0)
   const set=useCallback((key:string,dirty:boolean)=>{

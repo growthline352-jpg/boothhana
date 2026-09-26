@@ -44,7 +44,7 @@ public class PlatformService {
             EventBoothRepository eventBooths, ProductRepository products, EventProductRepository eventProducts,
             BoothNoticeRepository notices, ReservationRepository reservations, ReservationItemRepository reservationItems,
             PosSaleRepository posSales, PosSaleItemRepository posItems,
-            @Value("${app.r2.public-url:}") String publicImageUrl) {
+            @Value("${app.storage.public-url:}") String publicImageUrl) {
         this.users = users; this.events = events; this.booths = booths; this.eventBooths = eventBooths;
         this.products = products; this.eventProducts = eventProducts; this.notices = notices;
         this.reservations = reservations; this.reservationItems = reservationItems;

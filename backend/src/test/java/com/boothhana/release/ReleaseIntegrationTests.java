@@ -48,7 +48,7 @@ class ReleaseIntegrationTests {
   p.add("spring.datasource.hikari.maximum-pool-size",()->2);
   p.add("spring.datasource.hikari.connection-timeout",()->5000);
   p.add("app.support.guest-enabled",()->false);p.add("app.support.attachments-enabled",()->false);
-  p.add("app.r2.account-id",()->"");p.add("app.r2.access-key",()->"");p.add("app.r2.secret-key",()->"");p.add("app.r2.bucket",()->"");
+  p.add("app.gcs.project-id",()->"");p.add("app.gcs.public-bucket",()->"");p.add("app.support.private-bucket",()->"");
  }
  @Autowired JdbcTemplate db;
  @Autowired PlatformService platform;

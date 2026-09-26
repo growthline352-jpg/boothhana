@@ -14,7 +14,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.json.JsonMapper;
 import java.nio.file.*;import java.util.*;import java.io.*;
 /** OPT-IN actual PostgreSQL service integration; temporary isolated schema, never drops public.
- * Requires CREATE SCHEMA on dedicated localhost boothhana_floorplan_test. No real CLI or R2.
+ * Requires CREATE SCHEMA on dedicated localhost boothhana_floorplan_test. No real CLI or GCS.
  */
 @EnabledIfEnvironmentVariable(named="BOOTH_FLOORPLAN_TEST_URL",matches=".+")
 class FloorplanPostgresTests {
@@ -40,7 +40,7 @@ class FloorplanPostgresTests {
  UUID draft(){long asset=source();permit(asset);UUID id=begin(asset);tx.execute(s->{try{return service.content(id,lease,new ByteArrayInputStream(image));}catch(IOException e){throw new RuntimeException(e);}});var g=new Geometry("test",true,List.of(new Shape("b1","B1",List.of(new Point(.1,.1),new Point(.2,.1),new Point(.2,.2),new Point(.1,.2)),"READABLE",true)),List.of());tx.execute(s->service.analysis(id,new Analysis(lease,rev(id),digest(),g)));return id;}
  String digest(){try{return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(image));}catch(java.security.NoSuchAlgorithmException e){throw new IllegalStateException(e);}}
  void publishEvent(){long revision=((Number)catalog.eventDetail(event).get("revision")).longValue();tx.execute(s->catalog.editEvent(event,new CatalogModels.EditInput(revision,"REVIEWED","test checked",Map.of())));long current=((Number)catalog.eventDetail(event).get("revision")).longValue();tx.execute(s->publications.publish(event,new CatalogModels.PublishInput(current)));}
- @Test void discoveryReplayHasOneSourceAndReceipt(){Observation o=discovery();assertThat(tx.execute(s->service.observe(event,o))).isEqualTo(tx.execute(s->service.observe(event,o)));assertThat(db.queryForObject("select count(*) from subculture_floorplan_source",Long.class)).isEqualTo(1);assertThat(db.queryForObject("select count(*) from subculture_floorplan_receipt",Long.class)).isEqualTo(1);}
+ @Test void discoveryReplayHasOneSourceAndReceipt(){Observation o=discovery();Map<String,Object> first=tx.execute(s->service.observe(event,o));Map<String,Object> second=tx.execute(s->service.observe(event,o));assertThat(first).isEqualTo(second);assertThat(db.queryForObject("select count(*) from subculture_floorplan_source",Long.class)).isEqualTo(1);assertThat(db.queryForObject("select count(*) from subculture_floorplan_receipt",Long.class)).isEqualTo(1);}
  @Test void noResultDoesNotRemoveExistingSource(){source();tx.execute(s->service.observe(event,new Observation(UUID.randomUUID().toString(),lease,true,new Discovery("NOT_FOUND",null,List.of(),List.of("https://example.com/event"),List.of()))));assertThat(db.queryForObject("select count(*) from subculture_floorplan_source",Long.class)).isEqualTo(1);}
  @Test void secondLeaseRejected(){assertThatThrownBy(()->tx.execute(s->service.claim(event,new Claim(UUID.randomUUID().toString())))).hasMessageContaining("다른");}
  @Test void unapprovedSourceCannotStartImage(){long asset=source();assertThatThrownBy(()->begin(asset)).hasMessageContaining("허용");}

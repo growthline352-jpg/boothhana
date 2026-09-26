@@ -1,6 +1,8 @@
-> **2026-09-21 운영 방침 추가 · v24-gcp-credit-notes (문서 보완)**  
-> 사용자는 Google Cloud 신규 가입자이며 크레딧을 받을 수 있다고 확인했습니다. 초기 이미지 저장은 **Google Cloud Storage(GCS) + 신규 가입 크레딧**을 사용하는 방향입니다. 개인 Drive 저장이 아닙니다.  
-> [크레딧 조건·설정 체크리스트·비용/만료 대응](docs/deployment/GCP_FREE_TRIAL_KO.md)을 먼저 확인하세요. **기존 코드는 여전히 R2이며 GCS 연결·버킷 생성·실제 이전은 미실행**입니다. DB·SQL·의존성·기존 데이터는 변경하지 않습니다.  
+> **운영 배포 작업본 · GitHub/Vercel/Render/GCS**
+>
+> 공개 이미지와 비공개 첨부의 저장 코드를 Google Cloud Storage로 전환했습니다. 실제 GitHub 원격 저장소, Vercel·Render·Supabase·GCS 리소스 생성과 실환경 수락검사는 아직 남아 있습니다.
+>
+> 배포 순서는 [운영 라이브 배포 가이드](docs/deployment/LIVE_GITHUB_VERCEL_GCS_KO.md)를 따르세요. 기존 v24 패키지 기록은 기준 이력이며 현재 작업본의 배포 승인 근거가 아닙니다.
 > 현재 ZIP: `BoothHana2-full-v24-gcp-credit-notes-20260921.zip`. 문서 패키지 정보는 `PACKAGE_GCP_CREDIT_NOTES.json`, 이번 변경은 `CHANGE_MANIFEST_GCP_CREDIT_NOTES.json`, 현재 전체 무결성은 `SHA256SUMS.txt`를 기준으로 합니다. 아래 v24 코드 변경·검사 기록은 기존 릴리스 이력입니다.
 
 # 현재 코드 검토 시작점 · v24

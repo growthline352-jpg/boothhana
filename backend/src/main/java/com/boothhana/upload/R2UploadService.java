@@ -74,7 +74,7 @@ public class R2UploadService {
     public UploadCompleteView complete(Long owner, UUID id) {
         var value = owned(owner, id);
         if (value.state == ImageUpload.State.COMPLETE) return new UploadCompleteView(value.objectKey);
-        // Also recovers a successful R2 PUT followed by a lost database commit/HTTP response.
+        // Also recovers a successful object write followed by a lost database commit/HTTP response.
         storage.verify(value.objectKey, value.contentType, value.fileSize, value.sha256);
         value.state = ImageUpload.State.COMPLETE; value.completedAt = Instant.now(); uploads.saveAndFlush(value);
         return new UploadCompleteView(value.objectKey);

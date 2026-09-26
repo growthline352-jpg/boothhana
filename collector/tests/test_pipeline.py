@@ -41,7 +41,7 @@ import sys,json,os
 from pathlib import Path
 assert 'BOOTH_COLLECTOR_TOKEN' not in os.environ
 assert 'DATABASE_URL' not in os.environ
-assert 'R2_SECRET_ACCESS_KEY' not in os.environ
+assert 'GOOGLE_APPLICATION_CREDENTIALS' not in os.environ
 assert not (Path(os.environ['CODEX_HOME'])/'hooks.json').exists()
 assert not (Path(os.environ['CODEX_HOME'])/'config.toml').read_text().find('mcp_servers')>=0
 prompt=sys.stdin.read()
@@ -51,14 +51,18 @@ output=Path(sys.argv[sys.argv.index('--output-last-message')+1])
         code+=f'output.write_text({json.dumps(json.dumps(SAMPLE,ensure_ascii=False) if not bad_json else "invalid",ensure_ascii=False)},encoding="utf-8")\n'
         if search:code+='print(json.dumps({"type":"item.completed","item":{"type":"web_search"}}))\n'
         code+=f'sys.exit({exit_code})\n'
-        fake=self.dir/'codex-fake';fake.write_text(code,encoding='utf-8');fake.chmod(0o700)
+        script=self.dir/'codex-fake.py';script.write_text(code,encoding='utf-8')
+        if os.name=='nt':
+            fake=self.dir/'codex-fake.cmd';fake.write_text(f'@echo off\r\nset PYTHONUTF8=1\r\n"{sys.executable}" "{script}" %*\r\n',encoding='utf-8')
+        else:
+            fake=script;fake.chmod(0o700)
         auth=self.dir/'auth';auth.mkdir(exist_ok=True);(auth/'auth.json').write_text('{"offline":"test"}')
         (auth/'config.toml').write_text('mcp_servers.secret = true')
         cfg=self.dir/'config.json';cfg.write_text(json.dumps({'apiBaseUrl':self.base,'stateDirectory':str(self.dir/'state'),'codexExecutable':str(fake),'codexHome':str(auth)}))
         return cfg
     def execute(self,**kwargs):
         cfg=self.fake_cli(**kwargs)
-        with patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':TOKEN,'DATABASE_URL':'must-not-leak','R2_SECRET_ACCESS_KEY':'must-not-leak'}):
+        with patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':TOKEN,'DATABASE_URL':'must-not-leak','GOOGLE_APPLICATION_CREDENTIALS':'must-not-leak'}):
             result=main(['--config',str(cfg),'--month','2026-10'])
         return result,next((self.dir/'state/runs').glob('*/batch.json')),cfg
     def test_pipeline_success(self):

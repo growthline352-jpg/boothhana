@@ -21,7 +21,7 @@ class FloorplanBatch:
         self.event_file=event_file;self.cfg=cfg;self.folder=folder;folder.mkdir(parents=True,exist_ok=True);self.dry=dry;self.fixtures=fixtures
         self.api=api if api is not None else (None if dry else Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']))
         self.started=time.monotonic();self.calls=0;self.issues=[];self.events=[]
-        self.meta_path=folder/'floorplans.json';self.meta=json.loads(self.meta_path.read_text()) if self.meta_path.exists() else {'version':8,'runId':str(uuid.uuid4()),'dryRun':dry,'startedAt':utcnow(),'state':'RUNNING'}
+        self.meta_path=folder/'floorplans.json';self.meta=json.loads(self.meta_path.read_text(encoding='utf-8')) if self.meta_path.exists() else {'version':8,'runId':str(uuid.uuid4()),'dryRun':dry,'startedAt':utcnow(),'state':'RUNNING'}
         if self.meta['version']!=8 or self.meta['dryRun']!=dry:raise RunError('Different checkpoint version/mode')
         self.lease=self.meta['runId'];write_json(self.meta_path,self.meta)
     def request(self,method,path,data=None,**kw):return self.api.request(method,BASE+path,data,**kw)
@@ -65,16 +65,16 @@ class FloorplanBatch:
         return value
     def discover(self,target):
         event=target['eventId'];self.heartbeat(event)
-        prompt=(ROOT/'prompts/floorplan-discovery.md').read_text()+'\nEVENT DATA:\n'+json.dumps(target['event'],ensure_ascii=False)
+        prompt=(ROOT/'prompts/floorplan-discovery.md').read_text(encoding='utf-8')+'\nEVENT DATA:\n'+json.dumps(target['event'],ensure_ascii=False)
         path=self.folder/f'event-{event}'/'discovery'
         result=self.job(path,prompt,'floorplan-discovery.schema.json',fixture='discovery.json')
         for p in result['plans']:
             for k in ('imageUrl','pageUrl'):public_url(p[k]);self.check_blocked(p[k])
         if self.dry:return result
         payload_path=path/'payload.json'
-        if payload_path.exists():payload=json.loads(payload_path.read_text());payload['leaseId']=self.lease
+        if payload_path.exists():payload=json.loads(payload_path.read_text(encoding='utf-8'));payload['leaseId']=self.lease
         else:
-            payload={'requestId':str(uuid.uuid4()),'leaseId':self.lease,'webSearchObserved':json.loads((path/'audit.json').read_text())['webSearchObserved'],'result':result};write_json(payload_path,payload)
+            payload={'requestId':str(uuid.uuid4()),'leaseId':self.lease,'webSearchObserved':json.loads((path/'audit.json').read_text(encoding='utf-8'))['webSearchObserved'],'result':result};write_json(payload_path,payload)
         receipt=self.request('POST',f'/events/{event}/observations',payload);write_json(path/'receipt.json',receipt)
         return result
     def check_blocked(self,url):
@@ -108,12 +108,12 @@ class FloorplanBatch:
         outputs=[]
         for index,tile in enumerate(regions):
             self.budget();self.heartbeat(event)
-            prompt=(ROOT/'prompts/floorplan-layout.md').read_text()+f'\n원본 {width}x{height}, 두 번째 이미지 {tile["width"]}x{tile["height"]}, 타일 {index+1}/{len(regions)}. 원본 SHA256={digest}'
+            prompt=(ROOT/'prompts/floorplan-layout.md').read_text(encoding='utf-8')+f'\n원본 {width}x{height}, 두 번째 이미지 {tile["width"]}x{tile["height"]}, 타일 {index+1}/{len(regions)}. 원본 SHA256={digest}'
             result=self.job(cache/f'analysis-{index}',prompt,'floorplan-layout.schema.json',images=[overview,tile['path']],fixture='layout.json')
             outputs.append((tile,result))
         geometry=merge_tiles(outputs,width,height);write_json(cache/'geometry.json',geometry);return geometry
     def run(self,imminent=False):
-        targets=json.loads(self.event_file.read_text()) if self.event_file else json.loads((self.fixtures/'targets.json').read_text()) if self.fixtures else ([] if self.dry else self.request('GET',f'/targets?imminent={str(imminent).lower()}&limit={self.cfg["floorplanMaxEvents"]}'))
+        targets=json.loads(self.event_file.read_text(encoding='utf-8')) if self.event_file else json.loads((self.fixtures/'targets.json').read_text(encoding='utf-8')) if self.fixtures else ([] if self.dry else self.request('GET',f'/targets?imminent={str(imminent).lower()}&limit={self.cfg["floorplanMaxEvents"]}'))
         if self.dry and not self.fixtures and not self.event_file:
             raise RunError('Live dry-run requires --event-file with sanitized event data; server reads are disabled')
         if not isinstance(targets,list) or any(not isinstance(t,dict) or type(t.get('eventId')) is not int or not isinstance(t.get('event'),dict) for t in targets):raise RunError('Expected [{eventId: number, event: object}]')

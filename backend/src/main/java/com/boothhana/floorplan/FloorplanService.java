@@ -19,7 +19,7 @@ import static com.boothhana.collection.CollectionModels.*;
 @Transactional(readOnly=true)
 public class FloorplanService {
  private final JdbcTemplate db;private final JsonMapper json;private final CatalogMediaService media;private final VerifiedImageStorage storage;private final String imageBase;
- public FloorplanService(JdbcTemplate db,JsonMapper json,CatalogMediaService media,VerifiedImageStorage storage,@Value("${app.r2.public-url:}") String base){this.db=db;this.json=json;this.media=media;this.storage=storage;this.imageBase=base.replaceAll("/$","");}
+ public FloorplanService(JdbcTemplate db,JsonMapper json,CatalogMediaService media,VerifiedImageStorage storage,@Value("${app.storage.public-url:}") String base){this.db=db;this.json=json;this.media=media;this.storage=storage;this.imageBase=base.replaceAll("/$","");}
  private String enc(Object v){return json.writeValueAsString(v);} private <T>T dec(Object v,Class<T> c){return json.readValue(v.toString(),c);}
  private Map<String,Object> one(String q,Object... args){var rows=db.queryForList(q,args);if(rows.isEmpty())throw ApiException.notFound("배치도 대상을 찾을 수 없습니다.");return rows.getFirst();}
  private static long num(Map<String,Object> r,String k){return ((Number)r.get(k)).longValue();}

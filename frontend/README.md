@@ -50,8 +50,8 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 - 요청은 `src/api/client.ts`의 브라우저 `fetch`를 사용합니다.
 - 세션 쿠키를 전달하기 위해 `credentials: 'include'`를 사용합니다.
 - 상태 변경 요청 전 `/api/auth/csrf`에서 토큰을 받아 `X-XSRF-TOKEN` 헤더에 전달합니다.
-- 프런트엔드에는 Supabase 접속 정보나 R2 비밀키를 넣지 않습니다.
-- R2 업로드는 백엔드에서 서명 URL을 받은 뒤 브라우저가 파일을 직접 `PUT`합니다.
+- 프런트엔드에는 Supabase 접속 정보나 GCS 자격증명을 넣지 않습니다.
+- 업로드 파일은 백엔드가 크기·형식·SHA-256을 검증한 뒤 GCS에 저장합니다.
 
 ## Styling and state
 

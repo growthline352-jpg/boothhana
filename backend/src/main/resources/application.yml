@@ -46,7 +46,7 @@ app:
     rate-secret: ${SUPPORT_RATE_SECRET:}
     attachments-enabled: ${SUPPORT_ATTACHMENTS_ENABLED:false}
     attachment-concurrency: ${SUPPORT_ATTACHMENT_CONCURRENCY:4}
-    private-bucket: ${SUPPORT_PRIVATE_BUCKET:}
+    private-bucket: ${GCS_PRIVATE_BUCKET:}
   collector:
     token: ${BOOTH_COLLECTOR_TOKEN:}
   upload:
@@ -55,9 +55,8 @@ app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
   admin-kakao-subjects: ${ADMIN_KAKAO_SUBJECTS:${ADMIN_KAKAO_SUBJECT:}}
-  r2:
-    account-id: ${R2_ACCOUNT_ID:}
-    access-key: ${R2_ACCESS_KEY_ID:}
-    secret-key: ${R2_SECRET_ACCESS_KEY:}
-    bucket: ${R2_BUCKET:}
-    public-url: ${R2_PUBLIC_URL:}
+  storage:
+    public-url: ${GCS_PUBLIC_URL:}
+  gcs:
+    project-id: ${GCS_PROJECT_ID:}
+    public-bucket: ${GCS_PUBLIC_BUCKET:}

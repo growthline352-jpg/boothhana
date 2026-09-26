@@ -18,7 +18,7 @@ import static com.boothhana.collection.CatalogModels.*;
 @Transactional(readOnly=true)
 public class CatalogMediaService {
     private final JdbcTemplate db;private final VerifiedImageStorage storage;private final String base;
-    public CatalogMediaService(JdbcTemplate db,VerifiedImageStorage storage,@Value("${app.r2.public-url:}") String base) {this.db=db;this.storage=storage;this.base=base.replaceAll("/$","");}
+    public CatalogMediaService(JdbcTemplate db,VerifiedImageStorage storage,@Value("${app.storage.public-url:}") String base) {this.db=db;this.storage=storage;this.base=base.replaceAll("/$","");}
     @Transactional public void register(long event,Long participant,Long product,Image image) {
         CatalogRules.images(List.of(image));
         String identity=CollectionRules.sha(event+":"+participant+":"+product+":"+image.type()+":"+image.imageUrl()+":"+image.pageUrl());

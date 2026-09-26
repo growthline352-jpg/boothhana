@@ -56,8 +56,8 @@ class Pipeline:
             self.meta={'runnerVersion':5,'runId':str(uuid.uuid4()),'weekKey':week_key(),'scope':scope,'dryRun':dry_run,'state':'RUNNING'};write_json(meta,self.meta)
         self.id=self.meta['runId'];self.scope=self.meta['scope']
         for saved in sorted((self.folder/'jobs').glob('*/receipt.json')):
-            if saved.parent.name.startswith('image-'): self.image_receipts[saved.parent.name]=json.loads(saved.read_text())
-            else: self.record_receipt(saved.parent.name,json.loads(saved.read_text()),report_issue=False)
+            if saved.parent.name.startswith('image-'): self.image_receipts[saved.parent.name]=json.loads(saved.read_text(encoding='utf-8'))
+            else: self.record_receipt(saved.parent.name,json.loads(saved.read_text(encoding='utf-8')),report_issue=False)
 
     def request(self,method,path,data=None,**kw): return self.api.request(method,'/api/internal/subculture/v4'+path,data,**kw)
     def heartbeat(self):
@@ -66,11 +66,11 @@ class Pipeline:
         path=self.folder/'jobs'/key;path.mkdir(parents=True,exist_ok=True);return path
     def job(self,key,prompt,schema):
         path=self.job_dir(key);file=path/'validated-result.json'
-        if file.exists(): return json.loads(file.read_text(encoding='utf-8')),json.loads((path/'audit.json').read_text())['webSearchObserved']
+        if file.exists(): return json.loads(file.read_text(encoding='utf-8')),json.loads((path/'audit.json').read_text(encoding='utf-8'))['webSearchObserved']
         self.check_budget(cli=True)
         self.heartbeat();self.calls+=1;self.stats['cliCalls']+=1
         attempts=path/'cli-attempts.json'
-        history=json.loads(attempts.read_text()) if attempts.exists() else []
+        history=json.loads(attempts.read_text(encoding='utf-8')) if attempts.exists() else []
         history.append({'startedAt':utcnow(),'fixture':bool(self.fixtures)});write_json(attempts,history)
         if self.fixtures:
             name='events.json' if key=='discovery' else 'participants.json' if key.startswith('participants') else 'sales.json'
@@ -248,7 +248,7 @@ class Pipeline:
         for stage,prefix in [('discovery','discovery'),('participants','participants-'),('sales','sales-')]:
             self.stats[stage]=sum(v['inserted']+v['changed']+v['unchanged'] for k,v in self.receipts.items() if k.startswith(prefix))
         self.stats['images']=len(self.image_receipts)
-        self.stats['cliCalls']=sum(len(json.loads(p.read_text())) for p in (self.folder/'jobs').glob('*/cli-attempts.json'))
+        self.stats['cliCalls']=sum(len(json.loads(p.read_text(encoding='utf-8'))) for p in (self.folder/'jobs').glob('*/cli-attempts.json'))
     def run(self,skip_discovery=False):
         if self.api:
             status=self.request('POST','/pipelines',{k:self.meta[k] for k in ('runId','weekKey','scope')})

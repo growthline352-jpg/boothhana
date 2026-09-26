@@ -6,7 +6,12 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States
 import { collectionApi, type Detail, type ReviewState, type Subcategory } from './api'
 import './collection.css'
 
-const categories: Record<Subcategory, string> = { COMIC_DOUJIN: '코믹·동인', DOLL: '인형 행사', ONLY_EVENT: '온리전', BIRTHDAY_CAFE: '생일카페', STATIONERY_GOODS: '문구·일러스트·굿즈' }
+const categories: Record<Subcategory, string> = {
+  COMIC_DOUJIN: '코믹·동인', DOLL: '인형 행사', ONLY_EVENT: '온리전',
+  BIRTHDAY_CAFE: '생일카페', STATIONERY_GOODS: '문구·일러스트·굿즈',
+  WINE: '주류·와인', WEDDING: '웨딩', LIFESTYLE: '생활·취미', DESIGN: '디자인·아트', BUSINESS: '창업·산업',
+  WALK: '걷기·거리', LIGHT: '불꽃·빛', MUSIC: '음악·공연', FOOD: '먹거리', CULTURE: '지역·문화',
+}
 const reviews: Record<ReviewState, string> = { PENDING: '검토 대기', REVIEWED: '확인 완료 · 비공개', EXCLUDED: '제외' }
 const runStatuses: Record<string, string> = { SUCCESS: '정상', PARTIAL: '일부 수집', NO_RESULTS: '검색 무결과', FAILED: '검색 실패', REJECTED_ALL: '전체 제외' }
 function External({ url, children }: { url: string; children: ReactNode }) {
@@ -63,7 +68,7 @@ function ReviewForm({ detail, close, saved, open }: { detail: Detail; close: () 
     <p className="collection-copy">{e.description}</p>
     <h3>검토 필요 항목</h3><ul>{detail.validationWarnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul>
     <h3>출처 · CLI가 보고한 확인 수준</h3><div className="collection-source-list">{e.sources.map((source, i) => <article key={i}><External url={source.url}>{source.url}</External><p>{source.kind} · {source.access === 'ORIGINAL' ? '원문 확인 보고' : source.access === 'SEARCH_SNIPPET' ? '검색 요약만 확인' : '접근 불가'}</p><blockquote>{source.evidence}</blockquote></article>)}</div>
-    <h3>배너 후보</h3><p>자동 다운로드·R2 저장·공개 미리보기를 하지 않습니다. 원본 회차와 사용 조건을 먼저 확인하세요.</p>{e.banners.length ? e.banners.map((banner, i) => <article className="collection-banner" key={i}><External url={banner.imageUrl}>이미지 후보 열기</External> · <External url={banner.pageUrl}>게시 페이지 열기</External><p>사용 조건: {banner.rights === 'UNKNOWN' ? '미확인' : '허락 문구가 있다고 보고됨 — 직접 확인 필요'} / 해당 회차: {banner.matchesEdition === true ? '일치한다고 보고됨' : '확인 필요'}</p>{banner.rightsEvidence && <p>{banner.rightsEvidence}</p>}</article>) : <p>이미지 후보 없음</p>}
+    <h3>배너 후보</h3><p>자동 다운로드·GCS 저장·공개 미리보기를 하지 않습니다. 원본 회차와 사용 조건을 먼저 확인하세요.</p>{e.banners.length ? e.banners.map((banner, i) => <article className="collection-banner" key={i}><External url={banner.imageUrl}>이미지 후보 열기</External> · <External url={banner.pageUrl}>게시 페이지 열기</External><p>사용 조건: {banner.rights === 'UNKNOWN' ? '미확인' : '허락 문구가 있다고 보고됨 — 직접 확인 필요'} / 해당 회차: {banner.matchesEdition === true ? '일치한다고 보고됨' : '확인 필요'}</p>{banner.rightsEvidence && <p>{banner.rightsEvidence}</p>}</article>) : <p>이미지 후보 없음</p>}
     {detail.reviewedEvent && <details><summary>이전에 확인한 내용 보존본</summary><pre className="collection-json">{JSON.stringify(detail.reviewedEvent, null, 2)}</pre></details>}
     <label className="field"><span>검토 메모 / 수정이 필요한 사실</span><textarea className="textarea" rows={4} maxLength={2000} disabled={submission.pending} value={note} onChange={event => setNote(event.target.value)} /></label>
     {error && <div className="form-alert" role="alert">{error}</div>}<div className="row-actions"><button className="btn secondary" disabled={submission.pending} onClick={() => void submit('PENDING')}>검토 대기</button><button className="btn primary" disabled={submission.pending} onClick={() => void submit('REVIEWED')}>확인 완료로 저장 · 비공개</button><button className="btn danger subtle" disabled={submission.pending} onClick={() => void submit('EXCLUDED')}>제외</button></div>

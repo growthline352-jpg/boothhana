@@ -1,5 +1,5 @@
 from pathlib import Path
-import unittest,tempfile,io,json,copy,hashlib,os,subprocess
+import unittest,tempfile,io,json,copy,hashlib,os,subprocess,sys
 from unittest.mock import patch
 from PIL import Image
 from run import codex_command,execute_search,RunError
@@ -46,7 +46,11 @@ class WorkerTests(unittest.TestCase):
  def test_image_arguments(self):
   cmd=codex_command('codex',Path('schema'),Path('out'),images=[Path('a.png'),Path('b.png')],web_search=False);self.assertEqual(cmd.count('--image'),2);self.assertIn('web_search="disabled"',cmd);self.assertIn('read-only',cmd);self.assertNotIn('--yolo',cmd)
  def test_live_image_subprocess_contract(self):
-  fake=self.path/'fake-codex';fake.write_text("#!/usr/bin/env python3\nimport sys,json,os,pathlib\na=sys.argv[1:];assert a.count('--image')==2;assert 'BOOTH_COLLECTOR_TOKEN' not in os.environ;assert 'web_search=\"disabled\"' in a\nfor i,x in enumerate(a):\n if x=='--image':assert pathlib.Path(a[i+1]).exists()\nout=pathlib.Path(a[a.index('--output-last-message')+1]);out.write_text('{}');sys.stdin.read()\nprint(json.dumps({'type':'turn.completed','usage':{}}))\n");fake.chmod(0o755)
+  script=self.path/'fake-codex.py';script.write_text("#!/usr/bin/env python3\nimport sys,json,os,pathlib\na=sys.argv[1:];assert a.count('--image')==2;assert 'BOOTH_COLLECTOR_TOKEN' not in os.environ;assert 'web_search=\"disabled\"' in a\nfor i,x in enumerate(a):\n if x=='--image':assert pathlib.Path(a[i+1]).exists()\nout=pathlib.Path(a[a.index('--output-last-message')+1]);out.write_text('{}');sys.stdin.read()\nprint(json.dumps({'type':'turn.completed','usage':{}}))\n",encoding='utf-8')
+  if os.name=='nt':
+   fake=self.path/'fake-codex.cmd';fake.write_text(f'@echo off\r\nset PYTHONUTF8=1\r\n"{sys.executable}" "{script}" %*\r\n',encoding='utf-8')
+  else:
+   fake=script;fake.chmod(0o755)
   cfg={**self.cfg,'codexExecutable':str(fake)};job=self.path/'job';job.mkdir()
   with patch.dict(os.environ,{'CODEX_API_KEY':'fake-only','BOOTH_COLLECTOR_TOKEN':'do-not-pass'}):raw,web,_=execute_search(cfg,job,'Analyze attached image',ROOT/'schemas/floorplan-layout.schema.json',images=[FIX/'map.png',FIX/'map.png'],web_search=False)
   self.assertEqual(raw,b'{}');self.assertFalse(web)
