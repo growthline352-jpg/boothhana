@@ -1,7 +1,7 @@
 /** TypeScript compiler AST: inventories source contracts, not browser/HTTP execution. */
 const fs=require('node:fs'),path=require('node:path'),ts=require('../v4/load_ts.cjs')()
 const root=path.resolve(process.env.BOOTHHANA_REVIEW_BASELINE||process.argv[2]||path.resolve(__dirname,'../..'))
-const files=[];function walk(p){for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())walk(f);else if(/\.tsx?$/.test(f))files.push(f)}}walk(path.join(root,'frontend/src'))
+const files=[];function walk(p){for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())walk(f);else if(/\.tsx?$/.test(f)&&!/\.(?:test|spec)\.tsx?$/.test(f))files.push(f)}}walk(path.join(root,'frontend/src'))
 const calls=[],interfaces=[],forwarders=[]
 for(const file of files){
  const sf=ts.createSourceFile(file,fs.readFileSync(file,'utf8'),ts.ScriptTarget.Latest,true),defs=new Map()
