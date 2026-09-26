@@ -27,7 +27,7 @@ def fixture(eid=101):
  {'id':32,'participantId':None,'productId':None,'type':'BANNER','url':BASE+'/fixture/forbidden.png','credit':'미승인','offlineAllowed':False}],
  'banner':{'id':32},'note':'PRIVATE_ACCOUNT_NOTE','reservations':[{'order':'SECRET_ORDER'}]}
 def plans():
- return {'plans':[{'id':'p1','assetId':41,'state':'READY','scope':{'title':'테스트 배치도','dates':['2026-09-20'],'hall':'A홀'},'imageUrl':BASE+'/fixture/plan.png','sourceUrl':BASE+'/fixture/credit','credit':'검증 전용 배치도','offlineAllowed':not STATE['revoke'],'sha256':PNG_SHA256,'partial':False,'shapes':[]}], 'managedAssetIds':[41]}
+ return {'plans':[{'id':'p1','assetId':41,'state':'READY','scope':{'title':'테스트 배치도','dates':['2026-09-20'],'hall':'A홀'},'imageUrl':BASE+'/fixture/plan.png','sourceUrl':BASE+'/fixture/credit','credit':'검증 전용 배치도','offlineAllowed':not STATE['revoke'],'sourceSha256':PNG_SHA256,'partial':False,'shapes':[]}], 'managedAssetIds':[41]}
 class Handler(SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
  def do_GET(self):
