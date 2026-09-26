@@ -108,6 +108,26 @@ class ScheduleTests(unittest.TestCase):
  def test_linux_explicit_timezone(self):self.assertIn('Sun *-*-* 03:00:00 Asia/Seoul',(ROOT/'systemd/boothhana-weekly.timer').read_text())
  def test_fixtures_cannot_write(self):
   with self.assertRaises(weekly.RunError):weekly.main(['--fixtures',str(FIX)])
+ def test_seed_checkpoint_preserves_audited_discovery(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp);source=root/'source';target=root/'target';scope={'region':'SEOUL_GYEONGGI','timezone':'Asia/Seoul','startDate':'2026-11-01','endDate':'2026-11-30'}
+   source.mkdir()
+   weekly.write_json(source/'pipeline.json',{'runnerVersion':5,'scope':scope,'dryRun':True})
+   (source/'jobs'/'discovery').mkdir(parents=True)
+   weekly.write_json(source/'jobs'/'discovery'/'validated-result.json',fixture('events'))
+   weekly.write_json(source/'jobs'/'discovery'/'audit.json',{'webSearchObserved':True,'usage':{'input_tokens':1}})
+   weekly.seed_discovery_checkpoint(source,target,scope,False)
+   self.assertEqual(fixture('events'),json.loads((target/'jobs'/'discovery'/'validated-result.json').read_text(encoding='utf-8')))
+   self.assertTrue(json.loads((target/'jobs'/'discovery'/'audit.json').read_text(encoding='utf-8'))['webSearchObserved'])
+ def test_seed_checkpoint_rejects_unaudited_result(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp);source=root/'source';scope={'region':'SEOUL_GYEONGGI','timezone':'Asia/Seoul','startDate':'2026-11-01','endDate':'2026-11-30'}
+   source.mkdir()
+   weekly.write_json(source/'pipeline.json',{'runnerVersion':5,'scope':scope,'dryRun':True})
+   (source/'jobs'/'discovery').mkdir(parents=True)
+   weekly.write_json(source/'jobs'/'discovery'/'validated-result.json',fixture('events'))
+   weekly.write_json(source/'jobs'/'discovery'/'audit.json',{'webSearchObserved':False,'usage':{}})
+   with self.assertRaisesRegex(weekly.RunError,'web-search audit'):weekly.seed_discovery_checkpoint(source,root/'target',scope,False)
 class PipelineTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.calls=[];self.state={'status':'RUNNING'}

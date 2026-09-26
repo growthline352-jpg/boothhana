@@ -41,6 +41,23 @@ def week_key(now=None):
     sunday=now.date()-timedelta(days=(now.weekday()+1)%7)
     return sunday.isoformat()
 
+def seed_discovery_checkpoint(source:Path,destination:Path,scope:dict,dry_run:bool):
+    """Reuse an audited discovery result without repeating the same web search."""
+    if dry_run: raise RunError('Seed checkpoints are for live ingestion; the source is already a dry-run artifact')
+    meta_file=source/'pipeline.json';result_file=source/'jobs'/'discovery'/'validated-result.json';audit_file=source/'jobs'/'discovery'/'audit.json'
+    if not all(path.is_file() for path in (meta_file,result_file,audit_file)):
+        raise RunError('Seed checkpoint is missing pipeline, discovery result, or audit metadata')
+    meta=json.loads(meta_file.read_text(encoding='utf-8'))
+    if meta.get('runnerVersion')!=5 or meta.get('scope')!=scope:
+        raise RunError('Seed checkpoint version or scope differs')
+    result=parse_schema(result_file.read_bytes(),'event-result-v4.schema.json')
+    audit=json.loads(audit_file.read_text(encoding='utf-8'))
+    if result['searchStatus']=='FAILED' or audit.get('webSearchObserved') is not True:
+        raise RunError('Seed discovery must have a completed web-search audit')
+    target=destination/'jobs'/'discovery';target.mkdir(parents=True,exist_ok=True)
+    write_json(target/'validated-result.json',result)
+    write_json(target/'audit.json',{'webSearchObserved':True,'usage':audit.get('usage',{})})
+
 class Pipeline:
     def __init__(self,cfg,folder:Path,scope,dry_run=False,fixtures:Path|None=None,resume=False):
         self.cfg=cfg;self.folder=folder;folder.mkdir(parents=True,exist_ok=True)
@@ -291,10 +308,11 @@ class Pipeline:
         return 2 if self.issues else 0
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',type=Path);p.add_argument('--month');p.add_argument('--start');p.add_argument('--end');p.add_argument('--scheduled',action='store_true');p.add_argument('--dry-run',action='store_true');p.add_argument('--fixtures',type=Path);p.add_argument('--resume',type=Path);p.add_argument('--skip-discovery',action='store_true')
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',type=Path);p.add_argument('--month');p.add_argument('--start');p.add_argument('--end');p.add_argument('--scheduled',action='store_true');p.add_argument('--dry-run',action='store_true');p.add_argument('--fixtures',type=Path);p.add_argument('--resume',type=Path);p.add_argument('--seed-checkpoint',type=Path);p.add_argument('--skip-discovery',action='store_true')
     args=p.parse_args(argv)
     if args.fixtures and not args.dry_run:raise RunError('Fixtures are allowed only with --dry-run; never stored to service DB')
     if args.resume and (args.month or args.start or args.end):raise RunError('Resume preserves the original period')
+    if args.seed_checkpoint and (args.resume or args.scheduled or args.fixtures):raise RunError('Seed checkpoint requires a new, explicit live date range')
     cfg=load_config(args.config);start,end=date_window(args.month,args.start,args.end)
     if args.resume:
         previous=json.loads((args.resume/'pipeline.json').read_text(encoding='utf-8'))
@@ -308,6 +326,7 @@ def main(argv=None):
             meta=json.loads((folder/'pipeline.json').read_text(encoding='utf-8'))
             if meta['state']=='SUCCESS': print('This weekly batch already completed; no CLI execution.');return 0
             scope=meta['scope']
+        if args.seed_checkpoint:seed_discovery_checkpoint(args.seed_checkpoint.resolve(),folder,scope,args.dry_run)
         return Pipeline(cfg,folder,scope,args.dry_run,args.fixtures,bool(args.resume)).run(args.skip_discovery)
 if __name__=='__main__':
     try:sys.exit(main())
