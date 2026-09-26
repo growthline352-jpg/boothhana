@@ -755,6 +755,44 @@
       "eventFormat": "MULTI_BOOTH",
       "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://www.coex.co.kr/exhibitions/2026-%EC%BD%94%EB%B2%A0-%EB%B2%A0%EC%9D%B4%EB%B9%84%ED%8E%98%EC%96%B4/", "status": "PUBLISHED", "note": "코엑스 공식 상세"}],
       "operationStatus": {"state": "SCHEDULED", "note": "코엑스 공식 일정에 등록", "sourceUrl": "https://www.coex.co.kr/exhibitions/2026-%EC%BD%94%EB%B2%A0-%EB%B2%A0%EC%9D%B4%EB%B9%84%ED%8E%98%EC%96%B4/", "checkedOn": "2026-09-27"}
+    },
+    {
+      "name": "코리아 핀테크 위크 2026",
+      "subcategory": "BUSINESS",
+      "organizer": "금융위원회, 한국핀테크지원센터",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "aT센터 제1·2전시장",
+      "address": "서울특별시 서초구 강남대로 27",
+      "description": "핀테크 기업과 금융기관의 기술·서비스를 소개하고 세미나와 비즈니스 프로그램을 운영하는 글로벌 산업 박람회다.",
+      "admission": null,
+      "subjects": ["핀테크", "금융", "AI"],
+      "occurrences": [{"startDate": "2026-11-25", "endDate": "2026-11-27", "startTime": null, "endTime": null}],
+      "sources": [{"url": "https://fintechweek.or.kr/", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "행사 공식 사이트와 금융위원회 안내가 2026-11-25~27, aT센터 제1·2전시장 개최를 안내한다."}],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://fintechweek.or.kr/", "status": "PUBLISHED", "note": "행사 공식 홈페이지"}],
+      "operationStatus": {"state": "SCHEDULED", "note": "행사 공식 일정에 등록", "sourceUrl": "https://fintechweek.or.kr/", "checkedOn": "2026-09-27"}
+    },
+    {
+      "name": "2026 대한민국 우리술대축제",
+      "subcategory": "WINE",
+      "organizer": "농림축산식품부, 한국농수산식품유통공사",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "aT센터 제1전시장",
+      "address": "서울특별시 서초구 강남대로 27",
+      "description": "국내 전통주 양조장과 수상작을 소개하고 시음·판매·문화 프로그램을 운영하는 정부 주관 주류 축제다.",
+      "admission": null,
+      "subjects": ["전통주", "우리술", "시음"],
+      "occurrences": [{"startDate": "2026-11-13", "endDate": "2026-11-15", "startTime": null, "endTime": null}],
+      "sources": [{"url": "https://www.thesool.com/front/publication/M000000064/view.do?bbsId=A000000042&publicationId=C000003539", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "더술닷컴 공식 참가업체 모집 안내가 2026-11-13~15, 3일간 개최를 명시한다."}],
+      "banners": [],
+      "warnings": ["성인 대상 시음은 신분 확인 및 현장 운영 기준 적용"],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://www.thesool.com/front/publication/M000000064/view.do?bbsId=A000000042&publicationId=C000003539", "status": "PUBLISHED", "note": "정부 공식 참가업체 모집 안내"}],
+      "operationStatus": {"state": "SCHEDULED", "note": "공식 모집 안내와 정부 보도자료 확인", "sourceUrl": "https://www.thesool.com/front/publication/M000000064/view.do?bbsId=A000000042&publicationId=C000003539", "checkedOn": "2026-09-27"}
     }
   ]
 }
