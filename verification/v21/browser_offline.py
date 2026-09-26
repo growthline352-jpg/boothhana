@@ -7,7 +7,7 @@ from pathlib import Path
 from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from urllib.parse import urlsplit
 from functools import partial
-import threading,json,io,time,sys,traceback
+import threading,json,io,time,sys,traceback,hashlib
 from PIL import Image,ImageDraw
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'verification/v21/results'
@@ -17,7 +17,7 @@ img=Image.new('RGB',(800,450),'white');draw=ImageDraw.Draw(img)
 for i in range(1,9):
  x=30+(i-1)%4*190;y=60+(i-1)//4*180
  draw.rectangle((x,y,x+140,y+120),outline='#2f6b55',width=3);draw.text((x+20,y+40),'BOOTH A'+str(i),fill='#15372a')
-buf=io.BytesIO();img.save(buf,format='PNG');PNG=buf.getvalue()
+buf=io.BytesIO();img.save(buf,format='PNG');PNG=buf.getvalue();PNG_SHA256=hashlib.sha256(PNG).hexdigest()
 BASE=''
 def fixture(eid=101):
  return {'id':eid,'mode':'INFO_ONLY','publishedAt':'2026-09-18T03:00:00Z',
@@ -27,7 +27,7 @@ def fixture(eid=101):
  {'id':32,'participantId':None,'productId':None,'type':'BANNER','url':BASE+'/fixture/forbidden.png','credit':'미승인','offlineAllowed':False}],
  'banner':{'id':32},'note':'PRIVATE_ACCOUNT_NOTE','reservations':[{'order':'SECRET_ORDER'}]}
 def plans():
- return {'plans':[{'id':'p1','assetId':41,'state':'READY','scope':{'title':'테스트 배치도','dates':['2026-09-20'],'hall':'A홀'},'imageUrl':BASE+'/fixture/plan.png','sourceUrl':BASE+'/fixture/credit','credit':'검증 전용 배치도','offlineAllowed':not STATE['revoke'],'partial':False,'shapes':[]}], 'managedAssetIds':[41]}
+ return {'plans':[{'id':'p1','assetId':41,'state':'READY','scope':{'title':'테스트 배치도','dates':['2026-09-20'],'hall':'A홀'},'imageUrl':BASE+'/fixture/plan.png','sourceUrl':BASE+'/fixture/credit','credit':'검증 전용 배치도','offlineAllowed':not STATE['revoke'],'sha256':PNG_SHA256,'partial':False,'shapes':[]}], 'managedAssetIds':[41]}
 class Handler(SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
  def do_GET(self):
