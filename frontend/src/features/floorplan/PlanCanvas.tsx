@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent, ReactNode } from 'react'
 import type { Shape, Point } from './api'
 import { center, rectangle, safePoints } from './geometry'
@@ -23,7 +23,6 @@ export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highl
   const pointers=useRef(new Map<number,Point>()),suppress=useRef(false)
   const drag=useRef<{kind:'vertex';id:string;index:number}|{kind:'draw';start:Point}|{kind:'pan';x:number;y:number;left:number;top:number;shape:string|null}|null>(null)
   const pinch=useRef<{distance:number;zoom:number;point:Point}|null>(null)
-  const pattern='unmapped-'+useId().replace(/[^a-zA-Z0-9_-]/g,'')
   const valid=shapes.filter(s=>safePoints(s.points)),w=Math.max(1,width),h=Math.max(1,height),ratio=w/h
   const frame=useRef(0),wasExpanded=useRef(false)
   useEffect(()=>()=>cancelAnimationFrame(frame.current),[])
@@ -89,39 +88,38 @@ export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highl
     if(svg.current?.hasPointerCapture(ev.pointerId))svg.current.releasePointerCapture(ev.pointerId)
     if(pointers.current.size===1&&viewport.current){const p=[...pointers.current.values()][0];drag.current={kind:'pan',x:p.x,y:p.y,left:viewport.current.scrollLeft,top:viewport.current.scrollTop,shape:null};suppress.current=true}
   }
+  const selection=renderSelection?.(expanded,showDetails)
   const content=<div className="floorplan-canvas"><div className="floorplan-toolbar">
-    <button className="btn secondary" type="button" onClick={()=>scale(zoom-.5)} disabled={zoom<=1} aria-label="배치도 축소">−</button><output>{Math.round(zoom*100)}%</output>
-    <button className="btn secondary" type="button" onClick={()=>scale(zoom+.5)} disabled={zoom>=12} aria-label="배치도 확대">＋</button>
+    <button className="btn secondary floorplan-zoom-button" type="button" onClick={()=>scale(zoom-.5)} disabled={zoom<=1} aria-label="배치도 축소">− <span>축소</span></button><output aria-label={`현재 확대율 ${Math.round(zoom*100)}퍼센트`}>{Math.round(zoom*100)}%</output>
+    <button className="btn secondary floorplan-zoom-button" type="button" onClick={()=>scale(zoom+.5)} disabled={zoom>=12} aria-label="배치도 확대"><span>확대</span> ＋</button>
     <button className="btn secondary" type="button" onClick={()=>{zoomRef.current=1;setZoom(1);viewport.current?.scrollTo(0,0)}}>전체 보기</button>
     <button className="btn secondary" type="button" disabled={!selected} onClick={focus}>선택 위치로</button>
     {imageUrl&&<label><input type="checkbox" checked={original} onChange={ev=>setOriginal(ev.target.checked)}/> 원본 배경</label>}
     {!editable&&<button ref={!expanded?fullButton:undefined} className="btn secondary" type="button" onClick={()=>setExpanded(!expanded)}>{expanded?'전체화면 닫기':'배치도 전체화면'}</button>}
     {editable&&<button type="button" className={`btn ${drawing?'primary':'secondary'}`} onClick={()=>setDrawing(!drawing)}>{drawing?'영역 그리기 중':'사각 부스 추가'}</button>}
-  </div><div className="floorplan-viewport" ref={viewport} tabIndex={0} aria-label="배치도. 손가락 두 개로 확대하고 끌어서 이동할 수 있어요." style={{aspectRatio:`${w}/${h}`}}>
+  </div>{selection}<div className="floorplan-viewport" ref={viewport} tabIndex={0} aria-label="배치도. 손가락 두 개로 확대하고 끌어서 이동할 수 있어요." style={{aspectRatio:`${w}/${h}`}}>
   <svg ref={svg} role="group" aria-label="부스번호별 배치도. 검색 결과에서도 선택할 수 있습니다." viewBox={`0 0 ${w} ${h}`} style={{width:`${zoom*100}%`,aspectRatio:`${w}/${h}`}}
     onPointerDown={down} onPointerMove={move} onPointerUp={ev=>end(ev)} onPointerCancel={ev=>end(ev,true)}>
-    <defs><pattern id={pattern} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform={`scale(${Math.max(1,w/1000)})`}><rect width="8" height="8" fill="#f4f4f4"/><path d="M0 0L8 8" stroke="#a0a6aa" strokeWidth="2"/></pattern></defs>
     <rect width={w} height={h} fill="white"/>{original&&imageUrl&&<image href={imageUrl} width={w} height={h} preserveAspectRatio="none"/>}
     {valid.map(s=>{const c=center(s.points),active=s.id===selected,unlinked=linkedIds!==undefined&&!linkedIds.includes(s.id)
       return <g key={s.id} data-shape={s.id} role="button" tabIndex={0} aria-label={`부스 ${s.label||'번호 미확인'}${unlinked?' · 참가자 연결 미확인':''}`} aria-pressed={active}
         onClick={ev=>{if(ev.detail===0)select(s.id)}} onKeyDown={ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();select(s.id)}}}>
-        <polygon className={`floorplan-region ${unlinked?'is-unlinked':''} ${active?'is-selected':''} ${highlight.includes(s.id)?'is-highlighted':''}`} style={unlinked&&!active&&!highlight.includes(s.id)?{fill:`url(#${pattern})`}:undefined} points={s.points.map(p=>`${p.x*w},${p.y*h}`).join(' ')} vectorEffect="non-scaling-stroke"/>
+        <polygon className={`floorplan-region ${unlinked?'is-unlinked':''} ${active?'is-selected':''} ${highlight.includes(s.id)?'is-highlighted':''}`} points={s.points.map(p=>`${p.x*w},${p.y*h}`).join(' ')} vectorEffect="non-scaling-stroke"/>
         <text x={c.x*w} y={c.y*h} textAnchor="middle" dominantBaseline="central" className="floorplan-label" fontSize={Math.max(10,w/110)}>{s.label||'?'}</text>
       </g>})}
     {editable&&valid.find(s=>s.id===selected)?.points.map((p,i)=><circle key={i} data-vertex={i} data-owner={selected} cx={p.x*w} cy={p.y*h} r={w/150} className="floorplan-handle" aria-hidden="true"/>)}
   </svg></div>
-  {linkedIds!==undefined&&<p className="floorplan-legend"><span>▧ 참가자 연결 미확인</span><span>▣ 연결 확인</span><span>▣ 파란 테두리: 선택 위치</span></p>}
+  {linkedIds!==undefined&&<p className="floorplan-legend"><span>□ 위치번호만</span><span>■ 부스정보 연결</span><span>■ 파란 테두리: 선택 위치</span></p>}
   <small>손가락 두 개로 확대하고 끌어서 이동하세요. 작은 부스는 검색 결과로 선택하면 자동으로 확대됩니다. 현위치·최단 경로 안내는 제공하지 않습니다.</small>
   </div>
-  const selection=renderSelection?.(expanded,showDetails)
   return expanded ? <dialog ref={dialog} className="floorplan-fullscreen" aria-label={detail ? `${detail.title} 판매정보` : '배치도 전체화면'}
     onCancel={ev=>{ev.preventDefault();if(detail)backToMap();else setExpanded(false)}}>
     {/* Keep the canvas mounted and laid out: returning from details restores the exact pan/zoom. */}
     <div className="floorplan-full-map" style={detail?{visibility:'hidden'}:undefined} inert={detail?true:undefined} aria-hidden={detail?true:undefined}>
-      {content}{selection}<button className="btn primary wide" onClick={()=>setExpanded(false)}>선택 위치 확인 · 전체화면 닫기</button>
+      {content}<button className="btn primary wide" onClick={()=>setExpanded(false)}>선택 위치 확인 · 전체화면 닫기</button>
     </div>
     {detail&&<section className="floorplan-full-details"><div className="floorplan-details-heading">
       <button className="btn secondary" type="button" onClick={backToMap}>← 같은 지도 위치로 돌아가기</button>
       <h2 ref={detailHeading} tabIndex={-1}>{detail.title}</h2></div>{detail.content}</section>}
-  </dialog> : <>{content}{selection}</>
+  </dialog> : <>{content}</>
 }

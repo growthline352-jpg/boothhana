@@ -60,15 +60,15 @@ export function MapView({plan,participants,onOpen,day:providedDay,hall='',query=
     </form>
     <PlanCanvas width={plan.width||1} height={plan.height||1} imageUrl={plan.imageUrl} shapes={plan.shapes.map(s=>({...s,recognition:'READABLE',boundaryConfirmed:true}))} selected={selected}
       onSelect={select} focusRequest={focusRequest} highlight={mapQuery||onlySaved?matches.map(s=>s.id):[]} linkedIds={plan.shapes.filter(s=>links(s).length).map(s=>s.id)}
-      renderSelection={(expanded,showDetails)=>(current&&<div className="floorplan-found" aria-live="polite"><strong>선택 위치 {current.label||'번호 미확인'}</strong>{eventId&&<ReportLink target={{namespace:'CATALOG',type:'FLOORPLAN',eventId:Number(eventId),id:null,planId:plan.id,areaId:current.id,day,hall:plan.scope.hall||hall}} label="위치 오류 신고" viewedVersion={plan.publishedAt}/>}{currentLinks.length?currentLinks.map(l=>{
+      renderSelection={(expanded,showDetails)=>(current&&<div className="floorplan-found" aria-live="polite"><div className="floorplan-found-heading"><span>선택한 위치</span><strong>{current.label||'번호 미확인'}</strong>{eventId&&<ReportLink target={{namespace:'CATALOG',type:'FLOORPLAN',eventId:Number(eventId),id:null,planId:plan.id,areaId:current.id,day,hall:plan.scope.hall||hall}} label="위치 오류 신고" viewedVersion={plan.publishedAt}/>}</div>{currentLinks.length?currentLinks.map(l=>{
       const p=lookup.get(l.participantId)!;return <div key={l.participantId}><strong>{p.participant.registrationName}</strong><p>{p.sales?.summary||'판매정보 미확인'}</p><button className="btn primary" data-floorplan-details={p.id} onClick={ev=>{
         if(expanded){
           const search=new URLSearchParams({day,hall,view:'map',booth:String(p.id),focus:String(p.id)})
           const shareUrl=eventId?new URL(`/discover/${eventId}?${search}`,window.location.origin).href:undefined
           showDetails(<BoothContent eventId={Number(eventId)||undefined} viewedVersion={plan.publishedAt} row={p} day={day} hall={hall} assets={assets.filter(a=>a.participantId===p.id)} shareUrl={shareUrl} eventNotice={eventNotice}/>,p.participant.registrationName,ev.currentTarget)
         }else onOpen(p.id,ev.currentTarget)
-      }}>상품 보기</button></div>
-    }):<><p>이 날짜에 연결된 공개 참가정보가 없습니다. 위치만 확인된 영역이며 참가자를 추측하지 않습니다.</p>{expanded?<small>전체화면을 닫으면 참가 부스 목록에서 계속 찾을 수 있어요.</small>:onList&&<button className="btn secondary" onClick={onList}>참가 부스 목록에서 찾기</button>}</>}</div>)}/>
+      }}>부스 정보 보기</button></div>
+    }):<div className="floorplan-empty-location"><strong>등록된 부스 정보가 없습니다.</strong><p>현재는 위치번호만 제공해요. 참가 정보가 들어오면 이 위치에 자동으로 연결됩니다.</p>{expanded?<small>전체화면을 닫으면 참가 부스 목록에서 계속 찾을 수 있어요.</small>:onList&&<button className="btn secondary" onClick={onList}>참가 부스 목록에서 찾기</button>}</div>}</div>)}/>
     <details open={!!mapQuery||onlySaved}><summary>{mapQuery?'검색한 위치':'부스 위치 목록'} · {matches.length}개 영역</summary><div className="floorplan-search-results">{matches.map(s=>{
       const people=links(s).map(l=>lookup.get(l.participantId)!)
       return <article key={s.id}><div><strong>{s.label||'번호 미확인'} · {people.map(p=>p.participant.registrationName).join(' / ')||'참가자 연결 미확인'}</strong><p>{people.map(p=>p.sales?.summary||p.participant.subjects.join(' · ')).join(' / ')}</p><small>{day} · {plan.scope.hall||'전시관 미확인'}</small></div><div className="row-actions"><button className="btn secondary" onClick={()=>select(s.id)}>위치 보기</button>{people.length===1&&<button className="btn primary" onClick={ev=>onOpen(people[0].id,ev.currentTarget)}>상품 보기</button>}</div></article>
