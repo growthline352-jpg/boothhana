@@ -38,8 +38,35 @@ export interface PublicAsset {offlineAllowed?: boolean; id: number; participantI
 export interface PublicParticipant {id: number; participant: Participant; sales: Sales | null; productRows?: ProductRow[]}
 export interface PublicEvent {banner?:PublicAsset|null;id:number;mode:'INFO_ONLY';event:EventData;participants:PublicParticipant[];publishedAt:string;assets:PublicAsset[]}
 export interface PublicEventSummary { id: number; event: EventData; participantCount: number; publishedAt?: string; banner?: PublicAsset | null }
+
+const placeholderRegistrationNames = new Set(['', '.', '-', '—', 'ㆍ'])
+
+/** Keep collected evidence intact in the API while presenting useful public labels. */
+export function presentPublicParticipant(row: PublicParticipant): PublicParticipant {
+ const collectedName=row.participant.registrationName.trim()
+ const memberNames=[...new Set(row.participant.members.map(member=>member.name.trim()).filter(Boolean))]
+ const registrationName=placeholderRegistrationNames.has(collectedName)
+  ? (memberNames.join(' · ')||'부스명 미확인')
+  : collectedName
+ if(!row.sales)return {...row,participant:{...row.participant,registrationName}}
+ const products=(row.productRows?.map(product=>product.data)??row.sales.products)
+  .filter(product=>['EVENT_LISTED','EVENT_SALE_CONFIRMED'].includes(product.evidenceScope))
+ const names=[...new Set(products.map(product=>product.name.trim()).filter(Boolean))]
+ const summary=names.length
+  ? `${names.slice(0,2).join(' · ')}${names.length>2?` 외 ${names.length-2}개`:''}`
+  : row.sales.categories.length
+   ? `${row.sales.categories.slice(0,3).join(' · ')} 안내`
+   : row.participant.subjects.length
+    ? `${row.participant.subjects.slice(0,3).join(' · ')} 관련 부스`
+    : '판매정보를 확인하고 있어요.'
+ return {...row,participant:{...row.participant,registrationName},sales:{...row.sales,summary}}
+}
+
 export const publicCatalogApi={
  browse:(query:string)=>api<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`),
  events:(page=0)=>api<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`),
- event:(id:string)=>api<PublicEvent>(`/api/public/catalog/events/${id}`),
+ event:async(id:string)=>{
+  const value=await api<PublicEvent>(`/api/public/catalog/events/${id}`)
+  return {...value,participants:value.participants.map(presentPublicParticipant)}
+ },
 }
