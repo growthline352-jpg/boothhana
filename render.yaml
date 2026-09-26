@@ -22,7 +22,9 @@ services:
         sync: false
       - key: KAKAO_CLIENT_SECRET
         sync: false
-      - key: ADMIN_KAKAO_SUBJECTS
+      - key: ADMIN_LOGIN_USERNAME
+        sync: false
+      - key: ADMIN_LOGIN_PASSWORD_HASH
         sync: false
       - key: GCS_PROJECT_ID
         sync: false

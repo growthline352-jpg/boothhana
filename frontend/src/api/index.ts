@@ -26,6 +26,9 @@ const writeLines = (items: ReservationItem[]) => items.map(x=>({eventProductId:x
 
 export const authApi = {
   me: () => api<User>('/api/me', { cache: 'no-store', signal: AbortSignal.timeout(15_000) }),
+  adminLogin: (username: string, password: string) => api<void>('/api/auth/admin/login', {
+    method: 'POST', body: JSON.stringify({ username, password }),
+  }),
   logout: async () => {
     // Stop pending old-session mutations before requesting logout, even if logout later fails.
     resetCsrfToken()

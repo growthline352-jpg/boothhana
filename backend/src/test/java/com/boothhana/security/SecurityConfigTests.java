@@ -12,8 +12,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.when;
 
 @WebMvcTest(
     controllers = AuthController.class,
@@ -31,6 +34,10 @@ class SecurityConfigTests {
 
     @MockitoBean
     KakaoOAuthUserService oauthUsers;
+    @MockitoBean
+    AdminPasswordLoginService adminLogin;
+    @MockitoBean
+    com.boothhana.support.SupportRateLimiter rateLimiter;
 
     @Test
     void allowsFrontendPreflightForCurrentUserRequest() throws Exception {
@@ -53,5 +60,34 @@ class SecurityConfigTests {
         assertThat(cookie).isNotNull();
         assertThat(cookie.getSecure()).isTrue();
         assertThat(cookie.getAttribute("SameSite")).isEqualTo("none");
+    }
+
+    @Test
+    void adminPasswordLoginRequiresCsrfAndPersistsAnAdminSession() throws Exception {
+        var admin = new com.boothhana.domain.UserAccount();
+        admin.id = 17L; admin.kakaoSubject = "local-admin:operator"; admin.displayName = "관리자";
+        when(rateLimiter.hit(org.mockito.ArgumentMatchers.anyString())).thenReturn(1);
+        when(adminLogin.authenticate("operator", "correct password")).thenReturn(admin);
+
+        mockMvc.perform(post("/api/auth/admin/login")
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"operator\",\"password\":\"correct password\"}"))
+            .andExpect(status().isForbidden());
+
+        var csrfResponse = mockMvc.perform(get("/api/auth/csrf")).andExpect(status().isOk()).andReturn().getResponse();
+        String token = new com.fasterxml.jackson.databind.ObjectMapper().readTree(csrfResponse.getContentAsString()).get("token").asText();
+        var csrfCookie = csrfResponse.getCookie("XSRF-TOKEN");
+        assertThat(csrfCookie).isNotNull();
+
+        mockMvc.perform(post("/api/auth/admin/login")
+                .cookie(csrfCookie)
+                .header("X-XSRF-TOKEN", token)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"operator\",\"password\":\"correct password\"}"))
+            .andExpect(status().isNoContent())
+            .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
+            .andExpect(request().sessionAttribute(
+                org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                org.hamcrest.Matchers.notNullValue()));
     }
 }

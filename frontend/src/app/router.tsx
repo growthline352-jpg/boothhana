@@ -12,6 +12,7 @@ import { PublicLayout } from '../components/layout/PublicLayout'
 import { ConsoleLayout } from '../components/layout/ConsoleLayout'
 import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
+import { AdminLoginPage } from '../pages/AdminLoginPage'
 import { BoothDetailPage, EventDetailPage, EventsPage, ProductDetailPage } from '../pages/PublicPages'
 import { ReservationCreatePage, ReservationDetailPage, ReservationsPage } from '../pages/ReservationPages'
 import { CreatorBoothsPage, CreatorEventBoothPage, CreatorEventsPage, CreatorHomePage, CreatorNoticesPage, CreatorPosPage, CreatorProductsPage, CreatorReservationsPage } from '../pages/CreatorPages'
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
     { path: 'reservations', element: <ReservationsPage /> },
     { path: 'reservations/:reservationId', element: <ReservationDetailPage /> },
   ] },
+  { path: '/admin/login', element: <AdminLoginPage /> },
   { path: '/creator', element: <ConsoleLayout role="CREATOR" />, children: [
     { index: true, element: <CreatorHomePage /> },
     { path: 'events', element: <CreatorEventsPage /> },

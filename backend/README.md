@@ -2,6 +2,8 @@
 >
 > 공개 이미지와 비공개 문의 첨부 저장 구현을 Google Cloud Storage로 전환했습니다. Render에서는 서비스 계정 JSON을 `/etc/secrets/gcs-service-account.json`로 등록하고 `GOOGLE_APPLICATION_CREDENTIALS`가 그 경로를 가리키게 합니다. 실제 버킷·IAM·공개 URL 검증 전에는 운영 준비 완료로 간주하지 않습니다.
 
+관리자는 카카오 계정과 분리된 `/admin/login`을 사용합니다. Render에는 `ADMIN_LOGIN_USERNAME`과 bcrypt cost 12 형식의 `ADMIN_LOGIN_PASSWORD_HASH`만 저장하며 원문 비밀번호는 코드·DB·환경 변수에 저장하지 않습니다.
+
 # BoothHana2 backend
 
 BoothHana2의 카카오 로그인, 팬·크리에이터·관리자 API, Supabase PostgreSQL 저장과 Google Cloud Storage 이미지 저장을 제공하는 Spring Boot 애플리케이션입니다. 전체 로컬 설정 순서는 [루트 README](../README.md)를 확인합니다.

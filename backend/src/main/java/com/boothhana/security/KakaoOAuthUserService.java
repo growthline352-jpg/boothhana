@@ -14,14 +14,9 @@ import java.util.*;
 @Service
 public class KakaoOAuthUserService extends DefaultOAuth2UserService {
     private final UserAccountRepository users;
-    private final Set<String> adminSubjects;
 
-    public KakaoOAuthUserService(UserAccountRepository users, @Value("${app.admin-kakao-subjects:}") String adminSubjects) {
+    public KakaoOAuthUserService(UserAccountRepository users) {
         this.users = users;
-        this.adminSubjects = Arrays.stream(adminSubjects.split(","))
-            .map(String::trim)
-            .filter(subject -> !subject.isBlank())
-            .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     @Override @Transactional
@@ -32,7 +27,7 @@ public class KakaoOAuthUserService extends DefaultOAuth2UserService {
         user.kakaoSubject = subject;
         user.displayName = nickname(kakao.getAttributes());
         users.save(user);
-        return new DefaultOAuth2User(authorities(subject), kakao.getAttributes(), "id");
+        return new DefaultOAuth2User(authorities(), kakao.getAttributes(), "id");
     }
 
     static String kakaoSubject(Object id) {
@@ -46,11 +41,7 @@ public class KakaoOAuthUserService extends DefaultOAuth2UserService {
         return "BoothHana 사용자";
     }
 
-    List<SimpleGrantedAuthority> authorities(String subject) {
-        List<SimpleGrantedAuthority> result = new ArrayList<>();
-        result.add(new SimpleGrantedAuthority("ROLE_FAN"));
-        result.add(new SimpleGrantedAuthority("ROLE_CREATOR"));
-        if (adminSubjects.contains(subject)) result.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        return result;
+    List<SimpleGrantedAuthority> authorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_FAN"), new SimpleGrantedAuthority("ROLE_CREATOR"));
     }
 }

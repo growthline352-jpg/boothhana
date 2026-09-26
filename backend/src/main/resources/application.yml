@@ -54,7 +54,9 @@ app:
     max-bytes-per-day: ${UPLOAD_MAX_BYTES_PER_DAY:104857600}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
-  admin-kakao-subjects: ${ADMIN_KAKAO_SUBJECTS:${ADMIN_KAKAO_SUBJECT:}}
+  admin-login:
+    username: ${ADMIN_LOGIN_USERNAME:}
+    password-hash: ${ADMIN_LOGIN_PASSWORD_HASH:}
   storage:
     public-url: ${GCS_PUBLIC_URL:}
   gcs:

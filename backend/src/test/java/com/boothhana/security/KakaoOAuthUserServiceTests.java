@@ -20,33 +20,9 @@ class KakaoOAuthUserServiceTests {
 
     @Test
     void grantsFanAndCreatorPermissionsToEveryUser() {
-        var service = new KakaoOAuthUserService(mock(UserAccountRepository.class), "admin-id");
+        var service = new KakaoOAuthUserService(mock(UserAccountRepository.class));
 
-        assertThat(service.authorities("normal-id"))
-            .extracting(authority -> authority.getAuthority())
-            .containsExactly("ROLE_FAN", "ROLE_CREATOR");
-    }
-
-    @Test
-    void addsAdminPermissionForEachConfiguredKakaoSubject() {
-        var service = new KakaoOAuthUserService(mock(UserAccountRepository.class), "first-admin, second-admin");
-
-        assertThat(service.authorities("first-admin"))
-            .extracting(authority -> authority.getAuthority())
-            .containsExactly("ROLE_FAN", "ROLE_CREATOR", "ROLE_ADMIN");
-        assertThat(service.authorities("second-admin"))
-            .extracting(authority -> authority.getAuthority())
-            .containsExactly("ROLE_FAN", "ROLE_CREATOR", "ROLE_ADMIN");
-    }
-
-    @Test
-    void trimsConfiguredKakaoSubjectsAndIgnoresBlankEntries() {
-        var service = new KakaoOAuthUserService(mock(UserAccountRepository.class), " first-admin, ,second-admin ");
-
-        assertThat(service.authorities("second-admin"))
-            .extracting(authority -> authority.getAuthority())
-            .containsExactly("ROLE_FAN", "ROLE_CREATOR", "ROLE_ADMIN");
-        assertThat(service.authorities(""))
+        assertThat(service.authorities())
             .extracting(authority -> authority.getAuthority())
             .containsExactly("ROLE_FAN", "ROLE_CREATOR");
     }

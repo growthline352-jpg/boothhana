@@ -1,5 +1,5 @@
 import { PageMetadata } from '../../app/PageMetadata'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../../app/useAuth'
 import { AuthStatusNotice } from '../../app/AuthStatusNotice'
 import { DiscoveryIcon, type IconName } from '../../features/discovery/DiscoveryIcon'
@@ -30,12 +30,21 @@ export function ConsoleLayout({ role }: { role: 'CREATOR' | 'ADMIN' }) {
 }
 function ConsoleContent({ role }: { role: 'CREATOR' | 'ADMIN' }) {
   const { user, loading, status, loginUrl } = useAuth()
+  const location = useLocation()
   const links = role === 'CREATOR' ? creatorLinks : adminLinks
   const title = role === 'CREATOR' ? '크리에이터' : '관리자'
 
   if (loading) return <div className="state-panel" role="status"><span className="spinner" aria-hidden="true" /><h2>계정을 확인하고 있습니다</h2></div>
   if (status === 'error') return <AuthStatusNotice />
+  if (!user && role === 'ADMIN') {
+    const returnTo = location.pathname + location.search
+    return <div className="state-panel"><h2>관리자 로그인이 필요합니다</h2><p>운영자 전용 아이디와 비밀번호로 로그인해 주세요.</p><NavLink className="btn primary" to={`/admin/login?returnTo=${encodeURIComponent(returnTo)}`}>관리자 로그인</NavLink></div>
+  }
   if (!user) return <div className="state-panel"><h2>로그인이 필요합니다</h2><p>카카오 계정으로 로그인한 뒤 다시 확인해 주세요.</p><a className="btn primary" href={loginUrl}>카카오 로그인</a></div>
+  if (!user.permissions.includes(role) && role === 'ADMIN') {
+    const returnTo = location.pathname + location.search
+    return <div className="state-panel error-state" role="alert"><h2>관리자 계정이 아닙니다</h2><p>현재 카카오 계정 대신 운영자 전용 계정으로 로그인해 주세요.</p><NavLink className="btn primary" to={`/admin/login?returnTo=${encodeURIComponent(returnTo)}`}>관리자 로그인</NavLink></div>
+  }
   if (!user.permissions.includes(role)) return <div className="state-panel error-state" role="alert"><h2>접근 권한이 없습니다</h2><p>현재 계정은 이 관리 화면을 사용할 수 없습니다.</p><NavLink className="btn secondary" to="/">행사 둘러보기</NavLink></div>
 
   return <div className="console-shell" data-console={role.toLowerCase()}>

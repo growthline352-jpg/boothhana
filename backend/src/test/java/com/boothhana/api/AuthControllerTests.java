@@ -6,9 +6,12 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.web.csrf.DefaultCsrfToken;
+import static org.mockito.Mockito.mock;
+import com.boothhana.security.AdminPasswordLoginService;
+import com.boothhana.support.SupportRateLimiter;
 
 class AuthControllerTests {
-    private final AuthController controller = new AuthController();
+    private final AuthController controller = new AuthController(mock(AdminPasswordLoginService.class), mock(SupportRateLimiter.class));
 
     @Test
     void loginRedirectsDirectlyToKakao() {
