@@ -2,6 +2,7 @@ import type { EventData, PublicParticipant } from '../catalog/api'
 import { normalizePlace, relevantLocations, visitDays } from '../visit/visit'
 import type { PlanLink, PublicPlan, PublicShape } from './api'
 import { normalizeCode } from './geometry'
+import { layoutForSource } from './sourceLayouts'
 
 type LocatedBooth = {
   code: string
@@ -51,12 +52,60 @@ function uniqueLinks(items: LocatedBooth[]) {
   return [...links.values()]
 }
 
+function sourcePlan(event: EventData, locations: LocatedBooth[], day: string, hall: string, sourceUrl: string): PublicPlan | null {
+  const layout = layoutForSource(sourceUrl)
+  if (!layout?.booths.length) return null
+  const linkedByCode = new Map<string, LocatedBooth[]>()
+  for (const item of locations) linkedByCode.set(item.code, [...(linkedByCode.get(item.code) || []), item])
+  const booths = hall
+    ? layout.booths.filter(booth => !booth.hall || normalizePlace(booth.hall) === normalizePlace(hall))
+    : layout.booths
+  if (!booths.length) return null
+  const padding = 24
+  const minX = Math.max(0, Math.min(...booths.map(booth => booth.x)) - padding)
+  const minY = Math.max(0, Math.min(...booths.map(booth => booth.y)) - padding)
+  const maxX = Math.min(layout.width, Math.max(...booths.map(booth => booth.x + booth.width)) + padding)
+  const maxY = Math.min(layout.height, Math.max(...booths.map(booth => booth.y + booth.height)) + padding)
+  const width = maxX - minX, height = maxY - minY
+  const shapes: PublicShape[] = booths.map(booth => {
+    const linked = linkedByCode.get(normalizeCode(booth.code)) || []
+    const x = (booth.x - minX) / width, y = (booth.y - minY) / height
+    const right = (booth.x + booth.width - minX) / width, bottom = (booth.y + booth.height - minY) / height
+    return {
+      id: `source-${normalizeCode(booth.code).replace(/[^A-Z0-9-]/g, '')}`,
+      label: normalizeCode(booth.code),
+      points: [{x, y}, {x: right, y}, {x: right, y: bottom}, {x, y: bottom}],
+      status: linked.length ? 'MATCHED' : 'UNMAPPED',
+      links: uniqueLinks(linked),
+      issues: linked.length ? [] : ['공개된 참가 부스 정보 없음'],
+    }
+  })
+  const days = visitDays(event)
+  return {
+    id: `source-schematic-${day || 'all'}-${normalizePlace(hall) || 'all'}`,
+    assetId: 0,
+    scope: {hall: hall || null, zone: null, dates: day ? [day] : days, title: '부스 배치 안내도'},
+    state: 'READY',
+    publishedAt: '',
+    sourceUrl,
+    credit: '공식 배치 좌표를 바탕으로 부스하나가 재구성',
+    width: Math.round(width),
+    height: Math.round(height),
+    imageUrl: null,
+    shapes,
+    partial: true,
+    schematic: true,
+  }
+}
+
 /**
  * Builds a first-party schematic from published booth codes only. It deliberately
  * does not invent aisles, exits or physical distances from an organiser image.
  */
 export function generateSchematicPlan(event: EventData, participants: PublicParticipant[], day: string, hall: string, sourceUrl: string): PublicPlan | null {
   const locations = parsedLocations(event, participants, day, hall)
+  const sourced = sourcePlan(event, locations, day, hall, sourceUrl)
+  if (sourced) return sourced
   if (!locations.length) return null
 
   const grouped = new Map<string, LocatedBooth[]>()
