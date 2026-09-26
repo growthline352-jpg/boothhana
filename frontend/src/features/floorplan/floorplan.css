@@ -12,4 +12,6 @@
 .floorplan-full-details .catalog-drawer-content{max-width:1080px;margin:auto}
 .floorplan-details-heading{position:sticky;top:0;background:#fff;padding:12px 0;max-width:1080px;margin:auto;border-bottom:1px solid #e1e7ee;z-index:1}
 .floorplan-details-heading h2{margin:14px 0 6px;font-size:1.45rem}
+.floorplan-map-search{margin:14px 0 12px}.floorplan-map-search>label{display:block;margin-bottom:7px;font-size:.92rem;font-weight:800;color:#263746}.floorplan-map-search>div{display:flex;gap:8px}.floorplan-map-search .input{min-height:48px;font-size:1rem}.floorplan-map-search .btn{min-height:48px;white-space:nowrap}.floorplan-map-search>p{margin:8px 0 0;color:#526071;font-size:.88rem}
 @media(max-width:600px){.floorplan-fullscreen .floorplan-full-map .floorplan-viewport{height:calc(100dvh - 370px);min-height:160px}.floorplan-full-details{padding:12px;padding-top:max(12px,env(safe-area-inset-top))}.floorplan-details-heading h2{font-size:1.2rem}.floorplan-fullscreen .floorplan-found{max-height:26dvh}}
+@media(max-width:600px){.floorplan-map-search>div{display:grid;grid-template-columns:1fr auto}.floorplan-map-search .input{grid-column:1/-1}.floorplan-map-search .btn{min-width:0}}
