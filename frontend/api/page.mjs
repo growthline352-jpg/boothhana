@@ -71,8 +71,9 @@ export default async function handler(req, res) {
     res.setHeader('X-Robots-Tag', page.meta.robots)
     if (page.status === 503) res.setHeader('Retry-After', '60')
     res.end(req.method === 'HEAD' ? undefined : page.html)
-  } catch {
+  } catch (error) {
     // Missing build/config never becomes a false successful SEO response.
+    console.error('SEO page render failed', error)
     res.statusCode = 503; res.setHeader('X-Robots-Tag', 'noindex'); res.end(req.method === 'HEAD' ? undefined : '서비스 준비 상태를 확인하고 있습니다.')
   }
 }
