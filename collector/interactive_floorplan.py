@@ -94,19 +94,26 @@ def _event_days(event:dict):
     return list(dict.fromkeys(days))
 
 def merge_interactive_candidates(result:dict,event:dict):
-    """Promote known non-image FLOOR_PLAN links into the reviewed source pipeline."""
+    """Promote known FLOOR_PLAN links into the reviewed source pipeline.
+
+    Event collection already classifies these URLs as official floorplans. Do not
+    make a second web-search call rediscover the same image before it can enter the
+    reviewed asset pipeline.
+    """
     if result.get('status')=='ERROR':return result
     value=json.loads(json.dumps(result,ensure_ascii=False));plans=value.setdefault('plans',[])
-    existing={p.get('pageUrl') for p in plans};days=_event_days(event)
+    existing={u for p in plans for u in (p.get('pageUrl'),p.get('imageUrl')) if u};days=_event_days(event);interactive=False
     for link in event.get('discoveryLinks') or []:
         url=link.get('url')
-        if link.get('kind')!='FLOOR_PLAN' or not url or IMAGE_PATH.search(urlsplit(url).path) or url in existing:continue
-        plans.append({'imageUrl':url,'pageUrl':url,'scope':{'hall':None,'zone':None,'dates':days,'title':(event.get('name') or '행사')[:260]+' 클릭형 배치도'},'evidence':'행사 데이터에 등록된 공식 클릭형 배치도 링크. 접근성 부스번호를 검토 후 변환합니다.'})
+        if link.get('kind')!='FLOOR_PLAN' or not url or url in existing:continue
+        is_image=bool(IMAGE_PATH.search(urlsplit(url).path));interactive=interactive or not is_image
+        plans.append({'imageUrl':url,'pageUrl':url,'scope':{'hall':None,'zone':None,'dates':days,'title':(event.get('name') or '행사')[:260]+(' 배치도' if is_image else ' 클릭형 배치도')},'evidence':('행사 데이터에 등록된 공식 배치도 이미지 링크.' if is_image else '행사 데이터에 등록된 공식 클릭형 배치도 링크. 접근성 부스번호를 검토 후 변환합니다.')})
         existing.add(url)
         if len(plans)>=20:break
     if plans:
         value['status']='FOUND';value['availableOn']=None
         value['checkedUrls']=list(dict.fromkeys([*(value.get('checkedUrls') or []),*(p['pageUrl'] for p in plans)]))[:30]
-        note='클릭형 HTML 배치도는 원본 이미지를 복제하지 않고 접근성 부스번호만 공통 안내도로 변환합니다.'
-        value['warnings']=list(dict.fromkeys([*(value.get('warnings') or []),note]))[:50]
+        if interactive:
+            note='클릭형 HTML 배치도는 원본 이미지를 복제하지 않고 접근성 부스번호만 공통 안내도로 변환합니다.'
+            value['warnings']=list(dict.fromkeys([*(value.get('warnings') or []),note]))[:50]
     return value
