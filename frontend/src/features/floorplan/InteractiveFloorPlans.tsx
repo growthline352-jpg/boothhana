@@ -21,12 +21,16 @@ export function InteractiveFloorPlans({eventId,event,assets,participants,onOpen,
   const state=useRemote(()=>floorplanApi.public(eventId),[eventId]),[chosen,setChosen]=useState('')
   useEffect(()=>{setChosen('')},[focusParticipantId,day,hall])
   const floorplanLinks=event.discoveryLinks?.filter(link=>link.kind==='FLOOR_PLAN'&&link.url)||[]
-  const actions=<div className="row-actions">{onList&&<button className="btn secondary" onClick={onList}>참가 부스 목록</button>}{floorplanLinks.map((link,index)=><SafeLink key={link.url} url={link.url}>공식 배치도{floorplanLinks.length>1?` ${index+1}`:''} 열기 ↗</SafeLink>)}{event.sources.find(s=>s.kind==='OFFICIAL')&&<SafeLink url={event.sources.find(s=>s.kind==='OFFICIAL')!.url}>공식 행사 안내</SafeLink>}</div>
+  const officialUrl=event.discoveryLinks?.find(link=>link.kind==='OFFICIAL'&&link.url)?.url
+    || event.sources.find(source=>source.kind==='OFFICIAL')?.url
+    || event.sources[0]?.url
+    || ''
+  const actions=<div className="row-actions">{onList&&<button className="btn secondary" onClick={onList}>참가 부스 목록</button>}{floorplanLinks.map((link,index)=><SafeLink key={link.url} url={link.url}>공식 배치도{floorplanLinks.length>1?` ${index+1}`:''} 열기 ↗</SafeLink>)}{officialUrl&&<SafeLink url={officialUrl}>공식 행사 안내</SafeLink>}</div>
   if(state.loading)return <section className="panel"><p role="status">배치도를 확인하고 있어요…</p>{actions}</section>
   if(state.error)return <section className="panel"><h2>배치도를 불러오지 못했어요.</h2><p>부스 목록은 계속 확인할 수 있어요. 이미지 사용 상태를 확인할 수 없어 저장된 도면은 자동으로 대신 표시하지 않습니다.</p><button className="btn secondary" onClick={()=>void state.reload()}>다시 시도</button>{actions}
     <FloorPlans eventId={Number(eventId)} event={event} assets={[]} participants={participants}/></section>
   const data=state.data,eligible=data?.plans.filter(p=>planApplies(p,day,hall))||[]
-  const sourceUrl=floorplanLinks[0]?.url||event.sources.find(s=>s.kind==='OFFICIAL')?.url||''
+  const sourceUrl=floorplanLinks[0]?.url||officialUrl
   const schematic=generateSchematicPlan(event,participants,day,hall,sourceUrl)
   const ready=eligible.filter(p=>p.state==='READY')
   const matching=focusParticipantId?[...ready,...(schematic?[schematic]:[])].find(p=>p.shapes.some(s=>linksForDay(s.links,day).some(l=>l.participantId===focusParticipantId))):undefined
