@@ -7,6 +7,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ public class GcsImageStorage implements VerifiedImageStorage {
     private final String bucket;
     private volatile Storage storage;
 
+    @Autowired
     public GcsImageStorage(
             @Value("${app.gcs.project-id:}") String projectId,
             @Value("${app.gcs.public-bucket:}") String bucket) {

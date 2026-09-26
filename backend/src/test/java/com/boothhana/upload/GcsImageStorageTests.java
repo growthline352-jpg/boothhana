@@ -6,9 +6,12 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -16,6 +19,20 @@ import static org.mockito.Mockito.*;
 class GcsImageStorageTests {
     private final Storage storage = mock(Storage.class);
     private final GcsImageStorage images = new GcsImageStorage("project", "public-bucket", storage);
+
+    @Test
+    void springCreatesComponentWithConfiguredConstructor() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("test", Map.of(
+                "app.gcs.project-id", "project",
+                "app.gcs.public-bucket", "public-bucket"
+            )));
+            context.register(GcsImageStorage.class);
+            context.refresh();
+
+            assertThat(context.getBean(GcsImageStorage.class)).isNotNull();
+        }
+    }
 
     @Test
     void createsImmutableObjectWithVerificationMetadata() {
