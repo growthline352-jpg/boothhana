@@ -87,8 +87,10 @@ function sourcePlan(event: EventData, locations: LocatedBooth[], day: string, ha
     scope: {hall: hall || null, zone: null, dates: day ? [day] : days, title: '부스 배치 안내도'},
     state: 'READY',
     publishedAt: '',
-    sourceUrl,
-    credit: '공식 배치 좌표를 바탕으로 부스하나가 재구성',
+    sourceUrl: layout.source,
+    credit: layout.layoutBasis==='OFFICIAL_CODES'
+      ? '공식 부스번호를 부스하나가 행·번호 순서로 자동 정리'
+      : '공식 배치 좌표를 바탕으로 부스하나가 재구성',
     width: Math.round(width),
     height: Math.round(height),
     imageUrl: null,

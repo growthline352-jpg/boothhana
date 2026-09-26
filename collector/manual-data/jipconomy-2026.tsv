@@ -1,0 +1,41 @@
+booth	category	name	kind
+A-01	공공기관관	국토교통부 & 한국토지주택공사	BRAND
+A-02	공공기관관	GH 경기주택도시공사	BRAND
+A-03	공공기관관	SH 서울주택도시개발공사	BRAND
+A-04	공공기관관	태안기업도시	BRAND
+A-05	공공기관관	국토교통부 & 국가철도공단	BRAND
+A-06	공공기관관	행정중심복합도시건설청	BRAND
+A-07	공공기관관	HUG 주택도시보증공사	BRAND
+A-08	공공기관관	iH 인천도시공사	BRAND
+A-09	공공기관관	한국부동산원	BRAND
+A-10	공공기관관	새만금개발청 & 새만금개발공사	BRAND
+B-01	건설사관	현대건설	BRAND
+B-02	건설사관	삼성물산	BRAND
+B-03	건설사관	GS건설	BRAND
+B-04	건설사관	대우건설	BRAND
+B-05	건설사관	IPARK현대산업개발	BRAND
+B-06	건설사관	롯데건설	BRAND
+B-07	건설사관	DL이앤씨	BRAND
+B-08	건설사관	포스코이앤씨	BRAND
+B-09	건설사관	HL 디앤아이한라	BRAND
+C-01	분양마케팅관	씨엘케이	BRAND
+C-02	분양마케팅관	Damac	BRAND
+C-03	분양마케팅관	미드미네트웍스 & 오래현	BRAND
+C-04	분양마케팅관	씨앤디플래닝	BRAND
+C-05	분양마케팅관	홈플릭스	BRAND
+C-06	분양마케팅관	향남역 그로브 스위첸	BRAND
+C-07	분양마케팅관	더피알커뮤니케이션	BRAND
+C-08	분양마케팅관	삼일산업	BRAND
+C-09	분양마케팅관	태원씨아이앤디	BRAND
+C-10	분양마케팅관	한국부동산마케팅협회	BRAND
+C-11	분양마케팅관	경북	BRAND
+D-01	부동산성장관	글로벌PMC	BRAND
+D-02	부동산성장관	직방	BRAND
+E-01	부동산개발관	HM & 한국디벨로퍼협회	BRAND
+E-03	부동산개발관	엠디엠플러스	BRAND
+E-04	부동산개발관	디블록그룹 (구)한호건설그룹	BRAND
+E-05	부동산개발관	울산복합도시개발	BRAND
+F-01	이벤트관	신한은행 부동산 상담존	BRAND
+F-02	이벤트관	아름다운 우리아파트 사진전	HOST
+F-03	이벤트관	한경 독자라운지	HOST
+F-04	이벤트관	이벤트존	HOST
