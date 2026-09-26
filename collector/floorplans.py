@@ -10,9 +10,10 @@ import jsonschema
 from run import ROOT,SEOUL,RunError,run_lock,execute_search,utcnow,write_json
 from weekly import load_config
 from catalog_transport import Api
-from media_fetch import fetch_image
+from media_fetch import fetch_image,fetch_html
 from floorplan_geometry import tiles,merge_tiles,EXTRACTOR
 from floorplan_contract import validate_payload,input_fingerprint,result_fingerprint
+from interactive_floorplan import build_schematic,is_interactive_source,merge_interactive_candidates
 from rules import public_url
 BASE='/api/internal/subculture/v4/floorplans'
 
@@ -67,7 +68,8 @@ class FloorplanBatch:
         event=target['eventId'];self.heartbeat(event)
         prompt=(ROOT/'prompts/floorplan-discovery.md').read_text(encoding='utf-8')+'\nEVENT DATA:\n'+json.dumps(target['event'],ensure_ascii=False)
         path=self.folder/f'event-{event}'/'discovery'
-        result=self.job(path,prompt,'floorplan-discovery.schema.json',fixture='discovery.json')
+        result=merge_interactive_candidates(self.job(path,prompt,'floorplan-discovery.schema.json',fixture='discovery.json'),target['event'])
+        validate_payload(result,ROOT/'schemas/floorplan-discovery.schema.json')
         for p in result['plans']:
             for k in ('imageUrl','pageUrl'):public_url(p[k]);self.check_blocked(p[k])
         if self.dry:return result
@@ -85,12 +87,17 @@ class FloorplanBatch:
         self.budget();asset=source['asset'];self.check_blocked(asset['imageUrl']);self.check_blocked(asset['pageUrl'])
         if not source['canTransform'] or asset['rightsState']!='APPROVED':return {'assetId':asset['id'],'state':'WAITING_PERMISSION'}
         self.heartbeat(event)
-        data,mime,digest=fetch_image(asset['imageUrl'],self.cfg['imageAllowedHosts'],min(30,self.cfg['httpTimeoutSeconds']))
-        from PIL import Image
-        import io
-        with Image.open(io.BytesIO(data)) as im:
-            if getattr(im,'n_frames',1)!=1 or im.getexif().get(274,1)!=1:raise RunError('Animated/EXIF-rotated source requires a normalized official source')
-            width,height=im.size
+        geometry=None
+        if is_interactive_source(asset):
+            html,_=fetch_html(asset['pageUrl'],self.cfg['imageAllowedHosts'],min(30,self.cfg['httpTimeoutSeconds']))
+            data,mime,digest,width,height,geometry=build_schematic(html)
+        else:
+            data,mime,digest=fetch_image(asset['imageUrl'],self.cfg['imageAllowedHosts'],min(30,self.cfg['httpTimeoutSeconds']))
+            from PIL import Image
+            import io
+            with Image.open(io.BytesIO(data)) as im:
+                if getattr(im,'n_frames',1)!=1 or im.getexif().get(274,1)!=1:raise RunError('Animated/EXIF-rotated source requires a normalized official source')
+                width,height=im.size
         version=self.request('POST',f'/events/{event}/versions',{'leaseId':self.lease,'assetId':asset['id'],'sourceRevision':source['sourceRevision'],'sha256':digest,'width':width,'height':height,'size':len(data),'contentType':mime})
         vid=version['id'];self.heartbeat(event)
         # PUT-like idempotent source write also refreshes source hash. URL-equal bytes may have changed.
@@ -100,7 +107,7 @@ class FloorplanBatch:
             return {'assetId':asset['id'],'versionId':vid,'state':value['state'],'cachedGeometry':True}
         # Stable version cache survives later weekly/daily runs and budgets, not just --resume.
         cache=Path(self.cfg['stateDirectory']).expanduser()/'floorplan-vision-cache'/str(vid)/EXTRACTOR
-        geometry=self.vision(event,data,mime,cache)
+        geometry=geometry or self.vision(event,data,mime,cache)
         version=self.request('POST',f'/versions/{vid}/analysis',{'leaseId':self.lease,'revision':version['revision'],'sha256':digest,'geometry':geometry})
         return {'assetId':asset['id'],'versionId':vid,'state':version['state'],'mapped':version['mapping']['matched'],'unmapped':version['mapping']['unresolved']}
     def vision(self,event,data,mime,cache):

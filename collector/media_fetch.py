@@ -7,6 +7,7 @@ from urllib.parse import urlsplit,urljoin
 from PIL import Image,UnidentifiedImageError
 from rules import public_url
 MAX_BYTES=10*1024*1024
+MAX_HTML_BYTES=4*1024*1024
 MAX_PIXELS=25_000_000
 class MediaError(ValueError): pass
 
@@ -79,3 +80,42 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30):
             return result,type_,digest
         finally: connection.close()
     raise MediaError('Too many image redirects')
+
+def fetch_html(url: str,hosts: list[str],timeout: int=30):
+    """Fetch a reviewed public HTML floorplan page with the same SSRF controls as images."""
+    deadline=time.monotonic()+timeout
+    for _ in range(4):
+        parsed,host=check_url(url,hosts);addresses=public_addresses(host,443)
+        remaining=deadline-time.monotonic()
+        if remaining<=0:raise MediaError('HTML deadline exceeded')
+        connection=PinnedHTTPS(host,addresses[0],min(10,remaining))
+        try:
+            path=(parsed.path or '/')+('?' + parsed.query if parsed.query else '')
+            connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Floorplan-Fetcher/1','Accept':'text/html','Accept-Encoding':'identity'})
+            response=connection.getresponse()
+            if response.status in (301,302,303,307,308):
+                target=response.getheader('Location')
+                if not target:raise MediaError('Redirect missing destination')
+                url=urljoin(url,target);continue
+            if response.status!=200:raise MediaError(f'HTML HTTP {response.status}')
+            if response.getheader('Content-Encoding','identity') not in ('identity',''):raise MediaError('Compressed transport not accepted')
+            type_=response.getheader('Content-Type','').split(';')[0].strip().lower()
+            if type_ not in ('text/html','application/xhtml+xml'):raise MediaError('Floorplan page is not HTML')
+            length=response.getheader('Content-Length')
+            if length is not None and (not length.isdigit() or not 0<int(length)<=MAX_HTML_BYTES):raise MediaError('Declared HTML size invalid')
+            data=bytearray()
+            while True:
+                remaining=deadline-time.monotonic()
+                if remaining<=0:raise MediaError('HTML deadline exceeded')
+                if connection.sock is not None:connection.sock.settimeout(min(10,remaining))
+                chunk=response.read(min(65536,MAX_HTML_BYTES+1-len(data)))
+                if not chunk:break
+                data.extend(chunk)
+                if len(data)>MAX_HTML_BYTES:raise MediaError('HTML exceeds 4MiB')
+            if length is not None and len(data)!=int(length):raise MediaError('Truncated HTML')
+            raw=bytes(data)
+            try:text=raw.decode('utf-8-sig','strict')
+            except UnicodeDecodeError as exc:raise MediaError('Floorplan HTML must be UTF-8') from exc
+            return text,hashlib.sha256(raw).hexdigest()
+        finally:connection.close()
+    raise MediaError('Too many HTML redirects')

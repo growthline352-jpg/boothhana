@@ -6,6 +6,7 @@ from run import codex_command,execute_search,RunError
 from weekly import load_config
 from floorplans import FloorplanBatch
 from floorplan_geometry import tiles,merge_tiles,EXTRACTOR,simple
+from interactive_floorplan import build_schematic,merge_interactive_candidates,parse_accessible_booths
 from run_scheduled import run as scheduled
 ROOT=Path(__file__).resolve().parents[1];FIX=ROOT/'examples/floorplan-v8'
 def png(w=1000,h=700):
@@ -114,4 +115,29 @@ class WorkerTests(unittest.TestCase):
  def test_schema_discovery(self):
   import jsonschema
   jsonschema.validate(json.loads((FIX/'discovery.json').read_text()),json.loads((ROOT/'schemas/floorplan-discovery.schema.json').read_text()))
+ def test_interactive_link_enters_reviewed_source_pipeline(self):
+  event={'name':'행사','occurrences':[{'startDate':'2026-10-10','endDate':'2026-10-11'}],'discoveryLinks':[{'kind':'FLOOR_PLAN','url':'https://example.com/event/map'}]}
+  value=merge_interactive_candidates({'status':'NOT_FOUND','availableOn':None,'plans':[],'checkedUrls':['https://example.com/event'],'warnings':[]},event)
+  self.assertEqual(value['status'],'FOUND');self.assertEqual(value['plans'][0]['imageUrl'],value['plans'][0]['pageUrl']);self.assertEqual(value['plans'][0]['scope']['dates'],['2026-10-10','2026-10-11'])
+ def test_accessible_html_becomes_complete_schematic(self):
+  html=(FIX/'interactive.html').read_text(encoding='utf-8');booths=parse_accessible_booths(html)
+  self.assertEqual([(b['hall'],b['code']) for b in booths],[('제1전시실','A-16'),('제1전시실','A-17'),('제1전시실','A-13A'),('제2전시실','B-01'),('제2전시실','B-02')])
+  data,mime,digest,width,height,geometry=build_schematic(html)
+  self.assertEqual(mime,'image/png');self.assertEqual(digest,hashlib.sha256(data).hexdigest());self.assertGreaterEqual(width,720);self.assertGreaterEqual(height,480);self.assertTrue(geometry['complete']);self.assertEqual(len(geometry['shapes']),5)
+  changed=html.replace('B-02 참가자','B-03 참가자')
+  self.assertNotEqual(digest,build_schematic(changed)[2])
+ def test_interactive_source_skips_vision_and_uses_existing_analysis_api(self):
+  html=(FIX/'interactive.html').read_text(encoding='utf-8')
+  class API:
+   def __init__(self):self.analysis=None
+   def request(self,m,p,data=None,**kw):
+    if p.endswith('/versions'):return {'id':'11111111-1111-1111-1111-111111111111','revision':1,'geometry':None,'state':'AWAITING_IMAGE'}
+    if p.endswith('/content'):return {'revision':1,'geometry':None,'state':'AWAITING_ANALYSIS'}
+    if p.endswith('/analysis'):self.analysis=data;return {'state':'DRAFT','mapping':{'matched':1,'unresolved':4}}
+    return {}
+  api=API();b=FloorplanBatch(self.cfg,self.path/'interactive-run',api=api)
+  source={'asset':{'id':1,'rightsState':'APPROVED','imageUrl':'https://example.com/event/map','pageUrl':'https://example.com/event/map'},'canTransform':True,'sourceRevision':1}
+  with patch('floorplans.fetch_html',return_value=(html,'0'*64)),patch('floorplans.fetch_image') as image,patch.object(b,'vision') as vision:
+   value=b.process_source(1,source)
+  image.assert_not_called();vision.assert_not_called();self.assertEqual(len(api.analysis['geometry']['shapes']),5);self.assertEqual(value['mapped'],1)
 if __name__=='__main__':unittest.main()
