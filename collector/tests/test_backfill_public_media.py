@@ -1,7 +1,11 @@
 import pathlib,sys,unittest
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from backfill_public_media import ComiverseParser,ProjectDollParser,WORK_CARD,normalized
+from backfill_public_media import ComiverseParser,ProjectDollParser,WORK_CARD,normalized,fetch_promotional_image
+from unittest.mock import patch
+from PIL import Image
+import hashlib,io
+from media_fetch import MediaError
 
 class PublicMediaBackfillTests(unittest.TestCase):
  def test_comiverse_attributes_keep_catalog_and_info_images(self):
@@ -15,5 +19,11 @@ class PublicMediaBackfillTests(unittest.TestCase):
   self.assertIsNotNone(match);self.assertEqual(match.group('id'),'w_COXaT8y5EA4T')
  def test_name_matching_ignores_spacing_and_width(self):
   self.assertEqual(normalized(' Ａ 부스 '),normalized('A부스'))
+ def test_large_jpeg_gets_bounded_display_derivative(self):
+  source=io.BytesIO();Image.new('RGB',(6000,5000),'white').save(source,format='JPEG')
+  with patch('backfill_public_media.fetch_image',side_effect=[MediaError('Image format/pixel limit mismatch'),(source.getvalue(),'image/jpeg','unused')]):
+   data,type_,digest=fetch_promotional_image('https://example.com/large.jpg','example.com')
+  self.assertEqual(type_,'image/jpeg');self.assertEqual(digest,hashlib.sha256(data).hexdigest())
+  with Image.open(io.BytesIO(data)) as result:self.assertLessEqual(result.width*result.height,25_000_000)
 
 if __name__=='__main__':unittest.main()

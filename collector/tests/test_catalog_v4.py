@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 import weekly
 from catalog_rules import parse_schema,validate_stage,validate_discovery,check_participant,check_sales
 from rules import InvalidResult
-from media_fetch import check_url,public_addresses,inspect_image,MediaError,fetch_image
+from media_fetch import check_url,public_addresses,inspect_image,MediaError,fetch_image,request_target
 from catalog_transport import Api
 from transport import DeliveryError
 from PIL import Image
@@ -72,6 +72,9 @@ class CatalogRulesTests(unittest.TestCase):
  def test_disjoint_days_preserved(self):
   accepted,_=validate_discovery(fixture('events'),date(2026,10,1),date(2026,10,31),[]);self.assertEqual(len(accepted[0]['occurrences']),2)
 class MediaTests(unittest.TestCase):
+ def test_unicode_request_target_is_percent_encoded(self):
+  from urllib.parse import urlsplit
+  self.assertEqual(request_target(urlsplit('https://example.com/홍보 이미지.jpg?종류=배너')), '/%ED%99%8D%EB%B3%B4%20%EC%9D%B4%EB%AF%B8%EC%A7%80.jpg?%EC%A2%85%EB%A5%98=%EB%B0%B0%EB%84%88')
  def test_no_implicit_allowlist(self):
   with self.assertRaises(MediaError):check_url('https://example.com/a.png',[])
  def test_exact_host_allowed(self):check_url('https://example.com/a.png',['example.com'])

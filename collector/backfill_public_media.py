@@ -10,6 +10,7 @@ import argparse
 import difflib
 import hashlib
 import html
+import io
 from html.parser import HTMLParser
 import http.cookiejar
 import json
@@ -22,7 +23,8 @@ from urllib.error import HTTPError
 from urllib.parse import quote, urljoin, urlsplit, urlunsplit
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
-from media_fetch import fetch_html, fetch_image
+from PIL import Image as PillowImage, ImageOps
+from media_fetch import MediaError, fetch_html, fetch_image, inspect_image
 
 
 API_DEFAULT = "https://boothhana2-api-zn7x.onrender.com"
@@ -30,6 +32,25 @@ EXPLICITLY_RESTRICTED = {
     "https://dongne.co/api/images/5633?size=large",
     "w_R7vKfX_Jy4zD",
 }
+
+
+def fetch_promotional_image(url: str, host: str) -> tuple[bytes, str, str]:
+    """Fetch a normal image, or make a bounded display derivative for huge JPEGs."""
+    try:
+        return fetch_image(url, [host])
+    except MediaError as error:
+        if str(error) != "Image format/pixel limit mismatch" or not urlsplit(url).path.lower().endswith((".jpg", ".jpeg")):
+            raise
+    source, content_type, _ = fetch_image(url, [host], max_pixels=150_000_000)
+    with PillowImage.open(io.BytesIO(source)) as opened:
+        opened.draft("RGB", (4000, 4000))
+        image = ImageOps.exif_transpose(opened).convert("RGB")
+        image.thumbnail((4000, 4000), PillowImage.Resampling.LANCZOS)
+        output = io.BytesIO()
+        image.save(output, format="JPEG", quality=88, optimize=True, progressive=True)
+    data = output.getvalue()
+    digest = inspect_image(data, "image/jpeg")
+    return data, "image/jpeg", digest
 
 
 def normalized(value: str | None) -> str:
@@ -312,30 +333,41 @@ def discover_generic_banners(api: AdminApi, events: list[dict]) -> tuple[list[Ca
     skipped = []
     for row in events:
         detail = api.event(row["id"])
-        if any(asset["type"] == "BANNER" for asset in detail.get("assets", [])):
+        if any(asset["type"] == "BANNER" and asset.get("storageState") == "STORED" for asset in detail.get("assets", [])):
             continue
-        sources = (detail.get("event") or {}).get("sources") or []
-        source = next((item["url"] for item in sources if item.get("url") and item.get("access") != "INACCESSIBLE"), None)
-        if not source:
+        sources = [item["url"] for item in ((detail.get("event") or {}).get("sources") or [])
+                   if item.get("url") and item.get("access") != "INACCESSIBLE"]
+        if not sources:
             skipped.append({"event": row["name"], "reason": "no-source"})
             continue
-        try:
-            parser = OpenGraphParser()
-            parser.feed(source_html(source))
-            image = next((absolute(source, value) for value in parser.images if absolute(source, value)), None)
-            if not image:
-                skipped.append({"event": row["name"], "reason": "no-og-image"})
-                continue
-            found.append(Candidate(row["id"], None, None, "BANNER", image, source, row["name"], urlsplit(source).hostname or "공식 행사 페이지"))
-        except Exception as error:
-            skipped.append({"event": row["name"], "reason": type(error).__name__})
+        seen_images = set()
+        source_errors = []
+        for source in sources[:3]:
+            try:
+                parser = OpenGraphParser()
+                parser.feed(source_html(source))
+                image = next((absolute(source, value) for value in parser.images if absolute(source, value)), None)
+                if not image:
+                    source_errors.append("no-og-image")
+                    continue
+                if image not in seen_images:
+                    found.append(Candidate(row["id"], None, None, "BANNER", image, source, row["name"], urlsplit(source).hostname or "공식 행사 페이지"))
+                    seen_images.add(image)
+            except Exception as error:
+                source_errors.append(type(error).__name__)
+        if not seen_images:
+            skipped.append({"event": row["name"], "reason": ",".join(dict.fromkeys(source_errors)) or "no-og-image"})
     return found, {"skipped": skipped}
 
 
 def unique_candidates(values: list[Candidate]) -> list[Candidate]:
     result = {}
     for value in values:
-        if value.image_url and value.page_url and value.image_url not in EXPLICITLY_RESTRICTED:
+        # data: placeholders such as the Comiverse "미정" SVG are not source artwork.
+        # Upgrade the one known legacy official asset host before the HTTPS-only fetch.
+        if value.image_url.startswith("http://www.cafenbakeryfair.com/"):
+            value = Candidate(**{**asdict(value), "image_url": value.image_url.replace("http://", "https://", 1)})
+        if value.image_url and value.page_url and urlsplit(value.image_url).scheme == "https" and value.image_url not in EXPLICITLY_RESTRICTED:
             result[value.key()] = value
     return list(result.values())
 
@@ -383,7 +415,7 @@ def execute(args) -> dict:
             asset = api.approve(asset, candidate)
             if asset["storageState"] != "STORED":
                 host = urlsplit(candidate.image_url).hostname
-                data, content_type, digest = fetch_image(candidate.image_url, [host])
+                data, content_type, digest = fetch_promotional_image(candidate.image_url, host)
                 asset = api.upload(asset, data, content_type, digest)
             if asset["storageState"] == "STORED":
                 summary["stored"] += 1

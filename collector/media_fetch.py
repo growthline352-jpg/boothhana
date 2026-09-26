@@ -3,7 +3,7 @@ Does not inherit proxy settings, send cookies, crawl pages, resize, or transform
 """
 from __future__ import annotations
 import hashlib,http.client,ipaddress,io,socket,ssl,time,warnings
-from urllib.parse import urlsplit,urljoin
+from urllib.parse import quote,urlsplit,urljoin
 from PIL import Image,UnidentifiedImageError
 from rules import public_url
 MAX_BYTES=10*1024*1024
@@ -33,20 +33,28 @@ class PinnedHTTPS(http.client.HTTPSConnection):
         self.sock=socket.create_connection((self.ip,443),self.timeout)
         self.sock=self._context.wrap_socket(self.sock,server_hostname=self.host)
 
-def inspect_image(data: bytes,content_type: str):
+def request_target(parsed):
+    """Encode Unicode paths without double-encoding existing percent escapes."""
+    path=quote(parsed.path or '/',safe="/%:@!$&'()*+,;=-._~")
+    query=quote(parsed.query,safe="=&;%:+,?/@!$'()*-._~")
+    return path+('?' + query if query else '')
+
+def inspect_image(data: bytes,content_type: str,max_pixels: int=MAX_PIXELS):
     if not data or len(data)>MAX_BYTES: raise MediaError('Image size outside 1..10MiB')
-    expected={'JPEG':'image/jpeg','PNG':'image/png','WEBP':'image/webp','GIF':'image/gif'}
+    # Pillow reports iPhone multi-picture JPEGs as MPO; browsers and our upload
+    # signature validation safely consume their JPEG-compatible first frame.
+    expected={'JPEG':'image/jpeg','MPO':'image/jpeg','PNG':'image/png','WEBP':'image/webp','GIF':'image/gif'}
     try:
         with warnings.catch_warnings():
-            warnings.simplefilter('error',Image.DecompressionBombWarning)
+            warnings.simplefilter('error' if max_pixels<=MAX_PIXELS else 'ignore',Image.DecompressionBombWarning)
             with Image.open(io.BytesIO(data)) as image:
                 kind=expected.get(image.format)
-                if kind!=content_type or image.width*image.height>MAX_PIXELS: raise MediaError('Image format/pixel limit mismatch')
+                if kind!=content_type or image.width*image.height>max_pixels: raise MediaError('Image format/pixel limit mismatch')
                 image.verify()
     except (UnidentifiedImageError,OSError,Image.DecompressionBombError,Image.DecompressionBombWarning) as exc: raise MediaError('Invalid image') from exc
     return hashlib.sha256(data).hexdigest()
 
-def fetch_image(url: str,hosts: list[str],timeout: int=30):
+def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PIXELS):
     deadline=time.monotonic()+timeout
     for _ in range(4):
         parsed,host=check_url(url,hosts);addresses=public_addresses(host,443)
@@ -54,7 +62,7 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30):
         if remaining<=0: raise MediaError('Image deadline exceeded')
         connection=PinnedHTTPS(host,addresses[0],min(10,remaining))
         try:
-            path=(parsed.path or '/')+('?' + parsed.query if parsed.query else '')
+            path=request_target(parsed)
             connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Image-Fetcher/4','Accept':'image/png,image/jpeg,image/webp,image/gif','Accept-Encoding':'identity'})
             response=connection.getresponse()
             if response.status in (301,302,303,307,308):
@@ -76,7 +84,7 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30):
                 data.extend(chunk)
                 if len(data)>MAX_BYTES: raise MediaError('Actual image exceeds 10MiB')
             if length is not None and len(data)!=int(length): raise MediaError('Truncated image')
-            result=bytes(data);digest=inspect_image(result,type_)
+            result=bytes(data);digest=inspect_image(result,type_,max_pixels)
             return result,type_,digest
         finally: connection.close()
     raise MediaError('Too many image redirects')
@@ -90,7 +98,7 @@ def fetch_html(url: str,hosts: list[str],timeout: int=30):
         if remaining<=0:raise MediaError('HTML deadline exceeded')
         connection=PinnedHTTPS(host,addresses[0],min(10,remaining))
         try:
-            path=(parsed.path or '/')+('?' + parsed.query if parsed.query else '')
+            path=request_target(parsed)
             connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Floorplan-Fetcher/1','Accept':'text/html','Accept-Encoding':'identity'})
             response=connection.getresponse()
             if response.status in (301,302,303,307,308):
