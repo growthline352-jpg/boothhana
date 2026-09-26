@@ -89,18 +89,21 @@ export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highl
     if(pointers.current.size===1&&viewport.current){const p=[...pointers.current.values()][0];drag.current={kind:'pan',x:p.x,y:p.y,left:viewport.current.scrollLeft,top:viewport.current.scrollTop,shape:null};suppress.current=true}
   }
   const selection=renderSelection?.(expanded,showDetails)
-  const content=<div className="floorplan-canvas"><div className="floorplan-toolbar">
+  // Public plans keep the verified source image intact. Geometry is only an
+  // interaction layer; it must not redraw or visually replace the organizer's map.
+  const showSourceImage=!!imageUrl&&(!editable||original)
+  const content=<div className={`floorplan-canvas ${imageUrl&&!editable?'has-source-image':''} ${editable?'is-editable':''}`}><div className="floorplan-toolbar">
     <button className="btn secondary floorplan-zoom-button" type="button" onClick={()=>scale(zoom-.5)} disabled={zoom<=1} aria-label="배치도 축소">− <span>축소</span></button><output aria-label={`현재 확대율 ${Math.round(zoom*100)}퍼센트`}>{Math.round(zoom*100)}%</output>
     <button className="btn secondary floorplan-zoom-button" type="button" onClick={()=>scale(zoom+.5)} disabled={zoom>=12} aria-label="배치도 확대"><span>확대</span> ＋</button>
     <button className="btn secondary" type="button" onClick={()=>{zoomRef.current=1;setZoom(1);viewport.current?.scrollTo(0,0)}}>전체 보기</button>
     <button className="btn secondary" type="button" disabled={!selected} onClick={focus}>선택 위치로</button>
-    {imageUrl&&<label><input type="checkbox" checked={original} onChange={ev=>setOriginal(ev.target.checked)}/> 원본 배경</label>}
+    {imageUrl&&editable&&<label><input type="checkbox" checked={original} onChange={ev=>setOriginal(ev.target.checked)}/> 원본 배경</label>}
     {!editable&&<button ref={!expanded?fullButton:undefined} className="btn secondary" type="button" onClick={()=>setExpanded(!expanded)}>{expanded?'전체화면 닫기':'배치도 전체화면'}</button>}
     {editable&&<button type="button" className={`btn ${drawing?'primary':'secondary'}`} onClick={()=>setDrawing(!drawing)}>{drawing?'영역 그리기 중':'사각 부스 추가'}</button>}
   </div>{selection}<div className="floorplan-viewport" ref={viewport} tabIndex={0} aria-label="배치도. 손가락 두 개로 확대하고 끌어서 이동할 수 있어요." style={{aspectRatio:`${w}/${h}`}}>
   <svg ref={svg} role="group" aria-label="부스번호별 배치도. 검색 결과에서도 선택할 수 있습니다." viewBox={`0 0 ${w} ${h}`} style={{width:`${zoom*100}%`,aspectRatio:`${w}/${h}`}}
     onPointerDown={down} onPointerMove={move} onPointerUp={ev=>end(ev)} onPointerCancel={ev=>end(ev,true)}>
-    <rect width={w} height={h} fill="white"/>{original&&imageUrl&&<image href={imageUrl} width={w} height={h} preserveAspectRatio="none"/>}
+    <rect width={w} height={h} fill="white"/>{showSourceImage&&<image href={imageUrl} width={w} height={h} preserveAspectRatio="none"/>}
     {valid.map(s=>{const c=center(s.points),active=s.id===selected,unlinked=linkedIds!==undefined&&!linkedIds.includes(s.id)
       return <g key={s.id} data-shape={s.id} role="button" tabIndex={0} aria-label={`부스 ${s.label||'번호 미확인'}${unlinked?' · 참가자 연결 미확인':''}`} aria-pressed={active}
         onClick={ev=>{if(ev.detail===0)select(s.id)}} onKeyDown={ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();select(s.id)}}}>
@@ -110,7 +113,7 @@ export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highl
     {editable&&valid.find(s=>s.id===selected)?.points.map((p,i)=><circle key={i} data-vertex={i} data-owner={selected} cx={p.x*w} cy={p.y*h} r={w/150} className="floorplan-handle" aria-hidden="true"/>)}
   </svg></div>
   {linkedIds!==undefined&&<p className="floorplan-legend"><span>□ 위치번호만</span><span>■ 부스정보 연결</span><span>■ 파란 테두리: 선택 위치</span></p>}
-  <small>손가락 두 개로 확대하고 끌어서 이동하세요. 작은 부스는 검색 결과로 선택하면 자동으로 확대됩니다. 현위치·최단 경로 안내는 제공하지 않습니다.</small>
+  <small>{imageUrl&&!editable?'공식 원본 배치도를 그대로 표시합니다. 검색하거나 선택한 위치만 위에 강조됩니다. ':' '}손가락 두 개로 확대하고 끌어서 이동하세요. 작은 부스는 검색 결과로 선택하면 자동으로 확대됩니다. 현위치·최단 경로 안내는 제공하지 않습니다.</small>
   </div>
   return expanded ? <dialog ref={dialog} className="floorplan-fullscreen" aria-label={detail ? `${detail.title} 판매정보` : '배치도 전체화면'}
     onCancel={ev=>{ev.preventDefault();if(detail)backToMap();else setExpanded(false)}}>

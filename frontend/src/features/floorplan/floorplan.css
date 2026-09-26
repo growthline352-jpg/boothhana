@@ -16,3 +16,13 @@
 .floorplan-toolbar output{min-width:58px;text-align:center;font-weight:850;font-variant-numeric:tabular-nums;color:#263746}.floorplan-zoom-button{display:inline-flex;gap:6px;align-items:center}.floorplan-found{display:grid;grid-template-columns:minmax(150px,.45fr) 1fr;gap:18px;align-items:center;border:1px solid #cddce8;background:#f5f9fc}.floorplan-found-heading{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.floorplan-found-heading>span{width:100%;font-size:.76rem;font-weight:800;color:#607487}.floorplan-found-heading>strong{font-size:1.35rem;color:#1f3445}.floorplan-found-heading>a{font-size:.78rem}.floorplan-found>div:not(.floorplan-found-heading){display:grid;grid-template-columns:minmax(120px,.7fr) 1fr auto;gap:12px;align-items:center}.floorplan-found>div:not(.floorplan-found-heading)>p{margin:0}.floorplan-empty-location{grid-template-columns:1fr!important}.floorplan-empty-location>p{margin:3px 0!important}
 @media(max-width:600px){.floorplan-fullscreen .floorplan-full-map .floorplan-viewport{height:calc(100dvh - 370px);min-height:160px}.floorplan-full-details{padding:12px;padding-top:max(12px,env(safe-area-inset-top))}.floorplan-details-heading h2{font-size:1.2rem}.floorplan-fullscreen .floorplan-found{max-height:26dvh}}
 @media(max-width:600px){.floorplan-map-search>div{display:grid;grid-template-columns:1fr auto}.floorplan-map-search .input{grid-column:1/-1}.floorplan-map-search .btn{min-width:0}.floorplan-zoom-button span{display:none}.floorplan-found{grid-template-columns:1fr;gap:10px}.floorplan-found>div:not(.floorplan-found-heading){grid-template-columns:1fr}.floorplan-found-heading>span{width:auto}.floorplan-found-heading>strong{font-size:1.2rem}.floorplan-found .btn{width:100%}}
+
+/* A verified organizer image is the public map. Shapes are transparent hit
+   targets and become visible only as interaction feedback, never a redraw. */
+.floorplan-canvas.has-source-image .floorplan-region,
+.floorplan-canvas.has-source-image .floorplan-region.is-unlinked:not(.is-selected):not(.is-highlighted){fill:transparent;stroke:transparent}
+.floorplan-canvas.has-source-image .floorplan-label{opacity:0}
+.floorplan-canvas.has-source-image .floorplan-viewport g:hover .floorplan-region,
+.floorplan-canvas.has-source-image .floorplan-viewport g:focus .floorplan-region{fill:rgba(47,107,85,.16);stroke:#2f6b55;stroke-width:3}
+.floorplan-canvas.has-source-image .floorplan-region.is-highlighted{fill:rgba(255,175,40,.28);stroke:#a86f00;stroke-width:3}
+.floorplan-canvas.has-source-image .floorplan-region.is-selected{fill:rgba(37,104,215,.22);stroke:#145bc4;stroke-width:4}
