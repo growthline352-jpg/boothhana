@@ -2,6 +2,8 @@ package com.boothhana.collection;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.*;
 import static com.boothhana.collection.CatalogModels.*;
 import static com.boothhana.collection.CollectionModels.*;
@@ -18,7 +20,12 @@ public class CatalogAdminController {
     @GetMapping("/participants/{id}") public ParticipantView participant(@PathVariable long id){return service.participant(id);}
     @PatchMapping("/participants/{id}") public ParticipantView editParticipant(@PathVariable long id,@RequestBody EditInput input){return service.editParticipant(id,input);}
     @PatchMapping("/participants/{id}/sales") public ParticipantView editSales(@PathVariable long id,@RequestBody EditInput input){return service.editSales(id,input);}
+    @PostMapping("/events/{id}/assets") public AssetView registerAsset(@PathVariable long id,@RequestBody AssetRegistrationInput input){return media.registerValidated(id,input);}
     @PatchMapping("/assets/{id}/rights") public AssetView rights(@PathVariable long id,@RequestBody RightsInput input){return media.rights(id,input);}
+    @PostMapping("/assets/{id}/content") public AssetView content(@PathVariable long id,@RequestHeader("X-Asset-Revision") long revision,
+        @RequestHeader("X-Image-SHA256") String digest,@RequestHeader("X-Image-Size") long size,HttpServletRequest request) throws IOException {
+        return media.content(id,revision,request.getContentType(),digest,size,request.getInputStream());
+    }
     @PutMapping("/events/{id}/banner") public BannerSelection banner(@PathVariable long id,@RequestBody BannerInput input){return media.selectBanner(id,input);}
     @PostMapping("/events/{id}/publish") public Map<String,Object> publish(@PathVariable long id,@RequestBody PublishInput input){return publications.publish(id,input);}
     @DeleteMapping("/events/{id}/publish") @ResponseStatus(HttpStatus.NO_CONTENT) public void unpublish(@PathVariable long id){publications.unpublish(id);}

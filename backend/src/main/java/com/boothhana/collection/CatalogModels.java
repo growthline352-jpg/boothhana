@@ -59,6 +59,7 @@ public final class CatalogModels {
     public record RightsInput(long revision, String rightsState, String note, String credit, boolean offlineAllowed) {
         public RightsInput(long revision,String rightsState,String note,String credit){this(revision,rightsState,note,credit,false);}
     }
+    public record AssetRegistrationInput(Long participantId, Long productId, Image image) {}
     public record BannerSelection(Long assetId, long revision) {}
     public record BannerInput(Long assetId, long revision, Long assetRevision) {}
     public record PublishInput(long eventRevision) {}

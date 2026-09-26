@@ -125,6 +125,18 @@ class CatalogPostgresTests {
         AssetView approved=media.detail(a.id());tx.execute(s->media.rights(a.id(),new RightsInput(approved.revision(),"REJECTED","revoked","")));
         assertThat(json.writeValueAsString(publications.detail(eventId))).doesNotContain("verified/catalog/test.png");
     }
+    @Test void manualAssetRegistrationValidatesParentsAndIsIdempotent() {
+        long id=participant();ingest(stage("SALES",id));
+        long product=service.participant(id).sales().productRows().getFirst().id();
+        var image=new Image("PRODUCT","https://example.com/product.png","https://example.com/product",null,"product");
+        var input=new AssetRegistrationInput(id,product,image);
+        AssetView first=tx.execute(s->media.registerValidated(eventId,input));
+        AssetView replay=tx.execute(s->media.registerValidated(eventId,input));
+        assertThat(replay.id()).isEqualTo(first.id());
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where identity_key=(select identity_key from subculture_catalog_asset where id=?)",Long.class,first.id())).isEqualTo(1);
+        assertThatThrownBy(()->tx.execute(s->media.registerValidated(eventId,new AssetRegistrationInput(id+999,product,image)))).hasMessageContaining("참가자");
+        assertThatThrownBy(()->tx.execute(s->media.registerValidated(eventId,new AssetRegistrationInput(null,product,image)))).hasMessageContaining("참가자 연결");
+    }
     @Test void differentRunningPipelineIsBlockedAndFinishedPipelineCanReleaseLease() {
         assertThatThrownBy(()->tx.execute(s->service.start(new PipelineInput(UUID.randomUUID().toString(),"2026-09-13",scope)))).hasMessageContaining("다른");
         tx.execute(s->service.finish(pipeline,new PipelineFinish("SUCCESS",Map.of("test",true))));

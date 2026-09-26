@@ -19,13 +19,31 @@ import static com.boothhana.collection.CatalogModels.*;
 public class CatalogMediaService {
     private final JdbcTemplate db;private final VerifiedImageStorage storage;private final String base;
     public CatalogMediaService(JdbcTemplate db,VerifiedImageStorage storage,@Value("${app.storage.public-url:}") String base) {this.db=db;this.storage=storage;this.base=base.replaceAll("/$","");}
-    @Transactional public void register(long event,Long participant,Long product,Image image) {
+    @Transactional public AssetView register(long event,Long participant,Long product,Image image) {
         CatalogRules.images(List.of(image));
         String identity=CollectionRules.sha(event+":"+participant+":"+product+":"+image.type()+":"+image.imageUrl()+":"+image.pageUrl());
         db.update("""
             insert into subculture_catalog_asset(event_id,participant_id,product_id,identity_key,type,image_url,page_url,caption,reported_rights)
             values(?,?,?,?,?,?,?,?,?) on conflict(identity_key) do nothing
             """,event,participant,product,identity,image.type(),image.imageUrl(),image.pageUrl(),image.caption(),image.rightsEvidence());
+        return db.query("select * from subculture_catalog_asset where identity_key=?",this::asset,identity).getFirst();
+    }
+    /** Register a reviewed association without allowing cross-event participant/product links. */
+    @Transactional public AssetView registerValidated(long event,AssetRegistrationInput input) {
+        if(input==null||input.image()==null||event<1) throw ApiException.badRequest("이미지 후보 형식을 확인하세요.");
+        var events=db.queryForList("select id,review_state from subculture_event_candidate where id=?",event);
+        if(events.isEmpty()) throw ApiException.notFound("행사 없음");
+        if("EXCLUDED".equals(events.getFirst().get("review_state"))) throw ApiException.conflict("제외한 행사에는 이미지를 등록할 수 없습니다.");
+        Long participant=input.participantId(),product=input.productId();
+        if(product!=null&&participant==null) throw ApiException.badRequest("상품 이미지는 참가자 연결이 필요합니다.");
+        if(participant!=null) {
+            var rows=db.queryForList("select id,review_state from subculture_participant where id=? and event_id=?",participant,event);
+            if(rows.isEmpty()) throw ApiException.badRequest("이 행사의 참가자가 아닙니다.");
+            if("EXCLUDED".equals(rows.getFirst().get("review_state"))) throw ApiException.conflict("제외한 참가자에는 이미지를 등록할 수 없습니다.");
+        }
+        if(product!=null&&db.queryForObject("select count(*) from subculture_catalog_product where id=? and participant_id=?",Long.class,product,participant)!=1)
+            throw ApiException.badRequest("이 참가자의 상품이 아닙니다.");
+        return register(event,participant,product,input.image());
     }
     public List<AssetView> assets(long event,Long participant) {
         String q="select * from subculture_catalog_asset where event_id=?"+(participant==null?"":" and participant_id=?")+" order by id";
