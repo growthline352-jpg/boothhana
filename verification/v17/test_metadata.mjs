@@ -4,7 +4,7 @@ import { readFile, mkdtemp, mkdir, writeFile, rm, access } from 'node:fs/promise
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pageMetadata, renderMetadata, injectMetadata, normalizePath, siteOrigin } from '../../frontend/seo/metadata.mjs'
-import handler, { renderPage, apiOrigin, readBoundedJson } from '../../frontend/api/page.mjs'
+import { createHandler, renderPage, apiOrigin, readBoundedJson } from '../../frontend/api/page.mjs'
 const template = await readFile(new URL('../../frontend/index.html', import.meta.url), 'utf8')
 const siteUrl = 'https://boothhana.example', apiBase = 'https://api.example'
 const catalog = { id: 7, event: { name: '[TEST] 문구 행사', description: '공개 행사 소개' }, banner: { url: 'https://assets.example/approved.png' }, assets: [] }
@@ -99,18 +99,17 @@ test('hosting preparation refuses unbuilt or mismatched template', async () => {
  } finally { await rm(base, { recursive: true, force: true }) }
 })
 test('Node request adapter applies no-store, noindex, method and HEAD behavior', async () => {
- const base = await mkdtemp(join(tmpdir(), 'v17-handler-')), previous = process.cwd(), oldSite = process.env.PUBLIC_SITE_URL
+ const oldSite = process.env.PUBLIC_SITE_URL
  const response = () => ({ headers: {}, setHeader(k,v) { this.headers[k] = v }, end(value) { this.body = value }, statusCode: 0 })
+ const handler = createHandler(async () => template)
  try {
-  await mkdir(join(base, 'seo-template')); await writeFile(join(base, 'seo-template', 'index.html'), template)
-  process.chdir(base); process.env.PUBLIC_SITE_URL = siteUrl
+  process.env.PUBLIC_SITE_URL = siteUrl
   for (const method of ['GET','HEAD']) {
    const res = response(); await handler({ method, url: '/api/page?path=/library&note=SECRET', query: { path: '/library' }, headers: { cookie:'SESSION=SECRET' } }, res)
    assert.equal(res.statusCode, 200); assert.equal(res.headers['Cache-Control'], 'private, no-store'); assert.equal(res.headers['X-Robots-Tag'], 'noindex,follow')
    if (method === 'GET') { assert.ok(!res.body.includes('SECRET')); assert.match(res.body, /내 보관함/) } else assert.equal(res.body, undefined)
   }
   const post = response(); await handler({method:'POST'},post); assert.equal(post.statusCode,405); assert.equal(post.headers.Allow,'GET, HEAD')
-  await rm(join(base,'seo-template'),{recursive:true,force:true})
-  const missing = response(); await handler({method:'HEAD',url:'/',query:{}},missing); assert.equal(missing.statusCode,503); assert.equal(missing.body,undefined)
- } finally { process.chdir(previous); if (oldSite === undefined) delete process.env.PUBLIC_SITE_URL; else process.env.PUBLIC_SITE_URL=oldSite; await rm(base,{recursive:true,force:true}) }
+  const missing = response(); await createHandler(async () => { throw new Error('missing fixture') })({method:'HEAD',url:'/',query:{}},missing); assert.equal(missing.statusCode,503); assert.equal(missing.body,undefined)
+ } finally { if (oldSite === undefined) delete process.env.PUBLIC_SITE_URL; else process.env.PUBLIC_SITE_URL=oldSite }
 })

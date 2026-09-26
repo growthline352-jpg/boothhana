@@ -51,28 +51,32 @@ export async function renderPage({ path, search = '', template, siteUrl, apiBase
   const meta = pageMetadata({ path, search, siteUrl, catalog, unavailable })
   return { status, meta, html: injectMetadata(template, meta) }
 }
-export default async function handler(req, res) {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  // Do not retain event titles/images after an unpublish or rights revocation.
-  res.setHeader('Cache-Control', 'private, no-store')
-  res.setHeader('X-Content-Type-Options', 'nosniff')
-  if (!['GET', 'HEAD'].includes(req.method)) { res.setHeader('Allow', 'GET, HEAD'); res.statusCode = 405; res.end(); return }
-  try {
-    const raw = Array.isArray(req.query?.path) ? '' : req.query?.path
-    const request = new URL(req.url || '/', 'https://request.invalid')
-    const path = normalizePath(typeof raw === 'string' ? '/' + raw.replace(/^\//, '') : request.pathname)
-    const search = new URLSearchParams(request.search)
-    search.delete('path') // framework routing parameter is not a user-visible search filter
-    const siteUrl = siteOrigin(process.env.PUBLIC_SITE_URL || '')
-    const template = await readFile(new URL('../seo-template/index.html', import.meta.url), 'utf8')
-    const page = await renderPage({ path, search: search.toString(), template, siteUrl, apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '' })
-    res.statusCode = page.status
-    res.setHeader('X-Robots-Tag', page.meta.robots)
-    if (page.status === 503) res.setHeader('Retry-After', '60')
-    res.end(req.method === 'HEAD' ? undefined : page.html)
-  } catch (error) {
-    // Missing build/config never becomes a false successful SEO response.
-    console.error('SEO page render failed', error)
-    res.statusCode = 503; res.setHeader('X-Robots-Tag', 'noindex'); res.end(req.method === 'HEAD' ? undefined : '서비스 준비 상태를 확인하고 있습니다.')
+export function createHandler(loadTemplate = () => readFile(new URL('../seo-template/index.html', import.meta.url), 'utf8')) {
+  return async function handler(req, res) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    // Do not retain event titles/images after an unpublish or rights revocation.
+    res.setHeader('Cache-Control', 'private, no-store')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    if (!['GET', 'HEAD'].includes(req.method)) { res.setHeader('Allow', 'GET, HEAD'); res.statusCode = 405; res.end(); return }
+    try {
+      const raw = Array.isArray(req.query?.path) ? '' : req.query?.path
+      const request = new URL(req.url || '/', 'https://request.invalid')
+      const path = normalizePath(typeof raw === 'string' ? '/' + raw.replace(/^\//, '') : request.pathname)
+      const search = new URLSearchParams(request.search)
+      search.delete('path') // framework routing parameter is not a user-visible search filter
+      const siteUrl = siteOrigin(process.env.PUBLIC_SITE_URL || '')
+      const template = await loadTemplate()
+      const page = await renderPage({ path, search: search.toString(), template, siteUrl, apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '' })
+      res.statusCode = page.status
+      res.setHeader('X-Robots-Tag', page.meta.robots)
+      if (page.status === 503) res.setHeader('Retry-After', '60')
+      res.end(req.method === 'HEAD' ? undefined : page.html)
+    } catch (error) {
+      // Missing build/config never becomes a false successful SEO response.
+      console.error('SEO page render failed', error)
+      res.statusCode = 503; res.setHeader('X-Robots-Tag', 'noindex'); res.end(req.method === 'HEAD' ? undefined : '서비스 준비 상태를 확인하고 있습니다.')
+    }
   }
 }
+
+export default createHandler()
