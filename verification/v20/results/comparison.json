@@ -1,0 +1,10 @@
+{
+  "v19-all-new-tests": {
+    "exitCode": 1,
+    "summary": "1..13\n# tests 13\n# suites 0\n# pass 1\n# fail 12\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 582.188443"
+  },
+  "v20-all-new-tests": {
+    "exitCode": 0,
+    "summary": "1..13\n# tests 13\n# suites 0\n# pass 13\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 549.132042"
+  }
+}

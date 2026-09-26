@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python",
+    "verification/v22/release_gate.py"
+  ],
+  "cwd": ".",
+  "attemptedAt": "2026-09-18T10:14:26Z",
+  "exitCode": 2,
+  "durationSeconds": 0.72
+}

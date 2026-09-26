@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python",
+    "verification/run_checks.py"
+  ],
+  "exitCode": 0,
+  "attemptedAt": "2026-09-18T10:17:44Z",
+  "durationSeconds": 49.3,
+  "includesV22GateReportingTests": true
+}

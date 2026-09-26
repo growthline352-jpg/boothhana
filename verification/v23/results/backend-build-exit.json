@@ -1,0 +1,14 @@
+{
+  "command": [
+    "bash",
+    "gradlew",
+    "test",
+    "bootJar",
+    "--no-daemon"
+  ],
+  "cwd": "/mnt/data/boothhana_v23/BoothHana2/backend",
+  "startedAt": 1789728283.1907537,
+  "timeoutSeconds": 45,
+  "exitCode": 1,
+  "durationSeconds": 0.378
+}

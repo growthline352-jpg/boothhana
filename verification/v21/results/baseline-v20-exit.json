@@ -1,0 +1,6 @@
+{
+  "state": "INCOMPLETE",
+  "reason": "Initial tool invocation reached its execution timeout; not used as a passing baseline. See baseline-complete-exit.json for completed rerun.",
+  "exitCode": null,
+  "productionApproval": false
+}

@@ -1,0 +1,6 @@
+{
+  "state": "NOT_READY",
+  "productionApproval": false,
+  "attemptedAt": 1789710062.7965167,
+  "reason": "BOOTH_FULL_TEST_URL must be isolated localhost boothhana_release_test, never production forwarding"
+}

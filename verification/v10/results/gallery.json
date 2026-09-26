@@ -1,0 +1,15 @@
+{
+  "checks": [
+    "offline gallery renders fake source cards",
+    "embedded preview image loaded without networking",
+    "gallery mobile width",
+    "preview category sends allowed view to wrapper",
+    "exhibition placeholder shown",
+    "creator preview accessible",
+    "drawer accessible close",
+    "preview native close",
+    "reduced motion style",
+    "preview script errors absent"
+  ],
+  "scope": "Standalone static preview wrapper only, not production navigation."
+}

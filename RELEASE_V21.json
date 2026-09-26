@@ -1,0 +1,57 @@
+{
+  "version": "v21",
+  "date": "2026-09-18",
+  "baseFile": "BoothHana2-full-v20-20260918.zip",
+  "baseSha256": "0a4ddc4e9c5c233a65b03c8a367bd8e8b913708afb7f915d70815ff6047c41ea",
+  "purpose": "Code review: overlapping public cache, stale form attempt identifiers, withdrawn booth sales history/search",
+  "productionApproval": false,
+  "newSql": [],
+  "requiredSqlRange": "001..016",
+  "runtimeFilesChanged": 4,
+  "offline": {
+    "databaseName": "boothhana.offline.v18",
+    "idbVersion": 2,
+    "packageVersion": 19,
+    "shellCache": "boothhana-offline-shell-v20-1",
+    "offlineRuntimeUnchanged": true,
+    "v19AndV20ValidDownloadsPreserved": true,
+    "v18DownloadsMustBeDownloadedAgain": true,
+    "serverAndMemberLibraryCleared": false
+  },
+  "preserved": {
+    "regions": [
+      "SEOUL",
+      "GYEONGGI"
+    ],
+    "excludedRegion": "INCHEON",
+    "categories": [
+      "SUBCULTURE",
+      "EXHIBITION",
+      "FESTIVAL"
+    ],
+    "ttlDays": 7,
+    "maxEvents": 5,
+    "maxBytes": 62914560
+  },
+  "validation": {
+    "newRegressionScenarios": 26,
+    "newNodeTestsPassed": 20,
+    "newJavaScenariosPassed": 6,
+    "sameTestsOnV20": {
+      "failed": 17,
+      "passed": 9,
+      "notIndependentDefectCount": true
+    },
+    "collectorTestsPassed": 170,
+    "finalIndependentRunnerExitCode": 0,
+    "realBrowserScenariosCompleted": 0,
+    "newRealDbTestAddedButNotRun": true,
+    "fullFrameworkBuildPassed": false,
+    "actualDatabaseMigrationRun": false,
+    "externalDeploymentRun": false
+  },
+  "entry": "START_HERE_KO.md",
+  "changes": "docs/release/V21_CHANGES_KO.md",
+  "results": "TEST_RESULTS_KO.md",
+  "checksums": "SHA256SUMS.txt"
+}

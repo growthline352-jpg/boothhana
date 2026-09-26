@@ -1,0 +1,70 @@
+{
+  "original-v20-node": {
+    "exitCode": 1,
+    "durationSeconds": 0.414,
+    "command": [
+      "node",
+      "--test",
+      "verification/v21/test_public_cache.cjs",
+      "verification/v21/test_attempt_storage.cjs"
+    ],
+    "productionApproval": false,
+    "tests": 20,
+    "pass": 7,
+    "fail": 13,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "original-v20-java": {
+    "exitCode": 1,
+    "durationSeconds": 1.755,
+    "command": [
+      "python",
+      "verification/v21/check_java.py"
+    ],
+    "productionApproval": false,
+    "tests": 6,
+    "pass": 2,
+    "fail": 4
+  },
+  "new-node": {
+    "exitCode": 0,
+    "durationSeconds": 0.397,
+    "command": [
+      "node",
+      "--test",
+      "verification/v21/test_public_cache.cjs",
+      "verification/v21/test_attempt_storage.cjs"
+    ],
+    "productionApproval": false,
+    "tests": 20,
+    "pass": 20,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "new-java": {
+    "exitCode": 0,
+    "durationSeconds": 1.687,
+    "command": [
+      "python",
+      "verification/v21/check_java.py"
+    ],
+    "productionApproval": false,
+    "tests": 6,
+    "pass": 6,
+    "fail": 0
+  },
+  "scope": "Actual product modules/services with explicit fetch, storage and JDBC/JSON doubles; not React DOM, browser or real PostgreSQL.",
+  "sameTestsOriginal": {
+    "tests": 26,
+    "passed": 9,
+    "failed": 17,
+    "notIndependentDefectCount": true
+  },
+  "fixed": {
+    "tests": 26,
+    "passed": 26,
+    "failed": 0
+  }
+}

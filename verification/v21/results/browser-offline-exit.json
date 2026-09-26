@@ -1,0 +1,11 @@
+{
+  "state": "FAILED",
+  "exitCode": 1,
+  "command": [
+    "/opt/pyvenv/bin/python",
+    "verification/v21/browser_offline.py"
+  ],
+  "durationSeconds": 3.228,
+  "completedAt": 1789722372.767353,
+  "productionApproval": false
+}

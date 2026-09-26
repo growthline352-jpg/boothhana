@@ -1,0 +1,127 @@
+{
+  "scope": "28 isolated module/UI structure scenarios; includes new UX requirements, not independent defect count",
+  "originalV22": {
+    "tests": 28,
+    "pass": 5,
+    "fail": 23,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "modifiedV23": {
+    "tests": 28,
+    "pass": 28,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "nativeOriginal": {
+    "mode": "native Chromium HTMLDialogElement + real helper; isolated DOM, no React hydration/API",
+    "productionApproval": false,
+    "checks": [
+      {
+        "before": {
+          "focus": "qr-close",
+          "lock": "hidden"
+        },
+        "middle": {
+          "lock": "hidden",
+          "focus": "qr-trigger"
+        },
+        "after": {
+          "lock": "auto",
+          "focus": "trigger"
+        },
+        "pass": true,
+        "case": "normal"
+      },
+      {
+        "before": {
+          "focus": "qr-close",
+          "lock": "hidden"
+        },
+        "middle": {
+          "lock": "auto",
+          "focus": "qr-close"
+        },
+        "after": {
+          "lock": "hidden",
+          "focus": "qr-close"
+        },
+        "pass": false,
+        "case": "parent-first"
+      },
+      {
+        "before": {
+          "focus": "qr-close",
+          "lock": "hidden"
+        },
+        "middle": {
+          "lock": "hidden",
+          "focus": "qr-trigger"
+        },
+        "after": {
+          "lock": "auto",
+          "focus": "trigger"
+        },
+        "pass": true,
+        "case": "duplicate-cleanup"
+      }
+    ],
+    "status": "FAIL"
+  },
+  "nativeModified": {
+    "mode": "native Chromium HTMLDialogElement + real helper; isolated DOM, no React hydration/API",
+    "productionApproval": false,
+    "checks": [
+      {
+        "before": {
+          "focus": "qr-close",
+          "lock": "hidden"
+        },
+        "middle": {
+          "lock": "hidden",
+          "focus": "qr-trigger"
+        },
+        "after": {
+          "lock": "auto",
+          "focus": "trigger"
+        },
+        "pass": true,
+        "case": "normal"
+      },
+      {
+        "before": {
+          "focus": "qr-close",
+          "lock": "hidden"
+        },
+        "middle": {
+          "lock": "hidden",
+          "focus": "qr-close"
+        },
+        "after": {
+          "lock": "auto",
+          "focus": "public-main"
+        },
+        "pass": true,
+        "case": "parent-first"
+      },
+      {
+        "before": {
+          "focus": "qr-close",
+          "lock": "hidden"
+        },
+        "middle": {
+          "lock": "hidden",
+          "focus": "qr-trigger"
+        },
+        "after": {
+          "lock": "auto",
+          "focus": "trigger"
+        },
+        "pass": true,
+        "case": "duplicate-cleanup"
+      }
+    ],
+    "status": "PASS"
+  }
+}

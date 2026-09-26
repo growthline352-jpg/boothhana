@@ -1,0 +1,7 @@
+{
+  "state": "NOT_READY",
+  "productionApproval": false,
+  "scope": "real built React/Chromium, fixture APIs only",
+  "passed": [],
+  "reason": "RuntimeError: Build frontend with the frozen lockfile before running this browser test"
+}

@@ -1,0 +1,31 @@
+{
+  "version": "v18",
+  "createdAt": "2026-09-18",
+  "base": "BoothHana2-full-v17-20260918.zip",
+  "baseSha256": "23011c6a4d1955fa5ffaf200e67997b6784d0a56e8b255d771e66b7c12f420d4",
+  "regions": [
+    "SEOUL",
+    "GYEONGGI"
+  ],
+  "excludedRegion": "INCHEON",
+  "categories": [
+    "SUBCULTURE",
+    "EXHIBITION",
+    "FESTIVAL"
+  ],
+  "newSql": [
+    "database/016_catalog_scope_offline.sql"
+  ],
+  "migrationRange": "001..016",
+  "offline": {
+    "entry": "/offline/index.html",
+    "readOnly": true,
+    "ttlDays": 7,
+    "maxEvents": 5,
+    "maxTotalMiB": 60,
+    "accountNotesOrOrders": false,
+    "imageOptInRequired": true
+  },
+  "productionApproval": false,
+  "validation": "See TEST_RESULTS_KO.md and verification/v18/results. Full dependency build/real DB/browser/hosting/mobile/external services not verified."
+}

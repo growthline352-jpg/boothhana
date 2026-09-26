@@ -1,0 +1,81 @@
+"""Bounded public image retrieval. Exact host allowlist + DNS-to-connection pinning on every redirect.
+Does not inherit proxy settings, send cookies, crawl pages, resize, or transform third-party works.
+"""
+from __future__ import annotations
+import hashlib,http.client,ipaddress,io,socket,ssl,time,warnings
+from urllib.parse import urlsplit,urljoin
+from PIL import Image,UnidentifiedImageError
+from rules import public_url
+MAX_BYTES=10*1024*1024
+MAX_PIXELS=25_000_000
+class MediaError(ValueError): pass
+
+def public_addresses(host: str,port: int,resolver=socket.getaddrinfo):
+    addresses=[]
+    for row in resolver(host,port,type=socket.SOCK_STREAM):
+        value=row[4][0];ip=ipaddress.ip_address(value)
+        # Mixed private/public DNS is rejected, not filtered. Prevent rebinding/fallback routes.
+        if not ip.is_global or ip.is_multicast or ip.is_unspecified: raise MediaError('DNS resolves to a non-public address')
+        if value not in addresses: addresses.append(value)
+    if not addresses: raise MediaError('No public DNS address')
+    return addresses
+
+def check_url(url: str,hosts: list[str]):
+    public_url(url);parsed=urlsplit(url);host=parsed.hostname.rstrip('.').lower()
+    if parsed.scheme!='https' or parsed.port not in (None,443): raise MediaError('External image requires HTTPS/443')
+    if not any(host==entry.lower() or (entry.startswith('*.') and host.endswith(entry[1:].lower()) and host!=entry[2:].lower()) for entry in hosts): raise MediaError('Image host is not in administrator allowlist')
+    return parsed,host
+
+class PinnedHTTPS(http.client.HTTPSConnection):
+    def __init__(self,host,ip,timeout): super().__init__(host,timeout=timeout,context=ssl.create_default_context());self.ip=ip
+    def connect(self):
+        self.sock=socket.create_connection((self.ip,443),self.timeout)
+        self.sock=self._context.wrap_socket(self.sock,server_hostname=self.host)
+
+def inspect_image(data: bytes,content_type: str):
+    if not data or len(data)>MAX_BYTES: raise MediaError('Image size outside 1..10MiB')
+    expected={'JPEG':'image/jpeg','PNG':'image/png','WEBP':'image/webp','GIF':'image/gif'}
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error',Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(data)) as image:
+                kind=expected.get(image.format)
+                if kind!=content_type or image.width*image.height>MAX_PIXELS: raise MediaError('Image format/pixel limit mismatch')
+                image.verify()
+    except (UnidentifiedImageError,OSError,Image.DecompressionBombError,Image.DecompressionBombWarning) as exc: raise MediaError('Invalid image') from exc
+    return hashlib.sha256(data).hexdigest()
+
+def fetch_image(url: str,hosts: list[str],timeout: int=30):
+    deadline=time.monotonic()+timeout
+    for _ in range(4):
+        parsed,host=check_url(url,hosts);addresses=public_addresses(host,443)
+        remaining=deadline-time.monotonic()
+        if remaining<=0: raise MediaError('Image deadline exceeded')
+        connection=PinnedHTTPS(host,addresses[0],min(10,remaining))
+        try:
+            path=(parsed.path or '/')+('?' + parsed.query if parsed.query else '')
+            connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Image-Fetcher/4','Accept':'image/png,image/jpeg,image/webp,image/gif','Accept-Encoding':'identity'})
+            response=connection.getresponse()
+            if response.status in (301,302,303,307,308):
+                target=response.getheader('Location')
+                if not target: raise MediaError('Redirect missing destination')
+                url=urljoin(url,target);continue
+            if response.status!=200: raise MediaError(f'Image HTTP {response.status}')
+            if response.getheader('Content-Encoding','identity') not in ('identity',''): raise MediaError('Compressed transport not accepted')
+            type_=response.getheader('Content-Type','').split(';')[0].strip().lower()
+            length=response.getheader('Content-Length')
+            if length is not None and (not length.isdigit() or not 0<int(length)<=MAX_BYTES): raise MediaError('Declared image size invalid')
+            data=bytearray()
+            while True:
+                remaining=deadline-time.monotonic()
+                if remaining<=0: raise MediaError('Image deadline exceeded')
+                if connection.sock is not None: connection.sock.settimeout(min(10,remaining))
+                chunk=response.read(min(65536,MAX_BYTES+1-len(data)))
+                if not chunk: break
+                data.extend(chunk)
+                if len(data)>MAX_BYTES: raise MediaError('Actual image exceeds 10MiB')
+            if length is not None and len(data)!=int(length): raise MediaError('Truncated image')
+            result=bytes(data);digest=inspect_image(result,type_)
+            return result,type_,digest
+        finally: connection.close()
+    raise MediaError('Too many image redirects')

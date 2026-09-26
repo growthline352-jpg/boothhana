@@ -1,0 +1,47 @@
+{
+  "version": "v18",
+  "checkedAt": "2026-09-18",
+  "productionApproval": false,
+  "localSuiteExitCode": 0,
+  "collectorTests": 170,
+  "newPythonTests": 10,
+  "newNodeTests": 18,
+  "browser": "NOT_READY",
+  "browserChecksCompleted": 0,
+  "realBuilds": [
+    {
+      "name": "frontend-install",
+      "command": [
+        "/opt/nvm/versions/node/v22.16.0/bin/corepack",
+        "pnpm",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "exitCode": 1,
+      "state": "NOT_READY"
+    },
+    {
+      "name": "frontend-build",
+      "command": [
+        "tsc",
+        "-b"
+      ],
+      "exitCode": 1,
+      "state": "NOT_READY"
+    },
+    {
+      "name": "backend-build",
+      "command": [
+        "sh",
+        "gradlew",
+        "test",
+        "bootJar",
+        "--no-daemon"
+      ],
+      "exitCode": 1,
+      "state": "NOT_READY"
+    }
+  ],
+  "databaseGate": "NOT_READY",
+  "source": "verification/v18/results/final-checks.log"
+}

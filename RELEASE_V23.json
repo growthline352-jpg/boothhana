@@ -1,0 +1,58 @@
+{
+  "version": "v23",
+  "date": "2026-09-18",
+  "baseFile": "BoothHana2-full-v22-20260918.zip",
+  "baseSha256": "d04416fb66766123ed6357d6e9998754fc6ef4ca2da5d0bb069c3878196961a3",
+  "purpose": "Code review and public visitor usability: modal lifecycle, filters, loading states, mobile navigation, progressive offline download disclosure",
+  "productionApproval": false,
+  "newSql": [],
+  "requiredSqlRange": "001..016",
+  "runtimeFilesChanged": 11,
+  "backendUnchanged": true,
+  "collectorUnchanged": true,
+  "dependenciesUnchanged": true,
+  "offline": {
+    "runtimeUnchanged": true,
+    "idbVersion": 2,
+    "packageVersion": 19,
+    "shellCache": "boothhana-offline-shell-v20-1",
+    "v19AndLaterValidDownloadsPreserved": true
+  },
+  "preserved": {
+    "regions": [
+      "SEOUL",
+      "GYEONGGI"
+    ],
+    "excludedRegion": "INCHEON",
+    "categories": [
+      "SUBCULTURE",
+      "EXHIBITION",
+      "FESTIVAL"
+    ],
+    "ttlDays": 7,
+    "maxEvents": 5,
+    "maxBytes": 62914560
+  },
+  "validation": {
+    "newIsolatedScenariosPassed": 28,
+    "sameScenariosOnV22": {
+      "passed": 5,
+      "failed": 23,
+      "includesNewUxRequirements": true,
+      "independentDefectCount": false
+    },
+    "newGateTestsPassed": 3,
+    "collectorTestsPassed": 170,
+    "finalIndependentRunnerExitCode": 0,
+    "nativeChromiumDialogChecksPassed": 3,
+    "staticChromiumLayoutChecksPassed": 16,
+    "hydratedApplicationBrowserScenariosCompleted": 0,
+    "fullFrameworkBuildPassed": false,
+    "actualDatabaseMigrationRun": false,
+    "externalDeploymentRun": false
+  },
+  "entry": "START_HERE_KO.md",
+  "changes": "docs/release/V23_CHANGES_KO.md",
+  "results": "TEST_RESULTS_KO.md",
+  "checksums": "SHA256SUMS.txt"
+}

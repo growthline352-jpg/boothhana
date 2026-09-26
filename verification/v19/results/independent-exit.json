@@ -1,0 +1,9 @@
+{
+  "exitCode": 0,
+  "state": "PASS",
+  "command": [
+    "/opt/pyvenv/bin/python",
+    "verification/v19/run_checks.py"
+  ],
+  "seconds": 21.76
+}

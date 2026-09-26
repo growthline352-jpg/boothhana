@@ -1,0 +1,49 @@
+{
+  "version": "v19",
+  "date": "2026-09-18",
+  "baseFile": "BoothHana2-full-v18-20260918.zip",
+  "baseSha256": "7c15d8d135b7f4fbe00c015ed3c3e95e3a2308ae98965f5b49e6628f97bc4ba7",
+  "purpose": "v18 code review: offline consistency, privacy boundaries and reader regression fixes",
+  "productionApproval": false,
+  "newSql": [],
+  "requiredSqlRange": "001..016",
+  "offline": {
+    "databaseName": "boothhana.offline.v18",
+    "idbVersion": 2,
+    "packageVersion": 19,
+    "v18DownloadsMustBeDownloadedAgain": true,
+    "serverAndMemberLibraryCleared": false
+  },
+  "preserved": {
+    "regions": [
+      "SEOUL",
+      "GYEONGGI"
+    ],
+    "excludedRegion": "INCHEON",
+    "categories": [
+      "SUBCULTURE",
+      "EXHIBITION",
+      "FESTIVAL"
+    ],
+    "ttlDays": 7,
+    "maxEvents": 5,
+    "maxBytes": 62914560
+  },
+  "validation": {
+    "newRegressionTests": 18,
+    "newRegressionPassed": 18,
+    "sameTestsOnV18": {
+      "failed": 17,
+      "passed": 1
+    },
+    "collectorTestsPassed": 170,
+    "realBrowserScenariosCompleted": 0,
+    "fullFrameworkBuildPassed": false,
+    "actualDatabaseMigrationRun": false,
+    "externalDeploymentRun": false
+  },
+  "entry": "START_HERE_KO.md",
+  "changes": "docs/release/V19_CHANGES_KO.md",
+  "results": "TEST_RESULTS_KO.md",
+  "checksums": "SHA256SUMS.txt"
+}

@@ -1,0 +1,14 @@
+{
+  "state": "FAILED",
+  "exitCode": 1,
+  "command": [
+    "bash",
+    "gradlew",
+    "test",
+    "bootJar",
+    "--no-daemon"
+  ],
+  "durationSeconds": 5.619,
+  "completedAt": 1789722374.472282,
+  "productionApproval": false
+}

@@ -1,0 +1,17 @@
+{
+  "serverSQL": {
+    "checked": 16,
+    "allUnchanged": true,
+    "changed": []
+  },
+  "collectorSource": {
+    "checked": 53,
+    "allUnchanged": true,
+    "changed": []
+  },
+  "dependencyContracts": {
+    "checked": 6,
+    "allUnchanged": true,
+    "changed": []
+  }
+}

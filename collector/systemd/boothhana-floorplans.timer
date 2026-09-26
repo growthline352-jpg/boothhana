@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily KST 04:00 floorplan supplemental check
+[Timer]
+OnCalendar=Mon..Sat *-*-* 04:00:00 Asia/Seoul
+Persistent=true
+Unit=boothhana-floorplans.service
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "tsc",
+    "-b"
+  ],
+  "cwd": "/mnt/data/boothhana_v23/BoothHana2/frontend",
+  "startedAt": 1789728281.8356173,
+  "timeoutSeconds": 45,
+  "exitCode": 1,
+  "durationSeconds": 1.351
+}

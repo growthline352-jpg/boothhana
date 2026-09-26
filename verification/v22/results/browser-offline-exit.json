@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python",
+    "verification/v22/browser_offline.py"
+  ],
+  "cwd": ".",
+  "attemptedAt": "2026-09-18T10:14:24Z",
+  "exitCode": 1,
+  "durationSeconds": 1.92
+}

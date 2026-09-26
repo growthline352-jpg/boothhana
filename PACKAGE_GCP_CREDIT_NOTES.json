@@ -1,0 +1,59 @@
+{
+  "packageRevision": "v24-gcp-credit-notes",
+  "applicationVersion": 24,
+  "createdOn": "2026-09-21",
+  "changeType": "DOCUMENTATION_ONLY",
+  "inputZip": "BoothHana2-full-v24-20260921.zip",
+  "inputZipSha256": "43893d11076dab1497249b6da08b59160b6cde1ff6bb75241347af9d213d5776",
+  "outputZip": "BoothHana2-full-v24-gcp-credit-notes-20260921.zip",
+  "productionApproval": false,
+  "liveIntegrationGate": "NOT_READY",
+  "userConfirmed": {
+    "newGoogleCloudCustomer": true,
+    "creditEligibilityReported": true,
+    "confirmedOn": "2026-09-21"
+  },
+  "programReference": {
+    "name": "Google Cloud Free Trial",
+    "standardCreditUsd": 300,
+    "standardDurationDays": 90,
+    "verifiedOn": "2026-09-21",
+    "sourceUrl": "https://docs.cloud.google.com/free/docs/free-cloud-features"
+  },
+  "actualAccount": {
+    "consoleVerified": false,
+    "billingAccountState": null,
+    "creditGrantedUsd": null,
+    "remainingCreditUsd": null,
+    "activatedOn": null,
+    "expiresOn": null,
+    "projectId": null,
+    "bucketName": null,
+    "region": null,
+    "budgetAmount": null,
+    "alertsConfigured": false,
+    "paidUpgradeAuthorized": false
+  },
+  "storageDecision": {
+    "target": "GOOGLE_CLOUD_STORAGE",
+    "currentCode": "CLOUDFLARE_R2",
+    "implementation": "NOT_IMPLEMENTED",
+    "deployment": "NOT_EXECUTED",
+    "migration": "NOT_EXECUTED",
+    "databaseMigration": "NOT_REQUESTED"
+  },
+  "runtimeConfiguration": false,
+  "runtimeConfigurationNote": "Documentation metadata only; not read by application.",
+  "applicationCodeChanged": false,
+  "sqlChanged": false,
+  "dependenciesChanged": false,
+  "existingDataReset": false,
+  "document": "docs/deployment/GCP_FREE_TRIAL_KO.md",
+  "baselineRelease": "RELEASE_V24.json",
+  "baselineChangeManifest": "CHANGE_MANIFEST_V24.json",
+  "currentChangeManifest": "CHANGE_MANIFEST_GCP_CREDIT_NOTES.json",
+  "currentFileChecksums": "SHA256SUMS.txt",
+  "externalVerificationReport": "BoothHana2_v24_GCP_credit_package_check.json",
+  "testsRerun": false,
+  "verificationScope": "Documentation, unchanged-source comparison, archive integrity only"
+}

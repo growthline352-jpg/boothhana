@@ -1,0 +1,4 @@
+/* Grammar diagnostics for complete frontend sources. Not a Vite build or dependency type resolution. */
+const fs=require('fs'),path=require('path'),cp=require('child_process');
+const ts=require('./load_ts.cjs')();const root=path.resolve(__dirname,'../../frontend/src');let count=0,errors=[];
+function scan(dir){for(const file of fs.readdirSync(dir)){const p=path.join(dir,file);if(fs.statSync(p).isDirectory())scan(p);else if(/\.tsx?$/.test(file)){count++;const r=ts.transpileModule(fs.readFileSync(p,'utf8'),{fileName:p,compilerOptions:{target:ts.ScriptTarget.ES2023,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},reportDiagnostics:true});errors.push(...(r.diagnostics||[]).filter(d=>d.category===ts.DiagnosticCategory.Error).map(d=>p+': '+ts.flattenDiagnosticMessageText(d.messageText,' ')));}}}scan(root);if(errors.length)throw Error(errors.join('\n'));console.log('PASS: '+count+' full TS/TSX files parsed. Dependency types/build not resolved.');

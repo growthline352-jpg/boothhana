@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "verification/v24/test_api_contracts.cjs",
+    "verification/v24/test_write_dtos.cjs",
+    "verification/v24/test_offline_hash.mjs"
+  ],
+  "cwd": "/mnt/data/boothhana_v24/BoothHana2",
+  "runAt": 1789953657.6503122,
+  "baseline": true,
+  "exitCode": 1,
+  "seconds": 0.5705020427703857
+}

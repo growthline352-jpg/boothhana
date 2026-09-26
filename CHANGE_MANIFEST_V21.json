@@ -1,0 +1,46 @@
+{
+  "version": "v21",
+  "base": "v20",
+  "runtimeChanges": [
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryService.java",
+      "beforeSha256": "f67efcdd432b3c516d7b439ede00c468e1cc6ffd38d1d85796e135fb079b118d",
+      "afterSha256": "58e3d3235daba8f080b984378ff1071a991a060ce4f264639a55a46c2e65807a"
+    },
+    {
+      "file": "frontend/src/features/library/publicCache.ts",
+      "beforeSha256": "234d1034fb2dec112b4418b668c805a853a3342728c7ca5ca5964ba4c48ad1f3",
+      "afterSha256": "bc38f9ffac49b1cb7b96f5a725af4c5315c61daee5b35aac60793ff0b904d86d"
+    },
+    {
+      "file": "frontend/src/features/support/submission.ts",
+      "beforeSha256": "f093996a79019386c171290bfe81191f431794c8e6edae0eec6fa34658a09bdc",
+      "afterSha256": "2832e08d64ad3b5c8c2e3921f7e27940530fe485ee103d6ff3676e7b0a003b15"
+    },
+    {
+      "file": "frontend/src/features/trade/submission.ts",
+      "beforeSha256": "388fc53599d85a546a8bd3e00a4c2c82185c4362803607cab6d3061ccf82e2de",
+      "afterSha256": "3c3c19e51771b9d28629a0a6a67ba760deff19145cadffab2643c95a1aa09f32"
+    }
+  ],
+  "preservationChecks": {
+    "database/": {
+      "files": 17,
+      "allOriginalBytesUnchanged": true
+    },
+    "collector/": {
+      "files": 53,
+      "allOriginalBytesUnchanged": true
+    },
+    "frontend/public/offline/": {
+      "files": 8,
+      "allOriginalBytesUnchanged": true
+    },
+    "dependencyManifestsUnchanged": true
+  },
+  "newSql": [],
+  "offlineSchemaChanged": false,
+  "offlineRuntimeChanged": false,
+  "sourceScope": "3 frontend runtime files and 1 backend runtime file; regression/integration tests, CI wiring and current docs changed separately",
+  "productionApproval": false
+}

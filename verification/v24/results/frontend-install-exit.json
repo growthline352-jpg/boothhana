@@ -1,0 +1,13 @@
+{
+  "command": [
+    "corepack",
+    "pnpm",
+    "install",
+    "--frozen-lockfile"
+  ],
+  "cwd": "/mnt/data/boothhana_v24/BoothHana2/frontend",
+  "runAt": 1789953661.9188557,
+  "baseline": false,
+  "exitCode": 1,
+  "seconds": 0.16457366943359375
+}

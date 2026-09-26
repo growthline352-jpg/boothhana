@@ -1,0 +1,83 @@
+{
+  "packageRevision": "v24-gcp-credit-notes",
+  "baseApplicationVersion": 24,
+  "createdOn": "2026-09-21",
+  "inputZip": "BoothHana2-full-v24-20260921.zip",
+  "inputZipSha256": "43893d11076dab1497249b6da08b59160b6cde1ff6bb75241347af9d213d5776",
+  "runtimeChanges": [],
+  "documentationChanges": [
+    {
+      "path": "PACKAGE_GCP_CREDIT_NOTES.json",
+      "kind": "added",
+      "beforeSha256": null,
+      "afterSha256": "767fdaff6603fc78a90b4c2e03693d18e7800eb56df728a1dc6580c4c39a7a87"
+    },
+    {
+      "path": "PRODUCTION_REVIEW_START_KO.md",
+      "kind": "modified",
+      "beforeSha256": "6a5bf11a6daf317760c9d9dcd3f1211a244b9684a95d945e3a0627e7f7501218",
+      "afterSha256": "44720753b28b77e3690e9f74ae722c3b7deb8e2bd4862f0cb9c5cf7abffc1df6"
+    },
+    {
+      "path": "README.md",
+      "kind": "modified",
+      "beforeSha256": "cb38278f01d1d5c415331a796dee7b6c8a5e0e9655c77b34edc7e417df232ba7",
+      "afterSha256": "a13a3b589b09c830d33da8d98e057675741e85c2070fe1828d2ca9f62c331f95"
+    },
+    {
+      "path": "README_KO.md",
+      "kind": "modified",
+      "beforeSha256": "1c663dc47502368764fcf1c68af9d1c351526915570b9036963b733e500c39a5",
+      "afterSha256": "be9766c7637b86a6ad8125b687232f3a5ba4fb47c99255fa8a4273824424efb6"
+    },
+    {
+      "path": "RELEASE_NOTES_KO.md",
+      "kind": "modified",
+      "beforeSha256": "1c663dc47502368764fcf1c68af9d1c351526915570b9036963b733e500c39a5",
+      "afterSha256": "be9766c7637b86a6ad8125b687232f3a5ba4fb47c99255fa8a4273824424efb6"
+    },
+    {
+      "path": "REVIEW_START_HERE_KO.md",
+      "kind": "modified",
+      "beforeSha256": "1c663dc47502368764fcf1c68af9d1c351526915570b9036963b733e500c39a5",
+      "afterSha256": "be9766c7637b86a6ad8125b687232f3a5ba4fb47c99255fa8a4273824424efb6"
+    },
+    {
+      "path": "START_HERE_KO.md",
+      "kind": "modified",
+      "beforeSha256": "1c663dc47502368764fcf1c68af9d1c351526915570b9036963b733e500c39a5",
+      "afterSha256": "be9766c7637b86a6ad8125b687232f3a5ba4fb47c99255fa8a4273824424efb6"
+    },
+    {
+      "path": "TEST_RESULTS_KO.md",
+      "kind": "modified",
+      "beforeSha256": "2bd31af936053ecf995e6ab5f64872cb38dc4aad04f3efc6533894be72ce49f0",
+      "afterSha256": "64d97a4f5c50a8277138e6575e4112fac50b67dfd537f761cc742d637cb954e9"
+    },
+    {
+      "path": "backend/README.md",
+      "kind": "modified",
+      "beforeSha256": "ffe19e5d8993dfb33ae115c6ebd9eaca4d35e2eae71592258c5da6d8bb771f45",
+      "afterSha256": "4481a93d51f09d9ae2a1d9523f8d9b0d3156d2f5ed23a61d6eb702925f009660"
+    },
+    {
+      "path": "docs/deployment/FULL_V24_KO.md",
+      "kind": "modified",
+      "beforeSha256": "cb126862db41fdb7b195fe4c15458449ebe28e2f50eca717d083f323899dbd4c",
+      "afterSha256": "84eea40e5d05c24facd37c23cdeca0862118bf0020d5d1ba2bc4fab6f4dcd88d"
+    },
+    {
+      "path": "docs/deployment/GCP_FREE_TRIAL_KO.md",
+      "kind": "added",
+      "beforeSha256": null,
+      "afterSha256": "bfd9214d793ef976595e61ea40dfb69168ee2afbc747284ba517baa2754d0ae7"
+    }
+  ],
+  "excludedFromDeltaHashes": [
+    "CHANGE_MANIFEST_GCP_CREDIT_NOTES.json",
+    "SHA256SUMS.txt"
+  ],
+  "exclusionReason": "Avoid self-reference; both are covered by the current ZIP and SHA256SUMS where applicable.",
+  "currentFileManifest": "SHA256SUMS.txt",
+  "baselineReleaseMetadataPreserved": true
+}

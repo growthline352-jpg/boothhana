@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""Offline regression checks on the integrated sources. No real external API/DB or deployment."""
+from pathlib import Path
+import subprocess,tempfile,sys
+ROOT=Path(__file__).resolve().parents[1];HERE=ROOT/'verification/v4'
+def run(*args,cwd=ROOT):
+ print('RUN',' '.join(map(str,args)),flush=True);subprocess.run(list(map(str,args)),cwd=cwd,check=True)
+def main():
+ run(sys.executable,'-m','unittest','discover','-s','tests','-v',cwd=ROOT/'collector')
+ run('node',HERE/'test_api_client.cjs');run('node',HERE/'test_review_v2.cjs');run('node',HERE/'check_ts.cjs');run('node',ROOT/'verification/v5/test_catalog_review.cjs');run('node',ROOT/'verification/v5/check_ts_contracts.cjs');run(sys.executable,ROOT/'verification/v5/check_java_local_types.py')
+ run('node',ROOT/'verification/v6/test_discovery.cjs');run('node',ROOT/'verification/v6/check_ts_contracts.cjs');run(sys.executable,ROOT/'verification/v6/check_java_contracts.py')
+ src=ROOT/'backend/src/main/java/com/boothhana'
+ with tempfile.TemporaryDirectory(prefix='boothhana-rules-') as temp:
+  files=[src/x for x in ['service/StockRules.java','service/RecordNumbers.java','upload/ImageUploadRules.java','service/EventImageUpdate.java','service/ProductRevisions.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogReviewRules.java','collection/CatalogAccumulation.java','collection/CatalogCursorRules.java','collection/CatalogBrowseQuery.java']]
+  names=['RulesSmokeTest','ReviewV2RulesTest','CollectionRulesSmokeTest','CatalogRulesSmokeTest','JavaSyntaxCheck']
+  run('javac','-encoding','UTF-8','-d',temp,*files,*(HERE/(n+'.java') for n in names),ROOT/'verification/v5/ReviewFixesSmokeTest.java',ROOT/'verification/v6/BrowseRulesTest.java')
+  for name in names[:-1]+['ReviewFixesSmokeTest','BrowseRulesTest']:run('java','-cp',temp,name)
+  all_java=sorted((ROOT/'backend/src').rglob('*.java'));run('java','-cp',temp,'JavaSyntaxCheck',*all_java)
+ run('node',ROOT/'verification/v7/test_review.cjs');run('node',ROOT/'verification/v7/test_banner_ui.cjs');run(sys.executable,ROOT/'verification/v7/run_banner_smoke.py')
+ run(sys.executable,ROOT/'verification/v8/run_checks.py')
+ run(sys.executable,ROOT/'verification/v9/run_checks.py')
+ run(sys.executable,ROOT/'verification/v16/run_checks.py')
+ print('Offline checks passed. Full frontend/Gradle/PostgreSQL/Codex/R2 acceptance remains separate.')
+if __name__=='__main__':main()

@@ -1,0 +1,25 @@
+{
+  "version": "v16",
+  "createdAt": "2026-09-18",
+  "base": "BoothHana2-full-v15-20260918.zip",
+  "baseSha256": "33e9af931f64f75e9f4cf8788058b3301b6e82b4195b42926ef7b6aab115f514",
+  "fixes": [
+    "R15-01",
+    "R15-02",
+    "R15-03",
+    "R15-04",
+    "R15-05"
+  ],
+  "newSql": false,
+  "migrationRange": "001..015",
+  "tableCount": 43,
+  "productionApproval": false,
+  "validation": "Independent checks passed; actual dependency build/DB/browser/external integration unverified",
+  "documents": [
+    "START_HERE_KO.md",
+    "TEST_RESULTS_KO.md",
+    "docs/deployment/V16_DATABASE_REVIEW_KO.md",
+    "docs/deployment/FULL_V16_KO.md",
+    "docs/release/V16_CHANGES_KO.md"
+  ]
+}

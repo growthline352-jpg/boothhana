@@ -1,0 +1,22 @@
+{
+  "originalV21": {
+    "tests": 22,
+    "pass": 8,
+    "fail": 14,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "fixedV22": {
+    "tests": 22,
+    "pass": 22,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "sameTestFiles": [
+    "test_remote.cjs",
+    "test_guest_session.cjs",
+    "test_public_views.cjs"
+  ],
+  "scope": "Actual frontend modules with explicit hooks/JSX/API doubles; not a real browser or distinct defect count"
+}

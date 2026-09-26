@@ -1,0 +1,15 @@
+[Unit]
+Description=BoothHana imminent floorplan discovery/vision/mapping
+Wants=network-online.target
+After=network-online.target
+[Service]
+Type=oneshot
+User=boothhana
+WorkingDirectory=/opt/boothhana/collector
+EnvironmentFile=/etc/boothhana/collector.env
+ExecStart=/opt/boothhana/collector/.venv/bin/python /opt/boothhana/collector/floorplans.py --config /opt/boothhana/collector/config.local.json --imminent
+TimeoutStartSec=21h
+SuccessExitStatus=2
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077

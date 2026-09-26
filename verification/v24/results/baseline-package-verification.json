@@ -1,0 +1,13 @@
+{
+  "state": "VERIFIED",
+  "zipName": "BoothHana2-full-v23-20260918.zip",
+  "zipSha256": "05566e04c56823e09749ac784c71c8e31c8fd537602d5ea378efc06ba815b55f",
+  "fileCount": 1219,
+  "checksumCount": 1218,
+  "matchedChecksums": 1218,
+  "crc": "PASS",
+  "exactCoverage": true,
+  "duplicatePaths": false,
+  "externalDigestChecked": true,
+  "authenticityVerified": false
+}

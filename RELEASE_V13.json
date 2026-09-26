@@ -1,0 +1,18 @@
+{
+  "version": "v13-rebuilt",
+  "date": "2026-09-17",
+  "baseline": "BoothHana2-full-v12-20260917.zip",
+  "baseline_sha256": "06843235f43177bfaed92e025e3a9ac66b755bd4d999caa48b2c29b787320cb1",
+  "scope": [
+    "R12-01",
+    "R12-02",
+    "R12-03",
+    "R12-04",
+    "R12-05"
+  ],
+  "migration": "013_support_reliability.sql",
+  "status": "INTEGRATION_PENDING",
+  "production_database_changed": false,
+  "github_changed": false,
+  "scheduler_changed": false
+}

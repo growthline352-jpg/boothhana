@@ -1,0 +1,12 @@
+{
+  "command": [
+    "corepack",
+    "pnpm",
+    "install",
+    "--frozen-lockfile"
+  ],
+  "cwd": "frontend",
+  "startedAt": 1789718252.4705746,
+  "exitCode": 1,
+  "finishedAt": 1789718253.141308
+}

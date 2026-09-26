@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: boothhana-backend
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/boothhana}
+    username: ${DATABASE_USERNAME:boothhana}
+    password: ${DATABASE_PASSWORD:boothhana}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:5000}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID:local-placeholder}
+            client-secret: ${KAKAO_CLIENT_SECRET:local-placeholder}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: profile_nickname
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        secure: ${SESSION_COOKIE_SECURE:false}
+        same-site: ${SESSION_COOKIE_SAME_SITE:lax}
+app:
+  support:
+    guest-enabled: ${SUPPORT_GUEST_ENABLED:false}
+    rate-secret: ${SUPPORT_RATE_SECRET:}
+    attachments-enabled: ${SUPPORT_ATTACHMENTS_ENABLED:false}
+    attachment-concurrency: ${SUPPORT_ATTACHMENT_CONCURRENCY:4}
+    private-bucket: ${SUPPORT_PRIVATE_BUCKET:}
+  collector:
+    token: ${BOOTH_COLLECTOR_TOKEN:}
+  upload:
+    max-per-hour: ${UPLOAD_MAX_PER_HOUR:20}
+    max-bytes-per-day: ${UPLOAD_MAX_BYTES_PER_DAY:104857600}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
+  admin-kakao-subjects: ${ADMIN_KAKAO_SUBJECTS:${ADMIN_KAKAO_SUBJECT:}}
+  r2:
+    account-id: ${R2_ACCOUNT_ID:}
+    access-key: ${R2_ACCESS_KEY_ID:}
+    secret-key: ${R2_SECRET_ACCESS_KEY:}
+    bucket: ${R2_BUCKET:}
+    public-url: ${R2_PUBLIC_URL:}

@@ -1,0 +1,48 @@
+{
+  "sourceBaseline": "BoothHana2-full-v13-release-reviewed-20260917.zip",
+  "sourceBaselineSha256": "19b0adfd9237701493bfb54bf6bedf8258ec3a916fc6f8d81cc7179325e158b5",
+  "productionApproval": false,
+  "executed": {
+    "v14FocusedRunner": "PASS_EXIT_0",
+    "supportExistingServiceAssertions": 49,
+    "v13ReliabilityAssertions": 24,
+    "v14ContentAdmissionAttachmentAssertions": 21,
+    "v14TradeRulesReceiptAssertions": 18,
+    "v14TradeStateUiAssertions": 26,
+    "actualCreationBodies": "Reservation/POS same request twice => 1 record, stock 10->8, 1 receipt; conflicting input409; new intent allowed. Memory repositories/scripted JDBC, not actual DB.",
+    "gateRefusalUnitTests": 9,
+    "v13SubmissionUiAssertions": 29,
+    "v12SupportUiAssertions": 55,
+    "collectorTests": 170,
+    "typescriptSyntaxFiles": 77,
+    "javaSyntaxFiles": 121,
+    "localTypes": "PASS_EXPLICIT_EXTERNAL_STUBS",
+    "v10DesignAssertions": 62,
+    "v11PureRules": 123,
+    "v11ServiceAssertions": 22,
+    "v11ErrorAssertions": 7,
+    "v11UiAssertions": 44,
+    "workflowSyntax": "PASS_YAML_ONLY",
+    "releaseGateWithoutDatabase": "EXPECTED_NOT_READY_EXIT_2"
+  },
+  "notExecuted": [
+    "actual SQL001..014 / PostgreSQL / JPA+JDBC concurrency and rollback",
+    "full Spring HTTP authentication/CSRF with real dependencies",
+    "real React build/browser/mobile",
+    "Kakao",
+    "private R2",
+    "live Codex",
+    "CI workflow on GitHub",
+    "load at configured production limits",
+    "backup restore"
+  ],
+  "failedBuildAttempts": {
+    "frontend": "TS2688 missing vite/client/node dependencies",
+    "backend": "UnknownHostException services.gradle.org"
+  },
+  "actualIntegrationTestsWritten": {
+    "ReleaseIntegrationTests": 14,
+    "SupportReliabilityPostgresTests": 8
+  },
+  "rootRegression": "Stopped at tool timeout after completing collector/earlier stages; remaining banner/floorplan/visit/goods/design checks executed separately. No claim of one complete root-run."
+}

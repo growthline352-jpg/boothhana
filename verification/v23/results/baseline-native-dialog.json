@@ -1,0 +1,55 @@
+{
+  "mode": "native Chromium HTMLDialogElement + real helper; isolated DOM, no React hydration/API",
+  "productionApproval": false,
+  "checks": [
+    {
+      "before": {
+        "focus": "qr-close",
+        "lock": "hidden"
+      },
+      "middle": {
+        "lock": "hidden",
+        "focus": "qr-trigger"
+      },
+      "after": {
+        "lock": "auto",
+        "focus": "trigger"
+      },
+      "pass": true,
+      "case": "normal"
+    },
+    {
+      "before": {
+        "focus": "qr-close",
+        "lock": "hidden"
+      },
+      "middle": {
+        "lock": "auto",
+        "focus": "qr-close"
+      },
+      "after": {
+        "lock": "hidden",
+        "focus": "qr-close"
+      },
+      "pass": false,
+      "case": "parent-first"
+    },
+    {
+      "before": {
+        "focus": "qr-close",
+        "lock": "hidden"
+      },
+      "middle": {
+        "lock": "hidden",
+        "focus": "qr-trigger"
+      },
+      "after": {
+        "lock": "auto",
+        "focus": "trigger"
+      },
+      "pass": true,
+      "case": "duplicate-cleanup"
+    }
+  ],
+  "status": "FAIL"
+}

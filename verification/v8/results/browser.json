@@ -1,0 +1,33 @@
+{
+  "checks": 27,
+  "passed": [
+    "1440: four fixture polygons",
+    "1440: no page overflow",
+    "1440: original embedded",
+    "1440: preview zoom",
+    "1440: reset",
+    "1440: keyboard opens native drawer",
+    "1440: modal",
+    "1440: escape",
+    "1440: focus returns to map",
+    "390: four fixture polygons",
+    "390: no page overflow",
+    "390: original embedded",
+    "390: preview zoom",
+    "390: reset",
+    "390: keyboard opens native drawer",
+    "390: modal",
+    "390: escape",
+    "390: focus returns to map",
+    "320: four fixture polygons",
+    "320: no page overflow",
+    "320: original embedded",
+    "320: preview zoom",
+    "320: reset",
+    "320: keyboard opens native drawer",
+    "320: modal",
+    "320: escape",
+    "320: focus returns to map"
+  ],
+  "scope": "static source SVG + preview glue + actual native dialog lifecycle; not React app E2E"
+}

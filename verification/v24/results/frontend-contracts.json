@@ -1,0 +1,5360 @@
+{
+  "files": 98,
+  "calls": [
+    {
+      "file": "frontend/src/api/client.ts",
+      "line": 78,
+      "callee": "fetch",
+      "method": "GET",
+      "paths": [
+        "/api/auth/csrf"
+      ],
+      "bodyFields": null,
+      "expression": "`${API_BASE_URL}/api/auth/csrf`"
+    },
+    {
+      "file": "frontend/src/api/image-upload.ts",
+      "line": 33,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/uploads/tickets"
+      ],
+      "bodyFields": [
+        "uploadId",
+        "target",
+        "contentType",
+        "fileSize",
+        "sha256"
+      ],
+      "expression": "'/api/creator/uploads/tickets'"
+    },
+    {
+      "file": "frontend/src/api/image-upload.ts",
+      "line": 37,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/uploads/tickets/{value}/content"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/uploads/tickets/${uploadId}/content`"
+    },
+    {
+      "file": "frontend/src/api/image-upload.ts",
+      "line": 40,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/uploads/tickets/{value}/complete"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/uploads/tickets/${uploadId}/complete`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 28,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/me"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/me'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 32,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/logout"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/logout'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 38,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/events"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/public/events'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 39,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/events/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/events/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 40,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/events/{value}/booths"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/events/${id}/booths`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 41,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/booths/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/booths/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 42,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/booths/{value}/products"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/booths/${id}/products`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 43,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/products/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/products/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 47,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/me/reservations"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/me/reservations'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 48,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/me/reservations/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/me/reservations/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 49,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/me/reservation-requests/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/me/reservation-requests/${encodeURIComponent(requestId)}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 51,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/me/reservations"
+      ],
+      "bodyFields": [
+        "eventBoothId",
+        "items",
+        "requestId"
+      ],
+      "expression": "'/api/me/reservations'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 55,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/me/reservations/{value}/cancel"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/me/reservations/${id}/cancel`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 59,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/applications"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/creator/applications'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 60,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/applications/{value}/resubmit"
+      ],
+      "bodyFields": [
+        "revision"
+      ],
+      "expression": "`/api/creator/applications/${id}/resubmit`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 61,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/applications/{value}/withdraw"
+      ],
+      "bodyFields": [
+        "revision"
+      ],
+      "expression": "`/api/creator/applications/${id}/withdraw`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 62,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/events?boothId={value}",
+        "/api/creator/events"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/events${boothId ? `?boothId=${boothId}` : ''}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 63,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/booths"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/creator/booths'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 64,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/event-booths"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/creator/event-booths'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 66,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/creator/event-booths/{value}"
+      ],
+      "bodyFields": [
+        "boothNumber",
+        "intro",
+        "isPublic"
+      ],
+      "expression": "`/api/creator/event-booths/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 67,
+      "callee": "api",
+      "method": "DELETE",
+      "paths": [
+        "/api/creator/event-booths/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/event-booths/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 69,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/booths"
+      ],
+      "bodyFields": [
+        "name",
+        "intro",
+        "imageKey",
+        "snsUrl"
+      ],
+      "expression": "'/api/creator/booths'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 71,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/creator/booths/{value}"
+      ],
+      "bodyFields": [
+        "name",
+        "intro",
+        "imageKey",
+        "snsUrl"
+      ],
+      "expression": "`/api/creator/booths/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 72,
+      "callee": "api",
+      "method": "DELETE",
+      "paths": [
+        "/api/creator/booths/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/booths/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 74,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/applications"
+      ],
+      "bodyFields": [
+        "eventId",
+        "boothId"
+      ],
+      "expression": "'/api/creator/applications'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 78,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/event-booths/{value}/products"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/event-booths/${eventBoothId}/products`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 80,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/event-booths/{value}/products"
+      ],
+      "bodyFields": [
+        "name",
+        "description",
+        "imageKey",
+        "price",
+        "stockMode",
+        "stockQuantity",
+        "soldOut",
+        "isPublic",
+        "reservationEnabled",
+        "version",
+        "productVersion"
+      ],
+      "expression": "`/api/creator/event-booths/${eventBoothId}/products`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 82,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/creator/products/{value}"
+      ],
+      "bodyFields": [
+        "name",
+        "description",
+        "imageKey",
+        "price",
+        "stockMode",
+        "stockQuantity",
+        "soldOut",
+        "isPublic",
+        "reservationEnabled",
+        "version",
+        "productVersion"
+      ],
+      "expression": "`/api/creator/products/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 83,
+      "callee": "api",
+      "method": "DELETE",
+      "paths": [
+        "/api/creator/products/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/products/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 85,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/event-booths/{value}/products/copy"
+      ],
+      "bodyFields": [
+        "productIds"
+      ],
+      "expression": "`/api/creator/event-booths/${eventBoothId}/products/copy`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 89,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/reservations"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/creator/reservations'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 90,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/reservations/by-number/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/reservations/by-number/${encodeURIComponent(value)}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 91,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/reservations/{value}/pickup"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/reservations/${id}/pickup`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 92,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/pos-sales"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/creator/pos-sales'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 93,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/pos-sales/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/pos-sales/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 94,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/pos-requests/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/pos-requests/${encodeURIComponent(requestId)}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 96,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/pos-sales"
+      ],
+      "bodyFields": [
+        "eventBoothId",
+        "paymentMethod",
+        "items",
+        "requestId"
+      ],
+      "expression": "'/api/creator/pos-sales'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 97,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/pos-sales/{value}/cancel"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/pos-sales/${id}/cancel`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 98,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/creator/event-booths/{value}/notices"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/event-booths/${eventBoothId}/notices`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 100,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/event-booths/{value}/notices"
+      ],
+      "bodyFields": [
+        "title",
+        "body",
+        "pinned"
+      ],
+      "expression": "`/api/creator/event-booths/${eventBoothId}/notices`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 102,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/creator/notices/{value}"
+      ],
+      "bodyFields": [
+        "title",
+        "body",
+        "pinned"
+      ],
+      "expression": "`/api/creator/notices/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 103,
+      "callee": "api",
+      "method": "DELETE",
+      "paths": [
+        "/api/creator/notices/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/notices/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 104,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/creator/notices/{value}/pin"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/creator/notices/${id}/pin`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 108,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/events"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/admin/events'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 109,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/events/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/events/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 111,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/events"
+      ],
+      "bodyFields": [
+        "name",
+        "startAt",
+        "endAt",
+        "venue",
+        "description",
+        "imageKey",
+        "reservationStartAt",
+        "reservationEndAt",
+        "status",
+        "removeImage"
+      ],
+      "expression": "'/api/admin/events'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 113,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/admin/events/{value}"
+      ],
+      "bodyFields": [
+        "name",
+        "startAt",
+        "endAt",
+        "venue",
+        "description",
+        "imageKey",
+        "reservationStartAt",
+        "reservationEndAt",
+        "status",
+        "removeImage"
+      ],
+      "expression": "`/api/admin/events/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 114,
+      "callee": "api",
+      "method": "DELETE",
+      "paths": [
+        "/api/admin/events/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/events/${id}`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 115,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/events/{value}/publish"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/events/${id}/publish`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 116,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/events/{value}/end"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/events/${id}/end`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 117,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/applications"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/admin/applications'"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 118,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/applications/{value}/approve"
+      ],
+      "bodyFields": [
+        "revision"
+      ],
+      "expression": "`/api/admin/applications/${id}/approve`"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 120,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/applications/{value}/reject"
+      ],
+      "bodyFields": [
+        "reason",
+        "revision"
+      ],
+      "expression": "`/api/admin/applications/${id}/reject`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 24,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/v4/events?page={value}&size=20"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/events?page=${page}&size=20`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 25,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/v4/events/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/events/${id}`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 26,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/admin/subculture/v4/events/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/events/${id}`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 27,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/v4/events/{value}/participants?page={value}&size=20&q={value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/events/${id}/participants?page=${page}&size=20&q=${encodeURIComponent(q)}`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 28,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/v4/participants/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/participants/${id}`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 29,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/admin/subculture/v4/participants/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/participants/${id}`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 30,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/admin/subculture/v4/participants/{value}/sales"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/participants/${id}/sales`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 31,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/admin/subculture/v4/assets/{value}/rights"
+      ],
+      "bodyFields": [
+        "revision",
+        "rightsState",
+        "note",
+        "credit",
+        "offlineAllowed"
+      ],
+      "expression": "`${base}/assets/${asset.id}/rights`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 32,
+      "callee": "api",
+      "method": "PUT",
+      "paths": [
+        "/api/admin/subculture/v4/events/{value}/banner"
+      ],
+      "bodyFields": [
+        "revision",
+        "assetId",
+        "assetRevision"
+      ],
+      "expression": "`${base}/events/${eventId}/banner`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 33,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/subculture/v4/events/{value}/publish"
+      ],
+      "bodyFields": [
+        "eventRevision"
+      ],
+      "expression": "`${base}/events/${id}/publish`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 34,
+      "callee": "api",
+      "method": "DELETE",
+      "paths": [
+        "/api/admin/subculture/v4/events/{value}/publish"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/events/${id}/publish`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 35,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/v4/runs?page={value}&size=20"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/runs?page=${page}&size=20`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 42,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/catalog/events?{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/catalog/events?${query}`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 43,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/catalog/events?page={value}&size=20"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/catalog/events?page=${page}&size=20`"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 44,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/catalog/events/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/catalog/events/${id}`"
+    },
+    {
+      "file": "frontend/src/features/collection/api.ts",
+      "line": 33,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/candidates?state={value}&page={value}&size=20"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/subculture/candidates?state=${state}&page=${page}&size=20`"
+    },
+    {
+      "file": "frontend/src/features/collection/api.ts",
+      "line": 34,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/candidates/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/subculture/candidates/${id}`"
+    },
+    {
+      "file": "frontend/src/features/collection/api.ts",
+      "line": 35,
+      "callee": "api",
+      "method": "PATCH",
+      "paths": [
+        "/api/admin/subculture/candidates/{value}/review"
+      ],
+      "bodyFields": [
+        "revision",
+        "reviewState",
+        "note"
+      ],
+      "expression": "`/api/admin/subculture/candidates/${id}/review`"
+    },
+    {
+      "file": "frontend/src/features/collection/api.ts",
+      "line": 38,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/runs?page={value}&size=20"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/subculture/runs?page=${page}&size=20`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 22,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/versions/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/versions/${encodeURIComponent(id)}`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 23,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/events/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/events/${id}`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 24,
+      "callee": "api",
+      "method": "PUT",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/events/{value}/watch"
+      ],
+      "bodyFields": [
+        "revision",
+        "disabled"
+      ],
+      "expression": "`${base}/events/${id}/watch`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 25,
+      "callee": "api",
+      "method": "PUT",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/events/{value}/sources/{value}/permission"
+      ],
+      "bodyFields": [
+        "assetRevision",
+        "sourceRevision",
+        "allowed",
+        "note",
+        "credit"
+      ],
+      "expression": "`${base}/events/${event}/sources/${s.asset.id}/permission`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 26,
+      "callee": "api",
+      "method": "PUT",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/events/{value}/sources/{value}/scope"
+      ],
+      "bodyFields": [
+        "revision",
+        "scope"
+      ],
+      "expression": "`${base}/events/${event}/sources/${s.asset.id}/scope`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 27,
+      "callee": "api",
+      "method": "PUT",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/versions/{value}"
+      ],
+      "bodyFields": [
+        "revision",
+        "geometry",
+        "manualLinks",
+        "note"
+      ],
+      "expression": "`${base}/versions/${v.id}`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 28,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/versions/{value}/publish"
+      ],
+      "bodyFields": [
+        "revision",
+        "acceptPartial",
+        "note"
+      ],
+      "expression": "`${base}/versions/${v.id}/publish`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 29,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/admin/subculture/v4/floorplans/versions/{value}/withdraw"
+      ],
+      "bodyFields": [
+        "revision",
+        "note",
+        "acceptPartial"
+      ],
+      "expression": "`${base}/versions/${v.id}/withdraw`"
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 30,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/catalog/events/{value}/floorplans"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/catalog/events/${encodeURIComponent(id)}/floorplans`"
+    },
+    {
+      "file": "frontend/src/features/goods/api.ts",
+      "line": 36,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/goods/bestsellers?category={value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/goods/bestsellers?category=${encodeURIComponent(category)}`"
+    },
+    {
+      "file": "frontend/src/features/goods/api.ts",
+      "line": 37,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/goods-showcase?q={value}&page={value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/admin/goods-showcase?q=${encodeURIComponent(q)}&page=${page}`"
+    },
+    {
+      "file": "frontend/src/features/goods/api.ts",
+      "line": 39,
+      "callee": "api",
+      "method": "PUT",
+      "paths": [
+        "/api/admin/goods-showcase/{value}"
+      ],
+      "bodyFields": [
+        "category",
+        "enabled",
+        "revision"
+      ],
+      "expression": "`/api/admin/goods-showcase/${id}`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 6,
+      "callee": "request",
+      "method": "GET",
+      "paths": [
+        "/api/me/library/index"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/index`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 7,
+      "callee": "request",
+      "method": "GET",
+      "paths": [
+        "/api/me/library/items?{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/items?${query}`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 8,
+      "callee": "request",
+      "method": "PUT",
+      "paths": [
+        "/api/me/library/items"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/items`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 9,
+      "callee": "request",
+      "method": "GET",
+      "paths": [
+        "/api/me/library/items/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/items/${encodeURIComponent(id)}`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 10,
+      "callee": "request",
+      "method": "PATCH",
+      "paths": [
+        "/api/me/library/items/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/items/${encodeURIComponent(id)}`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 11,
+      "callee": "request",
+      "method": "DELETE",
+      "paths": [
+        "/api/me/library/items/{value}?revision={value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${base}/items/${encodeURIComponent(id)}?revision=${revision}`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 12,
+      "callee": "request",
+      "method": "PUT",
+      "paths": [
+        "/api/me/library/items/{value}/visit"
+      ],
+      "bodyFields": [
+        "day",
+        "visited"
+      ],
+      "expression": "`${base}/items/${encodeURIComponent(id)}/visit`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 13,
+      "callee": "request",
+      "method": "POST",
+      "paths": [
+        "/api/public/library/resolve"
+      ],
+      "bodyFields": [
+        "targets"
+      ],
+      "expression": "'/api/public/library/resolve'"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 14,
+      "callee": "request",
+      "method": "POST",
+      "paths": [
+        "/api/me/library/import"
+      ],
+      "bodyFields": [
+        "item",
+        "note",
+        "expectedUserId"
+      ],
+      "expression": "`${base}/import`"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 15,
+      "callee": "request",
+      "method": "POST",
+      "paths": [
+        "/api/me/library/items/{value}/activity"
+      ],
+      "bodyFields": [
+        "action"
+      ],
+      "expression": "`${base}/items/${encodeURIComponent(id)}/activity`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 24,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/support/options"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/public/support/options'"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 25,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/public/support/target"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/public/support/target'"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 26,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/public/support/claimables?eventId={value}&participantId={value}"
+      ],
+      "bodyFields": null,
+      "expression": "`/api/public/support/claimables?eventId=${t.eventId}&participantId=${t.id}`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 27,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/support/tickets?{value}",
+        "/api/me/support/tickets?{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(admin)}/tickets?${new URLSearchParams({kind,page:String(page),status})}`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 28,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/me/support/requests/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix()}/requests/${encodeURIComponent(id)}`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 29,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/me/support/tickets"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/me/support/tickets'"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 30,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/admin/support/tickets/{value}",
+        "/api/me/support/tickets/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(admin)}/tickets/${encodeURIComponent(id)}`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 31,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/admin/support/tickets/{value}/messages",
+        "/api/me/support/tickets/{value}/messages"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(admin)}/tickets/${id}/messages`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 32,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/admin/support/tickets/{value}/actions"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(true)}/tickets/${id}/actions`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 33,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/admin/support/tickets/{value}/hide"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(true)}/tickets/${id}/hide`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 34,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/admin/support/tickets/{value}/publish-reviewed"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(true)}/tickets/${id}/publish-reviewed`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 35,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/admin/support/tickets/{value}/claim-decision"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(true)}/tickets/${id}/claim-decision`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 36,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/admin/support/managers/{value}/{value}/revoke"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix(true)}/managers/${exhibitor}/${user}/revoke`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 37,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "/api/me/support/managed-exhibitors"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix()}/managed-exhibitors`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 38,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/public/support/guest/tickets"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/public/support/guest/tickets'"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 39,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/public/support/guest/read"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/public/support/guest/read'"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 40,
+      "callee": "post",
+      "method": "POST",
+      "paths": [
+        "/api/public/support/guest/messages"
+      ],
+      "bodyFields": null,
+      "expression": "'/api/public/support/guest/messages'"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 44,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "/api/me/support/tickets/{value}/attachments/{value}?{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${prefix()}/tickets/${id}/attachments/${uploadId}?${new URLSearchParams({sha256,size:String(file.size)})}`"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 47,
+      "callee": "fetch",
+      "method": "GET",
+      "paths": [
+        "/api/admin/support/tickets/{value}/attachments/{value}",
+        "/api/me/support/tickets/{value}/attachments/{value}"
+      ],
+      "bodyFields": null,
+      "expression": "`${API_BASE_URL}${prefix(admin)}/tickets/${ticketId}/attachments/${id}`"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "ImageUploadTask",
+      "file": "frontend/src/api/image-upload.ts",
+      "extends": [],
+      "fields": []
+    },
+    {
+      "name": "AuthSnapshot",
+      "file": "frontend/src/app/AuthSession.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "status",
+          "type": "AuthStatus",
+          "optional": false
+        },
+        {
+          "name": "user",
+          "type": "User | null",
+          "optional": false
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "generation",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "DraftLease",
+      "file": "frontend/src/app/ConsoleDraftStore.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "epoch",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "scope",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "key",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "DraftEntry",
+      "file": "frontend/src/app/ConsoleDraftStore.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "optional": false
+        },
+        {
+          "name": "pending",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "AuthValue",
+      "file": "frontend/src/app/auth-context.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "drafts",
+          "type": "ConsoleDraftStore",
+          "optional": false
+        },
+        {
+          "name": "user",
+          "type": "User | null",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "AuthStatus",
+          "optional": false
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "generation",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "getSnapshot",
+          "type": "() => AuthSnapshot",
+          "optional": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "refresh",
+          "type": "() => Promise<void>",
+          "optional": false
+        },
+        {
+          "name": "loginUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "logout",
+          "type": "() => Promise<void>",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ConsoleLink",
+      "file": "frontend/src/components/layout/ConsoleLayout.tsx",
+      "extends": [],
+      "fields": [
+        {
+          "name": "to",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "icon",
+          "type": "IconName",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ImageUploaderProps",
+      "file": "frontend/src/components/ui/ImageUploader.tsx",
+      "extends": [],
+      "fields": [
+        {
+          "name": "currentUrl",
+          "type": "string | null",
+          "optional": true
+        },
+        {
+          "name": "target",
+          "type": "'booth' | 'product'",
+          "optional": false
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "onUploaded",
+          "type": "(objectKey: string) => void",
+          "optional": false
+        },
+        {
+          "name": "onBusyChange",
+          "type": "(busy: boolean) => void",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "Location",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "code",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "hall",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "zone",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "startDate",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "endDate",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "floorPlanUrl",
+          "type": "string | null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Member",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "aliases",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "profileUrl",
+          "type": "string | null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ImageCandidate",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "type",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "imageUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "pageUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "caption",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "rightsEvidence",
+          "type": "string | null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Identity",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "sourceSystem",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "entryId",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "detailUrl",
+          "type": "string | null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ProductCheck",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "state",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "lastSeenAt",
+          "type": "string | null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ProductRow",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "data",
+          "type": "Product",
+          "optional": false
+        },
+        {
+          "name": "verification",
+          "type": "ProductCheck",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "Participant",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "identity",
+          "type": "Identity | null",
+          "optional": true
+        },
+        {
+          "name": "sourceEntryId",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "registrationName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "members",
+          "type": "Member[]",
+          "optional": false
+        },
+        {
+          "name": "locations",
+          "type": "Location[]",
+          "optional": false
+        },
+        {
+          "name": "subjects",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "officialLinks",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "sources",
+          "type": "EventSource[]",
+          "optional": false
+        },
+        {
+          "name": "images",
+          "type": "ImageCandidate[]",
+          "optional": false
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Product",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "identity",
+          "type": "Identity | null",
+          "optional": true
+        },
+        {
+          "name": "sourceEntryId",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "memberName",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "categories",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "subjects",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "evidenceScope",
+          "type": "EvidenceScope",
+          "optional": false
+        },
+        {
+          "name": "price",
+          "type": "{amount: string; currency: string; checkedOn: string; note: string | null} | null",
+          "optional": false
+        },
+        {
+          "name": "saleState",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "productUrl",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "sources",
+          "type": "EventSource[]",
+          "optional": false
+        },
+        {
+          "name": "images",
+          "type": "ImageCandidate[]",
+          "optional": false
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Sales",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "summary",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "evidenceScope",
+          "type": "EvidenceScope",
+          "optional": false
+        },
+        {
+          "name": "categories",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "subjects",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "salesMethod",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "sources",
+          "type": "EventSource[]",
+          "optional": false
+        },
+        {
+          "name": "images",
+          "type": "ImageCandidate[]",
+          "optional": false
+        },
+        {
+          "name": "products",
+          "type": "Product[]",
+          "optional": false
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Asset",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "offlineAllowed",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "participantId",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "productId",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "imageUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "pageUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "caption",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "rightsEvidence",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "rightsState",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "rightsNote",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "storageState",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "storedUrl",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "credit",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ParticipantRow",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "reviewState",
+          "type": "ReviewState",
+          "optional": false
+        },
+        {
+          "name": "data",
+          "type": "Participant",
+          "optional": false
+        },
+        {
+          "name": "collectedData",
+          "type": "Participant",
+          "optional": false
+        },
+        {
+          "name": "reviewNote",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "lastSeenAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "overrides",
+          "type": "Record<string,unknown>",
+          "optional": false
+        },
+        {
+          "name": "sales",
+          "type": "{revision: number; reviewState: ReviewState; data: Sales; collectedData: Sales | null; reviewNote: string; collectedAt: string; overrides: Record<string,unknown>; productRows: ProductRow[]} | null",
+          "optional": false
+        },
+        {
+          "name": "assets",
+          "type": "Asset[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "EventRow",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "subcategory",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "reviewState",
+          "type": "ReviewState",
+          "optional": false
+        },
+        {
+          "name": "participantCount",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "salesCount",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "storedImageCount",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "published",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "startDate",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Coverage",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "completeness",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "reportedTotal",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "totalUnit",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "visitedPages",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "nextPageUrl",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "BannerSelection",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "assetId",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "EventDetail",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "bannerSelection",
+          "type": "BannerSelection",
+          "optional": false
+        },
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "event",
+          "type": "EventData",
+          "optional": false
+        },
+        {
+          "name": "collectedEvent",
+          "type": "EventData",
+          "optional": false
+        },
+        {
+          "name": "overrides",
+          "type": "Record<string, unknown>",
+          "optional": false
+        },
+        {
+          "name": "reviewState",
+          "type": "ReviewState",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "possibleDuplicateOf",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "assets",
+          "type": "Asset[]",
+          "optional": false
+        },
+        {
+          "name": "recentStages",
+          "type": "{stage: string; status: string; coverage: Coverage; receivedAt: string}[]",
+          "optional": false
+        },
+        {
+          "name": "participantProgress",
+          "type": "{root_url: string | null; next_page_url: string | null; pass_no: number; page_index: number; state: string; updated_at: string}[]",
+          "optional": true
+        },
+        {
+          "name": "publication",
+          "type": "{event_revision: number; published_at: string}[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PipelineRun",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "runId",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "scope",
+          "type": "{startDate: string; endDate: string}",
+          "optional": false
+        },
+        {
+          "name": "startedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "heartbeatAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "summary",
+          "type": "{counts?: Record<string,number>; issues?: string[]; schedule?: string; receipts?: Record<string,{status:string;inserted:number;changed:number;unchanged:number;rejected:number}>}",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Edit",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "reviewState",
+          "type": "ReviewState",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "overrides",
+          "type": "Record<string,unknown>",
+          "optional": false
+        },
+        {
+          "name": "clearOverrides",
+          "type": "string[]",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "PublicAsset",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "offlineAllowed",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "participantId",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "productId",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "caption",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "attribution",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "credit",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PublicParticipant",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "participant",
+          "type": "Participant",
+          "optional": false
+        },
+        {
+          "name": "sales",
+          "type": "Sales | null",
+          "optional": false
+        },
+        {
+          "name": "productRows",
+          "type": "ProductRow[]",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "PublicEvent",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "banner",
+          "type": "PublicAsset|null",
+          "optional": true
+        },
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "mode",
+          "type": "'INFO_ONLY'",
+          "optional": false
+        },
+        {
+          "name": "event",
+          "type": "EventData",
+          "optional": false
+        },
+        {
+          "name": "participants",
+          "type": "PublicParticipant[]",
+          "optional": false
+        },
+        {
+          "name": "publishedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "assets",
+          "type": "PublicAsset[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PublicEventSummary",
+      "file": "frontend/src/features/catalog/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "event",
+          "type": "EventData",
+          "optional": false
+        },
+        {
+          "name": "participantCount",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "publishedAt",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "banner",
+          "type": "PublicAsset | null",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "Occurrence",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "startDate",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "endDate",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "startTime",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "endTime",
+          "type": "string | null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "EventSource",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "url",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "access",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "evidence",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Banner",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "imageUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "pageUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "rights",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "rightsEvidence",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "matchesEdition",
+          "type": "boolean | null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "OperationStatus",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "state",
+          "type": "'UNKNOWN'|'SCHEDULED'|'CANCELED'|'POSTPONED'|'RESCHEDULED'",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "sourceUrl",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "checkedOn",
+          "type": "string|null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "EventData",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "operationStatus",
+          "type": "OperationStatus",
+          "optional": true
+        },
+        {
+          "name": "eventFormat",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "discoveryLinks",
+          "type": "{kind: string; url: string | null; status: string; note: string | null}[]",
+          "optional": true
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "subcategory",
+          "type": "Subcategory",
+          "optional": false
+        },
+        {
+          "name": "organizer",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "edition",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "region",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "venueName",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "address",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "admission",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "subjects",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "occurrences",
+          "type": "Occurrence[]",
+          "optional": false
+        },
+        {
+          "name": "sources",
+          "type": "EventSource[]",
+          "optional": false
+        },
+        {
+          "name": "banners",
+          "type": "Banner[]",
+          "optional": false
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Candidate",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "subcategory",
+          "type": "Subcategory",
+          "optional": false
+        },
+        {
+          "name": "venueName",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "startsOn",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "endsOn",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "reviewState",
+          "type": "ReviewState",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "possibleDuplicateOf",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "lastSeenAt",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Detail",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "reviewState",
+          "type": "ReviewState",
+          "optional": false
+        },
+        {
+          "name": "event",
+          "type": "EventData",
+          "optional": false
+        },
+        {
+          "name": "reviewedEvent",
+          "type": "EventData | null",
+          "optional": false
+        },
+        {
+          "name": "validationWarnings",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "reviewNote",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "possibleDuplicateOf",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "firstSeenAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "lastSeenAt",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "runId",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "inserted",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "changed",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "unchanged",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "rejected",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "rejections",
+          "type": "{ index: number; name: string; reasons: string[] }[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Run",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "executionMode",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "startedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "finishedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "scope",
+          "type": "{ region: string; timezone: string; startDate: string; endDate: string }",
+          "optional": false
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "receipt",
+          "type": "Receipt",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Page",
+      "file": "frontend/src/features/collection/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "items",
+          "type": "T[]",
+          "optional": false
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "size",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "BrowseState",
+      "file": "frontend/src/features/discovery/browse.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "category",
+          "type": "DiscoveryCategory",
+          "optional": false
+        },
+        {
+          "name": "q",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "region",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "subcategory",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "period",
+          "type": "Period",
+          "optional": false
+        },
+        {
+          "name": "sort",
+          "type": "'date' | 'recent'",
+          "optional": false
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "to",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "dateError",
+          "type": "string",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "DiscoveryCategory",
+      "file": "frontend/src/features/discovery/categories.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "key",
+          "type": "CategoryKey",
+          "optional": false
+        },
+        {
+          "name": "code",
+          "type": "'SUBCULTURE' | 'EXHIBITION' | 'FESTIVAL'",
+          "optional": false
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "eyebrow",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "emphasis",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "searchHint",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "icon",
+          "type": "'sparkles' | 'building' | 'festival'",
+          "optional": false
+        },
+        {
+          "name": "filters",
+          "type": "{ value: string; label: string }[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Point",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "x",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PlanScope",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "hall",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "zone",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "dates",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Shape",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "label",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "points",
+          "type": "Point[]",
+          "optional": false
+        },
+        {
+          "name": "recognition",
+          "type": "'READABLE'|'UNCERTAIN'",
+          "optional": false
+        },
+        {
+          "name": "boundaryConfirmed",
+          "type": "boolean",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Geometry",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "extractorVersion",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "complete",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "shapes",
+          "type": "Shape[]",
+          "optional": false
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PlanLink",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "participantId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "dates",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "method",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MappedShape",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "shape",
+          "type": "Shape",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "links",
+          "type": "PlanLink[]",
+          "optional": false
+        },
+        {
+          "name": "candidates",
+          "type": "number[]",
+          "optional": false
+        },
+        {
+          "name": "issues",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Mapping",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "shapes",
+          "type": "MappedShape[]",
+          "optional": false
+        },
+        {
+          "name": "matched",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "unresolved",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "issues",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ManualLink",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "participantId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "dates",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PlanVersionSummary",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "event_id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "asset_id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "sha256",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "image_width",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "image_height",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "scope",
+          "type": "PlanScope",
+          "optional": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PlanVersion",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [
+        "PlanVersionSummary"
+      ],
+      "fields": [
+        {
+          "name": "geometry",
+          "type": "Geometry|null",
+          "optional": false
+        },
+        {
+          "name": "mapping",
+          "type": "Mapping|null",
+          "optional": false
+        },
+        {
+          "name": "manualLinks",
+          "type": "Record<string,ManualLink>",
+          "optional": false
+        },
+        {
+          "name": "imageUrl",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "pageUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "credit",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Source",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "asset",
+          "type": "Asset",
+          "optional": false
+        },
+        {
+          "name": "scope",
+          "type": "PlanScope",
+          "optional": false
+        },
+        {
+          "name": "canTransform",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "sourceRevision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "lastError",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Roster",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "locations",
+          "type": "{code:string;hall:string|null;zone:string|null;dates:string[]}[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Workspace",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "watch",
+          "type": "{revision:number;disabled:boolean;last_status:string;last_error:string;lastCheckedAt:string;nextCheckAt:string;result:{warnings?:string[]}}|null",
+          "optional": false
+        },
+        {
+          "name": "sources",
+          "type": "Source[]",
+          "optional": false
+        },
+        {
+          "name": "versions",
+          "type": "PlanVersionSummary[]",
+          "optional": false
+        },
+        {
+          "name": "roster",
+          "type": "Roster[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PublicShape",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "label",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "points",
+          "type": "Point[]",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "links",
+          "type": "PlanLink[]",
+          "optional": false
+        },
+        {
+          "name": "issues",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PublicPlan",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "sourceSha256",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "offlineAllowed",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "assetId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "scope",
+          "type": "PlanScope",
+          "optional": false
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "publishedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "sourceUrl",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "credit",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "imageUrl",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "shapes",
+          "type": "PublicShape[]",
+          "optional": false
+        },
+        {
+          "name": "partial",
+          "type": "boolean",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "PublicPlans",
+      "file": "frontend/src/features/floorplan/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "plans",
+          "type": "PublicPlan[]",
+          "optional": false
+        },
+        {
+          "name": "managedAssetIds",
+          "type": "number[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "RankedGood",
+      "file": "frontend/src/features/goods/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "rank",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "productId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventProductId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "price",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "imageUrl",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "boothName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "eventName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "eventState",
+          "type": "'PUBLISHED' | 'ENDED'",
+          "optional": false
+        },
+        {
+          "name": "soldOut",
+          "type": "boolean",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "GoodsFeed",
+      "file": "frontend/src/features/goods/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "basis",
+          "type": "'POS_LOGGED_UNITS'",
+          "optional": false
+        },
+        {
+          "name": "windowDays",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "from",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "to",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "asOf",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "items",
+          "type": "RankedGood[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "GoodsCandidate",
+      "file": "frontend/src/features/goods/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "product_id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "event_product_id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "price",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "booth_name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "event_name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "units",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "category",
+          "type": "string | null",
+          "optional": false
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "LibraryValue",
+      "file": "frontend/src/features/library/LibraryProvider.tsx",
+      "extends": [],
+      "fields": [
+        {
+          "name": "owner",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "error",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "version",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "index",
+          "type": "MemoryIndex[]",
+          "optional": false
+        },
+        {
+          "name": "guest",
+          "type": "GuestMemory[]",
+          "optional": false
+        },
+        {
+          "name": "publicVersion",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "refreshPublic",
+          "type": "()=>void",
+          "optional": false
+        },
+        {
+          "name": "resolvePublic",
+          "type": "(targets:MemoryTarget[])=>Promise<ResolvedMemory[]>",
+          "optional": false
+        },
+        {
+          "name": "refresh",
+          "type": "()=>Promise<void>",
+          "optional": false
+        },
+        {
+          "name": "save",
+          "type": "(i:SaveInput)=>Promise<MemoryIndex>",
+          "optional": false
+        },
+        {
+          "name": "remove",
+          "type": "(row:MemoryIndex)=>Promise<void>",
+          "optional": false
+        },
+        {
+          "name": "edit",
+          "type": "(row:MemoryEntry,note:string,day:string,hall:string)=>Promise<void>",
+          "optional": false
+        },
+        {
+          "name": "visit",
+          "type": "(row:MemoryEntry,day:string,visited:boolean)=>Promise<void>",
+          "optional": false
+        },
+        {
+          "name": "importGuest",
+          "type": "()=>Promise<{imported:number;remaining:number;issues:string[]}>",
+          "optional": false
+        },
+        {
+          "name": "clearGuest",
+          "type": "()=>void",
+          "optional": false
+        },
+        {
+          "name": "discardGuest",
+          "type": "(key:string)=>void",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryDraft",
+      "file": "frontend/src/features/library/MemoryDrafts.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "day",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "hall",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "LocalStoragePort",
+      "file": "frontend/src/features/library/guestStore.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "length",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryTarget",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "type",
+          "type": "TargetKind",
+          "optional": false
+        },
+        {
+          "name": "eventId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "participantId",
+          "type": "number|null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "SaveInput",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "target",
+          "type": "MemoryTarget",
+          "optional": false
+        },
+        {
+          "name": "day",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "hall",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "SavedMemory",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "eventName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "participantName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "summary",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "tags",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryImage",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "url",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "credit",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "sourceUrl",
+          "type": "string|null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryVerification",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "state",
+          "type": "'CONFIRMED_CURRENT'|'NOT_RECONFIRMED'|'LEGACY'",
+          "optional": false
+        },
+        {
+          "name": "lastSeenAt",
+          "type": "string|null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryCurrent",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "verification",
+          "type": "MemoryVerification|null",
+          "optional": true
+        },
+        {
+          "name": "memory",
+          "type": "SavedMemory",
+          "optional": false
+        },
+        {
+          "name": "operationState",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "notice",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "venue",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "occurrences",
+          "type": "EventData['occurrences']",
+          "optional": false
+        },
+        {
+          "name": "locations",
+          "type": "Location[]",
+          "optional": false
+        },
+        {
+          "name": "evidenceScope",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "price",
+          "type": "{amount:string;currency:string;checkedOn?:string;note?:string}|null",
+          "optional": false
+        },
+        {
+          "name": "saleState",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "links",
+          "type": "{label:string;url:string}[]",
+          "optional": false
+        },
+        {
+          "name": "publishedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "ResolvedMemory",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "target",
+          "type": "MemoryTarget",
+          "optional": false
+        },
+        {
+          "name": "available",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "current",
+          "type": "MemoryCurrent|null",
+          "optional": false
+        },
+        {
+          "name": "image",
+          "type": "MemoryImage|null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryEntry",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [
+        "ResolvedMemory"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "savedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "day",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "hall",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "visitedDays",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "saved",
+          "type": "SavedMemory|null",
+          "optional": false
+        },
+        {
+          "name": "changed",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "lastOpenedAt",
+          "type": "string|null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryIndex",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "target",
+          "type": "MemoryTarget",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "day",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "hall",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "visitedDays",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "MemoryPage",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "items",
+          "type": "MemoryEntry[]",
+          "optional": false
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "size",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "groups",
+          "type": "{eventId:number;name:string;count:number}[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "GuestMemory",
+      "file": "frontend/src/features/library/types.ts",
+      "extends": [
+        "SaveInput"
+      ],
+      "fields": [
+        {
+          "name": "key",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "savedAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "visitedDays",
+          "type": "string[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "OfflineModule",
+      "file": "frontend/src/features/offline/offlineModule.ts",
+      "extends": [],
+      "fields": []
+    },
+    {
+      "name": "Target",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "namespace",
+          "type": "'CATALOG'|'PLATFORM'",
+          "optional": false
+        },
+        {
+          "name": "type",
+          "type": "'EVENT'|'PARTICIPANT'|'PRODUCT'|'ASSET'|'FLOORPLAN'|'BOOTH'|'RESERVATION'",
+          "optional": false
+        },
+        {
+          "name": "eventId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "id",
+          "type": "number|null",
+          "optional": false
+        },
+        {
+          "name": "planId",
+          "type": "string|null",
+          "optional": true
+        },
+        {
+          "name": "areaId",
+          "type": "string|null",
+          "optional": true
+        },
+        {
+          "name": "day",
+          "type": "string|null",
+          "optional": true
+        },
+        {
+          "name": "hall",
+          "type": "string|null",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "Resolved",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "target",
+          "type": "Target",
+          "optional": false
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "route",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "snapshot",
+          "type": "Record<string,unknown>",
+          "optional": false
+        },
+        {
+          "name": "fingerprint",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "visible",
+          "type": "boolean",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "TicketSummary",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "number",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "kind",
+          "type": "TicketKind",
+          "optional": false
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "resolution",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "updatedAt",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Ticket",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [
+        "TicketSummary"
+      ],
+      "fields": [
+        {
+          "name": "target",
+          "type": "Target|null",
+          "optional": false
+        },
+        {
+          "name": "receivedSnapshot",
+          "type": "Record<string,unknown>",
+          "optional": false
+        },
+        {
+          "name": "receivedFingerprint",
+          "type": "string|null",
+          "optional": false
+        },
+        {
+          "name": "clientContext",
+          "type": "Record<string,string>",
+          "optional": false
+        },
+        {
+          "name": "messages",
+          "type": "{id:string;author:string;internal:boolean;body:string;evidence:string[];createdAt:string;messageKind?:'DIALOGUE'|'SYSTEM'}[]",
+          "optional": false
+        },
+        {
+          "name": "attachments",
+          "type": "{id:string;contentType:string;size:number;createdAt:string}[]",
+          "optional": false
+        },
+        {
+          "name": "actions",
+          "type": "{actorId:number|null;action:string;details:unknown;createdAt:string}[]",
+          "optional": true
+        },
+        {
+          "name": "currentTarget",
+          "type": "Resolved",
+          "optional": true
+        },
+        {
+          "name": "contentComparisonAvailable",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "requesterId",
+          "type": "number|null",
+          "optional": true
+        },
+        {
+          "name": "assignedTo",
+          "type": "number|null",
+          "optional": true
+        },
+        {
+          "name": "exhibitorId",
+          "type": "number|null",
+          "optional": true
+        },
+        {
+          "name": "eventRevision",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "eventReviewState",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "management",
+          "type": "{state:string;revision:number}|null",
+          "optional": true
+        },
+        {
+          "name": "verifiedManagers",
+          "type": "{id:number;name:string}[]",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "TicketInput",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "requestId",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "kind",
+          "type": "TicketKind",
+          "optional": false
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "evidence",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "target",
+          "type": "Target|null",
+          "optional": false
+        },
+        {
+          "name": "context",
+          "type": "Record<string,string>",
+          "optional": false
+        },
+        {
+          "name": "exhibitorId",
+          "type": "number|null",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ReplyInput",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "requestId",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "evidence",
+          "type": "string[]",
+          "optional": false
+        },
+        {
+          "name": "internal",
+          "type": "boolean",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ActionInput",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "duplicateOf",
+          "type": "string|null",
+          "optional": true
+        },
+        {
+          "name": "expectedFingerprint",
+          "type": "string|null",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "Page",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "items",
+          "type": "T[]",
+          "optional": false
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "size",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Options",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "guestEnabled",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "guestExpiryDays",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "guestAttachments",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "attachmentsEnabled",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "maxAttachmentBytes",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "maxAttachments",
+          "type": "number",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "GuestAccess",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "ticketId",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "accessKey",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "Manager",
+      "file": "frontend/src/features/support/api.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "exhibitorId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "permission",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "claimId",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "participants",
+          "type": "{id:number;eventId:number;name:string;route:string}[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "AttemptStorage",
+      "file": "frontend/src/features/support/submission.ts",
+      "extends": [],
+      "fields": []
+    },
+    {
+      "name": "VisitQuery",
+      "file": "frontend/src/features/visit/visit.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "day",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "hall",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "q",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "tab",
+          "type": "VisitTab",
+          "optional": false
+        },
+        {
+          "name": "booth",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "focus",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "product",
+          "type": "number | null",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "displayName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "permissions",
+          "type": "Permission[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "EventSummary",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "startAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "endAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "venue",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "imageUrl",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "imageKey",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "removeImage",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "reservationStartAt",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "reservationEndAt",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "status",
+          "type": "EventStatus",
+          "optional": false
+        },
+        {
+          "name": "boothCount",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "applicationStatus",
+          "type": "ApplicationStatus",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "BoothSummary",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventId",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "creatorName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "boothNumber",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "intro",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "imageUrl",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "imageKey",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "snsUrl",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "status",
+          "type": "ApplicationStatus",
+          "optional": false
+        },
+        {
+          "name": "isPublic",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "productCount",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "reservableCount",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "notices",
+          "type": "BoothNotice[]",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "EventProduct",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "version",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "productVersion",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventBoothId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "imageUrl",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "imageKey",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "price",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "stockMode",
+          "type": "'FINITE' | 'INFINITE'",
+          "optional": false
+        },
+        {
+          "name": "stockQuantity",
+          "type": "number | null",
+          "optional": false
+        },
+        {
+          "name": "soldOut",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "isPublic",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "reservationEnabled",
+          "type": "boolean",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "BoothNotice",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventBoothId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "body",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "pinned",
+          "type": "boolean",
+          "optional": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "ReservationItem",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "eventProductId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "productName",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "quantity",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "unitPrice",
+          "type": "number",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "Reservation",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "reservationNo",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "eventBoothId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "boothName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "ReservationStatus",
+          "optional": false
+        },
+        {
+          "name": "qrToken",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "items",
+          "type": "ReservationItem[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "PosSale",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "saleNo",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "eventBoothId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "paymentMethod",
+          "type": "'CASH' | 'TRANSFER' | 'OTHER'",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "'SOLD' | 'CANCELED'",
+          "optional": false
+        },
+        {
+          "name": "soldAt",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "totalAmount",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "items",
+          "type": "ReservationItem[]",
+          "optional": false
+        }
+      ]
+    },
+    {
+      "name": "EventApplication",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "revision",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "id",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "eventName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "boothId",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "boothName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "creatorName",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "status",
+          "type": "ApplicationStatus",
+          "optional": false
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "ApiErrorBody",
+      "file": "frontend/src/types.ts",
+      "extends": [],
+      "fields": [
+        {
+          "name": "requestId",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "status",
+          "type": "number",
+          "optional": false
+        },
+        {
+          "name": "code",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "optional": false
+        },
+        {
+          "name": "fieldErrors",
+          "type": "Record<string, string>",
+          "optional": true
+        }
+      ]
+    }
+  ],
+  "forwarders": [
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 3,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "{value}"
+      ],
+      "bodyFields": null,
+      "expression": "path"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 22,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "{value}"
+      ],
+      "bodyFields": null,
+      "expression": "url"
+    }
+  ]
+}

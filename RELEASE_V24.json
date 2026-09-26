@@ -1,0 +1,25 @@
+{
+  "version": 24,
+  "createdOn": "2026-09-21",
+  "inputVersion": 23,
+  "productionApproval": false,
+  "automatedSourceChecks": "PASS",
+  "liveIntegrationGate": "NOT_READY",
+  "databaseMigrations": "001..016 unchanged",
+  "offline": {
+    "dbVersion": 2,
+    "packageVersion": 19,
+    "shellCache": "boothhana-offline-shell-v24-1",
+    "bulkReset": false,
+    "unverifiedManagedFloorplanNeedsRedownload": true
+  },
+  "scope": {
+    "regions": [
+      "SEOUL",
+      "GYEONGGI"
+    ],
+    "incheon": false
+  },
+  "productRegressionScenarios": 54,
+  "report": "docs/release/V24_CHANGES_KO.md"
+}

@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python",
+    "verification/run_checks.py"
+  ],
+  "startedAt": 1789718357.514001,
+  "finishedAt": 1789718414.7921286,
+  "exitCode": 0
+}

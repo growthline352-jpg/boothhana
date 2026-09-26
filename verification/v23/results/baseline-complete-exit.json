@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/opt/pyvenv/bin/python",
+    "verification/run_checks.py"
+  ],
+  "cwd": "/mnt/data/boothhana_v22_baseline/BoothHana2",
+  "startedAt": 1789728281.8350105,
+  "timeoutSeconds": 220,
+  "exitCode": 0,
+  "durationSeconds": 77.501
+}

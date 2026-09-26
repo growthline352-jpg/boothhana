@@ -1,0 +1,53 @@
+{
+  "version": "v20",
+  "date": "2026-09-18",
+  "baseFile": "BoothHana2-full-v19-20260918.zip",
+  "baseSha256": "3fc312d55333fae4b7d4859589a4ce1b737b6e96b06ce5b2fe69ad409d49e273",
+  "purpose": "Code review: CSRF body timeout, confirmed identity lifecycle, rejected IDB opens and visit-day export scope",
+  "productionApproval": false,
+  "newSql": [],
+  "requiredSqlRange": "001..016",
+  "offline": {
+    "databaseName": "boothhana.offline.v18",
+    "idbVersion": 2,
+    "packageVersion": 19,
+    "shellCache": "boothhana-offline-shell-v20-1",
+    "v19ValidDownloadsPreserved": true,
+    "v18DownloadsMustBeDownloadedAgain": true,
+    "serverAndMemberLibraryCleared": false
+  },
+  "preserved": {
+    "regions": [
+      "SEOUL",
+      "GYEONGGI"
+    ],
+    "excludedRegion": "INCHEON",
+    "categories": [
+      "SUBCULTURE",
+      "EXHIBITION",
+      "FESTIVAL"
+    ],
+    "ttlDays": 7,
+    "maxEvents": 5,
+    "maxBytes": 62914560
+  },
+  "validation": {
+    "newRegressionTests": 13,
+    "newRegressionPassed": 13,
+    "sameTestsOnV19": {
+      "failed": 12,
+      "passed": 1,
+      "cancelled": 0
+    },
+    "existingApiTestsPassed": 17,
+    "collectorTestsPassed": 170,
+    "realBrowserScenariosCompleted": 0,
+    "fullFrameworkBuildPassed": false,
+    "actualDatabaseMigrationRun": false,
+    "externalDeploymentRun": false
+  },
+  "entry": "START_HERE_KO.md",
+  "changes": "docs/release/V20_CHANGES_KO.md",
+  "results": "TEST_RESULTS_KO.md",
+  "checksums": "SHA256SUMS.txt"
+}

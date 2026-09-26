@@ -1,0 +1,51 @@
+{
+  "date": "2026-09-17",
+  "reviewed_release": "v13-rebuilt",
+  "source_zip": "BoothHana2-full-v13-20260917.zip",
+  "source_sha256": "c5f5ecb1e4bccddea2d7a53d36c3da68df145c0083b43467279ea44c954606e1",
+  "verdict": "NO_GO",
+  "application_source_modified": false,
+  "database_modified": false,
+  "confirmed_logic_findings": [
+    "R13-01 metadata-only correction",
+    "R13-02 reservation/POS replay"
+  ],
+  "conditional_risks": [
+    "R13-03 nested transaction connection exhaustion"
+  ],
+  "gaps": [
+    "actual project build did not complete",
+    "no actual whole-schema, Spring HTTP, RLS, browser, external services or load/recovery tests"
+  ],
+  "documentation_findings": [
+    "D13-01 control characters in the release command"
+  ],
+  "executed": {
+    "v13_offline_runner": "passed; fake JDBC/framework boundaries; not production approval",
+    "collector_tests": {
+      "tests": 170,
+      "result": "passed",
+      "boundary": "fake CLI/local mock API"
+    },
+    "product_participant_correction": "both reproduced UPDATED with lastSeenAt-only change; unchanged controls rejected",
+    "reservation_pos_replay": "verbatim method bodies twice; 2 records and stock6 from10 with qty2 each; in-memory repositories",
+    "frontend_build": {
+      "exit": 1,
+      "reason": "missing installed vite/client and node types"
+    },
+    "backend_test": {
+      "exit": 1,
+      "reason": "Gradle distribution DNS error; application compile not reached"
+    },
+    "release_gate": {
+      "exit": 2,
+      "reason": "dedicated local DB config missing; correct refusal, not a pass"
+    }
+  },
+  "source_integrity": {
+    "original_files": 723,
+    "modified_original_files": [],
+    "missing_original_files": [],
+    "zip_crc_error": null
+  }
+}

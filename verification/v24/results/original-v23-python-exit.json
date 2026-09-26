@@ -1,0 +1,18 @@
+{
+  "command": [
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "verification/v24",
+    "-p",
+    "test_collector_contracts.py",
+    "-v"
+  ],
+  "cwd": "/mnt/data/boothhana_v24/BoothHana2",
+  "runAt": 1789953658.221955,
+  "baseline": true,
+  "exitCode": 1,
+  "seconds": 1.5209105014801025
+}

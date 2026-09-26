@@ -1,0 +1,6 @@
+{
+  "state": "NOT_READY",
+  "productionApproval": false,
+  "attemptedAt": 1789722370.4115853,
+  "reason": "Fresh isolated SQL001..016 test preparation required; production DB is not permitted"
+}

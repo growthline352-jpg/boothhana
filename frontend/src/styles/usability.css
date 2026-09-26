@@ -1,0 +1,116 @@
+/* v23: public journey polish; no category, map coordinate, or data changes.
+   Import after the legacy layers. Local fonts only; minimum 44px primary targets. */
+.public-shell { --u-muted: #536274; --u-border: #d9e1e8; }
+.public-shell .discovery-hero-inner { padding-block: 32px 24px; min-height: 0; row-gap: 28px; }
+.public-shell .discovery-hero h1 { font-size: clamp(28px, 3.3vw, 42px); }
+.public-shell .discovery-hero-copy > p { font-size: 16px; color: var(--u-muted); margin-block: 14px 20px; }
+.public-shell .discovery-hero-meta { color: var(--u-muted); font-size: 13px; gap: 12px 20px; flex-wrap: wrap; }
+.public-shell .discovery-search { min-height: 58px; }
+.public-shell .discovery-search input { min-width: 0; font-size: 16px; }
+.public-shell .discovery-search button { min-height: 44px; font-size: 15px; }
+.public-shell .discovery-shortcuts { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.public-shell .discovery-shortcuts > a { background: #ffffffd9; border: 1px solid var(--u-border); border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.public-shell .discovery-shortcuts > a:hover { border-color: var(--d-accent); background: #fff; }
+.public-shell .discovery-shortcuts > a > svg:first-child { color: var(--d-accent); }
+.public-shell .discovery-shortcuts > a > svg:last-child { margin-left: auto; }
+.public-shell .discovery-shortcuts strong { display: block; font-size: 15px; color: var(--ink); }
+.public-shell .discovery-shortcuts small { display: block; margin-top: 3px; color: var(--u-muted); font-size: 13px; }
+.public-shell .discovery-feed { padding-top: 32px; scroll-margin-top: 136px; }
+.public-shell .discovery-toolbar { gap: 16px; flex-wrap: wrap; }
+.public-shell .discovery-selects { flex-wrap: wrap; gap: 10px; }
+.public-shell .discovery-selects label { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--u-border); border-radius: 9px; background: #fff; min-width: 0; }
+.public-shell .discovery-select-label { color: var(--u-muted); font-size: 13px; white-space: nowrap; }
+.public-shell .discovery-selects select { padding: 6px 22px 6px 2px; min-height: 44px; width: auto; max-width: 100%; border: 0; color: var(--ink); font-size: 14px; }
+.public-shell .discovery-filter-chip, .public-shell .discovery-applied > button, .public-shell .discovery-pagination button { min-height: 44px; font-size: 14px; }
+.public-shell .discovery-applied { gap: 8px; flex-wrap: wrap; padding-bottom: 16px; }
+.public-shell .discovery-applied > button { padding: 8px 12px; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.public-shell .discovery-result-count { font-size: 15px; }
+.public-shell .discovery-empty p { max-width: 560px; font-size: 15px; color: var(--u-muted); }
+.public-shell .discovery-empty { background: #f7f9fb; border-color: #cbd5df; }
+.public-shell .discovery-event-description { color: var(--u-muted); font-size: 14px; }
+.public-shell .discovery-event-meta { color: var(--u-muted); font-size: 14px; }
+.public-shell .discovery-event-bottom { font-size: 13px; color: var(--u-muted); }
+.public-shell .discovery-event-type { font-size: 12px; }
+.public-shell .discovery-poster-credit { font-size: 12px; color: var(--u-muted); }
+.public-shell .discovery-date-empty { border-style: solid; }
+.public-shell [aria-invalid="true"] { border-color: #ad3c30; }
+.public-shell .visit-task-nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 0 24px; }
+.public-shell .visit-task-nav a { min-height: 44px; display: inline-flex; align-items: center; padding: 10px 14px; border: 1px solid var(--u-border); border-radius: 10px; background: white; font-size: 14px; }
+.public-shell .visit-task-nav a:first-child { background: var(--accent-soft); color: var(--accent-hover); border-color: #e9c8bd; font-weight: 700; }
+.public-shell #visit-browse, .public-shell #offline-save { scroll-margin-top: 140px; }
+.public-shell .visit-active-filters { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; margin-bottom: 16px; border-radius: 10px; background: #f0f4f7; font-size: 14px; color: var(--u-muted); overflow-wrap: anywhere; }
+.public-shell .visit-active-filters button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--u-border); border-radius: 8px; background: #fff; white-space: nowrap; }
+.public-shell .visit-memory-state { padding: 28px; margin: 16px 0; background: #f5f8fa; border: 1px solid var(--u-border); border-radius: 14px; }
+.public-shell .visit-memory-state h2 { font-size: 20px; }
+.public-shell .visit-memory-state p { color: var(--u-muted); }
+.public-shell .offline-download-panel { margin: 28px 0; background: #f3f8f5; border: 1px solid #cfded5; border-radius: 16px; padding: 24px; }
+.public-shell .offline-panel-heading { display: flex; gap: 16px; align-items: flex-start; }
+.public-shell .offline-panel-icon { display: grid; place-items: center; width: 46px; height: 46px; flex-shrink: 0; font-size: 26px; background: #fff; border: 1px solid #c9dacf; border-radius: 12px; color: #225a41; }
+.public-shell .offline-panel-heading .eyebrow { color: #315e46; margin: 0 0 4px; font-size: 12px; }
+.public-shell .offline-panel-heading h2 { font-size: 22px; margin: 0 0 8px; }
+.public-shell .offline-panel-heading p:last-child { font-size: 14px; color: #405b4d; margin: 0; line-height: 1.65; }
+.public-shell .offline-panel-overview { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
+.public-shell .offline-panel-overview > span { background: #fff; border: 1px solid #d4e1d9; padding: 5px 10px; font-size: 12px; border-radius: 6px; color: #345d47; }
+.public-shell .offline-panel-overview > a { margin-left: auto; min-height: 44px; display: inline-flex; align-items: center; color: #225a41; font-weight: 600; font-size: 14px; text-decoration: underline; text-underline-offset: 4px; }
+.public-shell .offline-download-options { border-top: 1px solid #cfded5; border-bottom: 1px solid #cfded5; }
+.public-shell .offline-download-options > summary { cursor: pointer; padding: 16px 0; min-height: 48px; font-size: 15px; font-weight: 700; color: #234e39; }
+.public-shell .offline-download-options .field { padding: 10px 0; font-size: 15px; }
+.public-shell .offline-download-options .field > span { line-height: 1.65; font-weight: 500; }
+.public-shell .offline-download-options input[type="checkbox"] { width: 18px; height: 18px; margin-right: 7px; vertical-align: middle; accent-color: #2f6b55; }
+.public-shell .offline-download-options .field small { font-size: 13px; line-height: 1.65; color: #405b4d; }
+.public-shell .offline-download-feedback { white-space: pre-line; overflow-wrap: anywhere; padding: 12px 0; font-size: 14px; }
+.public-shell .offline-download-feedback:empty { display: none; }
+.public-shell .offline-download-feedback.is-saved { border-left: 3px solid #2f6b55; padding: 12px; background: #fff; }
+.public-shell .offline-download-policy { display: block; font-size: 12px; line-height: 1.75; color: #405b4d; margin-top: 14px; }
+.public-shell .memory-offline-hint { padding: 12px 16px; margin-bottom: 18px; border-radius: 10px; border: 1px solid var(--u-border); background: #f7f9fb; color: var(--u-muted); font-size: 14px; line-height: 1.7; }
+.public-shell .memory-search { grid-template-columns: minmax(0,1fr) auto; align-items: end; }
+.public-shell .memory-search-actions { display: flex; gap: 8px; }
+.public-shell .memory-search > .memory-filter-row { grid-column: 1 / -1; }
+.public-shell .memory-card-meta, .public-shell .memory-event-name { font-size: 13px; }
+.public-shell .memory-card-content { gap: 10px; }
+.public-shell .memory-editor > header, .public-shell .memory-qr-dialog > header { position: sticky; top: -26px; background: #fff; z-index: 2; padding-block: 14px; margin-top: -14px; border-bottom: 1px solid var(--u-border); }
+.public-shell .memory-editor > header > button, .public-shell .memory-qr-dialog > header > button { flex-shrink: 0; }
+.public-mobile-nav { display: none; }
+@media (max-width: 780px) {
+ .public-shell .discovery-header-inner { width: calc(100% - 32px); gap: 0; }
+ .public-shell .discovery-header-tools { gap: 8px; }
+ .public-shell .discovery-header-tools > .memory-header-link, .public-shell .discovery-header-tools > .discovery-reservations { display: none; }
+ .public-shell .discovery-brand { height: 60px; }
+ .public-shell .discovery-category-nav { min-height: 48px; }
+ .public-shell .discovery-category-link { min-height: 48px; padding-block: 10px; }
+ .public-shell .discovery-hero-inner { padding-block: 24px 20px; gap: 20px; }
+ .public-shell .discovery-hero-art { display: none; }
+ .public-shell .discovery-shortcuts { gap: 8px; }
+ .public-shell .discovery-shortcuts > a { flex-direction: column; text-align: center; justify-content: center; padding: 12px 6px; gap: 8px; }
+ .public-shell .discovery-shortcuts small, .public-shell .discovery-shortcuts > a > svg:last-child { display: none; }
+ .public-shell .discovery-shortcuts strong { font-size: 13px; }
+ .public-shell .discovery-feed { padding-top: 24px; }
+ .public-shell .discovery-subcategories { flex-wrap: nowrap; overflow-x: auto; padding-block: 6px 14px; }
+ .public-shell .discovery-filter-chip { flex-shrink: 0; padding: 9px 13px; }
+ .public-shell .discovery-selects { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+ .public-shell .discovery-selects label { justify-content: space-between; }
+ .public-shell .discovery-selects label:last-child { grid-column: 1 / -1; }
+ .public-shell .discovery-selects select { font-size: 16px; flex: 1; width: 100%; min-width: 0; }
+ .public-shell .discovery-selects label > svg { display: none; }
+ .public-shell .public-mobile-nav { position: fixed; display: grid; grid-template-columns: repeat(3,1fr); bottom: 0; left: 0; right: 0; padding: 6px 12px calc(6px + env(safe-area-inset-bottom,0px)); min-height: 66px; background: #fff; border-top: 1px solid var(--u-border); box-shadow: 0 -3px 16px #172b4208; z-index: 45; }
+ .public-mobile-nav > a { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 48px; padding: 4px; gap: 3px; font-size: 12px; font-weight: 600; color: #526171; border-radius: 8px; }
+ .public-mobile-nav > a[aria-current="page"], .public-mobile-nav > a.active { color: var(--d-accent); background: var(--d-soft); }
+ .public-shell .discovery-footer { padding-bottom: calc(92px + env(safe-area-inset-bottom,0px)); }
+ .public-shell .visit-task-nav a { flex: 1; justify-content: center; font-size: 13px; white-space: nowrap; }
+ .public-shell .visit-task-nav a:last-child { flex-basis: 100%; }
+ .public-shell .offline-download-panel { padding: 18px; }
+ .public-shell .offline-panel-heading h2 { font-size: 20px; }
+ .public-shell .offline-panel-overview > a { margin-left: 0; width: 100%; }
+ .public-shell .offline-download-options .row-actions { align-items: stretch; }
+ .public-shell .offline-download-options .row-actions > * { min-height: 44px; white-space: normal; text-align: center; }
+ .public-shell .memory-search { grid-template-columns: 1fr; gap: 12px; }
+ .public-shell .memory-search-actions .btn { flex: 1; }
+ .public-shell .memory-page-heading .row-actions { width: 100%; }
+ .public-shell .memory-page-heading .row-actions > * { flex: 1; justify-content: center; font-size: 14px; }
+ .public-shell .memory-editor > header, .public-shell .memory-qr-dialog > header { top: -20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .public-shell .discovery-shortcuts > a { transition: none; }
+}
+
+.public-shell .discovery-menu > summary { min-width: 44px; min-height: 44px; }

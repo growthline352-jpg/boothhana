@@ -1,0 +1,602 @@
+{
+  "state": "SOURCE_CONTRACTS_PASSED",
+  "liveHTTP": false,
+  "actualPostgreSQL": false,
+  "javaSourceFiles": 112,
+  "controllerMappings": 151,
+  "frontendCallSites": 117,
+  "resolvedControllerPathVariants": 121,
+  "securityHandlers": [
+    [
+      "POST",
+      "/api/logout"
+    ]
+  ],
+  "forwarders": [
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 3,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "{value}"
+      ],
+      "bodyFields": null,
+      "expression": "path"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 22,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "{value}"
+      ],
+      "bodyFields": null,
+      "expression": "url"
+    }
+  ],
+  "recordFieldChecks": [
+    {
+      "file": "frontend/src/api/image-upload.ts",
+      "line": 33,
+      "dto": "ApiModels.UploadTicketInput",
+      "fields": [
+        "contentType",
+        "fileSize",
+        "sha256",
+        "target",
+        "uploadId"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 51,
+      "dto": "ApiModels.ReservationInput",
+      "fields": [
+        "eventBoothId",
+        "items",
+        "requestId"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 60,
+      "dto": "ApiModels.ApplicationDecision",
+      "fields": [
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 61,
+      "dto": "ApiModels.ApplicationDecision",
+      "fields": [
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 66,
+      "dto": "ApiModels.EventBoothInput",
+      "fields": [
+        "boothNumber",
+        "intro",
+        "isPublic"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 69,
+      "dto": "ApiModels.BoothInput",
+      "fields": [
+        "imageKey",
+        "intro",
+        "name",
+        "snsUrl"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 71,
+      "dto": "ApiModels.BoothInput",
+      "fields": [
+        "imageKey",
+        "intro",
+        "name",
+        "snsUrl"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 74,
+      "dto": "ApiModels.ApplicationInput",
+      "fields": [
+        "boothId",
+        "eventId"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 80,
+      "dto": "ApiModels.ProductInput",
+      "fields": [
+        "description",
+        "imageKey",
+        "isPublic",
+        "name",
+        "price",
+        "productVersion",
+        "reservationEnabled",
+        "soldOut",
+        "stockMode",
+        "stockQuantity",
+        "version"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 82,
+      "dto": "ApiModels.ProductInput",
+      "fields": [
+        "description",
+        "imageKey",
+        "isPublic",
+        "name",
+        "price",
+        "productVersion",
+        "reservationEnabled",
+        "soldOut",
+        "stockMode",
+        "stockQuantity",
+        "version"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 85,
+      "dto": "ApiModels.CopyProductsInput",
+      "fields": [
+        "productIds"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 96,
+      "dto": "ApiModels.PosInput",
+      "fields": [
+        "eventBoothId",
+        "items",
+        "paymentMethod",
+        "requestId"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 100,
+      "dto": "ApiModels.NoticeInput",
+      "fields": [
+        "body",
+        "pinned",
+        "title"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 102,
+      "dto": "ApiModels.NoticeInput",
+      "fields": [
+        "body",
+        "pinned",
+        "title"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 111,
+      "dto": "ApiModels.EventInput",
+      "fields": [
+        "description",
+        "endAt",
+        "imageKey",
+        "name",
+        "removeImage",
+        "reservationEndAt",
+        "reservationStartAt",
+        "startAt",
+        "status",
+        "venue"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 113,
+      "dto": "ApiModels.EventInput",
+      "fields": [
+        "description",
+        "endAt",
+        "imageKey",
+        "name",
+        "removeImage",
+        "reservationEndAt",
+        "reservationStartAt",
+        "startAt",
+        "status",
+        "venue"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 118,
+      "dto": "ApiModels.ApplicationDecision",
+      "fields": [
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "line": 120,
+      "dto": "ApiModels.ApplicationDecision",
+      "fields": [
+        "reason",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 31,
+      "dto": "CatalogModels.RightsInput",
+      "fields": [
+        "credit",
+        "note",
+        "offlineAllowed",
+        "revision",
+        "rightsState"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 32,
+      "dto": "CatalogModels.BannerInput",
+      "fields": [
+        "assetId",
+        "assetRevision",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 33,
+      "dto": "CatalogModels.PublishInput",
+      "fields": [
+        "eventRevision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/collection/api.ts",
+      "line": 35,
+      "dto": "CollectionModels.ReviewInput",
+      "fields": [
+        "note",
+        "reviewState",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 24,
+      "dto": "FloorplanModels.WatchEdit",
+      "fields": [
+        "disabled",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 25,
+      "dto": "FloorplanModels.Permission",
+      "fields": [
+        "allowed",
+        "assetRevision",
+        "credit",
+        "note",
+        "sourceRevision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 26,
+      "dto": "FloorplanModels.SourceEdit",
+      "fields": [
+        "revision",
+        "scope"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 27,
+      "dto": "FloorplanModels.Edit",
+      "fields": [
+        "geometry",
+        "manualLinks",
+        "note",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 28,
+      "dto": "FloorplanModels.Publish",
+      "fields": [
+        "acceptPartial",
+        "note",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/floorplan/api.ts",
+      "line": 29,
+      "dto": "FloorplanModels.Publish",
+      "fields": [
+        "acceptPartial",
+        "note",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/goods/api.ts",
+      "line": 39,
+      "dto": "GoodsShowcaseService.SettingInput",
+      "fields": [
+        "category",
+        "enabled",
+        "revision"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 12,
+      "dto": "LibraryModels.Visit",
+      "fields": [
+        "day",
+        "visited"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 13,
+      "dto": "LibraryModels.Resolve",
+      "fields": [
+        "targets"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 14,
+      "dto": "LibraryModels.Import",
+      "fields": [
+        "expectedUserId",
+        "item",
+        "note"
+      ],
+      "extra": [],
+      "missingRequired": []
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 15,
+      "dto": "LibraryModels.Activity",
+      "fields": [
+        "action"
+      ],
+      "extra": [],
+      "missingRequired": []
+    }
+  ],
+  "opaqueBodyBoundaries": [
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 26,
+      "path": "/api/admin/subculture/v4/events/{value}",
+      "bodyType": "EditInput",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 29,
+      "path": "/api/admin/subculture/v4/participants/{value}",
+      "bodyType": "EditInput",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/catalog/api.ts",
+      "line": 30,
+      "path": "/api/admin/subculture/v4/participants/{value}/sales",
+      "bodyType": "EditInput",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 8,
+      "path": "/api/me/library/items",
+      "bodyType": "Save",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 10,
+      "path": "/api/me/library/items/{value}",
+      "bodyType": "Edit",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 25,
+      "path": "/api/public/support/target",
+      "bodyType": "Target",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 29,
+      "path": "/api/me/support/tickets",
+      "bodyType": "Create",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 31,
+      "path": "/api/admin/support/tickets/{value}/messages",
+      "bodyType": "Message",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 31,
+      "path": "/api/me/support/tickets/{value}/messages",
+      "bodyType": "Message",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 32,
+      "path": "/api/admin/support/tickets/{value}/actions",
+      "bodyType": "Action",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 33,
+      "path": "/api/admin/support/tickets/{value}/hide",
+      "bodyType": "Action",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 34,
+      "path": "/api/admin/support/tickets/{value}/publish-reviewed",
+      "bodyType": "Correction",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 35,
+      "path": "/api/admin/support/tickets/{value}/claim-decision",
+      "bodyType": "ClaimDecision",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 36,
+      "path": "/api/admin/support/managers/{value}/{value}/revoke",
+      "bodyType": "Revoke",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 38,
+      "path": "/api/public/support/guest/tickets",
+      "bodyType": "GuestCreate",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 39,
+      "path": "/api/public/support/guest/read",
+      "bodyType": "GuestAccess",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 40,
+      "path": "/api/public/support/guest/messages",
+      "bodyType": "GuestMessage",
+      "reason": "forwarded/variable/nested body: runtime binding coverage required"
+    }
+  ],
+  "javaRecordsInventoried": 136,
+  "schemaTables": 43,
+  "schemaColumns": 397,
+  "migrations": [
+    "001_initial_schema.sql",
+    "002_remove_user_role.sql",
+    "003_inventory_safety.sql",
+    "004_review_v2_safety.sql",
+    "005_subculture_collection.sql",
+    "006_subculture_catalog.sql",
+    "007_catalog_review_fixes.sql",
+    "008_catalog_presentation.sql",
+    "009_floorplan_automation.sql",
+    "010_goods_showcase.sql",
+    "011_server_only_access.sql",
+    "012_support_and_relationships.sql",
+    "013_support_reliability.sql",
+    "014_trade_idempotency.sql",
+    "015_personal_library.sql",
+    "016_catalog_scope_offline.sql"
+  ],
+  "jsonSchemaFiles": 6,
+  "issues": []
+}

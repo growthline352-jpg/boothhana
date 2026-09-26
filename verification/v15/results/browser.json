@@ -1,0 +1,486 @@
+{
+  "scope": "Static JSX/CSS + preview-only dialog wiring, not real React app",
+  "checks": [
+    {
+      "name": "index-1440 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "index-1440 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "index-1440 title",
+      "passed": true
+    },
+    {
+      "name": "index-1440 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "index-1440 record opens",
+      "passed": true
+    },
+    {
+      "name": "index-1440 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "index-1440 name has focus",
+      "passed": true
+    },
+    {
+      "name": "index-1440 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "index-1440 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "index-1440 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "index-1440 focus returns",
+      "passed": true
+    },
+    {
+      "name": "index-1440 no script errors",
+      "passed": true
+    },
+    {
+      "name": "index-768 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "index-768 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "index-768 title",
+      "passed": true
+    },
+    {
+      "name": "index-768 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "index-768 record opens",
+      "passed": true
+    },
+    {
+      "name": "index-768 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "index-768 name has focus",
+      "passed": true
+    },
+    {
+      "name": "index-768 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "index-768 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "index-768 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "index-768 focus returns",
+      "passed": true
+    },
+    {
+      "name": "index-768 no script errors",
+      "passed": true
+    },
+    {
+      "name": "index-390 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "index-390 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "index-390 title",
+      "passed": true
+    },
+    {
+      "name": "index-390 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "index-390 record opens",
+      "passed": true
+    },
+    {
+      "name": "index-390 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "index-390 name has focus",
+      "passed": true
+    },
+    {
+      "name": "index-390 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "index-390 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "index-390 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "index-390 focus returns",
+      "passed": true
+    },
+    {
+      "name": "index-390 no script errors",
+      "passed": true
+    },
+    {
+      "name": "index-320 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "index-320 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "index-320 title",
+      "passed": true
+    },
+    {
+      "name": "index-320 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "index-320 record opens",
+      "passed": true
+    },
+    {
+      "name": "index-320 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "index-320 name has focus",
+      "passed": true
+    },
+    {
+      "name": "index-320 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "index-320 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "index-320 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "index-320 focus returns",
+      "passed": true
+    },
+    {
+      "name": "index-320 no script errors",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 title",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 record opens",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 name has focus",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 focus returns",
+      "passed": true
+    },
+    {
+      "name": "guest-1440 no script errors",
+      "passed": true
+    },
+    {
+      "name": "guest-768 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "guest-768 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "guest-768 title",
+      "passed": true
+    },
+    {
+      "name": "guest-768 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "guest-768 record opens",
+      "passed": true
+    },
+    {
+      "name": "guest-768 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "guest-768 name has focus",
+      "passed": true
+    },
+    {
+      "name": "guest-768 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "guest-768 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "guest-768 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "guest-768 focus returns",
+      "passed": true
+    },
+    {
+      "name": "guest-768 no script errors",
+      "passed": true
+    },
+    {
+      "name": "guest-390 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "guest-390 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "guest-390 title",
+      "passed": true
+    },
+    {
+      "name": "guest-390 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "guest-390 record opens",
+      "passed": true
+    },
+    {
+      "name": "guest-390 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "guest-390 name has focus",
+      "passed": true
+    },
+    {
+      "name": "guest-390 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "guest-390 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "guest-390 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "guest-390 focus returns",
+      "passed": true
+    },
+    {
+      "name": "guest-390 no script errors",
+      "passed": true
+    },
+    {
+      "name": "guest-320 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "guest-320 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "guest-320 title",
+      "passed": true
+    },
+    {
+      "name": "guest-320 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "guest-320 record opens",
+      "passed": true
+    },
+    {
+      "name": "guest-320 private-note edit",
+      "passed": true
+    },
+    {
+      "name": "guest-320 name has focus",
+      "passed": true
+    },
+    {
+      "name": "guest-320 no inferred visit claim",
+      "passed": true
+    },
+    {
+      "name": "guest-320 dialog fits viewport",
+      "passed": true
+    },
+    {
+      "name": "guest-320 Escape closes",
+      "passed": true
+    },
+    {
+      "name": "guest-320 focus returns",
+      "passed": true
+    },
+    {
+      "name": "guest-320 no script errors",
+      "passed": true
+    },
+    {
+      "name": "empty-1440 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "empty-1440 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "empty-1440 title",
+      "passed": true
+    },
+    {
+      "name": "empty-1440 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "empty-1440 useful empty state",
+      "passed": true
+    },
+    {
+      "name": "empty-1440 no script errors",
+      "passed": true
+    },
+    {
+      "name": "empty-768 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "empty-768 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "empty-768 title",
+      "passed": true
+    },
+    {
+      "name": "empty-768 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "empty-768 useful empty state",
+      "passed": true
+    },
+    {
+      "name": "empty-768 no script errors",
+      "passed": true
+    },
+    {
+      "name": "empty-390 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "empty-390 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "empty-390 title",
+      "passed": true
+    },
+    {
+      "name": "empty-390 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "empty-390 useful empty state",
+      "passed": true
+    },
+    {
+      "name": "empty-390 no script errors",
+      "passed": true
+    },
+    {
+      "name": "empty-320 no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "empty-320 header named collection link",
+      "passed": true
+    },
+    {
+      "name": "empty-320 title",
+      "passed": true
+    },
+    {
+      "name": "empty-320 not a real data or API claim",
+      "passed": true
+    },
+    {
+      "name": "empty-320 useful empty state",
+      "passed": true
+    },
+    {
+      "name": "empty-320 no script errors",
+      "passed": true
+    }
+  ],
+  "passed": 120
+}

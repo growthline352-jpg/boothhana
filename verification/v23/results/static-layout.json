@@ -1,0 +1,711 @@
+{
+  "mode": "real Chromium, static source JSX + CSS with synthetic data; no hydration/API",
+  "productionApproval": false,
+  "checks": [
+    {
+      "width": 320,
+      "scrollWidth": 320,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 98.65625,
+          "height": 53
+        },
+        {
+          "width": 98.671875,
+          "height": 53
+        },
+        {
+          "width": 98.65625,
+          "height": 53
+        }
+      ],
+      "page": "discovery",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        }
+      ],
+      "page": "discovery",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        }
+      ],
+      "page": "discovery",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "navVisible": false,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 14,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 14,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 14,
+          "height": 44
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        }
+      ],
+      "page": "discovery",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "scrollWidth": 320,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 98.65625,
+          "height": 53
+        },
+        {
+          "width": 98.671875,
+          "height": 53
+        },
+        {
+          "width": 98.65625,
+          "height": 53
+        }
+      ],
+      "page": "detail",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        }
+      ],
+      "page": "detail",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        }
+      ],
+      "page": "detail",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "navVisible": false,
+      "inputs": [
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        }
+      ],
+      "page": "detail",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "scrollWidth": 320,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 98.65625,
+          "height": 53
+        },
+        {
+          "width": 98.671875,
+          "height": 53
+        },
+        {
+          "width": 98.65625,
+          "height": 53
+        }
+      ],
+      "page": "library",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        }
+      ],
+      "page": "library",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        }
+      ],
+      "page": "library",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "navVisible": false,
+      "inputs": [
+        {
+          "name": "search",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 46
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        }
+      ],
+      "page": "library",
+      "passed": true
+    },
+    {
+      "width": 320,
+      "scrollWidth": 320,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 98.65625,
+          "height": 53
+        },
+        {
+          "width": 98.671875,
+          "height": 53
+        },
+        {
+          "width": 98.65625,
+          "height": 53
+        }
+      ],
+      "page": "invalid-dates",
+      "passed": true
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        },
+        {
+          "width": 122,
+          "height": 53
+        }
+      ],
+      "page": "invalid-dates",
+      "passed": true
+    },
+    {
+      "width": 768,
+      "scrollWidth": 768,
+      "navVisible": true,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 16,
+          "height": 44
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        },
+        {
+          "width": 248,
+          "height": 53
+        }
+      ],
+      "page": "invalid-dates",
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "navVisible": false,
+      "inputs": [
+        {
+          "name": "서브컬처 행사 검색",
+          "font": 16,
+          "height": 40
+        },
+        {
+          "name": "select-one",
+          "font": 14,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 14,
+          "height": 44
+        },
+        {
+          "name": "select-one",
+          "font": 14,
+          "height": 44
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        },
+        {
+          "name": "date",
+          "font": 16,
+          "height": 48
+        }
+      ],
+      "overflows": [],
+      "mobileTargets": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 0,
+          "height": 0
+        }
+      ],
+      "page": "invalid-dates",
+      "passed": true
+    }
+  ],
+  "status": "PASS"
+}

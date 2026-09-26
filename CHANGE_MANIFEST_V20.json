@@ -1,0 +1,60 @@
+{
+  "version": "v20",
+  "base": "v19",
+  "runtimeChanges": [
+    {
+      "file": "frontend/public/offline/store.mjs",
+      "beforeSha256": "a455400eee04e2a673a2f8fbc80954f6cf82b0b00e03f024023b7c05c25b1e1e",
+      "afterSha256": "68fa7361388d34ad1408b3a4481d444984dd073ccb9adcf95578fcecb2f80164"
+    },
+    {
+      "file": "frontend/public/offline/sw.js",
+      "beforeSha256": "cc4b75fa8c0a41af8cdc7868f6114b144576c5110500a3f770d4f6bb56eb3c5e",
+      "afterSha256": "b90705cf23789d3c614b2183b4b5eece7991210c242ba17ab823e3d14b73f1e3"
+    },
+    {
+      "file": "frontend/src/api/client.ts",
+      "beforeSha256": "c447506a03791116d70c0abac4cbbaeb9470ead003c59b8c81bf12cd9456fc58",
+      "afterSha256": "e133233ed6233dad70b99106102dbca22638cd0120ef8592bfdb8896e474d46d"
+    },
+    {
+      "file": "frontend/src/api/index.ts",
+      "beforeSha256": "da31b7d638293aa4afb5e7ad6c9a257a84f148479e730863c98e28321cf2b4ef",
+      "afterSha256": "1f9f8aa5208fce2eca74e05eaa21aa706b2345b21c98838dda221528d73c2693"
+    },
+    {
+      "file": "frontend/src/app/AuthContext.tsx",
+      "beforeSha256": "a36563066d0dc039e0e1eb3df5cd4342ef5d040648918ab6d72d38b114e42713",
+      "afterSha256": "d4223c2fc19b1d522b46a8e1a642b233d76720cdfc4740def60ee8c2e0951e82"
+    },
+    {
+      "file": "frontend/src/app/AuthSession.ts",
+      "beforeSha256": "92d81963bd3cb8f10e1e9355a81bc627c0e4b6dae8851584574a402f3bae0487",
+      "afterSha256": "c5365d7dbfc2100e39122405e2629d34136bef4921f5aa045cdecd792f9182f5"
+    },
+    {
+      "file": "frontend/src/features/offline/OfflineDownloadPanel.tsx",
+      "beforeSha256": "11c442dbca8d2c393c69f6eba2c5079cda1837bb46416e977f8411dfd892bd71",
+      "afterSha256": "e24223e1d89317c793e211e6eb5d38a045fc4b82b69f0606a073cf18d0170603"
+    }
+  ],
+  "preservationChecks": {
+    "database": {
+      "files": 17,
+      "allOriginalBytesUnchanged": true
+    },
+    "backend": {
+      "files": 142,
+      "allOriginalBytesUnchanged": true
+    },
+    "collector": {
+      "files": 53,
+      "allOriginalBytesUnchanged": true
+    },
+    "dependencyManifestsUnchanged": true
+  },
+  "newSql": [],
+  "offlineSchemaChanged": false,
+  "sourceScope": "7 frontend runtime files; verification and docs changed separately",
+  "productionApproval": false
+}

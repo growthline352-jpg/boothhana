@@ -1,0 +1,51 @@
+{
+  "checkedAtUtc": "2026-09-18T04:25:32Z",
+  "tools": {
+    "node": "/opt/nvm/versions/node/v22.16.0/bin/node",
+    "java": "/usr/bin/java",
+    "npm": "/opt/nvm/versions/node/v22.16.0/bin/npm",
+    "pnpm": null,
+    "psql": null,
+    "docker": null,
+    "chromium": "/usr/bin/chromium"
+  },
+  "frontendNodeModules": false,
+  "dns": {
+    "registry.npmjs.org": "gaierror",
+    "services.gradle.org": "gaierror",
+    "repo.maven.apache.org": "gaierror"
+  },
+  "commands": [
+    {
+      "command": [
+        "npm",
+        "run",
+        "build",
+        "--prefix",
+        "frontend"
+      ],
+      "log": "frontend-build.log",
+      "exitCode": 1
+    },
+    {
+      "command": [
+        "sh",
+        "backend/gradlew",
+        "-p",
+        "backend",
+        "test",
+        "--no-daemon"
+      ],
+      "log": "backend-build.log",
+      "exitCode": 1
+    },
+    {
+      "command": [
+        "python",
+        "verification/v16/release_gate.py"
+      ],
+      "log": "gate-refusal.log",
+      "exitCode": 2
+    }
+  ]
+}

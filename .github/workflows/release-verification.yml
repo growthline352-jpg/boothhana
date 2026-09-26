@@ -1,0 +1,89 @@
+name: release-verification
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  full-schema-and-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-ci-only
+      VITE_API_BASE_URL: http://localhost:8080
+      VITE_PUBLIC_SITE_URL: https://boothhana.test.invalid
+      BOOTH_FULL_TEST_URL: jdbc:postgresql://127.0.0.1:5432/boothhana_release_test
+      BOOTH_FULL_TEST_USER: boothhana_release_runtime
+      BOOTH_FULL_TEST_PASSWORD: isolated-runtime-ci-only
+      BOOTH_SUPPORT_TEST_URL: jdbc:postgresql://127.0.0.1:5432/boothhana_support_test
+      BOOTH_SUPPORT_TEST_USER: postgres
+      BOOTH_SUPPORT_TEST_PASSWORD: isolated-ci-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install clients and collector dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          corepack enable
+          corepack prepare pnpm@10.13.1 --activate
+          python -m pip install -r collector/requirements.txt
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Isolated fresh databases and actual migrations
+        run: |
+          createdb boothhana_release_test
+          createdb boothhana_support_test
+          PGDATABASE=boothhana_release_test python verification/v18/prepare_test_db.py --confirm-isolated-empty-test-cluster
+      - name: Required clean build and actual integration gate
+        run: python verification/v24/release_gate.py
+      - name: Archive test reports (not deploy)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-${{ github.sha }}
+          path: |
+            backend/build/test-results/test/
+            backend/build/reports/tests/test/
+            verification/v17/results/*.json
+            verification/v18/results/*.json
+            verification/v19/results/*.json
+            verification/v20/results/*.json
+            verification/v21/results/*.json
+            verification/v22/results/*.json
+            verification/v23/results/*.json
+            verification/v24/results/*.json
+            verification/v18/results/test-db-preparation.json
+          if-no-files-found: warn
+# No deployment step. Require this job in branch protection and separately protect
+# the production environment; hosting auto-deploy must not bypass the required checks.

@@ -1,0 +1,12 @@
+{
+  "exitCode": 0,
+  "durationSeconds": 1.687,
+  "command": [
+    "python",
+    "verification/v21/check_java.py"
+  ],
+  "productionApproval": false,
+  "tests": 6,
+  "pass": 6,
+  "fail": 0
+}

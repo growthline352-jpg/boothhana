@@ -1,0 +1,9 @@
+[Unit]
+Description=BoothHana weekly catalogue at Sunday 03:00 Asia/Seoul
+[Timer]
+OnCalendar=Sun *-*-* 03:00:00 Asia/Seoul
+Persistent=true
+AccuracySec=1min
+Unit=boothhana-weekly.service
+[Install]
+WantedBy=timers.target

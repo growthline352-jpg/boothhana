@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python",
+    "verification/run_checks.py"
+  ],
+  "exitCode": 0,
+  "durationSeconds": 67.91,
+  "attempt": "final product and verification source",
+  "productionApproval": false
+}

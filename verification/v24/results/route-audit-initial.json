@@ -1,0 +1,28 @@
+{
+  "missing": [],
+  "sites": 117,
+  "forwarders": [
+    {
+      "file": "frontend/src/features/library/api.ts",
+      "line": 3,
+      "callee": "api",
+      "method": "GET",
+      "paths": [
+        "{value}"
+      ],
+      "bodyFields": null,
+      "expression": "path"
+    },
+    {
+      "file": "frontend/src/features/support/api.ts",
+      "line": 22,
+      "callee": "api",
+      "method": "POST",
+      "paths": [
+        "{value}"
+      ],
+      "bodyFields": null,
+      "expression": "url"
+    }
+  ]
+}

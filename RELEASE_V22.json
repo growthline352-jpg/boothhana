@@ -1,0 +1,59 @@
+{
+  "version": "v22",
+  "date": "2026-09-18",
+  "baseFile": "BoothHana2-full-v21-20260918.zip",
+  "baseSha256": "580f2b78ed451403702a55e7d3b97e98ea8b296489d21c0df02555c76f658773",
+  "purpose": "Code review: stale fetch after write, guest private lookup lifetime, open memory public withdrawal, Gyeonggi venue links",
+  "productionApproval": false,
+  "newSql": [],
+  "requiredSqlRange": "001..016",
+  "runtimeFilesChanged": 5,
+  "backendUnchanged": true,
+  "collectorUnchanged": true,
+  "dependenciesUnchanged": true,
+  "offline": {
+    "databaseName": "boothhana.offline.v18",
+    "idbVersion": 2,
+    "packageVersion": 19,
+    "shellCache": "boothhana-offline-shell-v20-1",
+    "runtimeUnchanged": true,
+    "v19AndLaterValidDownloadsPreserved": true,
+    "serverAndMemberLibraryCleared": false
+  },
+  "preserved": {
+    "regions": [
+      "SEOUL",
+      "GYEONGGI"
+    ],
+    "excludedRegion": "INCHEON",
+    "categories": [
+      "SUBCULTURE",
+      "EXHIBITION",
+      "FESTIVAL"
+    ],
+    "ttlDays": 7,
+    "maxEvents": 5,
+    "maxBytes": 62914560
+  },
+  "validation": {
+    "newProductRegressionTests": 22,
+    "newProductTestsPassed": 22,
+    "sameTestsOnV21": {
+      "failed": 14,
+      "passed": 8,
+      "cancelled": 0,
+      "notIndependentDefectCount": true
+    },
+    "newGateReportingTestsPassed": 3,
+    "collectorTestsPassed": 170,
+    "finalIndependentRunnerExitCode": 0,
+    "realBrowserScenariosCompleted": 0,
+    "fullFrameworkBuildPassed": false,
+    "actualDatabaseMigrationRun": false,
+    "externalDeploymentRun": false
+  },
+  "entry": "START_HERE_KO.md",
+  "changes": "docs/release/V22_CHANGES_KO.md",
+  "results": "TEST_RESULTS_KO.md",
+  "checksums": "SHA256SUMS.txt"
+}

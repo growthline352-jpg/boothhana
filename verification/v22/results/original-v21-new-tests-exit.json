@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "verification/v22/test_remote.cjs",
+    "verification/v22/test_guest_session.cjs",
+    "verification/v22/test_public_views.cjs"
+  ],
+  "cwd": ".",
+  "attemptedAt": "2026-09-18T10:13:27Z",
+  "baselineSource": "Unmodified input v21 source with the same final v22 test suite",
+  "exitCode": 1,
+  "durationSeconds": 1.24
+}

@@ -1,0 +1,77 @@
+{
+  "searchStatus": "COMPLETE",
+  "summary": "가상 판매정보",
+  "queries": [
+    "TEST sales"
+  ],
+  "coverage": {
+    "completeness": "COMPLETE",
+    "reportedTotal": 1,
+    "totalUnit": "PRODUCTS",
+    "visitedPages": [
+      "https://example.com/test/event/2026"
+    ],
+    "nextPageUrl": null,
+    "warnings": []
+  },
+  "participants": [],
+  "sales": {
+    "summary": "[TEST] 스티커를 취급하는 가상 부스입니다.",
+    "evidenceScope": "GENERAL_CATALOG",
+    "categories": [
+      "스티커"
+    ],
+    "subjects": [
+      "테스트 캐릭터"
+    ],
+    "salesMethod": null,
+    "sources": [
+      {
+        "url": "https://example.com/test/event/2026",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "[TEST] fictional source for automated tests; not real event research."
+      }
+    ],
+    "images": [],
+    "products": [
+      {
+        "sourceEntryId": "product-1",
+        "name": "[TEST] 스티커",
+        "summary": "테스트 전용 상품",
+        "memberName": "[TEST] A",
+        "categories": [
+          "스티커"
+        ],
+        "subjects": [
+          "테스트 캐릭터"
+        ],
+        "evidenceScope": "GENERAL_CATALOG",
+        "price": {
+          "amount": "3000",
+          "currency": "KRW",
+          "checkedOn": "2026-09-16",
+          "note": "가상 기본금액. 행사 현장 판매 미확인."
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": "https://example.com/test/product-1",
+        "sources": [
+          {
+            "url": "https://example.com/test/event/2026",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "[TEST] fictional source for automated tests; not real event research."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "상시 상품 참고, 현장 판매 여부 미확인"
+        ],
+        "identity": null
+      }
+    ],
+    "warnings": [
+      "테스트 데이터"
+    ]
+  }
+}

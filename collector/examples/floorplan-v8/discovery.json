@@ -1,0 +1,26 @@
+{
+  "status": "FOUND",
+  "availableOn": null,
+  "plans": [
+    {
+      "imageUrl": "https://example.com/map.png",
+      "pageUrl": "https://example.com/event/map",
+      "scope": {
+        "title": "[TEST] 가상 1관 배치도",
+        "hall": "1관",
+        "zone": null,
+        "dates": [
+          "2026-10-10",
+          "2026-10-11"
+        ]
+      },
+      "evidence": "가상 테스트 원문, 실제 행사 아님"
+    }
+  ],
+  "checkedUrls": [
+    "https://example.com/event/map"
+  ],
+  "warnings": [
+    "가상 테스트 데이터"
+  ]
+}

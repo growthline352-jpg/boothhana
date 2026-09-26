@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1",
+  "searchStatus": "COMPLETE",
+  "summary": "[TEST] 가상 행사입니다. 실제 검색 결과가 아닙니다.",
+  "queries": [
+    "[TEST] 서울 2026년 10월 서브컬처"
+  ],
+  "events": [
+    {
+      "name": "[TEST] 샘플 온리전",
+      "subcategory": "ONLY_EVENT",
+      "organizer": "테스트 주최",
+      "edition": "2026 1회",
+      "region": "SEOUL",
+      "venueName": "테스트 카페",
+      "address": "서울특별시 마포구 테스트 주소",
+      "description": "[TEST] 검증용 행사. 실재하지 않습니다.",
+      "admission": null,
+      "subjects": [
+        "테스트 작품"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-10",
+          "endDate": "2026-10-11",
+          "startTime": null,
+          "endTime": null
+        },
+        {
+          "startDate": "2026-10-13",
+          "endDate": "2026-10-13",
+          "startTime": "12:00",
+          "endTime": "19:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://example.com/sample-event",
+          "kind": "OTHER",
+          "access": "SEARCH_SNIPPET",
+          "evidence": "[TEST] 10/10~11, 10/13 서울에서 개최한다는 가상 문구."
+        }
+      ],
+      "banners": [
+        {
+          "imageUrl": "https://example.com/sample-poster.png",
+          "pageUrl": "https://example.com/sample-event",
+          "rights": "UNKNOWN",
+          "rightsEvidence": null,
+          "matchesEdition": null
+        }
+      ],
+      "warnings": [
+        "[TEST] 실제 행사가 아닌 오프라인 테스트 자료"
+      ]
+    }
+  ]
+}

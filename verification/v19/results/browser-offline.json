@@ -1,0 +1,10 @@
+{
+  "state": "NOT_READY",
+  "checks": [],
+  "count": 0,
+  "errors": [
+    "Page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:42243/offline/index.html\nCall log:\n  - navigating to \"http://127.0.0.1:42243/offline/index.html\", waiting until \"load\"\n"
+  ],
+  "scope": "Real isolated offline reader / Chromium, LOCAL mocked HTTP API/images. No real React build, DB, OAuth, R2, CLI or device hardware.",
+  "productionApproval": false
+}

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "bash",
+    "gradlew",
+    "test",
+    "bootJar",
+    "--no-daemon"
+  ],
+  "cwd": "backend",
+  "startedAt": 1789718252.471878,
+  "exitCode": 1,
+  "finishedAt": 1789718258.7664049
+}

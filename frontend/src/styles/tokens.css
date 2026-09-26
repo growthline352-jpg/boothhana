@@ -1,0 +1,29 @@
+/* v10 — shared visual tokens; local/system fonts only. */
+:root {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --paper: #ffffff;
+  --soft: #f1f4f7;
+  --ink: #202c3b;
+  --muted: #5f6b7a;
+  --line: #dfe5eb;
+  --line-strong: #a8b4c1;
+  --accent: #b84532;
+  --accent-hover: #9e3828;
+  --accent-soft: #fff1eb;
+  --teal: #176851;
+  --gold: #94620d;
+  --danger: #b52b32;
+  --shadow: 0 2px 8px rgb(23 40 57 / 4%);
+  --radius: 10px;
+  --radius-card: 18px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Noto Sans KR", "Malgun Gothic", "Segoe UI", sans-serif;
+  --focus: #2167b0;
+}

@@ -1,0 +1,319 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "1",
+      "type": "string"
+    },
+    "searchStatus": {
+      "type": "string",
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "queries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "maxItems": 50
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "subcategory": {
+            "type": "string",
+            "enum": [
+              "COMIC_DOUJIN",
+              "DOLL",
+              "ONLY_EVENT",
+              "BIRTHDAY_CAFE",
+              "STATIONERY_GOODS",
+              "WINE",
+              "WEDDING",
+              "LIFESTYLE",
+              "DESIGN",
+              "BUSINESS",
+              "WALK",
+              "LIGHT",
+              "MUSIC",
+              "FOOD",
+              "CULTURE"
+            ]
+          },
+          "organizer": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "edition": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100
+          },
+          "region": {
+            "type": "string",
+            "enum": [
+              "SEOUL",
+              "GYEONGGI",
+              "OTHER",
+              "UNKNOWN"
+            ]
+          },
+          "venueName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 255
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "admission": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 20
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "startDate": {
+                  "type": "string",
+                  "maxLength": 10
+                },
+                "endDate": {
+                  "type": "string",
+                  "maxLength": 10
+                },
+                "startTime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 5
+                },
+                "endTime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 5
+                }
+              },
+              "required": [
+                "startDate",
+                "endDate",
+                "startTime",
+                "endTime"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 100
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "OFFICIAL",
+                    "ORGANIZER_SOCIAL",
+                    "VENUE",
+                    "AGGREGATOR",
+                    "OTHER"
+                  ]
+                },
+                "access": {
+                  "type": "string",
+                  "enum": [
+                    "ORIGINAL",
+                    "SEARCH_SNIPPET",
+                    "INACCESSIBLE"
+                  ]
+                },
+                "evidence": {
+                  "type": "string",
+                  "maxLength": 240
+                }
+              },
+              "required": [
+                "url",
+                "kind",
+                "access",
+                "evidence"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 5
+          },
+          "banners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "imageUrl": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "pageUrl": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "rights": {
+                  "type": "string",
+                  "enum": [
+                    "UNKNOWN",
+                    "STATED_PERMISSION"
+                  ]
+                },
+                "rightsEvidence": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 500
+                },
+                "matchesEdition": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "imageUrl",
+                "pageUrl",
+                "rights",
+                "rightsEvidence",
+                "matchesEdition"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 3
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 300
+            },
+            "maxItems": 20
+          },
+          "operationStatus": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "UNKNOWN",
+                  "SCHEDULED",
+                  "CANCELED",
+                  "POSTPONED",
+                  "RESCHEDULED"
+                ]
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 500
+              },
+              "sourceUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 2048
+              },
+              "checkedOn": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              }
+            },
+            "required": [
+              "state",
+              "note",
+              "sourceUrl",
+              "checkedOn"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "name",
+          "subcategory",
+          "organizer",
+          "edition",
+          "region",
+          "venueName",
+          "address",
+          "description",
+          "admission",
+          "subjects",
+          "occurrences",
+          "sources",
+          "banners",
+          "warnings"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 200
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "searchStatus",
+    "summary",
+    "queries",
+    "events"
+  ],
+  "additionalProperties": false
+}

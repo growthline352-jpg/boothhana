@@ -1,0 +1,20 @@
+[
+  {
+    "eventId": 1,
+    "event": {
+      "name": "[TEST] 가상 인형 행사",
+      "occurrences": [
+        {
+          "startDate": "2026-10-10",
+          "endDate": "2026-10-11"
+        }
+      ],
+      "venueName": "[TEST] 서울 전시관",
+      "sources": [
+        {
+          "url": "https://example.com/event"
+        }
+      ]
+    }
+  }
+]

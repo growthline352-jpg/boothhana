@@ -1,0 +1,38 @@
+{
+  "attemptedAt": 1789714389.848285,
+  "results": [
+    {
+      "name": "frontend-install",
+      "command": [
+        "/opt/nvm/versions/node/v22.16.0/bin/corepack",
+        "pnpm",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "exitCode": 1,
+      "state": "NOT_READY"
+    },
+    {
+      "name": "frontend-build",
+      "command": [
+        "tsc",
+        "-b"
+      ],
+      "exitCode": 1,
+      "state": "NOT_READY"
+    },
+    {
+      "name": "backend-build",
+      "command": [
+        "sh",
+        "gradlew",
+        "test",
+        "bootJar",
+        "--no-daemon"
+      ],
+      "exitCode": 1,
+      "state": "NOT_READY"
+    }
+  ],
+  "productionApproval": false
+}

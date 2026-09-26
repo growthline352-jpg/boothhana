@@ -1,0 +1,7571 @@
+{
+  "sourceFiles": 112,
+  "endpoints": [
+    {
+      "controller": "GoodsShowcaseController",
+      "name": "feed",
+      "method": "GET",
+      "path": "/api/public/goods/bestsellers",
+      "returns": "ResponseEntity<GoodsShowcaseService.Feed>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "category",
+          "annotations": "@RequestParam(defaultValue = \"SUBCULTURE\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/goods/GoodsShowcaseController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "GoodsShowcaseController",
+      "name": "candidates",
+      "method": "GET",
+      "path": "/api/admin/goods-showcase",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "q",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"20\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/goods/GoodsShowcaseController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "GoodsShowcaseController",
+      "name": "update",
+      "method": "PUT",
+      "path": "/api/admin/goods-showcase/{productId}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "productId",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "GoodsShowcaseService.SettingInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/goods/GoodsShowcaseController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanPublicController",
+      "name": "plans",
+      "method": "GET",
+      "path": "/api/public/catalog/events/{id}/floorplans",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanPublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "detail",
+      "method": "GET",
+      "path": "/api/admin/subculture/v4/floorplans/events/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "watch",
+      "method": "PUT",
+      "path": "/api/admin/subculture/v4/floorplans/events/{id}/watch",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "WatchEdit",
+          "name": "e",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "permit",
+      "method": "PUT",
+      "path": "/api/admin/subculture/v4/floorplans/events/{id}/sources/{asset}/permission",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "asset",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Permission",
+          "name": "p",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "scope",
+      "method": "PUT",
+      "path": "/api/admin/subculture/v4/floorplans/events/{id}/sources/{asset}/scope",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "asset",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "SourceEdit",
+          "name": "p",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "version",
+      "method": "GET",
+      "path": "/api/admin/subculture/v4/floorplans/versions/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "edit",
+      "method": "PUT",
+      "path": "/api/admin/subculture/v4/floorplans/versions/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Edit",
+          "name": "e",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "publish",
+      "method": "POST",
+      "path": "/api/admin/subculture/v4/floorplans/versions/{id}/publish",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Publish",
+          "name": "p",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanAdminController",
+      "name": "withdraw",
+      "method": "POST",
+      "path": "/api/admin/subculture/v4/floorplans/versions/{id}/withdraw",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Publish",
+          "name": "p",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "targets",
+      "method": "GET",
+      "path": "/api/internal/subculture/v4/floorplans/targets",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "boolean",
+          "name": "imminent",
+          "annotations": "@RequestParam(defaultValue = \"false\")"
+        },
+        {
+          "type": "int",
+          "name": "limit",
+          "annotations": "@RequestParam(defaultValue = \"50\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "claim",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/events/{id}/claim",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Claim",
+          "name": "c",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "heartbeat",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/events/{id}/heartbeat",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Claim",
+          "name": "c",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "observe",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/events/{id}/observations",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Observation",
+          "name": "v",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "sources",
+      "method": "GET",
+      "path": "/api/internal/subculture/v4/floorplans/events/{id}/sources",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "begin",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/events/{id}/versions",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Begin",
+          "name": "b",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "content",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/versions/{id}/content",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "String",
+          "name": "lease",
+          "annotations": "@RequestHeader(\"X-Floorplan-Lease\")"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "r",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "analysis",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/versions/{id}/analysis",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Analysis",
+          "name": "a",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "remap",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/versions/{id}/remap",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Claim",
+          "name": "c",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "sourceFailure",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/events/{id}/sources/{asset}/failure",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "asset",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Failure",
+          "name": "f",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "FloorplanWorkerController",
+      "name": "finish",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/floorplans/events/{id}/finish",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Failure",
+          "name": "f",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanWorkerController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "HealthController",
+      "name": "live",
+      "method": "GET",
+      "path": "/api/public/health/live",
+      "returns": "Map<String, String>",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/health/HealthController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "HealthController",
+      "name": "ready",
+      "method": "GET",
+      "path": "/api/public/health/ready",
+      "returns": "ResponseEntity<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/health/HealthController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "HealthController",
+      "name": "details",
+      "method": "GET",
+      "path": "/api/admin/health/readiness",
+      "returns": "ReadinessService.Report",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/health/HealthController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CollectionAdminController",
+      "name": "candidates",
+      "method": "GET",
+      "path": "/api/admin/subculture/candidates",
+      "returns": "PageData<CandidateSummary>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": "@RequestParam(defaultValue = \"PENDING\")"
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"20\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CollectionAdminController",
+      "name": "detail",
+      "method": "GET",
+      "path": "/api/admin/subculture/candidates/{id}",
+      "returns": "CandidateDetail",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CollectionAdminController",
+      "name": "review",
+      "method": "PATCH",
+      "path": "/api/admin/subculture/candidates/{id}/review",
+      "returns": "CandidateDetail",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ReviewInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CollectionAdminController",
+      "name": "runs",
+      "method": "GET",
+      "path": "/api/admin/subculture/runs",
+      "returns": "PageData<RunSummary>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"20\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogPublicController",
+      "name": "list",
+      "method": "GET",
+      "path": "/api/public/catalog/events",
+      "returns": "PageData<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"20\")"
+        },
+        {
+          "type": "String",
+          "name": "category",
+          "annotations": "@RequestParam(defaultValue = \"SUBCULTURE\")"
+        },
+        {
+          "type": "String",
+          "name": "q",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "String",
+          "name": "subcategory",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "String",
+          "name": "from",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "String",
+          "name": "to",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "String",
+          "name": "sort",
+          "annotations": "@RequestParam(defaultValue = \"RECENT\")"
+        },
+        {
+          "type": "String",
+          "name": "region",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogPublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogPublicController",
+      "name": "detail",
+      "method": "GET",
+      "path": "/api/public/catalog/events/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogPublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "start",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/pipelines",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "PipelineInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "heartbeat",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/pipelines/{id}/heartbeat",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "finish",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/pipelines/{id}/finish",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "PipelineFinish",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "assets",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/pipelines/{id}/event-assets",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "events",
+      "method": "GET",
+      "path": "/api/internal/subculture/v4/pipelines/{id}/events",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "int",
+          "name": "limit",
+          "annotations": "@RequestParam(defaultValue = \"50\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "participants",
+      "method": "GET",
+      "path": "/api/internal/subculture/v4/pipelines/{id}/participants",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "int",
+          "name": "limit",
+          "annotations": "@RequestParam(defaultValue = \"100\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "cursors",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/pipelines/{id}/events/{eventId}/cursors",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "attempt",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/pipelines/{id}/participants/{participantId}/attempt",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "participantId",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "SalesAttemptInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "stage",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/stages",
+      "returns": "StageReceipt",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "StageBatch",
+          "name": "batch",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "assets",
+      "method": "GET",
+      "path": "/api/internal/subculture/v4/assets",
+      "returns": "List<AssetView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "int",
+          "name": "limit",
+          "annotations": "@RequestParam(defaultValue = \"100\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "content",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/assets/{id}/content",
+      "returns": "AssetView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": "@RequestHeader(\"X-Asset-Revision\")"
+        },
+        {
+          "type": "String",
+          "name": "digest",
+          "annotations": "@RequestHeader(\"X-Image-SHA256\")"
+        },
+        {
+          "type": "long",
+          "name": "size",
+          "annotations": "@RequestHeader(\"X-Image-Size\")"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "request",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogController",
+      "name": "failure",
+      "method": "POST",
+      "path": "/api/internal/subculture/v4/assets/{id}/failure",
+      "returns": "AssetView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "AssetFailure",
+          "name": "failure",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CollectionController",
+      "name": "ingest",
+      "method": "POST",
+      "path": "/api/internal/subculture/batches",
+      "returns": "Receipt",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Batch",
+          "name": "batch",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "events",
+      "method": "GET",
+      "path": "/api/admin/subculture/v4/events",
+      "returns": "PageData<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"20\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "event",
+      "method": "GET",
+      "path": "/api/admin/subculture/v4/events/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "editEvent",
+      "method": "PATCH",
+      "path": "/api/admin/subculture/v4/events/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "EditInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "participants",
+      "method": "GET",
+      "path": "/api/admin/subculture/v4/events/{id}/participants",
+      "returns": "PageData<ParticipantView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"20\")"
+        },
+        {
+          "type": "String",
+          "name": "q",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "participant",
+      "method": "GET",
+      "path": "/api/admin/subculture/v4/participants/{id}",
+      "returns": "ParticipantView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "editParticipant",
+      "method": "PATCH",
+      "path": "/api/admin/subculture/v4/participants/{id}",
+      "returns": "ParticipantView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "EditInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "editSales",
+      "method": "PATCH",
+      "path": "/api/admin/subculture/v4/participants/{id}/sales",
+      "returns": "ParticipantView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "EditInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "rights",
+      "method": "PATCH",
+      "path": "/api/admin/subculture/v4/assets/{id}/rights",
+      "returns": "AssetView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "RightsInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "banner",
+      "method": "PUT",
+      "path": "/api/admin/subculture/v4/events/{id}/banner",
+      "returns": "BannerSelection",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "BannerInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "publish",
+      "method": "POST",
+      "path": "/api/admin/subculture/v4/events/{id}/publish",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "PublishInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "unpublish",
+      "method": "DELETE",
+      "path": "/api/admin/subculture/v4/events/{id}/publish",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CatalogAdminController",
+      "name": "runs",
+      "method": "GET",
+      "path": "/api/admin/subculture/v4/runs",
+      "returns": "PageData<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"20\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogAdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "apply",
+      "method": "POST",
+      "path": "/api/creator/applications",
+      "returns": "ApplicationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "ApplicationInput",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "mine",
+      "method": "GET",
+      "path": "/api/creator/applications",
+      "returns": "List<ApplicationView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "ownHistory",
+      "method": "GET",
+      "path": "/api/creator/applications/{id}/history",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "history",
+      "method": "GET",
+      "path": "/api/admin/applications/{id}/history",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "resubmit",
+      "method": "POST",
+      "path": "/api/creator/applications/{id}/resubmit",
+      "returns": "ApplicationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ApplicationDecision",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "withdraw",
+      "method": "POST",
+      "path": "/api/creator/applications/{id}/withdraw",
+      "returns": "ApplicationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ApplicationDecision",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "approve",
+      "method": "POST",
+      "path": "/api/admin/applications/{id}/approve",
+      "returns": "ApplicationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ApplicationDecision",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "ApplicationWorkflowController",
+      "name": "reject",
+      "method": "POST",
+      "path": "/api/admin/applications/{id}/reject",
+      "returns": "ApplicationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ApplicationDecision",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/ApplicationWorkflowController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "PublicController",
+      "name": "events",
+      "method": "GET",
+      "path": "/api/public/events",
+      "returns": "List<EventView>",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/api/PublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "PublicController",
+      "name": "event",
+      "method": "GET",
+      "path": "/api/public/events/{id}",
+      "returns": "EventView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/PublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "PublicController",
+      "name": "booths",
+      "method": "GET",
+      "path": "/api/public/events/{id}/booths",
+      "returns": "List<BoothView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/PublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "PublicController",
+      "name": "booth",
+      "method": "GET",
+      "path": "/api/public/booths/{id}",
+      "returns": "BoothView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/PublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "PublicController",
+      "name": "products",
+      "method": "GET",
+      "path": "/api/public/booths/{id}/products",
+      "returns": "List<ProductView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/PublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "PublicController",
+      "name": "product",
+      "method": "GET",
+      "path": "/api/public/products/{id}",
+      "returns": "ProductView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/PublicController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AuthController",
+      "name": "csrf",
+      "method": "GET",
+      "path": "/api/auth/csrf",
+      "returns": "Map<String, String>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "CsrfToken",
+          "name": "token",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AuthController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AuthController",
+      "name": "login",
+      "method": "GET",
+      "path": "/api/auth/login",
+      "returns": "ResponseEntity<Void>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "jakarta.servlet.http.HttpServletRequest",
+          "name": "request",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "returnTo",
+          "annotations": "@RequestParam(required = false)"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AuthController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "events",
+      "method": "GET",
+      "path": "/api/admin/events",
+      "returns": "List<EventView>",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "event",
+      "method": "GET",
+      "path": "/api/admin/events/{id}",
+      "returns": "EventView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "create",
+      "method": "POST",
+      "path": "/api/admin/events",
+      "returns": "EventView",
+      "responseStatus": "@ResponseStatus(HttpStatus.CREATED)",
+      "parameters": [
+        {
+          "type": "EventInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "update",
+      "method": "PATCH",
+      "path": "/api/admin/events/{id}",
+      "returns": "EventView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "EventInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "delete",
+      "method": "DELETE",
+      "path": "/api/admin/events/{id}",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "publish",
+      "method": "POST",
+      "path": "/api/admin/events/{id}/publish",
+      "returns": "EventView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "end",
+      "method": "POST",
+      "path": "/api/admin/events/{id}/end",
+      "returns": "EventView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "AdminController",
+      "name": "applications",
+      "method": "GET",
+      "path": "/api/admin/applications",
+      "returns": "List<ApplicationView>",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/api/AdminController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "MeController",
+      "name": "me",
+      "method": "GET",
+      "path": "/api/me",
+      "returns": "UserView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "authentication",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/MeController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "MeController",
+      "name": "receipt",
+      "method": "GET",
+      "path": "/api/me/reservation-requests/{requestId}",
+      "returns": "org.springframework.http.ResponseEntity<java.util.Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "java.util.UUID",
+          "name": "requestId",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/MeController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "MeController",
+      "name": "reservations",
+      "method": "GET",
+      "path": "/api/me/reservations",
+      "returns": "List<ReservationView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/MeController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "MeController",
+      "name": "create",
+      "method": "POST",
+      "path": "/api/me/reservations",
+      "returns": "ReservationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "ReservationInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/MeController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "MeController",
+      "name": "reservation",
+      "method": "GET",
+      "path": "/api/me/reservations/{id}",
+      "returns": "ReservationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/MeController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "MeController",
+      "name": "cancel",
+      "method": "POST",
+      "path": "/api/me/reservations/{id}/cancel",
+      "returns": "ReservationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/MeController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "UploadController",
+      "name": "register",
+      "method": "POST",
+      "path": "/api/creator/uploads/tickets",
+      "returns": "UploadTicketView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UploadTicketInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/UploadController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "UploadController",
+      "name": "content",
+      "method": "POST",
+      "path": "/api/creator/uploads/tickets/{id}/content",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "request",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/UploadController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "UploadController",
+      "name": "complete",
+      "method": "POST",
+      "path": "/api/creator/uploads/tickets/{id}/complete",
+      "returns": "UploadCompleteView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/UploadController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "UploadController",
+      "name": "legacy",
+      "method": "POST",
+      "path": "/api/creator/uploads/presign",
+      "returns": "void",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/api/UploadController.java",
+      "alwaysThrows": true
+    },
+    {
+      "controller": "UploadController",
+      "name": "legacy",
+      "method": "POST",
+      "path": "/api/creator/uploads/complete",
+      "returns": "void",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/api/UploadController.java",
+      "alwaysThrows": true
+    },
+    {
+      "controller": "CreatorController",
+      "name": "events",
+      "method": "GET",
+      "path": "/api/creator/events",
+      "returns": "List<EventView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "boothId",
+          "annotations": "@RequestParam(required = false)"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "booths",
+      "method": "GET",
+      "path": "/api/creator/booths",
+      "returns": "List<BoothView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "eventBooths",
+      "method": "GET",
+      "path": "/api/creator/event-booths",
+      "returns": "List<BoothView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "updateEventBooth",
+      "method": "PATCH",
+      "path": "/api/creator/event-booths/{id}",
+      "returns": "BoothView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "EventBoothInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "deleteEventBooth",
+      "method": "DELETE",
+      "path": "/api/creator/event-booths/{id}",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "createBooth",
+      "method": "POST",
+      "path": "/api/creator/booths",
+      "returns": "BoothView",
+      "responseStatus": "@ResponseStatus(HttpStatus.CREATED)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "BoothInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "updateBooth",
+      "method": "PATCH",
+      "path": "/api/creator/booths/{id}",
+      "returns": "BoothView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "BoothInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "deleteBooth",
+      "method": "DELETE",
+      "path": "/api/creator/booths/{id}",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "products",
+      "method": "GET",
+      "path": "/api/creator/event-booths/{id}/products",
+      "returns": "List<ProductView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "createProduct",
+      "method": "POST",
+      "path": "/api/creator/event-booths/{id}/products",
+      "returns": "ProductView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ProductInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "updateProduct",
+      "method": "PATCH",
+      "path": "/api/creator/products/{id}",
+      "returns": "ProductView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ProductInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "deleteProduct",
+      "method": "DELETE",
+      "path": "/api/creator/products/{id}",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "copyProducts",
+      "method": "POST",
+      "path": "/api/creator/event-booths/{id}/products/copy",
+      "returns": "List<ProductView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "CopyProductsInput",
+          "name": "input",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "notices",
+      "method": "GET",
+      "path": "/api/creator/event-booths/{id}/notices",
+      "returns": "List<NoticeView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "createNotice",
+      "method": "POST",
+      "path": "/api/creator/event-booths/{id}/notices",
+      "returns": "NoticeView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "NoticeInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "updateNotice",
+      "method": "PATCH",
+      "path": "/api/creator/notices/{id}",
+      "returns": "NoticeView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "NoticeInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "pinNotice",
+      "method": "POST",
+      "path": "/api/creator/notices/{id}/pin",
+      "returns": "NoticeView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "deleteNotice",
+      "method": "DELETE",
+      "path": "/api/creator/notices/{id}",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "reservations",
+      "method": "GET",
+      "path": "/api/creator/reservations",
+      "returns": "List<ReservationView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "reservation",
+      "method": "GET",
+      "path": "/api/creator/reservations/by-number/{number}",
+      "returns": "ReservationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "number",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "pickup",
+      "method": "POST",
+      "path": "/api/creator/reservations/{id}/pickup",
+      "returns": "ReservationView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "receipt",
+      "method": "GET",
+      "path": "/api/creator/pos-requests/{requestId}",
+      "returns": "org.springframework.http.ResponseEntity<java.util.Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "java.util.UUID",
+          "name": "requestId",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "posSales",
+      "method": "GET",
+      "path": "/api/creator/pos-sales",
+      "returns": "List<PosView>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "posSale",
+      "method": "GET",
+      "path": "/api/creator/pos-sales/{id}",
+      "returns": "PosView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "createPos",
+      "method": "POST",
+      "path": "/api/creator/pos-sales",
+      "returns": "PosView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "PosInput",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "CreatorController",
+      "name": "cancelPos",
+      "method": "POST",
+      "path": "/api/creator/pos-sales/{id}/cancel",
+      "returns": "PosView",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/api/CreatorController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "options",
+      "method": "GET",
+      "path": "/api/public/support/options",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "target",
+      "method": "POST",
+      "path": "/api/public/support/target",
+      "returns": "Resolved",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Target",
+          "name": "t",
+          "annotations": "@RequestBody"
+        },
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "claimables",
+      "method": "GET",
+      "path": "/api/public/support/claimables",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": "@RequestParam"
+        },
+        {
+          "type": "long",
+          "name": "participantId",
+          "annotations": "@RequestParam"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "mine",
+      "method": "GET",
+      "path": "/api/me/support/tickets",
+      "returns": "PageData<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "kind",
+          "annotations": "@RequestParam"
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "receipt",
+      "method": "GET",
+      "path": "/api/me/support/requests/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "create",
+      "method": "POST",
+      "path": "/api/me/support/tickets",
+      "returns": "Map<String, Object>",
+      "responseStatus": "@ResponseStatus(HttpStatus.CREATED)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "Create",
+          "name": "c",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "detail",
+      "method": "GET",
+      "path": "/api/me/support/tickets/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "message",
+      "method": "POST",
+      "path": "/api/me/support/tickets/{id}/messages",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Message",
+          "name": "m",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "queue",
+      "method": "GET",
+      "path": "/api/admin/support/tickets",
+      "returns": "PageData<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "kind",
+          "annotations": "@RequestParam"
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "adminDetail",
+      "method": "GET",
+      "path": "/api/admin/support/tickets/{id}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "reply",
+      "method": "POST",
+      "path": "/api/admin/support/tickets/{id}/messages",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Message",
+          "name": "m",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "action",
+      "method": "POST",
+      "path": "/api/admin/support/tickets/{id}/actions",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Action",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "correct",
+      "method": "POST",
+      "path": "/api/admin/support/tickets/{id}/publish-reviewed",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Correction",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "hide",
+      "method": "POST",
+      "path": "/api/admin/support/tickets/{id}/hide",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Action",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "claimDecision",
+      "method": "POST",
+      "path": "/api/admin/support/tickets/{id}/claim-decision",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "ClaimDecision",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "managed",
+      "method": "GET",
+      "path": "/api/me/support/managed-exhibitors",
+      "returns": "List<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "revoke",
+      "method": "POST",
+      "path": "/api/admin/support/managers/{exhibitor}/{user}/revoke",
+      "returns": "void",
+      "responseStatus": "@ResponseStatus(HttpStatus.NO_CONTENT)",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "exhibitor",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "user",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Revoke",
+          "name": "i",
+          "annotations": "@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "guestCreate",
+      "method": "POST",
+      "path": "/api/public/support/guest/tickets",
+      "returns": "ResponseEntity<Map<String, Object>>",
+      "responseStatus": "@ResponseStatus(HttpStatus.CREATED)",
+      "parameters": [
+        {
+          "type": "GuestCreate",
+          "name": "c",
+          "annotations": "@RequestBody"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "r",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "guestRead",
+      "method": "POST",
+      "path": "/api/public/support/guest/read",
+      "returns": "ResponseEntity<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "GuestAccess",
+          "name": "a",
+          "annotations": "@RequestBody"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "r",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "guestMessage",
+      "method": "POST",
+      "path": "/api/public/support/guest/messages",
+      "returns": "ResponseEntity<Map<String, Object>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "GuestMessage",
+          "name": "a",
+          "annotations": "@RequestBody"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "r",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "upload",
+      "method": "POST",
+      "path": "/api/me/support/tickets/{id}/attachments/{upload}",
+      "returns": "Map<String, Object>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "UUID",
+          "name": "upload",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "String",
+          "name": "sha256",
+          "annotations": "@RequestParam"
+        },
+        {
+          "type": "long",
+          "name": "size",
+          "annotations": "@RequestParam"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "r",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "download",
+      "method": "GET",
+      "path": "/api/me/support/tickets/{id}/attachments/{attachment}",
+      "returns": "ResponseEntity<byte[]>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "UUID",
+          "name": "attachment",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "r",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "SupportController",
+      "name": "download",
+      "method": "GET",
+      "path": "/api/admin/support/tickets/{id}/attachments/{attachment}",
+      "returns": "ResponseEntity<byte[]>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "a",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "UUID",
+          "name": "attachment",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "HttpServletRequest",
+          "name": "r",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/support/SupportController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "list",
+      "method": "GET",
+      "path": "/api/me/library/items",
+      "returns": "ResponseEntity<Page>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "q",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "Long",
+          "name": "eventId",
+          "annotations": "@RequestParam(required = false)"
+        },
+        {
+          "type": "String",
+          "name": "type",
+          "annotations": "@RequestParam(defaultValue = \"\")"
+        },
+        {
+          "type": "boolean",
+          "name": "visited",
+          "annotations": "@RequestParam(defaultValue = \"false\")"
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": "@RequestParam(defaultValue = \"0\")"
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": "@RequestParam(defaultValue = \"24\")"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "index",
+      "method": "GET",
+      "path": "/api/me/library/index",
+      "returns": "ResponseEntity<List<Index>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "save",
+      "method": "PUT",
+      "path": "/api/me/library/items",
+      "returns": "ResponseEntity<SaveResult>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Save",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "importOne",
+      "method": "POST",
+      "path": "/api/me/library/import",
+      "returns": "ResponseEntity<ImportResult>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "Import",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "detail",
+      "method": "GET",
+      "path": "/api/me/library/items/{id}",
+      "returns": "ResponseEntity<Entry>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "edit",
+      "method": "PATCH",
+      "path": "/api/me/library/items/{id}",
+      "returns": "ResponseEntity<Entry>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Edit",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "delete",
+      "method": "DELETE",
+      "path": "/api/me/library/items/{id}",
+      "returns": "ResponseEntity<Void>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": "@RequestParam"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "visit",
+      "method": "PUT",
+      "path": "/api/me/library/items/{id}/visit",
+      "returns": "ResponseEntity<Entry>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Visit",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "activity",
+      "method": "POST",
+      "path": "/api/me/library/items/{id}/activity",
+      "returns": "ResponseEntity<Void>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Authentication",
+          "name": "auth",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": "@PathVariable"
+        },
+        {
+          "type": "Activity",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    },
+    {
+      "controller": "LibraryController",
+      "name": "resolve",
+      "method": "POST",
+      "path": "/api/public/library/resolve",
+      "returns": "ResponseEntity<List<Resolved>>",
+      "responseStatus": "",
+      "parameters": [
+        {
+          "type": "Resolve",
+          "name": "input",
+          "annotations": "@Valid,@RequestBody"
+        }
+      ],
+      "file": "backend/src/main/java/com/boothhana/library/LibraryController.java",
+      "alwaysThrows": false
+    }
+  ],
+  "records": [
+    {
+      "file": "backend/src/main/java/com/boothhana/goods/GoodsShowcaseService.java",
+      "name": "GoodsShowcaseService.Item",
+      "fields": [
+        {
+          "type": "int",
+          "name": "rank",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "productId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "eventProductId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "price",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "boothName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "eventName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "eventState",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "soldOut",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/goods/GoodsShowcaseService.java",
+      "name": "GoodsShowcaseService.Feed",
+      "fields": [
+        {
+          "type": "String",
+          "name": "basis",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "windowDays",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "from",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "to",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "asOf",
+          "annotations": ""
+        },
+        {
+          "type": "List<Item>",
+          "name": "items",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/goods/GoodsShowcaseService.java",
+      "name": "GoodsShowcaseService.SettingInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "category",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "enabled",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "revision",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Point",
+      "fields": [
+        {
+          "type": "double",
+          "name": "x",
+          "annotations": ""
+        },
+        {
+          "type": "double",
+          "name": "y",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.PlanScope",
+      "fields": [
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "zone",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "dates",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "title",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.PlanSource",
+      "fields": [
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "pageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "PlanScope",
+          "name": "scope",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "evidence",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Discovery",
+      "fields": [
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "availableOn",
+          "annotations": ""
+        },
+        {
+          "type": "List<PlanSource>",
+          "name": "plans",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "checkedUrls",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Claim",
+      "fields": [
+        {
+          "type": "String",
+          "name": "leaseId",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Observation",
+      "fields": [
+        {
+          "type": "String",
+          "name": "requestId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "leaseId",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "webSearchObserved",
+          "annotations": ""
+        },
+        {
+          "type": "Discovery",
+          "name": "result",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Permission",
+      "fields": [
+        {
+          "type": "long",
+          "name": "assetRevision",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "sourceRevision",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "allowed",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "credit",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.SourceEdit",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "PlanScope",
+          "name": "scope",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Begin",
+      "fields": [
+        {
+          "type": "String",
+          "name": "leaseId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "assetId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "sourceRevision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "sha256",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "width",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "height",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "size",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "contentType",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Shape",
+      "fields": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "label",
+          "annotations": ""
+        },
+        {
+          "type": "List<Point>",
+          "name": "points",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "recognition",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "boundaryConfirmed",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Geometry",
+      "fields": [
+        {
+          "type": "String",
+          "name": "extractorVersion",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "complete",
+          "annotations": ""
+        },
+        {
+          "type": "List<Shape>",
+          "name": "shapes",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Analysis",
+      "fields": [
+        {
+          "type": "String",
+          "name": "leaseId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "sha256",
+          "annotations": ""
+        },
+        {
+          "type": "Geometry",
+          "name": "geometry",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.ManualLink",
+      "fields": [
+        {
+          "type": "long",
+          "name": "participantId",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "dates",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reason",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Edit",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "Geometry",
+          "name": "geometry",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, ManualLink>",
+          "name": "manualLinks",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Publish",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "acceptPartial",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.WatchEdit",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "disabled",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Failure",
+      "fields": [
+        {
+          "type": "String",
+          "name": "leaseId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "message",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Roster",
+      "fields": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "List<Place>",
+          "name": "locations",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Place",
+      "fields": [
+        {
+          "type": "String",
+          "name": "code",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "zone",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "dates",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "mapUrl",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Link",
+      "fields": [
+        {
+          "type": "long",
+          "name": "participantId",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "dates",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "method",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.MappedShape",
+      "fields": [
+        {
+          "type": "Shape",
+          "name": "shape",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "List<Link>",
+          "name": "links",
+          "annotations": ""
+        },
+        {
+          "type": "List<Long>",
+          "name": "candidates",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "issues",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/floorplan/FloorplanModels.java",
+      "name": "FloorplanModels.Mapping",
+      "fields": [
+        {
+          "type": "List<MappedShape>",
+          "name": "shapes",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "matched",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "unresolved",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "issues",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/health/SchemaContract.java",
+      "name": "SchemaContract.ColumnShape",
+      "fields": [
+        {
+          "type": "String",
+          "name": "udt",
+          "annotations": ""
+        },
+        {
+          "type": "Integer",
+          "name": "length",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "notNull",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/health/ReadinessService.java",
+      "name": "ReadinessService.Report",
+      "fields": [
+        {
+          "type": "boolean",
+          "name": "ready",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "checkedAt",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "issues",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "diagnosticId",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.Scope",
+      "fields": [
+        {
+          "type": "String",
+          "name": "region",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "timezone",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "startDate",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "endDate",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.Occurrence",
+      "fields": [
+        {
+          "type": "String",
+          "name": "startDate",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "endDate",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "startTime",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "endTime",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.Source",
+      "fields": [
+        {
+          "type": "String",
+          "name": "url",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "kind",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "access",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "evidence",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.Banner",
+      "fields": [
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "pageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "rights",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "rightsEvidence",
+          "annotations": ""
+        },
+        {
+          "type": "Boolean",
+          "name": "matchesEdition",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.DiscoveryLink",
+      "fields": [
+        {
+          "type": "String",
+          "name": "kind",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "url",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.OperationStatus",
+      "fields": [
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "sourceUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "checkedOn",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.EventData",
+      "fields": [
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "subcategory",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "organizer",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "edition",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "region",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "venueName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "address",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "description",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "admission",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "subjects",
+          "annotations": ""
+        },
+        {
+          "type": "List<Occurrence>",
+          "name": "occurrences",
+          "annotations": ""
+        },
+        {
+          "type": "List<Source>",
+          "name": "sources",
+          "annotations": ""
+        },
+        {
+          "type": "List<Banner>",
+          "name": "banners",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "eventFormat",
+          "annotations": ""
+        },
+        {
+          "type": "List<DiscoveryLink>",
+          "name": "discoveryLinks",
+          "annotations": ""
+        },
+        {
+          "type": "OperationStatus",
+          "name": "operationStatus",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.SearchResult",
+      "fields": [
+        {
+          "type": "String",
+          "name": "schemaVersion",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "searchStatus",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "summary",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "queries",
+          "annotations": ""
+        },
+        {
+          "type": "List<EventData>",
+          "name": "events",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.Batch",
+      "fields": [
+        {
+          "type": "String",
+          "name": "schemaVersion",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "runId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "startedAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "finishedAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "executionMode",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "webSearchObserved",
+          "annotations": ""
+        },
+        {
+          "type": "Scope",
+          "name": "scope",
+          "annotations": ""
+        },
+        {
+          "type": "SearchResult",
+          "name": "result",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.Rejection",
+      "fields": [
+        {
+          "type": "int",
+          "name": "index",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "reasons",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.Receipt",
+      "fields": [
+        {
+          "type": "String",
+          "name": "runId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "inserted",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "changed",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "unchanged",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "rejected",
+          "annotations": ""
+        },
+        {
+          "type": "List<Rejection>",
+          "name": "rejections",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.CandidateSummary",
+      "fields": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "subcategory",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "venueName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "startsOn",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "endsOn",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewState",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "possibleDuplicateOf",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "lastSeenAt",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.CandidateDetail",
+      "fields": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewState",
+          "annotations": ""
+        },
+        {
+          "type": "EventData",
+          "name": "event",
+          "annotations": ""
+        },
+        {
+          "type": "EventData",
+          "name": "reviewedEvent",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "validationWarnings",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewNote",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "possibleDuplicateOf",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "firstSeenAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "lastSeenAt",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.ReviewInput",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewState",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.RunSummary",
+      "fields": [
+        {
+          "type": "String",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "executionMode",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "startedAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "finishedAt",
+          "annotations": ""
+        },
+        {
+          "type": "Scope",
+          "name": "scope",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "summary",
+          "annotations": ""
+        },
+        {
+          "type": "Receipt",
+          "name": "receipt",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionModels.java",
+      "name": "CollectionModels.PageData",
+      "fields": [
+        {
+          "type": "List<T>",
+          "name": "items",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "total",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogCursorRules.java",
+      "name": "CatalogCursorRules.Advance",
+      "fields": [
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "nextPageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "pageIndex",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "visited",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "warning",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogBrowseQuery.java",
+      "name": "CatalogBrowseQuery",
+      "fields": [
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "category",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "q",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "subcategory",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "from",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "to",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "sort",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "region",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Location",
+      "fields": [
+        {
+          "type": "String",
+          "name": "code",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "zone",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "startDate",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "endDate",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "floorPlanUrl",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Member",
+      "fields": [
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "kind",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "aliases",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "profileUrl",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Image",
+      "fields": [
+        {
+          "type": "String",
+          "name": "type",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "pageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "rightsEvidence",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "caption",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Identity",
+      "fields": [
+        {
+          "type": "String",
+          "name": "sourceSystem",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "entryId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "detailUrl",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Participant",
+      "fields": [
+        {
+          "type": "String",
+          "name": "sourceEntryId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "registrationName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "kind",
+          "annotations": ""
+        },
+        {
+          "type": "List<Member>",
+          "name": "members",
+          "annotations": ""
+        },
+        {
+          "type": "List<Location>",
+          "name": "locations",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "subjects",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "officialLinks",
+          "annotations": ""
+        },
+        {
+          "type": "List<Source>",
+          "name": "sources",
+          "annotations": ""
+        },
+        {
+          "type": "List<Image>",
+          "name": "images",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        },
+        {
+          "type": "Identity",
+          "name": "identity",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Price",
+      "fields": [
+        {
+          "type": "String",
+          "name": "amount",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "currency",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "checkedOn",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.ProductData",
+      "fields": [
+        {
+          "type": "String",
+          "name": "sourceEntryId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "summary",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "memberName",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "categories",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "subjects",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "evidenceScope",
+          "annotations": ""
+        },
+        {
+          "type": "Price",
+          "name": "price",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "saleState",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "productUrl",
+          "annotations": ""
+        },
+        {
+          "type": "List<Source>",
+          "name": "sources",
+          "annotations": ""
+        },
+        {
+          "type": "List<Image>",
+          "name": "images",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        },
+        {
+          "type": "Identity",
+          "name": "identity",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Sales",
+      "fields": [
+        {
+          "type": "String",
+          "name": "summary",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "evidenceScope",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "categories",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "subjects",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "salesMethod",
+          "annotations": ""
+        },
+        {
+          "type": "List<Source>",
+          "name": "sources",
+          "annotations": ""
+        },
+        {
+          "type": "List<Image>",
+          "name": "images",
+          "annotations": ""
+        },
+        {
+          "type": "List<ProductData>",
+          "name": "products",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.Coverage",
+      "fields": [
+        {
+          "type": "String",
+          "name": "completeness",
+          "annotations": ""
+        },
+        {
+          "type": "Integer",
+          "name": "reportedTotal",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "totalUnit",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "visitedPages",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "nextPageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.StageResult",
+      "fields": [
+        {
+          "type": "String",
+          "name": "searchStatus",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "summary",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "queries",
+          "annotations": ""
+        },
+        {
+          "type": "Coverage",
+          "name": "coverage",
+          "annotations": ""
+        },
+        {
+          "type": "List<Participant>",
+          "name": "participants",
+          "annotations": ""
+        },
+        {
+          "type": "Sales",
+          "name": "sales",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.CursorRef",
+      "fields": [
+        {
+          "type": "String",
+          "name": "sourceKey",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "passNo",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "pageIndex",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "requestedUrl",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.SalesAttemptInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reason",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.StageBatch",
+      "fields": [
+        {
+          "type": "String",
+          "name": "schemaVersion",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "runId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "pipelineId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "stage",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "participantId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "targetRevision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "startedAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "finishedAt",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "webSearchObserved",
+          "annotations": ""
+        },
+        {
+          "type": "StageResult",
+          "name": "result",
+          "annotations": ""
+        },
+        {
+          "type": "CursorRef",
+          "name": "cursor",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.StageReceipt",
+      "fields": [
+        {
+          "type": "String",
+          "name": "runId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "inserted",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "changed",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "unchanged",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "rejected",
+          "annotations": ""
+        },
+        {
+          "type": "List<Long>",
+          "name": "participantIds",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "issues",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.PipelineInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "runId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "weekKey",
+          "annotations": ""
+        },
+        {
+          "type": "Scope",
+          "name": "scope",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.PipelineFinish",
+      "fields": [
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, Object>",
+          "name": "summary",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.EditInput",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewState",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, Object>",
+          "name": "overrides",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "clearOverrides",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.RightsInput",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "rightsState",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "credit",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "offlineAllowed",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.BannerSelection",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "assetId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.BannerInput",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "assetId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "assetRevision",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.PublishInput",
+      "fields": [
+        {
+          "type": "long",
+          "name": "eventRevision",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.AssetFailure",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reason",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.ParticipantView",
+      "fields": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewState",
+          "annotations": ""
+        },
+        {
+          "type": "Participant",
+          "name": "data",
+          "annotations": ""
+        },
+        {
+          "type": "Participant",
+          "name": "collectedData",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewNote",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "lastSeenAt",
+          "annotations": ""
+        },
+        {
+          "type": "SalesView",
+          "name": "sales",
+          "annotations": ""
+        },
+        {
+          "type": "List<AssetView>",
+          "name": "assets",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, Object>",
+          "name": "overrides",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.ProductCheck",
+      "fields": [
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "lastSeenAt",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.ProductRow",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "ProductData",
+          "name": "data",
+          "annotations": ""
+        },
+        {
+          "type": "ProductCheck",
+          "name": "verification",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.SalesView",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewState",
+          "annotations": ""
+        },
+        {
+          "type": "Sales",
+          "name": "data",
+          "annotations": ""
+        },
+        {
+          "type": "Sales",
+          "name": "collectedData",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reviewNote",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "collectedAt",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, Object>",
+          "name": "overrides",
+          "annotations": ""
+        },
+        {
+          "type": "List<ProductRow>",
+          "name": "productRows",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CatalogModels.java",
+      "name": "CatalogModels.AssetView",
+      "fields": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "participantId",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "productId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "type",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "pageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "caption",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "rightsEvidence",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "rightsState",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "rightsNote",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "storageState",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "storedUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "error",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "credit",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "offlineAllowed",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/collection/CollectionRules.java",
+      "name": "CollectionRules.Check",
+      "fields": [
+        {
+          "type": "List<String>",
+          "name": "errors",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.UserView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "displayName",
+          "annotations": ""
+        },
+        {
+          "type": "List<Permission>",
+          "name": "permissions",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.EventView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "startAt",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "endAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "venue",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "description",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "reservationStartAt",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "reservationEndAt",
+          "annotations": ""
+        },
+        {
+          "type": "EventStatus",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "boothCount",
+          "annotations": ""
+        },
+        {
+          "type": "ApplicationStatus",
+          "name": "applicationStatus",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageKey",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.EventInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": "@NotBlank,@Size(max = 255)"
+        },
+        {
+          "type": "Instant",
+          "name": "startAt",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "Instant",
+          "name": "endAt",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "String",
+          "name": "venue",
+          "annotations": "@NotBlank,@Size(max = 255)"
+        },
+        {
+          "type": "String",
+          "name": "description",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageKey",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "reservationStartAt",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "reservationEndAt",
+          "annotations": ""
+        },
+        {
+          "type": "EventStatus",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "Boolean",
+          "name": "removeImage",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.BoothView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "eventId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "creatorName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "boothNumber",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "intro",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageKey",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "snsUrl",
+          "annotations": ""
+        },
+        {
+          "type": "ApplicationStatus",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "isPublic",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "productCount",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "reservableCount",
+          "annotations": ""
+        },
+        {
+          "type": "List<NoticeView>",
+          "name": "notices",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.BoothInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": "@NotBlank,@Size(max = 255)"
+        },
+        {
+          "type": "String",
+          "name": "intro",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageKey",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "snsUrl",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.EventBoothInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "boothNumber",
+          "annotations": "@NotBlank,@Size(max = 64)"
+        },
+        {
+          "type": "String",
+          "name": "intro",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "isPublic",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ApplicationInput",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "eventId",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "Long",
+          "name": "boothId",
+          "annotations": "@NotNull"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ApplicationView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "eventId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "eventName",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "boothId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "boothName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "creatorName",
+          "annotations": ""
+        },
+        {
+          "type": "ApplicationStatus",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reason",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ApplicationDecision",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": "@PositiveOrZero"
+        },
+        {
+          "type": "String",
+          "name": "reason",
+          "annotations": "@Size(max = 512)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.RejectInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "reason",
+          "annotations": "@NotBlank,@Size(max = 512)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ProductInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": "@NotBlank,@Size(max = 255)"
+        },
+        {
+          "type": "String",
+          "name": "description",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageKey",
+          "annotations": "@Size(max = 512)"
+        },
+        {
+          "type": "long",
+          "name": "price",
+          "annotations": "@PositiveOrZero,@Max(1000000000L)"
+        },
+        {
+          "type": "StockMode",
+          "name": "stockMode",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "Integer",
+          "name": "stockQuantity",
+          "annotations": "@PositiveOrZero"
+        },
+        {
+          "type": "boolean",
+          "name": "soldOut",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "isPublic",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "reservationEnabled",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "version",
+          "annotations": "@PositiveOrZero"
+        },
+        {
+          "type": "Long",
+          "name": "productVersion",
+          "annotations": "@PositiveOrZero"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ProductView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "eventBoothId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "description",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "imageKey",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "price",
+          "annotations": ""
+        },
+        {
+          "type": "StockMode",
+          "name": "stockMode",
+          "annotations": ""
+        },
+        {
+          "type": "Integer",
+          "name": "stockQuantity",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "soldOut",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "isPublic",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "reservationEnabled",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "version",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "productVersion",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.CopyProductsInput",
+      "fields": [
+        {
+          "type": "List<Long>",
+          "name": "productIds",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.NoticeInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "title",
+          "annotations": "@NotBlank,@Size(max = 255)"
+        },
+        {
+          "type": "String",
+          "name": "body",
+          "annotations": "@NotBlank"
+        },
+        {
+          "type": "boolean",
+          "name": "pinned",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.NoticeView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "eventBoothId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "title",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "body",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "pinned",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "createdAt",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.LineInput",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "eventProductId",
+          "annotations": "@NotNull,@Positive"
+        },
+        {
+          "type": "int",
+          "name": "quantity",
+          "annotations": "@Min(1),@Max(1000000)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ReservationInput",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "eventBoothId",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "List<@NotNull @Valid LineInput>",
+          "name": "items",
+          "annotations": "@NotEmpty,@Size(max = 100)"
+        },
+        {
+          "type": "UUID",
+          "name": "requestId",
+          "annotations": "@NotNull"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ReservationItemView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "eventProductId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "productName",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "quantity",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "unitPrice",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ReservationView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reservationNo",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "eventBoothId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "eventName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "boothName",
+          "annotations": ""
+        },
+        {
+          "type": "ReservationStatus",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "qrToken",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "createdAt",
+          "annotations": ""
+        },
+        {
+          "type": "List<ReservationItemView>",
+          "name": "items",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.PosInput",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "eventBoothId",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "PaymentMethod",
+          "name": "paymentMethod",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "List<@NotNull @Valid LineInput>",
+          "name": "items",
+          "annotations": "@NotEmpty,@Size(max = 100)"
+        },
+        {
+          "type": "UUID",
+          "name": "requestId",
+          "annotations": "@NotNull"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.PosView",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "saleNo",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "eventBoothId",
+          "annotations": ""
+        },
+        {
+          "type": "PaymentMethod",
+          "name": "paymentMethod",
+          "annotations": ""
+        },
+        {
+          "type": "PosStatus",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "Instant",
+          "name": "soldAt",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "totalAmount",
+          "annotations": ""
+        },
+        {
+          "type": "List<ReservationItemView>",
+          "name": "items",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.UploadInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "fileName",
+          "annotations": "@NotBlank,@Size(max = 255)"
+        },
+        {
+          "type": "String",
+          "name": "contentType",
+          "annotations": "@NotBlank"
+        },
+        {
+          "type": "String",
+          "name": "target",
+          "annotations": "@NotBlank,@Pattern(regexp = \"booth|product\")"
+        },
+        {
+          "type": "Long",
+          "name": "fileSize",
+          "annotations": "@NotNull,@Min(1),@Max(10485760)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.UploadCompleteInput",
+      "fields": [
+        {
+          "type": "String",
+          "name": "objectKey",
+          "annotations": "@NotBlank,@Size(max = 512)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.UploadCompleteView",
+      "fields": [
+        {
+          "type": "String",
+          "name": "objectKey",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.UploadTicketInput",
+      "fields": [
+        {
+          "type": "UUID",
+          "name": "uploadId",
+          "annotations": "@NotNull"
+        },
+        {
+          "type": "String",
+          "name": "target",
+          "annotations": "@NotBlank,@Pattern(regexp = \"booth|product\")"
+        },
+        {
+          "type": "String",
+          "name": "contentType",
+          "annotations": "@NotBlank"
+        },
+        {
+          "type": "long",
+          "name": "fileSize",
+          "annotations": "@Min(1),@Max(10485760)"
+        },
+        {
+          "type": "String",
+          "name": "sha256",
+          "annotations": "@NotBlank,@Pattern(regexp = \"[0-9a-f]{64}\")"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.UploadTicketView",
+      "fields": [
+        {
+          "type": "java.util.UUID",
+          "name": "uploadId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.UploadView",
+      "fields": [
+        {
+          "type": "String",
+          "name": "uploadUrl",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "objectKey",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/api/ApiModels.java",
+      "name": "ApiModels.ErrorView",
+      "fields": [
+        {
+          "type": "int",
+          "name": "status",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "code",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "message",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, String>",
+          "name": "fieldErrors",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "requestId",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportAttachments.java",
+      "name": "SupportAttachments.Download",
+      "fields": [
+        {
+          "type": "String",
+          "name": "type",
+          "annotations": ""
+        },
+        {
+          "type": "byte[]",
+          "name": "bytes",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportAttachmentTransactions.java",
+      "name": "SupportAttachmentTransactions.Entry",
+      "fields": [
+        {
+          "type": "String",
+          "name": "key",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "type",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "size",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "sha256",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "stored",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Target",
+      "fields": [
+        {
+          "type": "String",
+          "name": "namespace",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "type",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "planId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "areaId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "day",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Create",
+      "fields": [
+        {
+          "type": "UUID",
+          "name": "requestId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "kind",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "category",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "title",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "body",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "evidence",
+          "annotations": ""
+        },
+        {
+          "type": "Target",
+          "name": "target",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, String>",
+          "name": "context",
+          "annotations": ""
+        },
+        {
+          "type": "Long",
+          "name": "exhibitorId",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Message",
+      "fields": [
+        {
+          "type": "UUID",
+          "name": "requestId",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "body",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "evidence",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "internal",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Action",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "action",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "UUID",
+          "name": "duplicateOf",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "expectedFingerprint",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Correction",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "expectedFingerprint",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "targetRevision",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "eventRevision",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, Object>",
+          "name": "overrides",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reply",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.GuestCreate",
+      "fields": [
+        {
+          "type": "Create",
+          "name": "ticket",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "accessKey",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "website",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.GuestAccess",
+      "fields": [
+        {
+          "type": "UUID",
+          "name": "ticketId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "accessKey",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.GuestMessage",
+      "fields": [
+        {
+          "type": "GuestAccess",
+          "name": "access",
+          "annotations": ""
+        },
+        {
+          "type": "Message",
+          "name": "message",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.ClaimDecision",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "decision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reply",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Revoke",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "reason",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.AttachmentInput",
+      "fields": [
+        {
+          "type": "UUID",
+          "name": "uploadId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "contentType",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "size",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "sha256",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Resolved",
+      "fields": [
+        {
+          "type": "Target",
+          "name": "target",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "label",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "route",
+          "annotations": ""
+        },
+        {
+          "type": "Object",
+          "name": "snapshot",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "fingerprint",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "visible",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/support/SupportModels.java",
+      "name": "SupportModels.Principal",
+      "fields": [
+        {
+          "type": "Long",
+          "name": "userId",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "admin",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "guest",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Target",
+      "fields": [
+        {
+          "type": "String",
+          "name": "type",
+          "annotations": "@NotNull,@Pattern(regexp = \"EVENT|PARTICIPANT|PRODUCT\")"
+        },
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": "@Positive"
+        },
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": "@Positive"
+        },
+        {
+          "type": "Long",
+          "name": "participantId",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Save",
+      "fields": [
+        {
+          "type": "Target",
+          "name": "target",
+          "annotations": "@NotNull,@Valid"
+        },
+        {
+          "type": "String",
+          "name": "day",
+          "annotations": "@Size(max = 10)"
+        },
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": "@Size(max = 150)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Import",
+      "fields": [
+        {
+          "type": "Save",
+          "name": "item",
+          "annotations": "@NotNull,@Valid"
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": "@Size(max = 1000)"
+        },
+        {
+          "type": "long",
+          "name": "expectedUserId",
+          "annotations": "@Positive"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Resolve",
+      "fields": [
+        {
+          "type": "List<@Valid Target>",
+          "name": "targets",
+          "annotations": "@NotNull,@Size(min = 1, max = 200)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Edit",
+      "fields": [
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": "@Min(0)"
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": "@Size(max = 1000)"
+        },
+        {
+          "type": "String",
+          "name": "day",
+          "annotations": "@Size(max = 10)"
+        },
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": "@Size(max = 150)"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Visit",
+      "fields": [
+        {
+          "type": "String",
+          "name": "day",
+          "annotations": "@NotBlank,@Size(max = 10)"
+        },
+        {
+          "type": "boolean",
+          "name": "visited",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Activity",
+      "fields": [
+        {
+          "type": "String",
+          "name": "action",
+          "annotations": "@NotNull,@Pattern(regexp = \"OPEN|OUTBOUND\")"
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Link",
+      "fields": [
+        {
+          "type": "String",
+          "name": "label",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "url",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Image",
+      "fields": [
+        {
+          "type": "long",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "url",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "credit",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "sourceUrl",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Memory",
+      "fields": [
+        {
+          "type": "String",
+          "name": "title",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "eventName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "participantName",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "summary",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "tags",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.ProductVerification",
+      "fields": [
+        {
+          "type": "String",
+          "name": "state",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "lastSeenAt",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Current",
+      "fields": [
+        {
+          "type": "Memory",
+          "name": "memory",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "operationState",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "notice",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "venue",
+          "annotations": ""
+        },
+        {
+          "type": "List<Map<String, Object>>",
+          "name": "occurrences",
+          "annotations": ""
+        },
+        {
+          "type": "List<Map<String, Object>>",
+          "name": "locations",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "evidenceScope",
+          "annotations": ""
+        },
+        {
+          "type": "Map<String, Object>",
+          "name": "price",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "saleState",
+          "annotations": ""
+        },
+        {
+          "type": "List<Link>",
+          "name": "links",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "publishedAt",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "warnings",
+          "annotations": ""
+        },
+        {
+          "type": "ProductVerification",
+          "name": "verification",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Resolved",
+      "fields": [
+        {
+          "type": "Target",
+          "name": "target",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "available",
+          "annotations": ""
+        },
+        {
+          "type": "Current",
+          "name": "current",
+          "annotations": ""
+        },
+        {
+          "type": "Image",
+          "name": "image",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Entry",
+      "fields": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "Target",
+          "name": "target",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "savedAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "updatedAt",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "day",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "note",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "visitedDays",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "available",
+          "annotations": ""
+        },
+        {
+          "type": "Memory",
+          "name": "saved",
+          "annotations": ""
+        },
+        {
+          "type": "Current",
+          "name": "current",
+          "annotations": ""
+        },
+        {
+          "type": "Image",
+          "name": "image",
+          "annotations": ""
+        },
+        {
+          "type": "boolean",
+          "name": "changed",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "lastOpenedAt",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Group",
+      "fields": [
+        {
+          "type": "long",
+          "name": "eventId",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "name",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "count",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Page",
+      "fields": [
+        {
+          "type": "List<Entry>",
+          "name": "items",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "page",
+          "annotations": ""
+        },
+        {
+          "type": "int",
+          "name": "size",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "total",
+          "annotations": ""
+        },
+        {
+          "type": "List<Group>",
+          "name": "groups",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.SaveResult",
+      "fields": [
+        {
+          "type": "boolean",
+          "name": "created",
+          "annotations": ""
+        },
+        {
+          "type": "Entry",
+          "name": "item",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.ImportResult",
+      "fields": [
+        {
+          "type": "String",
+          "name": "result",
+          "annotations": ""
+        },
+        {
+          "type": "Entry",
+          "name": "item",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryModels.java",
+      "name": "LibraryModels.Index",
+      "fields": [
+        {
+          "type": "UUID",
+          "name": "id",
+          "annotations": ""
+        },
+        {
+          "type": "Target",
+          "name": "target",
+          "annotations": ""
+        },
+        {
+          "type": "long",
+          "name": "revision",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "day",
+          "annotations": ""
+        },
+        {
+          "type": "String",
+          "name": "hall",
+          "annotations": ""
+        },
+        {
+          "type": "List<String>",
+          "name": "visitedDays",
+          "annotations": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/src/main/java/com/boothhana/library/LibraryTargets.java",
+      "name": "LibraryTargets.Batch",
+      "fields": [
+        {
+          "type": "String",
+          "name": "from",
+          "annotations": ""
+        },
+        {
+          "type": "Object[]",
+          "name": "arguments",
+          "annotations": ""
+        },
+        {
+          "type": "List<Target>",
+          "name": "targets",
+          "annotations": ""
+        }
+      ]
+    }
+  ]
+}

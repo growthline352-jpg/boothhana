@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python",
+    "verification/v20/browser_offline.py"
+  ],
+  "cwd": ".",
+  "startedAt": 1789718252.4734437,
+  "exitCode": 1,
+  "finishedAt": 1789718256.6817424
+}

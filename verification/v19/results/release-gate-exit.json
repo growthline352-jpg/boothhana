@@ -1,0 +1,9 @@
+{
+  "exitCode": 2,
+  "state": "NOT_PASSED",
+  "command": [
+    "/opt/pyvenv/bin/python",
+    "verification/v19/release_gate.py"
+  ],
+  "seconds": 0.99
+}

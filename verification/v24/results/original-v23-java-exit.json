@@ -1,0 +1,11 @@
+{
+  "command": [
+    "python",
+    "verification/v24/check_java.py"
+  ],
+  "cwd": "/mnt/data/boothhana_v24/BoothHana2",
+  "runAt": 1789953659.7432003,
+  "baseline": true,
+  "exitCode": 1,
+  "seconds": 2.1752848625183105
+}

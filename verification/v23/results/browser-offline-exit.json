@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/opt/pyvenv/bin/python",
+    "verification/v23/browser_offline.py"
+  ],
+  "cwd": "/mnt/data/boothhana_v23/BoothHana2",
+  "startedAt": 1789728283.569157,
+  "timeoutSeconds": 65,
+  "exitCode": 1,
+  "durationSeconds": 3.395
+}

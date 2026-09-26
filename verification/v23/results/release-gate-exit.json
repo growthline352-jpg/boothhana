@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/opt/pyvenv/bin/python",
+    "verification/v23/release_gate.py"
+  ],
+  "cwd": "/mnt/data/boothhana_v23/BoothHana2",
+  "startedAt": 1789728286.9662619,
+  "timeoutSeconds": 45,
+  "exitCode": 2,
+  "durationSeconds": 1.236
+}

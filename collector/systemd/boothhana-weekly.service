@@ -1,0 +1,17 @@
+[Unit]
+Description=BoothHana weekly CLI research and floorplans
+Wants=network-online.target
+After=network-online.target
+[Service]
+Type=oneshot
+User=boothhana
+WorkingDirectory=/opt/boothhana/collector
+EnvironmentFile=/etc/boothhana/collector.env
+# Use absolute codexExecutable in config.local.json: services do not load interactive shell profiles.
+ExecStart=/opt/boothhana/collector/.venv/bin/python /opt/boothhana/collector/run_scheduled.py --config /opt/boothhana/collector/config.local.json
+TimeoutStartSec=22h
+SuccessExitStatus=2
+# Exit 2 = partial/budget-limited result; inspect summary/logs. Not a complete collection.
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077

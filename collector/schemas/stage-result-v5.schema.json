@@ -1,0 +1,834 @@
+{
+  "type": "object",
+  "properties": {
+    "searchStatus": {
+      "type": "string",
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "FAILED"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "queries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 300
+      },
+      "maxItems": 50
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "completeness": {
+          "type": "string",
+          "enum": [
+            "COMPLETE",
+            "PARTIAL",
+            "UNPUBLISHED",
+            "NOT_APPLICABLE",
+            "UNKNOWN"
+          ]
+        },
+        "reportedTotal": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "totalUnit": {
+          "type": "string",
+          "enum": [
+            "REGISTERED_BOOTHS",
+            "BOOTH_CUTS",
+            "PRODUCTS",
+            "UNKNOWN"
+          ]
+        },
+        "visitedPages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "maxItems": 100
+        },
+        "nextPageUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 2048
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "maxItems": 30
+        }
+      },
+      "required": [
+        "completeness",
+        "reportedTotal",
+        "totalUnit",
+        "visitedPages",
+        "nextPageUrl",
+        "warnings"
+      ],
+      "additionalProperties": false
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sourceEntryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
+          },
+          "registrationName": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CIRCLE",
+              "BRAND",
+              "ARTIST",
+              "SHOP",
+              "JOINT",
+              "HOST",
+              "CAFE",
+              "UNKNOWN"
+            ]
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "CIRCLE",
+                    "BRAND",
+                    "ARTIST",
+                    "SHOP",
+                    "HOST",
+                    "CAFE",
+                    "UNKNOWN"
+                  ]
+                },
+                "aliases": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "maxItems": 20
+                },
+                "profileUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 2048
+                }
+              },
+              "required": [
+                "name",
+                "kind",
+                "aliases",
+                "profileUrl"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 30
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 64
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ASSIGNED",
+                    "UNASSIGNED",
+                    "UNKNOWN",
+                    "NOT_APPLICABLE"
+                  ]
+                },
+                "hall": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 150
+                },
+                "zone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 150
+                },
+                "startDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 10
+                },
+                "endDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 10
+                },
+                "floorPlanUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 2048
+                }
+              },
+              "required": [
+                "code",
+                "status",
+                "hall",
+                "zone",
+                "startDate",
+                "endDate",
+                "floorPlanUrl"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 30
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 150
+            },
+            "maxItems": 30
+          },
+          "officialLinks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "maxItems": 20
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "OFFICIAL",
+                    "ORGANIZER_SOCIAL",
+                    "VENUE",
+                    "AGGREGATOR",
+                    "OTHER"
+                  ]
+                },
+                "access": {
+                  "type": "string",
+                  "enum": [
+                    "ORIGINAL",
+                    "SEARCH_SNIPPET",
+                    "INACCESSIBLE"
+                  ]
+                },
+                "evidence": {
+                  "type": "string",
+                  "maxLength": 240
+                }
+              },
+              "required": [
+                "url",
+                "kind",
+                "access",
+                "evidence"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 10
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "BANNER",
+                    "FLOOR_PLAN",
+                    "BOOTH_CUT",
+                    "SALES_SHEET",
+                    "PRODUCT",
+                    "LOGO"
+                  ]
+                },
+                "imageUrl": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "pageUrl": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "rightsEvidence": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 1000
+                },
+                "caption": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 300
+                }
+              },
+              "required": [
+                "type",
+                "imageUrl",
+                "pageUrl",
+                "rightsEvidence",
+                "caption"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 10
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "maxItems": 30
+          },
+          "identity": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "sourceSystem": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "entryId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 300
+              },
+              "detailUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "sourceSystem",
+              "entryId",
+              "detailUrl"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "sourceEntryId",
+          "registrationName",
+          "kind",
+          "members",
+          "locations",
+          "subjects",
+          "officialLinks",
+          "sources",
+          "images",
+          "warnings",
+          "identity"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 100
+    },
+    "sales": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "summary": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "evidenceScope": {
+              "type": "string",
+              "enum": [
+                "EVENT_LISTED",
+                "EVENT_SALE_CONFIRMED",
+                "PROFILE",
+                "GENERAL_CATALOG",
+                "PAST_REFERENCE",
+                "UNKNOWN"
+              ]
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "maxItems": 30
+            },
+            "subjects": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 150
+              },
+              "maxItems": 30
+            },
+            "salesMethod": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 1000
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 2048
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "OFFICIAL",
+                      "ORGANIZER_SOCIAL",
+                      "VENUE",
+                      "AGGREGATOR",
+                      "OTHER"
+                    ]
+                  },
+                  "access": {
+                    "type": "string",
+                    "enum": [
+                      "ORIGINAL",
+                      "SEARCH_SNIPPET",
+                      "INACCESSIBLE"
+                    ]
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "maxLength": 240
+                  }
+                },
+                "required": [
+                  "url",
+                  "kind",
+                  "access",
+                  "evidence"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 10
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "BANNER",
+                      "FLOOR_PLAN",
+                      "BOOTH_CUT",
+                      "SALES_SHEET",
+                      "PRODUCT",
+                      "LOGO"
+                    ]
+                  },
+                  "imageUrl": {
+                    "type": "string",
+                    "maxLength": 2048
+                  },
+                  "pageUrl": {
+                    "type": "string",
+                    "maxLength": 2048
+                  },
+                  "rightsEvidence": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 1000
+                  },
+                  "caption": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "type",
+                  "imageUrl",
+                  "pageUrl",
+                  "rightsEvidence",
+                  "caption"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 10
+            },
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "sourceEntryId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 300
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "summary": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "memberName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 255
+                  },
+                  "categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "maxItems": 20
+                  },
+                  "subjects": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 150
+                    },
+                    "maxItems": 30
+                  },
+                  "evidenceScope": {
+                    "type": "string",
+                    "enum": [
+                      "EVENT_LISTED",
+                      "EVENT_SALE_CONFIRMED",
+                      "PROFILE",
+                      "GENERAL_CATALOG",
+                      "PAST_REFERENCE",
+                      "UNKNOWN"
+                    ]
+                  },
+                  "price": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "string",
+                            "maxLength": 15
+                          },
+                          "currency": {
+                            "type": "string",
+                            "maxLength": 3
+                          },
+                          "checkedOn": {
+                            "type": "string",
+                            "maxLength": 10
+                          },
+                          "note": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "maxLength": 500
+                          }
+                        },
+                        "required": [
+                          "amount",
+                          "currency",
+                          "checkedOn",
+                          "note"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "saleState": {
+                    "type": "string",
+                    "enum": [
+                      "PLANNED",
+                      "ON_SALE",
+                      "SOLD_OUT",
+                      "CANCELED",
+                      "UNKNOWN"
+                    ]
+                  },
+                  "productUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 2048
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "OFFICIAL",
+                            "ORGANIZER_SOCIAL",
+                            "VENUE",
+                            "AGGREGATOR",
+                            "OTHER"
+                          ]
+                        },
+                        "access": {
+                          "type": "string",
+                          "enum": [
+                            "ORIGINAL",
+                            "SEARCH_SNIPPET",
+                            "INACCESSIBLE"
+                          ]
+                        },
+                        "evidence": {
+                          "type": "string",
+                          "maxLength": 240
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "kind",
+                        "access",
+                        "evidence"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 10
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "BANNER",
+                            "FLOOR_PLAN",
+                            "BOOTH_CUT",
+                            "SALES_SHEET",
+                            "PRODUCT",
+                            "LOGO"
+                          ]
+                        },
+                        "imageUrl": {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        "pageUrl": {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        "rightsEvidence": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 1000
+                        },
+                        "caption": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 300
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "imageUrl",
+                        "pageUrl",
+                        "rightsEvidence",
+                        "caption"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 10
+                  },
+                  "warnings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "maxItems": 30
+                  },
+                  "identity": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "sourceSystem": {
+                        "type": "string",
+                        "maxLength": 2048
+                      },
+                      "entryId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 300
+                      },
+                      "detailUrl": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "maxLength": 2048
+                      }
+                    },
+                    "required": [
+                      "sourceSystem",
+                      "entryId",
+                      "detailUrl"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "sourceEntryId",
+                  "name",
+                  "summary",
+                  "memberName",
+                  "categories",
+                  "subjects",
+                  "evidenceScope",
+                  "price",
+                  "saleState",
+                  "productUrl",
+                  "sources",
+                  "images",
+                  "warnings",
+                  "identity"
+                ],
+                "additionalProperties": false
+              },
+              "maxItems": 100
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "maxItems": 30
+            }
+          },
+          "required": [
+            "summary",
+            "evidenceScope",
+            "categories",
+            "subjects",
+            "salesMethod",
+            "sources",
+            "images",
+            "products",
+            "warnings"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "searchStatus",
+    "summary",
+    "queries",
+    "coverage",
+    "participants",
+    "sales"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "apiBaseUrl": "http://localhost:8080",
+  "tokenEnv": "BOOTH_COLLECTOR_TOKEN",
+  "stateDirectory": "~/.boothhana-collector",
+  "codexExecutable": "codex",
+  "codexHome": null,
+  "model": null,
+  "timeoutSeconds": 900,
+  "httpTimeoutSeconds": 45,
+  "maxEvents": 50,
+  "maxParticipantPages": 10,
+  "maxSales": 100,
+  "maxCliCalls": 160,
+  "maxRuntimeMinutes": 240,
+  "maxImages": 100,
+  "imageAllowedHosts": [],
+  "blockedSourceHosts": [
+    "witchform.com"
+  ],
+  "downloadApprovedImages": true,
+  "floorplanMaxEvents": 30,
+  "floorplanMaxSources": 10,
+  "floorplanMaxTiles": 40,
+  "floorplanMaxCliCalls": 100,
+  "floorplanMaxMinutes": 180
+}

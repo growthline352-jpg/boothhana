@@ -1,0 +1,569 @@
+{
+  "version": "v23",
+  "base": "BoothHana2-full-v22-20260918.zip",
+  "baseSha256": "d04416fb66766123ed6357d6e9998754fc6ef4ca2da5d0bb069c3878196961a3",
+  "excludedSelfAndChecksums": true,
+  "runtimeChanges": 11,
+  "changes": [
+    {
+      "path": ".github/workflows/release-verification.yml",
+      "status": "modified",
+      "oldSha256": "974a2945ee3313b66ddf9e415dae11b3ad00d8ea65469f40b9db8cec23afc3e7",
+      "newSha256": "cee947decdeabafdec68c6049cb1e8b5f04d094788ad90886d32505f1b0116cd",
+      "runtime": false
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+      "oldSha256": "e907e11902e21cfb52ce9c79cf6f99cc6163ffd808885e623e264194d8d06409",
+      "newSha256": "a1ed31a9d1a3f539ee1bebd4420febf8908fcdb2aae533987819c8b92e2a24e4",
+      "runtime": false
+    },
+    {
+      "path": "RELEASE_NOTES_KO.md",
+      "status": "modified",
+      "oldSha256": "6959c26c06a75201491a6fc02268e79d09b52ddc779d7a18a7592b0006fd9954",
+      "newSha256": "7945110fe2448ffe433dd54ae63de6d5b7ea79d12c25eefbe38991dacd95ba10",
+      "runtime": false
+    },
+    {
+      "path": "RELEASE_V23.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "04f16292c98c3c5f9599cee212e100d451b49cba36446963b01e1d477920d87f",
+      "runtime": false
+    },
+    {
+      "path": "REVIEW_START_HERE_KO.md",
+      "status": "modified",
+      "oldSha256": "c6848f62ecee1bc8c8eb2887e2b920455f6e4479c315d259e4f7eae3812fdd0d",
+      "newSha256": "7945110fe2448ffe433dd54ae63de6d5b7ea79d12c25eefbe38991dacd95ba10",
+      "runtime": false
+    },
+    {
+      "path": "START_HERE_KO.md",
+      "status": "modified",
+      "oldSha256": "85e47b39967c10e122a97065a51973d65b9747b67fd87f1eedb988f19a849880",
+      "newSha256": "7945110fe2448ffe433dd54ae63de6d5b7ea79d12c25eefbe38991dacd95ba10",
+      "runtime": false
+    },
+    {
+      "path": "TEST_RESULTS_KO.md",
+      "status": "modified",
+      "oldSha256": "5d239f02d3b7f0b09ed57ebe7acefe3533ebe32c6cec5772d91ee0dd6ab67dc5",
+      "newSha256": "3d52fb7475574321179f4d4d4c5e36011fa7f8b63d59ab47fa357094ca8909c3",
+      "runtime": false
+    },
+    {
+      "path": "docs/deployment/FULL_V23_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "ace08b4ffa810c02123828bba636f84e6e2aa6e5ead303e6aae665ffa550fa3d",
+      "runtime": false
+    },
+    {
+      "path": "docs/history/v22-review-baseline/README.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "e907e11902e21cfb52ce9c79cf6f99cc6163ffd808885e623e264194d8d06409",
+      "runtime": false
+    },
+    {
+      "path": "docs/history/v22-review-baseline/RELEASE_NOTES_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "6959c26c06a75201491a6fc02268e79d09b52ddc779d7a18a7592b0006fd9954",
+      "runtime": false
+    },
+    {
+      "path": "docs/history/v22-review-baseline/REVIEW_START_HERE_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "c6848f62ecee1bc8c8eb2887e2b920455f6e4479c315d259e4f7eae3812fdd0d",
+      "runtime": false
+    },
+    {
+      "path": "docs/history/v22-review-baseline/START_HERE_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "85e47b39967c10e122a97065a51973d65b9747b67fd87f1eedb988f19a849880",
+      "runtime": false
+    },
+    {
+      "path": "docs/history/v22-review-baseline/TEST_RESULTS_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "5d239f02d3b7f0b09ed57ebe7acefe3533ebe32c6cec5772d91ee0dd6ab67dc5",
+      "runtime": false
+    },
+    {
+      "path": "docs/history/v22-review-baseline/verification/README_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "44322039cac3b021acd3607cef8e0358696c63c1fe487f9af16eb79b07d0f61b",
+      "runtime": false
+    },
+    {
+      "path": "docs/release/V23_CHANGES_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "55968a2af9e5d135e444c88fb5d760807e4abb61b840e91167f7a79515bfbd67",
+      "runtime": false
+    },
+    {
+      "path": "frontend/src/components/layout/PublicLayout.tsx",
+      "status": "modified",
+      "oldSha256": "9fd3ace0ba373823861dd9d2a4b7f20c99fd7b67186c8fd75283637a00b29863",
+      "newSha256": "a7d85b9ca69da06a9eaea3847359e7cd9dd86b228ce61aaba698ff50ab6c4af6",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/catalog/CatalogPublicPage.tsx",
+      "status": "modified",
+      "oldSha256": "00143573e26b7eb52a8abe7fdad113ead63630be7ad0772ec445659a1ecc8829",
+      "newSha256": "2c8f23b12b5f9e1395d4b9c2e41f762d53a02681705fa910a4eb303b6ee08703",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/catalog/dialogLifecycle.ts",
+      "status": "modified",
+      "oldSha256": "3839e08f4d7aff46f88f2462b95afcc8748435722e1929c90c4bf9182265dcd8",
+      "newSha256": "430907730a639257144af01237ec734097e691a5da3c7f4d7446d9e79c10aef3",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/discovery/DiscoveryIcon.tsx",
+      "status": "modified",
+      "oldSha256": "402e85f89290abe2eb11a45b92f53a5d182859915712933924c632842a745d03",
+      "newSha256": "1c0bfd01476b37c413fc06e9daf84f76284b6d50442dfbff75a70cc78d5088fb",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/discovery/DiscoveryPage.tsx",
+      "status": "modified",
+      "oldSha256": "5b291c7a1418200e0bf13d0ca48db7ef98e1b25a2f160cb8047eca3a945907bd",
+      "newSha256": "37a6dc0adc33a7a1c70deb5bdfc25405daa877ae07c9a47997cd8119d14ec016",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/discovery/browse.ts",
+      "status": "modified",
+      "oldSha256": "8f90c3302ef3af70244740e7b5be0dc942167e6ff396d49e713c1b22476dc8cf",
+      "newSha256": "810b304999276cf3470f3e4e015ec7e4b505dca039d036b5a4dbb1ff01cb6857",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/library/LibraryPage.tsx",
+      "status": "modified",
+      "oldSha256": "0b53bd9bc8ba90807943385f0cbd6b7b45d3f1427e9dccae1a4eea0a69e4311c",
+      "newSha256": "3870145c39d5ef887f696374b0eea640bfbcfc4d4424eef574de47d05faa634b",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/offline/OfflineDownloadPanel.tsx",
+      "status": "modified",
+      "oldSha256": "e24223e1d89317c793e211e6eb5d38a045fc4b82b69f0606a073cf18d0170603",
+      "newSha256": "ee6ec63eef4f53d05bf77f86cc50b6f284ff5dcdb11a087940644a3b3715b0a7",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/features/visit/visit.ts",
+      "status": "modified",
+      "oldSha256": "588c9da54faa0881bc586ffa46f514394e570183708cee3639565b4d4ccc41a2",
+      "newSha256": "02e8bba96480dbf4d0dd87768ac7906998681d605af54f9e5796adc4f46e07fb",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "status": "modified",
+      "oldSha256": "2e5ba94e65990b69e1f82954d1de7cf0c9e7611d9440dbbca57eb0d1c56ef691",
+      "newSha256": "4aa8aead460694814247f12a114c1a81d6392259974ea188051642609b90d999",
+      "runtime": true
+    },
+    {
+      "path": "frontend/src/styles/usability.css",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "a6ca8e2bd87d1af3f45f2b2efd8683b53ad8cf1f16f39ce2b6d9fe3640573bd5",
+      "runtime": true
+    },
+    {
+      "path": "preview/v23/README_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "e8adde6a964185de245d985eb223efe9d3243a53b1a5ceeb041dbd765db7a336",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/detail-1280.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "1ac4abc7b01819b806dd9ea06f503e2ba9ece5f8cd62f169e54809f7cef8e1bb",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/detail-390.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "b98643e18ec74aa1e245f18297adfc7c89fc9a64e4edb605f12935745c55c7a0",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/detail.html",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "02b55afee57e3d9c94162a986fed1f4fef9d9cc09049eda1da3deeffbc2d3db8",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/discovery-1280.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "62b1bf2eaac1b717617768785d22ad6eff322df45b78c2a082328b89a4d88bd9",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/discovery-390.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "44832fa117766dc27c29b7048d8e0206662695d166aba2754dd328cf2b7a9523",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/discovery.html",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "70979f3c92b6a665c96d073fbe899ca0b3a08a3bb8efd8c6da4c790cbf0cd6d3",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/invalid-dates-1280.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "ad241762be9117162143720373359b2e594c9db683f8f182a4d4cc27677d9fa8",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/invalid-dates-390.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "4e164b6f67b82d09ae03b1adcd5d0061fbdbc2e2a9388a0ba3aa68a7af0c3fab",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/invalid-dates.html",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "882946a3c74044e7501d9ee45dc421a936ae99167a2cce7cfe920f1af672a9b6",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/library-1280.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "9ee6e348033a7a3aef36ad5e7aa23e97131558a8c6e32902053f5a44e8afbce6",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/library-390.png",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "c2298bf13e0bfdc508cdafcff8fcb56f88495b2e1e4c2dfb3762aed04a300ced",
+      "runtime": false
+    },
+    {
+      "path": "preview/v23/library.html",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "8d01d326da845e184c301615a610d5286777585d3a311d8f5ea2edc9636e1563",
+      "runtime": false
+    },
+    {
+      "path": "verification/README_KO.md",
+      "status": "modified",
+      "oldSha256": "44322039cac3b021acd3607cef8e0358696c63c1fe487f9af16eb79b07d0f61b",
+      "newSha256": "5ce0bad8f210df607ac2efa391f2bf06932809082e6dddf1777ccfc8c9675ed0",
+      "runtime": false
+    },
+    {
+      "path": "verification/run_checks.py",
+      "status": "modified",
+      "oldSha256": "8907d9a07f0bdcdceb9cf3fcf56f56ee99db4709e1fbfe66d587bd7e00e2391c",
+      "newSha256": "0a0ab2a7d06ec8a062aab2352119eba6e0fabf0afb0bff559433685431e633a2",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/README_KO.md",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "cf413321007abaaa866fc16bc6c83f030982a1a47a612ca161a66e78415fb3ff",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/browser_offline.py",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "15e06c2dfa3564106f19af3cb222908ba7e1a831b83dbabf0374d0ee2a570604",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/build_ui_preview.cjs",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "40beae61ebd03c68a2d4f5c1d893f3036e73cb318bd97ebfc14ee191d31033b1",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/check_native_dialog.py",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "4a33c33c78b7b6aee21d7071fc012d5a2cd085780e2deb83340d510993a8dafb",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/check_static_layout.py",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "39ea723857c7afd06f3ed023918eb1993c3bab25a70eb2bd1090f6893e43e5a0",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/release_gate.py",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "e3fecc3a0d62eafd9e106a702dc32450aead99f6f85f74e1036a2280b2827a01",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/backend-build-exit.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "565b90b28a351ef3f588ab7af853a69206cb64442635fa46f881019275c08d2f",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/backend-build.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "405a73aadc8a0310c5b8bb2c3a80e60f17960aea7b498716cbf302a30b0357dc",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/baseline-complete-exit.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "f06f7ca0ceee49824acc4ea5e40f1485c0250de4eed0f67c537c747ae51095c1",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/baseline-complete.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "68a6b2c6e97cbc806c20267a5725c84d647caffbd3c2c45f4ec346b14ea12fbc",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/baseline-native-dialog.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "cd5e7bc6659efa04af676791947dc4bdcb030f199286947a35a49bd6abdb2b74",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/baseline-native-dialog.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "d5b342b820cedb1f941099fb271b9903c094d23e25fa10ead7fac0c5dd90f73b",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/browser-offline-exit.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "9225b30fe46b6dfaa7eba6684f1a4cbfd1b2efb20851d53060ce460b4ddf1dcb",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/browser-offline.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "1aa0609043a455eb54669834a43942567cc93efe44994e743098b7916b26f0fb",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/browser-offline.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "68b22373b493eb0face4e64a446cee0a428dab858fb9fd55074d09eae6f396f6",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/comparison.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "8033d1e9c5973d4c1699f63f6bfd39fe9d40ca240a402bae015629599164a027",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/final-checks-exit.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "333bd650e2a9f5e740545d6ce090daade339a7db97d1fc430a0a0c3b29be2e79",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/final-checks.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "7e9eb6f6afdd26d2bba60d09f9cbe5502d6c9c1e69a75c7ed4fa97237183d6f4",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/frontend-build-exit.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "d29081a44a45962c170b706f5c20cdd2502a48e4997818597faf075bb57efdf7",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/frontend-build.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "2624f58a582df3754482ca7e5ed0f77b0bb31a9ccb5adc8f8f640a61c4a4ec36",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/frontend-install.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "9f3eeb00b0c90d11e9c6f35f725b807724beded0243289d6130e5064186159de",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/frontend-install.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "fc3e6af6bff99d4868d64926e4f241289a5c86290fc97ca6de71b2d870f8ae49",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/native-dialog.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "1ef241b5f2564a8977ef4656f12490187ab6285362ac7b2488bffbd6885e1597",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/native-dialog.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "ed04abcc878d3c1ff46179489f3193c15d32fff7eb88c92bc7b789117f19c814",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/new-tests.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "bed1b99cefb59911bfac8d6a5dffc0c3b598155668e6e5a26f266bc5c3938242",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/original-v22-tests.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "c549396f0164d8735a7cadaa69e95ec2aa95b5fcda650471f94a45c59bb7c556",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/release-gate-exit.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "09121f08af06b361f9e67473cc268866c3f928dbbfb3b1710241aef98ab657ff",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/release-gate.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "7d47834ce6783d10c54dff55584aca02828c8f7d59874d24d0cbe230b1f4259e",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/release-gate.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "c345a8d88aecce47a7b636d371351170afb3036f2abeacb733b338dcaf168912",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/static-layout.json",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "85ae40a2e4a9220c82a4e3aefc8decab845bc4f79aded8ee019c6b1555a729b6",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/static-layout.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "de6bcf074372443d9ff14749d492899a1727917f31e1d1aa36deeaa94541d685",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/results/types.log",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "e483a33c10979ce591f07b3e5091d0b74048efbebae8f2355e3539ede94c3030",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/run_checks.py",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "74e94277d5ecb93dbdf91a7c750931204da26901c06056eb29e5d2f7d2e90b9f",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/support/library.cjs",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "9b05342b5859b0b3494f330ed016ced10b2853ef5c57b3660b892be97b13f3a1",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/support/views.cjs",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "f009b1d24372501c7384529313f685a67af9ea7191eef4950e56ddf4e3bf07c6",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/test_dialogs.cjs",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "c68158b476efbd3ba168d04f8fede5d6c03b9ca6aafa495537c806e8c9c0442a",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/test_gate.py",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "6a0c88b32b3a7d28398516e536f1bf49ad2be74e0380499b47556c0def50397a",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/test_library_download.cjs",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "63d59a420ca357f095e8b18cb4abf1b4067f3f964935075a4dc89fd07414e9aa",
+      "runtime": false
+    },
+    {
+      "path": "verification/v23/test_public_usability.cjs",
+      "status": "added",
+      "oldSha256": null,
+      "newSha256": "1899461248316f24e9bcc6fb86fc589a339d53d6c882458e6219f12b75cc1895",
+      "runtime": false
+    }
+  ]
+}

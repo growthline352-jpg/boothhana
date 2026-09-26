@@ -1,0 +1,16 @@
+{
+  "exitCode": 0,
+  "durationSeconds": 0.397,
+  "command": [
+    "node",
+    "--test",
+    "verification/v21/test_public_cache.cjs",
+    "verification/v21/test_attempt_storage.cjs"
+  ],
+  "productionApproval": false,
+  "tests": 20,
+  "pass": 20,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 0
+}

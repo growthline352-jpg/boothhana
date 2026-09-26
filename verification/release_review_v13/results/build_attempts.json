@@ -1,0 +1,32 @@
+[
+  {
+    "name": "frontend-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 1,
+    "seconds": 1.01
+  },
+  {
+    "name": "backend-build",
+    "command": [
+      "sh",
+      "gradlew",
+      "test",
+      "--no-daemon"
+    ],
+    "exit": 1,
+    "seconds": 0.33
+  },
+  {
+    "name": "release-gate-missing-config",
+    "command": [
+      "python",
+      "verification/v13/release_gate.py"
+    ],
+    "exit": 2,
+    "seconds": 0.59
+  }
+]

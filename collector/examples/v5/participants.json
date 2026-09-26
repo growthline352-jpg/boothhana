@@ -1,0 +1,77 @@
+{
+  "searchStatus": "COMPLETE",
+  "summary": "가상 참가 명단",
+  "queries": [
+    "TEST participant"
+  ],
+  "coverage": {
+    "completeness": "COMPLETE",
+    "reportedTotal": 1,
+    "totalUnit": "REGISTERED_BOOTHS",
+    "visitedPages": [
+      "https://example.com/test/event/2026"
+    ],
+    "nextPageUrl": null,
+    "warnings": []
+  },
+  "participants": [
+    {
+      "sourceEntryId": "test-circle-1",
+      "registrationName": "[TEST] 공동 A + B",
+      "kind": "JOINT",
+      "members": [
+        {
+          "name": "[TEST] A",
+          "kind": "ARTIST",
+          "aliases": [],
+          "profileUrl": "https://example.com/test/A"
+        },
+        {
+          "name": "[TEST] B",
+          "kind": "BRAND",
+          "aliases": [],
+          "profileUrl": "https://example.com/test/B"
+        }
+      ],
+      "locations": [
+        {
+          "code": "B1",
+          "status": "ASSIGNED",
+          "hall": "테스트 홀",
+          "zone": null,
+          "startDate": "2026-10-10",
+          "endDate": "2026-10-11",
+          "floorPlanUrl": null
+        }
+      ],
+      "subjects": [
+        "테스트 캐릭터"
+      ],
+      "officialLinks": [
+        "https://example.com/test/A"
+      ],
+      "sources": [
+        {
+          "url": "https://example.com/test/event/2026",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "[TEST] fictional source for automated tests; not real event research."
+        }
+      ],
+      "images": [
+        {
+          "type": "BOOTH_CUT",
+          "imageUrl": "https://example.com/test/booth.png",
+          "pageUrl": "https://example.com/test/event/2026",
+          "rightsEvidence": null,
+          "caption": "가상 이미지 후보"
+        }
+      ],
+      "warnings": [
+        "테스트 전용"
+      ],
+      "identity": null
+    }
+  ],
+  "sales": null
+}

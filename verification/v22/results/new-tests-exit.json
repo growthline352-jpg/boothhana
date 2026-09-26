@@ -1,0 +1,13 @@
+{
+  "command": [
+    "node",
+    "--test",
+    "verification/v22/test_remote.cjs",
+    "verification/v22/test_guest_session.cjs",
+    "verification/v22/test_public_views.cjs"
+  ],
+  "cwd": ".",
+  "attemptedAt": "2026-09-18T10:13:28Z",
+  "exitCode": 0,
+  "durationSeconds": 1.22
+}

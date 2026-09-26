@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1",
+  "searchStatus": "COMPLETE",
+  "summary": "가상 검색 결과",
+  "queries": [
+    "TEST"
+  ],
+  "events": [
+    {
+      "name": "[TEST] 서울 서브컬처 가상 행사",
+      "subcategory": "STATIONERY_GOODS",
+      "organizer": "[TEST] 주최",
+      "edition": "2026-test",
+      "region": "SEOUL",
+      "venueName": "[TEST] 서울 전시장",
+      "address": "서울특별시 테스트 주소",
+      "description": "자동 테스트 전용 가상 행사입니다. 실제 방문 정보가 아닙니다.",
+      "admission": null,
+      "subjects": [
+        "테스트"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-10",
+          "endDate": "2026-10-11",
+          "startTime": "12:00",
+          "endTime": "17:00"
+        },
+        {
+          "startDate": "2026-10-13",
+          "endDate": "2026-10-13",
+          "startTime": null,
+          "endTime": null
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://example.com/test/event/2026",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "[TEST] fictional source for automated tests; not real event research."
+        }
+      ],
+      "banners": [],
+      "warnings": [
+        "가상 테스트 데이터"
+      ],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {
+          "kind": "PARTICIPANTS",
+          "url": "https://example.com/test/participants",
+          "status": "PUBLISHED",
+          "note": "가상 명단"
+        }
+      ]
+    }
+  ]
+}

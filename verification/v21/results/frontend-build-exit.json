@@ -1,0 +1,11 @@
+{
+  "state": "FAILED",
+  "exitCode": 1,
+  "command": [
+    "tsc",
+    "-b"
+  ],
+  "durationSeconds": 1.798,
+  "completedAt": 1789722371.1540887,
+  "productionApproval": false
+}

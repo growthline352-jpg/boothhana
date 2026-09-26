@@ -1,0 +1,26 @@
+{
+  "version": "v17",
+  "createdAt": "2026-09-18",
+  "base": "BoothHana2-full-v16-20260918(1).zip",
+  "baseSha256": "4b3f723b396570ddb8a772590d6bd37e18310f93c206e54baff3ffc571e8a2a9",
+  "fixes": [
+    "R16-01",
+    "R16-02",
+    "R16-03",
+    "R16-04",
+    "R16-05",
+    "R16-06"
+  ],
+  "newSql": false,
+  "migrationRange": "001..015",
+  "tableCount": 43,
+  "productionApproval": false,
+  "validation": "Independent v17/regression/collector checks passed. Real dependency build, PostgreSQL, actual app browser, hosting and external acceptance NOT VERIFIED.",
+  "documents": [
+    "START_HERE_KO.md",
+    "TEST_RESULTS_KO.md",
+    "docs/release/V17_CHANGES_KO.md",
+    "docs/deployment/FULL_V17_KO.md",
+    "docs/quality/V17_ACCEPTANCE_KO.md"
+  ]
+}

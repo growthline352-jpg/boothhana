@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: boothhana2-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/public/health/ready
+    envVars:
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SESSION_COOKIE_SAME_SITE
+        value: none

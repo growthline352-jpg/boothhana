@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python",
+    "verification/v20/release_gate.py"
+  ],
+  "cwd": ".",
+  "startedAt": 1789718252.473687,
+  "exitCode": 2,
+  "finishedAt": 1789718254.3485258
+}

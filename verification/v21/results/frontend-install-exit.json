@@ -1,0 +1,13 @@
+{
+  "state": "FAILED",
+  "exitCode": 1,
+  "command": [
+    "corepack",
+    "pnpm",
+    "install",
+    "--frozen-lockfile"
+  ],
+  "durationSeconds": 0.406,
+  "completedAt": 1789722369.244867,
+  "productionApproval": false
+}

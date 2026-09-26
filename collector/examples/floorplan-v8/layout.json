@@ -1,0 +1,100 @@
+{
+  "complete": true,
+  "shapes": [
+    {
+      "label": "B1",
+      "points": [
+        {
+          "x": 0.1,
+          "y": 0.1
+        },
+        {
+          "x": 0.25,
+          "y": 0.1
+        },
+        {
+          "x": 0.25,
+          "y": 0.30000000000000004
+        },
+        {
+          "x": 0.1,
+          "y": 0.30000000000000004
+        }
+      ],
+      "recognition": "READABLE",
+      "boundaryConfirmed": true
+    },
+    {
+      "label": "B2",
+      "points": [
+        {
+          "x": 0.35,
+          "y": 0.1
+        },
+        {
+          "x": 0.5,
+          "y": 0.1
+        },
+        {
+          "x": 0.5,
+          "y": 0.30000000000000004
+        },
+        {
+          "x": 0.35,
+          "y": 0.30000000000000004
+        }
+      ],
+      "recognition": "READABLE",
+      "boundaryConfirmed": true
+    },
+    {
+      "label": "A-03a",
+      "points": [
+        {
+          "x": 0.1,
+          "y": 0.5
+        },
+        {
+          "x": 0.25,
+          "y": 0.5
+        },
+        {
+          "x": 0.25,
+          "y": 0.7
+        },
+        {
+          "x": 0.1,
+          "y": 0.7
+        }
+      ],
+      "recognition": "READABLE",
+      "boundaryConfirmed": true
+    },
+    {
+      "label": "A-03b",
+      "points": [
+        {
+          "x": 0.35,
+          "y": 0.5
+        },
+        {
+          "x": 0.5,
+          "y": 0.5
+        },
+        {
+          "x": 0.5,
+          "y": 0.7
+        },
+        {
+          "x": 0.35,
+          "y": 0.7
+        }
+      ],
+      "recognition": "READABLE",
+      "boundaryConfirmed": true
+    }
+  ],
+  "warnings": [
+    "FICTIONAL fixture"
+  ]
+}

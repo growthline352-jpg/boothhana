@@ -1,0 +1,60 @@
+{
+  "productionApproval": false,
+  "attempts": [
+    {
+      "name": "frontend-install",
+      "command": [
+        "corepack",
+        "pnpm",
+        "install",
+        "--frozen-lockfile"
+      ],
+      "state": "NOT_PASSED",
+      "exitCode": 1,
+      "seconds": 0.16
+    },
+    {
+      "name": "frontend-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "state": "NOT_PASSED",
+      "exitCode": 1,
+      "seconds": 0.77
+    },
+    {
+      "name": "backend-build",
+      "command": [
+        "sh",
+        "gradlew",
+        "test",
+        "--no-daemon"
+      ],
+      "state": "NOT_PASSED",
+      "exitCode": 1,
+      "seconds": 0.26
+    },
+    {
+      "name": "release-gate",
+      "command": [
+        "python",
+        "verification/v17/release_gate.py"
+      ],
+      "state": "NOT_PASSED",
+      "exitCode": 2,
+      "seconds": 0.62
+    },
+    {
+      "name": "browser-gate",
+      "command": [
+        "python",
+        "verification/v17/browser_drafts.py"
+      ],
+      "state": "NOT_PASSED",
+      "exitCode": 2,
+      "seconds": 0.62
+    }
+  ]
+}

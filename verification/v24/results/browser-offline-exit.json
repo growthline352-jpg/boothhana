@@ -1,0 +1,11 @@
+{
+  "command": [
+    "python",
+    "verification/v24/browser_offline.py"
+  ],
+  "cwd": "/mnt/data/boothhana_v24/BoothHana2",
+  "runAt": 1789953667.9784253,
+  "baseline": false,
+  "exitCode": 1,
+  "seconds": 2.1755945682525635
+}

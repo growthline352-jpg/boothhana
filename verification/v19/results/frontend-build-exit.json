@@ -1,0 +1,9 @@
+{
+  "exitCode": 1,
+  "state": "NOT_PASSED",
+  "command": [
+    "tsc",
+    "-b"
+  ],
+  "seconds": 1.15
+}

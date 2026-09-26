@@ -1,0 +1,39 @@
+{
+  "inputVersion": "v21",
+  "preserved": {
+    "backend/": {
+      "files": 142,
+      "byteIdentical": true
+    },
+    "database/": {
+      "files": 17,
+      "byteIdentical": true
+    },
+    "collector/": {
+      "files": 53,
+      "byteIdentical": true
+    },
+    "frontend/public/offline/": {
+      "files": 8,
+      "byteIdentical": true
+    },
+    "frontend/package.json": {
+      "byteIdentical": true
+    },
+    "frontend/pnpm-lock.yaml": {
+      "byteIdentical": true
+    },
+    "backend/build.gradle": {
+      "byteIdentical": true
+    }
+  },
+  "runtimeChanged": [
+    "frontend/src/app/useRemote.ts",
+    "frontend/src/features/library/LibraryPage.tsx",
+    "frontend/src/features/library/memory.ts",
+    "frontend/src/features/support/GuestSupportPage.tsx",
+    "frontend/src/features/visit/visit.ts"
+  ],
+  "newServerSql": [],
+  "offlineResetRequiredFromV21": false
+}
