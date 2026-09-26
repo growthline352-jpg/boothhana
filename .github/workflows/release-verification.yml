@@ -57,6 +57,7 @@ jobs:
           sudo apt-get install -y postgresql-client
           corepack enable
           corepack prepare pnpm@10.13.1 --activate
+          pnpm --dir frontend install --frozen-lockfile
           python -m pip install -r collector/requirements.txt
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium
