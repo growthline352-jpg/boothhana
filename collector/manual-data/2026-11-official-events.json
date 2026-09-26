@@ -388,6 +388,44 @@
       "eventFormat": "SINGLE_HOST",
       "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=394", "status": "PUBLISHED", "note": "서울시 공식 상세"}],
       "operationStatus": {"state": "SCHEDULED", "note": "서울시 공식 일정에 등록", "sourceUrl": "https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=394", "checkedOn": "2026-09-27"}
+    },
+    {
+      "name": "Carbon Korea 2026",
+      "subcategory": "BUSINESS",
+      "organizer": null,
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "코엑스 마곡",
+      "address": "서울특별시 강서구 마곡중앙로 143",
+      "description": "탄소 소재와 관련 산업의 기술·제품을 소개하는 전문 전시회다.",
+      "admission": null,
+      "subjects": ["탄소", "소재", "산업전시"],
+      "occurrences": [{"startDate": "2026-11-04", "endDate": "2026-11-06", "startTime": null, "endTime": null}],
+      "sources": [{"url": "https://magok.coex.co.kr/", "kind": "VENUE", "access": "ORIGINAL", "evidence": "코엑스 마곡 공식 개최 예정 행사 목록이 2026-11-04~06 일정을 안내한다."}],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://magok.coex.co.kr/", "status": "PUBLISHED", "note": "코엑스 마곡 공식 일정"}],
+      "operationStatus": {"state": "SCHEDULED", "note": "코엑스 마곡 공식 일정에 등록", "sourceUrl": "https://magok.coex.co.kr/", "checkedOn": "2026-09-27"}
+    },
+    {
+      "name": "2026 코리아 마이스 엑스포",
+      "subcategory": "BUSINESS",
+      "organizer": null,
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "코엑스 마곡",
+      "address": "서울특별시 강서구 마곡중앙로 143",
+      "description": "국내외 MICE 산업 관계자와 기관이 참여하는 비즈니스 전시·교류 행사다.",
+      "admission": null,
+      "subjects": ["MICE", "관광산업", "비즈니스"],
+      "occurrences": [{"startDate": "2026-11-17", "endDate": "2026-11-19", "startTime": null, "endTime": null}],
+      "sources": [{"url": "https://magok.coex.co.kr/", "kind": "VENUE", "access": "ORIGINAL", "evidence": "코엑스 마곡 공식 개최 예정 행사 목록이 2026-11-17~19 일정을 안내한다."}],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [{"kind": "OFFICIAL", "url": "https://magok.coex.co.kr/", "status": "PUBLISHED", "note": "코엑스 마곡 공식 일정"}],
+      "operationStatus": {"state": "SCHEDULED", "note": "코엑스 마곡 공식 일정에 등록", "sourceUrl": "https://magok.coex.co.kr/", "checkedOn": "2026-09-27"}
     }
   ]
 }
