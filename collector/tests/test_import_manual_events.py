@@ -19,7 +19,7 @@ class ManualEventImportTests(unittest.TestCase):
         batch = build_batch(result, "2026-11", ["witchform.com"])
         self.assertEqual(batch["executionMode"], "MANUAL_IMPORT")
         self.assertFalse(batch["webSearchObserved"])
-        self.assertEqual(len(batch["result"]["events"]), 15)
+        self.assertEqual(len(batch["result"]["events"]), 20)
 
 
 if __name__ == "__main__":
