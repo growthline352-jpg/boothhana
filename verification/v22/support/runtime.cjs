@@ -22,10 +22,11 @@ function runtime(options={}){
  const overrides={react:hooks,'react/jsx-runtime':{jsx,jsxs:jsx,Fragment:'Fragment'},...options.overrides};
  function load(relative){const file=path.isAbsolute(relative)?relative:path.resolve(root,relative);if(cache.has(file))return cache.get(file).exports;
   const m={exports:{}};cache.set(file,m);
-  const src=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+  const src=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
+   .replace(/\bimport\.meta\.env\b/g,'__IMPORT_META_ENV__');
   const requireLocal=name=>{if(Object.hasOwn(overrides,name))return overrides[name];const supplied=options.resolve?.(name,file);if(supplied!==undefined)return supplied;if(name.endsWith('.css'))return {};if(!name.startsWith('.'))throw Error('Unmocked external dependency '+name);
    const base=path.resolve(path.dirname(file),name);for(const ext of ['', '.ts','.tsx','/index.ts'])if(fs.existsSync(base+ext)&&fs.statSync(base+ext).isFile())return load(base+ext);throw Error('Missing import '+name)};
-  vm.runInNewContext(src,{require:requireLocal,module:m,exports:m.exports,console,URL,URLSearchParams,Intl,Date,Error,Map,Set,Promise,crypto:require('node:crypto').webcrypto,Blob,setTimeout,clearTimeout,setInterval,clearInterval,...options.globals},{filename:file});return m.exports;
+  vm.runInNewContext(src,{require:requireLocal,module:m,exports:m.exports,console,URL,URLSearchParams,Intl,Date,Error,Map,Set,Promise,crypto:require('node:crypto').webcrypto,Blob,setTimeout,clearTimeout,setInterval,clearInterval,__IMPORT_META_ENV__:options.env||process.env,...options.globals},{filename:file});return m.exports;
  }
  return {hooks,slots,load,render(f=fn,p=props){fn=f;props=p;cursor=0;return f(p)},flushEffects(){while(pending.length)pending.shift()()},unmount(){for(const s of slots)s?.cleanup?.()},overrides};
 }
