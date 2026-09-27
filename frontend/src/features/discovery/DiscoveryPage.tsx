@@ -3,12 +3,12 @@ import { BestsellerSection } from '../goods/BestsellerCarousel'
 import { eventStatus } from '../visit/eventStatus'
 import { usePageScroll } from '../visit/ScrollMemory'
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useRemote } from '../../app/useRemote'
 import { publicCatalogApi, type PublicEventSummary } from '../catalog/api'
 import { SafeLink, StoredImage, labels } from '../catalog/Shared'
 import { categoryHref } from './categories'
-import { browseApiParams, cardOccurrences, periodRange, periodLabel, occurrenceLabel, parseBrowse, seoulToday, type Period } from './browse'
+import { browseApiParams, cardOccurrences, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import './discovery.css'
@@ -19,6 +19,8 @@ const dateFormatter = new Intl.DateTimeFormat('ko-KR', { month: '2-digit', day: 
 export function DiscoveryPage() {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
+  const navigate = useNavigate()
+  const isHome = location.pathname === '/'
   const state = parseBrowse(params)
   const { category } = state
   const [today, setToday] = useState(() => seoulToday())
@@ -36,7 +38,10 @@ export function DiscoveryPage() {
     Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key))
     setParams(next)
   }
-  const submit = (e: FormEvent) => { e.preventDefault(); if (category.enabled) update({ q: draft.trim().slice(0, 100) }) }
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    if (category.enabled) navigate(searchResultsHref(params, category.key, draft))
+  }
   const reset = () => { setDraft(''); setParams({ category: category.key, period: 'all' }) }
   const rows = data.data?.items ?? []
   const total = data.data?.total ?? 0
@@ -48,7 +53,7 @@ export function DiscoveryPage() {
   const quickLinks = homeQuickLinks(category.key)
 
   return <div className={`discovery-page discovery-theme-${category.key}`}>
-    <section className="popga-home" aria-label={`${category.label} 추천`}>
+    <section className={`popga-home${isHome ? '' : ' is-results'}`} aria-label={isHome ? `${category.label} 추천` : `${category.label} 행사 검색`}>
       <div className="discovery-container">
         <form className="popga-search" role="search" onSubmit={submit}>
           <DiscoveryIcon name="search" size={21}/>
@@ -57,7 +62,7 @@ export function DiscoveryPage() {
           <button type="submit" disabled={!category.enabled}>검색</button>
         </form>
 
-        <div className="popga-dashboard">
+        {isHome && <><div className="popga-dashboard">
           <aside className="daily-note" aria-labelledby="daily-note-heading">
             <div className="daily-note-head"><span>다가오는 행사 노트</span><strong id="daily-note-heading">{dateLabel}</strong></div>
             <div className="daily-note-tabs" role="group" aria-label="지역 빠른 선택">
@@ -92,10 +97,11 @@ export function DiscoveryPage() {
         <nav className="home-quick-links" aria-label="빠른 행사 찾기">
           {quickLinks.map(item => <Link key={item.label} to={item.to}><span className="home-quick-icon"><DiscoveryIcon name={item.icon} size={24}/></span><strong>{item.label}</strong><small>{item.detail}</small></Link>)}
         </nav>
+        </>}
       </div>
     </section>
 
-    <section className="discovery-container home-ranking" aria-labelledby="ranking-heading">
+    {isHome && <section className="discovery-container home-ranking" aria-labelledby="ranking-heading">
       <div className="home-section-title"><div><h2 id="ranking-heading">곧 열리는 행사</h2><p>현재 선택한 조건의 공개 행사를 가까운 일정부터 보여드려요.</p></div><a href="#discovery-results">전체보기 <DiscoveryIcon name="arrow" size={16}/></a></div>
       <div className="home-ranking-tabs" role="group" aria-label="다가오는 행사 지역">
         <button className={!state.region ? 'is-current' : ''} aria-pressed={!state.region} type="button" onClick={() => update({ region: '' })}>전체</button>
@@ -106,7 +112,7 @@ export function DiscoveryPage() {
         : data.error ? <div className="ranking-empty" role="alert">행사 정보를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.</div>
         : rows.length ? <div className="home-ranking-grid">{rows.slice(0, 5).map((row, index) => <RankingEvent key={row.id} row={row} rank={index + 1} today={today} returnTo={returnTo}/>)}</div>
         : <div className="ranking-empty">표시할 행사가 없습니다. 조건을 바꿔 다시 확인해 주세요.</div>}
-    </section>
+    </section>}
 
     <section className="discovery-container discovery-feed" aria-labelledby="discovery-heading" id="discovery-results">
       <div className="discovery-feed-head"><div><h2 id="discovery-heading">{category.label} 전체보기</h2><p>날짜와 지역, 관심 분야로 원하는 행사를 좁혀보세요.</p></div></div>

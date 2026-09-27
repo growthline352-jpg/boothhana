@@ -2,6 +2,15 @@ import type { Occurrence } from '../collection/api'
 import { getCategory, type DiscoveryCategory } from './categories'
 export type Period = 'upcoming' | 'week' | 'month' | 'all' | 'weekend' | 'nextmonth' | 'custom'
 export interface BrowseState { category: DiscoveryCategory; q: string; region: string; subcategory: string; period: Period; sort: 'date' | 'recent'; page: number; from?: string; to?: string; dateError?: string }
+export function searchResultsHref(current: URLSearchParams, category: string, rawQuery: string): string {
+  const next = new URLSearchParams(current)
+  const query = rawQuery.trim().slice(0, 100)
+  next.set('category', category)
+  next.delete('page')
+  if (query) next.set('q', query)
+  else next.delete('q')
+  return `/discover?${next.toString()}`
+}
 export function parseBrowse(params: URLSearchParams): BrowseState {
   const category = getCategory(params.get('category'))
   const subcategory = params.get('type') || ''

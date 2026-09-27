@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { parseBrowse, periodRange } from './browse'
+import { parseBrowse, periodRange, searchResultsHref } from './browse'
+
+describe('searchResultsHref', () => {
+  it('routes a home search to the results page and resets pagination', () => {
+    const href = searchResultsHref(
+      new URLSearchParams('category=subculture&period=weekend&page=3&region=SEOUL'),
+      'subculture',
+      '  프로젝트돌  ',
+    )
+    const url = new URL(href, 'https://boothhana.test')
+
+    expect(url.pathname).toBe('/discover')
+    expect(url.searchParams.get('q')).toBe('프로젝트돌')
+    expect(url.searchParams.get('category')).toBe('subculture')
+    expect(url.searchParams.get('period')).toBe('weekend')
+    expect(url.searchParams.get('region')).toBe('SEOUL')
+    expect(url.searchParams.has('page')).toBe(false)
+  })
+})
 
 describe('parseBrowse', () => {
   it('rejects a subcategory that belongs to a different category', () => {
