@@ -2,10 +2,17 @@ import type { Occurrence } from '../collection/api'
 import { getCategory, type DiscoveryCategory } from './categories'
 export type Period = 'upcoming' | 'week' | 'month' | 'all' | 'weekend' | 'nextmonth' | 'custom'
 export interface BrowseState { category: DiscoveryCategory; q: string; region: string; subcategory: string; period: Period; sort: 'date' | 'recent'; page: number; from?: string; to?: string; dateError?: string }
+const RESULT_MODE_KEYS = ['q', 'type', 'period', 'sort', 'page', 'from', 'to'] as const
+
+/** Category-only discovery URLs are landing pages. Search/filter intent opens the result view. */
+export function isDiscoveryResults(pathname: string, params: URLSearchParams): boolean {
+  return pathname === '/discover' && (params.get('view') === 'results' || RESULT_MODE_KEYS.some(key => params.has(key)))
+}
 export function searchResultsHref(current: URLSearchParams, category: string, rawQuery: string): string {
   const next = new URLSearchParams(current)
   const query = rawQuery.trim().slice(0, 100)
   next.set('category', category)
+  next.set('view', 'results')
   next.delete('page')
   if (query) next.set('q', query)
   else next.delete('q')

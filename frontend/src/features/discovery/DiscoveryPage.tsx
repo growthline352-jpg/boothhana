@@ -8,7 +8,7 @@ import { useRemote } from '../../app/useRemote'
 import { publicCatalogApi, type PublicEventSummary } from '../catalog/api'
 import { SafeLink, StoredImage, labels } from '../catalog/Shared'
 import { categoryHref } from './categories'
-import { browseApiParams, cardOccurrences, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
+import { browseApiParams, cardOccurrences, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import './discovery.css'
@@ -20,7 +20,7 @@ export function DiscoveryPage() {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
   const navigate = useNavigate()
-  const isHome = location.pathname === '/'
+  const isHome = !isDiscoveryResults(location.pathname, params)
   const state = parseBrowse(params)
   const { category } = state
   const [today, setToday] = useState(() => seoulToday())
@@ -42,7 +42,7 @@ export function DiscoveryPage() {
     e.preventDefault()
     if (category.enabled) navigate(searchResultsHref(params, category.key, draft))
   }
-  const reset = () => { setDraft(''); setParams({ category: category.key, period: 'all' }) }
+  const reset = () => { setDraft(''); setParams({ category: category.key, period: 'all', view: 'results' }) }
   const rows = data.data?.items ?? []
   const total = data.data?.total ?? 0
   const pages = Math.max(1, Math.ceil(total / 20))

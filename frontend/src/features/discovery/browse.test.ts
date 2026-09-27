@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseBrowse, periodRange, searchResultsHref } from './browse'
+import { isDiscoveryResults, parseBrowse, periodRange, searchResultsHref } from './browse'
 
 describe('searchResultsHref', () => {
   it('routes a home search to the results page and resets pagination', () => {
@@ -11,11 +11,26 @@ describe('searchResultsHref', () => {
     const url = new URL(href, 'https://boothhana.test')
 
     expect(url.pathname).toBe('/discover')
+    expect(url.searchParams.get('view')).toBe('results')
     expect(url.searchParams.get('q')).toBe('프로젝트돌')
     expect(url.searchParams.get('category')).toBe('subculture')
     expect(url.searchParams.get('period')).toBe('weekend')
     expect(url.searchParams.get('region')).toBe('SEOUL')
     expect(url.searchParams.has('page')).toBe(false)
+  })
+})
+
+describe('discovery page mode', () => {
+  it('keeps category tabs on their category landing page', () => {
+    expect(isDiscoveryResults('/discover', new URLSearchParams('category=exhibitions'))).toBe(false)
+    expect(isDiscoveryResults('/discover', new URLSearchParams('category=festivals'))).toBe(false)
+    expect(isDiscoveryResults('/discover', new URLSearchParams('category=festivals&region=SEOUL'))).toBe(false)
+  })
+
+  it('opens results only for an explicit search or result filter', () => {
+    expect(isDiscoveryResults('/discover', new URLSearchParams('category=exhibitions&view=results'))).toBe(true)
+    expect(isDiscoveryResults('/discover', new URLSearchParams('category=exhibitions&q=와인'))).toBe(true)
+    expect(isDiscoveryResults('/discover', new URLSearchParams('category=festivals&type=MUSIC&period=month'))).toBe(true)
   })
 })
 
