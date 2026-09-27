@@ -5,6 +5,7 @@ import { center, rectangle, safePoints } from './geometry'
 import { anchoredScroll, clampZoom, fitShapeZoom } from './viewport'
 import { openCatalogDialog } from '../catalog/dialogLifecycle'
 import './floorplan.css'
+const facilityNames:Record<string,string>={RESTROOM:'화장실',ENTRANCE:'입구',EXIT:'출구',INFORMATION:'안내',ELEVATOR:'엘리베이터',ESCALATOR:'에스컬레이터',STAIRS:'계단',FIRST_AID:'의무실',FOOD:'식음',STAGE:'무대',SERVICE:'편의시설',OTHER:'시설'}
 /** Fixed SVG renderer: model-generated code and markup are never executed. */
 export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highlight=[],linkedIds,focusRequest=0,editable=false,onChange,renderSelection}:{width:number;height:number;imageUrl:string|null;shapes:Shape[];selected:string|null;onSelect:(id:string,trigger:HTMLElement)=>void;highlight?:string[];linkedIds?:string[];focusRequest?:number;editable?:boolean;onChange?:(shapes:Shape[])=>void;renderSelection?:(expanded:boolean,showDetails:(content:ReactNode,title:string,trigger:HTMLElement)=>void)=>ReactNode}) {
   const svg=useRef<SVGSVGElement>(null),viewport=useRef<HTMLDivElement>(null),dialog=useRef<HTMLDialogElement>(null),fullButton=useRef<HTMLButtonElement>(null)
@@ -104,15 +105,15 @@ export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highl
   <svg ref={svg} role="group" aria-label="부스번호별 배치도. 검색 결과에서도 선택할 수 있습니다." viewBox={`0 0 ${w} ${h}`} style={{width:`${zoom*100}%`,aspectRatio:`${w}/${h}`}}
     onPointerDown={down} onPointerMove={move} onPointerUp={ev=>end(ev)} onPointerCancel={ev=>end(ev,true)}>
     <rect width={w} height={h} fill="white"/>{showSourceImage&&<image href={imageUrl} width={w} height={h} preserveAspectRatio="none"/>}
-    {valid.map(s=>{const c=center(s.points),active=s.id===selected,unlinked=linkedIds!==undefined&&!linkedIds.includes(s.id)
-      return <g key={s.id} data-shape={s.id} role="button" tabIndex={0} aria-label={`부스 ${s.label||'번호 미확인'}${unlinked?' · 참가자 연결 미확인':''}`} aria-pressed={active}
+    {valid.map(s=>{const c=center(s.points),active=s.id===selected,kind=s.kind||'BOOTH',facility=kind!=='BOOTH',unlinked=!facility&&linkedIds!==undefined&&!linkedIds.includes(s.id),label=s.label||(facility?facilityNames[kind]:'번호 미확인')
+      return <g key={s.id} data-shape={s.id} role="button" tabIndex={0} aria-label={`${facility?'시설':'부스'} ${label}${unlinked?' · 참가자 연결 미확인':''}`} aria-pressed={active}
         onClick={ev=>{if(ev.detail===0)select(s.id)}} onKeyDown={ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();select(s.id)}}}>
-        <polygon className={`floorplan-region ${unlinked?'is-unlinked':''} ${active?'is-selected':''} ${highlight.includes(s.id)?'is-highlighted':''}`} points={s.points.map(p=>`${p.x*w},${p.y*h}`).join(' ')} vectorEffect="non-scaling-stroke"/>
-        <text x={c.x*w} y={c.y*h} textAnchor="middle" dominantBaseline="central" className="floorplan-label" fontSize={Math.max(10,w/110)}>{s.label||'?'}</text>
+        <polygon className={`floorplan-region ${facility?`is-facility kind-${kind.toLowerCase().replace('_','-')}`:''} ${unlinked?'is-unlinked':''} ${active?'is-selected':''} ${highlight.includes(s.id)?'is-highlighted':''}`} points={s.points.map(p=>`${p.x*w},${p.y*h}`).join(' ')} vectorEffect="non-scaling-stroke"/>
+        <text x={c.x*w} y={c.y*h} textAnchor="middle" dominantBaseline="central" className={`floorplan-label ${facility?'is-facility':''}`} fontSize={Math.max(10,w/110)}>{label}</text>
       </g>})}
     {editable&&valid.find(s=>s.id===selected)?.points.map((p,i)=><circle key={i} data-vertex={i} data-owner={selected} cx={p.x*w} cy={p.y*h} r={w/150} className="floorplan-handle" aria-hidden="true"/>)}
   </svg></div>
-  {linkedIds!==undefined&&<p className="floorplan-legend"><span>□ 위치번호만</span><span>■ 부스정보 연결</span><span>■ 파란 테두리: 선택 위치</span></p>}
+  {linkedIds!==undefined&&<p className="floorplan-legend"><span>□ 위치번호만</span><span>■ 부스정보 연결</span><span className="floorplan-legend-facility">◆ 편의시설</span><span>■ 파란 테두리: 선택 위치</span></p>}
   <small>{imageUrl&&!editable?'공식 원본 배치도를 그대로 표시합니다. 검색하거나 선택한 위치만 위에 강조됩니다. ':' '}손가락 두 개로 확대하고 끌어서 이동하세요. 작은 부스는 검색 결과로 선택하면 자동으로 확대됩니다. 현위치·최단 경로 안내는 제공하지 않습니다.</small>
   </div>
   return expanded ? <dialog ref={dialog} className="floorplan-fullscreen" aria-label={detail ? `${detail.title} 판매정보` : '배치도 전체화면'}

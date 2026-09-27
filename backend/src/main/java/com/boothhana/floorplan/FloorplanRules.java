@@ -5,6 +5,7 @@ import java.util.*;
 import static com.boothhana.floorplan.FloorplanModels.*;
 /** Pure rules: no LLM assertions grant permissions or publication. Normalized coordinates use ORIGINAL pixels. */
 public final class FloorplanRules {
+ private static final Set<String> KINDS=Set.of("BOOTH","RESTROOM","ENTRANCE","EXIT","INFORMATION","ELEVATOR","ESCALATOR","STAIRS","FIRST_AID","FOOD","STAGE","SERVICE","OTHER");
  private FloorplanRules() {}
  public static String key(String s) { return s==null?"":Normalizer.normalize(s,Normalizer.Form.NFKC).strip().toUpperCase(Locale.ROOT)
    .replaceAll("[\\s\\u00a0]+","").replace('\u2010','-').replace('\u2011','-').replace('\u2013','-'); }
@@ -29,7 +30,7 @@ public final class FloorplanRules {
   Set<String> ids=new HashSet<>();
   for(Shape s:g.shapes()) {
    if(s==null)throw new IllegalArgumentException("빈 도형");text(s.id(),80,true);text(s.label(),80,false);
-   if(!s.id().matches("[A-Za-z0-9_-]+")||!ids.add(s.id())||(s.recognition()==null||!Set.of("READABLE","UNCERTAIN").contains(s.recognition()))||s.points()==null||s.points().size()<3||s.points().size()>16)throw new IllegalArgumentException("도형 ID/판독 상태 오류");
+   if(!s.id().matches("[A-Za-z0-9_-]+")||!ids.add(s.id())||!KINDS.contains(s.mapKind())||(s.recognition()==null||!Set.of("READABLE","UNCERTAIN").contains(s.recognition()))||s.points()==null||s.points().size()<3||s.points().size()>16)throw new IllegalArgumentException("도형 ID/종류/판독 상태 오류");
    Set<Point> ps=new HashSet<>();for(Point p:s.points())if(p==null||!Double.isFinite(p.x())||!Double.isFinite(p.y())||p.x()<0||p.x()>1||p.y()<0||p.y()>1||!ps.add(p))throw new IllegalArgumentException("원본 범위 밖/중복 좌표");
    if(area(s.points())<0.0000005)throw new IllegalArgumentException("면적이 없는 도형");
    int n=s.points().size();for(int i=0;i<n;i++)for(int j=i+1;j<n;j++)if((i+1)%n!=j&&(j+1)%n!=i&&intersects(s.points().get(i),s.points().get((i+1)%n),s.points().get(j),s.points().get((j+1)%n)))throw new IllegalArgumentException("자기 교차 도형");
@@ -42,19 +43,20 @@ public final class FloorplanRules {
  private static double[] box(Shape s){double x=1,y=1,r=0,b=0;for(Point p:s.points()){x=Math.min(x,p.x());y=Math.min(y,p.y());r=Math.max(r,p.x());b=Math.max(b,p.y());}return new double[]{x,y,r,b};}
  public static Mapping map(Geometry geometry,PlanScope scope,List<Roster> roster,Map<String,ManualLink> manual) {
   geometry(geometry);scope(scope);Set<Long> allowed=new HashSet<>();roster.forEach(r->allowed.add(r.id()));
-  Set<String> shapeIds=new HashSet<>();geometry.shapes().forEach(s->shapeIds.add(s.id()));
+  Set<String> shapeIds=new HashSet<>();geometry.shapes().stream().filter(s->"BOOTH".equals(s.mapKind())).forEach(s->shapeIds.add(s.id()));
   for(var e:manual.entrySet()) {
    ManualLink m=e.getValue();if(!shapeIds.contains(e.getKey())||m==null||!allowed.contains(m.participantId())||m.dates()==null||m.dates().size()>90)throw new IllegalArgumentException("다른 행사/없는 부스 수동 연결");
    text(m.reason(),1000,true);for(String d:m.dates()){text(d,10,true);LocalDate.parse(d);if(!scope.dates().isEmpty()&&!scope.dates().contains(d))throw new IllegalArgumentException("도면 범위 밖 날짜");}
    if(!scope.dates().isEmpty()&&m.dates().isEmpty())throw new IllegalArgumentException("수동 연결 적용일 필요");
   }
   List<MappedShape> out=new ArrayList<>();int matched=0;
-  Map<String,Long> codes=new HashMap<>();for(Shape s:geometry.shapes())if(!key(s.label()).isEmpty())codes.merge(key(s.label()),1L,Long::sum);
+  Map<String,Long> codes=new HashMap<>();for(Shape s:geometry.shapes())if("BOOTH".equals(s.mapKind())&&!key(s.label()).isEmpty())codes.merge(key(s.label()),1L,Long::sum);
   for(Shape s:geometry.shapes()) {
+   if(!"BOOTH".equals(s.mapKind())){out.add(new MappedShape(s,"FACILITY",List.of(),List.of(),List.of()));continue;}
    List<String> issues=new ArrayList<>();List<Link> links=new ArrayList<>();Set<Long> candidates=new LinkedHashSet<>();
    if(!s.boundaryConfirmed()||!"READABLE".equals(s.recognition())||key(s.label()).isBlank())issues.add("판독/영역 확인 필요");
    if(codes.getOrDefault(key(s.label()),0L)>1)issues.add("같은 도면에 중복 부스번호");
-   if(geometry.shapes().stream().anyMatch(b->b!=s&&overlap(s,b)>0.35))issues.add("다른 부스 영역과 겹침 — 위치 확인 필요");
+   if(geometry.shapes().stream().anyMatch(b->b!=s&&"BOOTH".equals(b.mapKind())&&overlap(s,b)>0.35))issues.add("다른 부스 영역과 겹침 — 위치 확인 필요");
    Map<Long,Set<String>> found=new LinkedHashMap<>();
    for(Roster r:roster)for(Place loc:r.locations())if(!key(s.label()).isBlank()&&key(s.label()).equals(key(loc.code()))) {
     candidates.add(r.id());
@@ -78,7 +80,8 @@ public final class FloorplanRules {
    boolean resolved=!links.isEmpty()&&(m!=null||issues.isEmpty());if(resolved)matched++;
    out.add(new MappedShape(s,resolved?m!=null?"MANUAL":"MATCHED":candidates.size()>1?"AMBIGUOUS":"UNMAPPED",links,List.copyOf(candidates),issues));
   }
-  return new Mapping(out,matched,out.size()-matched,geometry.complete()?List.of():List.of("일부 영역만 추출됨; 전체 배치도 확인 필요"));
+  int boothCount=(int)geometry.shapes().stream().filter(s->"BOOTH".equals(s.mapKind())).count();
+  return new Mapping(out,matched,boothCount-matched,geometry.complete()?List.of():List.of("일부 영역만 추출됨; 전체 배치도 확인 필요"));
  }
  public static Instant nextCheck(LocalDate today,LocalDate start,LocalDate end,String status,LocalDate announced,Instant now) {
   if(end.isBefore(today))return end.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();

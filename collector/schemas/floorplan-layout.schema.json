@@ -9,6 +9,24 @@
       "items": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "BOOTH",
+              "RESTROOM",
+              "ENTRANCE",
+              "EXIT",
+              "INFORMATION",
+              "ELEVATOR",
+              "ESCALATOR",
+              "STAIRS",
+              "FIRST_AID",
+              "FOOD",
+              "STAGE",
+              "SERVICE",
+              "OTHER"
+            ]
+          },
           "label": {
             "type": [
               "string",
@@ -53,6 +71,7 @@
           }
         },
         "required": [
+          "kind",
           "label",
           "points",
           "recognition",

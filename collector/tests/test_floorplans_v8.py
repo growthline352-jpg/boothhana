@@ -6,7 +6,7 @@ from run import codex_command,execute_search,RunError
 from weekly import load_config
 from floorplans import FloorplanBatch
 from floorplan_geometry import tiles,merge_tiles,EXTRACTOR,simple
-from interactive_floorplan import build_schematic,merge_interactive_candidates,parse_accessible_booths
+from interactive_floorplan import build_schematic,merge_interactive_candidates,parse_accessible_booths,parse_accessible_layout
 from run_scheduled import run as scheduled
 ROOT=Path(__file__).resolve().parents[1];FIX=ROOT/'examples/floorplan-v8'
 def png(w=1000,h=700):
@@ -37,6 +37,9 @@ class GeometryTests(unittest.TestCase):
  def test_repeated_points(self):self.assertFalse(simple([{'x':0,'y':0}]*4))
  def test_suffixes_preserved(self):
   v=merge_tiles([({'x':0,'y':0,'width':1000,'height':700},geometry())],1000,700);self.assertEqual([s['label'] for s in v['shapes']][-2:],['A-03a','A-03b'])
+ def test_map_element_kind_preserved(self):
+  g=geometry();g['shapes'][0]['kind']='RESTROOM';g['shapes'][0]['label']='화장실';v=merge_tiles([({'x':0,'y':0,'width':1000,'height':700},g)],1000,700)
+  self.assertEqual(v['shapes'][0]['kind'],'RESTROOM');self.assertTrue(v['shapes'][0]['id'].startswith('f-'))
  def test_rotated_exif_refused(self):
   image=Image.new('RGB',(100,100));ex=image.getexif();ex[274]=6;b=io.BytesIO();image.save(b,format='JPEG',exif=ex)
   with tempfile.TemporaryDirectory() as t:self.assertRaises(Exception,tiles,b.getvalue(),'image/jpeg',Path(t))
@@ -127,8 +130,9 @@ class WorkerTests(unittest.TestCase):
  def test_accessible_html_becomes_complete_schematic(self):
   html=(FIX/'interactive.html').read_text(encoding='utf-8');booths=parse_accessible_booths(html)
   self.assertEqual([(b['hall'],b['code']) for b in booths],[('제1전시실','A-16'),('제1전시실','A-17'),('제1전시실','A-13A'),('제2전시실','B-01'),('제2전시실','B-02')])
+  _,facilities=parse_accessible_layout(html);self.assertEqual([(f['hall'],f['kind'],f['label']) for f in facilities],[('제1전시실','ENTRANCE','입구/재입장'),('제1전시실','EXIT','출구'),('제2전시실','RESTROOM','화장실')])
   data,mime,digest,width,height,geometry=build_schematic(html)
-  self.assertEqual(mime,'image/png');self.assertEqual(digest,hashlib.sha256(data).hexdigest());self.assertGreaterEqual(width,720);self.assertGreaterEqual(height,480);self.assertTrue(geometry['complete']);self.assertEqual(len(geometry['shapes']),5)
+  self.assertEqual(mime,'image/png');self.assertEqual(digest,hashlib.sha256(data).hexdigest());self.assertGreaterEqual(width,720);self.assertGreaterEqual(height,480);self.assertTrue(geometry['complete']);self.assertEqual(len(geometry['shapes']),8);self.assertEqual(sum(s['kind']!='BOOTH' for s in geometry['shapes']),3)
   changed=html.replace('B-02 참가자','B-03 참가자')
   self.assertNotEqual(digest,build_schematic(changed)[2])
  def test_interactive_source_skips_vision_and_uses_existing_analysis_api(self):
@@ -144,5 +148,5 @@ class WorkerTests(unittest.TestCase):
   source={'asset':{'id':1,'rightsState':'APPROVED','imageUrl':'https://example.com/event/map','pageUrl':'https://example.com/event/map'},'canTransform':True,'sourceRevision':1}
   with patch('floorplans.fetch_html',return_value=(html,'0'*64)),patch('floorplans.fetch_image') as image,patch.object(b,'vision') as vision:
    value=b.process_source(1,source)
-  image.assert_not_called();vision.assert_not_called();self.assertEqual(len(api.analysis['geometry']['shapes']),5);self.assertEqual(value['mapped'],1)
+  image.assert_not_called();vision.assert_not_called();self.assertEqual(len(api.analysis['geometry']['shapes']),8);self.assertEqual(value['mapped'],1)
 if __name__=='__main__':unittest.main()

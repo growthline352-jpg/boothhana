@@ -6171,5 +6171,15 @@
       "width": 48,
       "height": 24
     }
+  ],
+  "facilities": [
+    {"id":"hall1-parcel","kind":"SERVICE","label":"택배접수","hall":"제1전시실","x":881.594,"y":847.007,"width":64,"height":64.003},
+    {"id":"hall1-entrance","kind":"ENTRANCE","label":"입구/재입장","hall":"제1전시실","x":87.688,"y":927.011,"width":113.359,"height":35.986},
+    {"id":"hall1-exit","kind":"EXIT","label":"출구","hall":"제1전시실","x":247.734,"y":927.011,"width":72.203,"height":35.986},
+    {"id":"hall2-entrance","kind":"ENTRANCE","label":"입구/재입장","hall":"제2전시실","x":58.328,"y":1648.997,"width":113.359,"height":35.986},
+    {"id":"hall2-information","kind":"INFORMATION","label":"운영본부","hall":"제2전시실","x":229.484,"y":1648.997,"width":80,"height":80.004},
+    {"id":"hall2-exit","kind":"EXIT","label":"출구","hall":"제2전시실","x":367.281,"y":1648.997,"width":72.203,"height":35.986},
+    {"id":"hall3-entrance","kind":"ENTRANCE","label":"입구/재입장","hall":"제3전시실","x":600.187,"y":2651.012,"width":113.359,"height":35.986},
+    {"id":"hall3-exit","kind":"EXIT","label":"출구","hall":"제3전시실","x":760.141,"y":2651.012,"width":72.203,"height":35.986}
   ]
 }

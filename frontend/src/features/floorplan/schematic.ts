@@ -61,11 +61,13 @@ function sourcePlan(event: EventData, locations: LocatedBooth[], day: string, ha
     ? layout.booths.filter(booth => !booth.hall || normalizePlace(booth.hall) === normalizePlace(hall))
     : layout.booths
   if (!booths.length) return null
+  const facilities = (layout.facilities||[]).filter(facility=>!hall||!facility.hall||normalizePlace(facility.hall)===normalizePlace(hall))
+  const elements = [...booths,...facilities]
   const padding = 24
-  const minX = Math.max(0, Math.min(...booths.map(booth => booth.x)) - padding)
-  const minY = Math.max(0, Math.min(...booths.map(booth => booth.y)) - padding)
-  const maxX = Math.min(layout.width, Math.max(...booths.map(booth => booth.x + booth.width)) + padding)
-  const maxY = Math.min(layout.height, Math.max(...booths.map(booth => booth.y + booth.height)) + padding)
+  const minX = Math.max(0, Math.min(...elements.map(element => element.x)) - padding)
+  const minY = Math.max(0, Math.min(...elements.map(element => element.y)) - padding)
+  const maxX = Math.min(layout.width, Math.max(...elements.map(element => element.x + element.width)) + padding)
+  const maxY = Math.min(layout.height, Math.max(...elements.map(element => element.y + element.height)) + padding)
   const width = maxX - minX, height = maxY - minY
   const shapes: PublicShape[] = booths.map(booth => {
     const linked = linkedByCode.get(normalizeCode(booth.code)) || []
@@ -73,6 +75,7 @@ function sourcePlan(event: EventData, locations: LocatedBooth[], day: string, ha
     const right = (booth.x + booth.width - minX) / width, bottom = (booth.y + booth.height - minY) / height
     return {
       id: `source-${normalizeCode(booth.code).replace(/[^A-Z0-9-]/g, '')}`,
+      kind: 'BOOTH',
       label: normalizeCode(booth.code),
       points: [{x, y}, {x: right, y}, {x: right, y: bottom}, {x, y: bottom}],
       status: linked.length ? 'MATCHED' : 'UNMAPPED',
@@ -80,6 +83,10 @@ function sourcePlan(event: EventData, locations: LocatedBooth[], day: string, ha
       issues: linked.length ? [] : ['공개된 참가 부스 정보 없음'],
     }
   })
+  for (const facility of facilities) {
+    const x=(facility.x-minX)/width,y=(facility.y-minY)/height,right=(facility.x+facility.width-minX)/width,bottom=(facility.y+facility.height-minY)/height
+    shapes.push({id:`source-${facility.id}`,kind:facility.kind,label:facility.label,points:[{x,y},{x:right,y},{x:right,y:bottom},{x,y:bottom}],status:'FACILITY',links:[],issues:[]})
+  }
   const days = visitDays(event)
   return {
     id: `source-schematic-${day || 'all'}-${normalizePlace(hall) || 'all'}`,
@@ -101,8 +108,8 @@ function sourcePlan(event: EventData, locations: LocatedBooth[], day: string, ha
 }
 
 /**
- * Builds a first-party schematic from published booth codes only. It deliberately
- * does not invent aisles, exits or physical distances from an organiser image.
+ * Builds a first-party schematic from published booth codes and explicitly
+ * recorded organizer facilities. It never invents aisles, facilities or distances.
  */
 export function generateSchematicPlan(event: EventData, participants: PublicParticipant[], day: string, hall: string, sourceUrl: string): PublicPlan | null {
   const locations = parsedLocations(event, participants, day, hall)
@@ -146,6 +153,7 @@ export function generateSchematicPlan(event: EventData, participants: PublicPart
     const height = rowHeight - insetY * 2
     return {
       id: `schematic-${fallbackIndex}-${item.code.replace(/[^A-Z0-9-]/g, '')}`,
+      kind: 'BOOTH',
       label: item.code,
       points: [{x, y}, {x: x + width, y}, {x: x + width, y: y + height}, {x, y: y + height}],
       status: 'MATCHED',

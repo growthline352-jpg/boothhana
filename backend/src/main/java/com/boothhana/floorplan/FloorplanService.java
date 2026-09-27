@@ -217,7 +217,7 @@ public class FloorplanService {
    m.put("offlineAllowed","READY".equals(state)&&Boolean.TRUE.equals(r.get("offline_allowed")));
    if("READY".equals(state)){
     Mapping map=dec(enc(snap.get("mapping")),Mapping.class);List<Map<String,Object>> shapes=new ArrayList<>();
-    for(MappedShape shape:map.shapes()) {Map<String,Object> item=new LinkedHashMap<>();item.put("id",shape.shape().id());item.put("label",shape.shape().label());item.put("points",shape.shape().points());item.put("status",shape.status());item.put("links",shape.links().stream().filter(l->allowed.contains(l.participantId())).toList());item.put("issues",shape.issues());shapes.add(item);}
+     for(MappedShape shape:map.shapes()) {Map<String,Object> item=new LinkedHashMap<>();item.put("id",shape.shape().id());item.put("kind",shape.shape().mapKind());item.put("label",shape.shape().label());item.put("points",shape.shape().points());item.put("status",shape.status());item.put("links",shape.links().stream().filter(l->allowed.contains(l.participantId())).toList());item.put("issues",shape.issues());shapes.add(item);}
     m.put("width",r.get("image_width"));m.put("height",r.get("image_height"));m.put("imageUrl",imageBase+"/"+r.get("object_key"));m.put("sourceSha256",r.get("sha256"));m.put("shapes",shapes);m.put("partial",map.unresolved()>0||!dec(enc(snap.get("geometry")),Geometry.class).complete());
    }else {m.put("shapes",List.of());m.put("imageUrl",null);}
    plans.add(m);

@@ -11,7 +11,10 @@ public final class FloorplanModels {
  public record Permission(long assetRevision,long sourceRevision,boolean allowed,String note,String credit) {}
  public record SourceEdit(long revision,PlanScope scope) {}
  public record Begin(String leaseId,long assetId,long sourceRevision,String sha256,int width,int height,long size,String contentType) {}
- public record Shape(String id,String label,List<Point> points,String recognition,boolean boundaryConfirmed) {}
+ public record Shape(String id,String label,List<Point> points,String recognition,boolean boundaryConfirmed,String kind) {
+  public Shape(String id,String label,List<Point> points,String recognition,boolean boundaryConfirmed){this(id,label,points,recognition,boundaryConfirmed,"BOOTH");}
+  public String mapKind(){return kind==null||kind.isBlank()?"BOOTH":kind;}
+ }
  public record Geometry(String extractorVersion,boolean complete,List<Shape> shapes,List<String> warnings) {}
  public record Analysis(String leaseId,long revision,String sha256,Geometry geometry) {}
  public record ManualLink(long participantId,List<String> dates,String reason) {}

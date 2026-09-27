@@ -2,7 +2,8 @@ import { api } from '../../api/client'
 import type { Asset } from '../catalog/api'
 export interface Point { x:number; y:number }
 export interface PlanScope { hall:string|null; zone:string|null; dates:string[]; title:string }
-export interface Shape { id:string; label:string|null; points:Point[]; recognition:'READABLE'|'UNCERTAIN'; boundaryConfirmed:boolean }
+export type MapElementKind = 'BOOTH'|'RESTROOM'|'ENTRANCE'|'EXIT'|'INFORMATION'|'ELEVATOR'|'ESCALATOR'|'STAIRS'|'FIRST_AID'|'FOOD'|'STAGE'|'SERVICE'|'OTHER'
+export interface Shape { id:string; kind?:MapElementKind; label:string|null; points:Point[]; recognition:'READABLE'|'UNCERTAIN'; boundaryConfirmed:boolean }
 export interface Geometry { extractorVersion:string; complete:boolean; shapes:Shape[]; warnings:string[] }
 export interface PlanLink { participantId:number; dates:string[]; method:string }
 export interface MappedShape { shape:Shape; status:string; links:PlanLink[]; candidates:number[]; issues:string[] }
@@ -14,7 +15,7 @@ export interface PlanVersion extends PlanVersionSummary {geometry:Geometry|null;
 export interface Source { asset:Asset; scope:PlanScope; canTransform:boolean; sourceRevision:number; lastError:string }
 export interface Roster {id:number; name:string; locations:{code:string;hall:string|null;zone:string|null;dates:string[]}[]}
 export interface Workspace { watch:{revision:number;disabled:boolean;last_status:string;last_error:string;lastCheckedAt:string;nextCheckAt:string;result:{warnings?:string[]}}|null; sources:Source[]; versions:PlanVersionSummary[]; roster:Roster[] }
-export interface PublicShape {id:string;label:string|null;points:Point[];status:string;links:PlanLink[];issues:string[]}
+export interface PublicShape {id:string;kind?:MapElementKind;label:string|null;points:Point[];status:string;links:PlanLink[];issues:string[]}
 export interface PublicPlan {sourceSha256?:string; offlineAllowed?:boolean; schematic?:boolean; id:string;assetId:number;scope:PlanScope;state:string;publishedAt:string;sourceUrl:string;credit:string;width?:number;height?:number;imageUrl:string|null;shapes:PublicShape[];partial?:boolean}
 export interface PublicPlans {plans:PublicPlan[];managedAssetIds:number[]}
 const base='/api/admin/subculture/v4/floorplans'

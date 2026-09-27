@@ -6,6 +6,15 @@
   "layoutBasis": "OFFICIAL_COORDINATES",
   "width": 1000,
   "height": 1000,
+  "facilities": [
+    { "id": "facility-stage-a", "kind": "STAGE", "label": "집코노미 콘서트 TRACK A", "hall": "D홀", "x": 30, "y": 40, "width": 360, "height": 145 },
+    { "id": "facility-office", "kind": "INFORMATION", "label": "운영사무국", "hall": "D홀", "x": 395, "y": 40, "width": 120, "height": 48 },
+    { "id": "facility-press", "kind": "OTHER", "label": "기자실", "hall": "D홀", "x": 395, "y": 88, "width": 120, "height": 48 },
+    { "id": "facility-speaker", "kind": "OTHER", "label": "연사대기실", "hall": "D홀", "x": 395, "y": 136, "width": 120, "height": 49 },
+    { "id": "facility-stage-b", "kind": "STAGE", "label": "집코노미 콘서트 TRACK B", "hall": "D홀", "x": 555, "y": 40, "width": 395, "height": 145 },
+    { "id": "facility-entrance", "kind": "ENTRANCE", "label": "입구", "hall": "D홀", "x": 120, "y": 845, "width": 110, "height": 55 },
+    { "id": "facility-exit", "kind": "EXIT", "label": "출구", "hall": "D홀", "x": 650, "y": 845, "width": 110, "height": 55 }
+  ],
   "booths": [
     { "code": "F-01", "hall": "D홀", "x": 30, "y": 220, "width": 42, "height": 105 },
     { "code": "F-02", "hall": "D홀", "x": 825, "y": 175, "width": 125, "height": 52 },

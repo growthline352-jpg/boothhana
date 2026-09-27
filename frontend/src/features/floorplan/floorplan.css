@@ -26,3 +26,16 @@
 .floorplan-canvas.has-source-image .floorplan-viewport g:focus .floorplan-region{fill:rgba(47,107,85,.16);stroke:#2f6b55;stroke-width:3}
 .floorplan-canvas.has-source-image .floorplan-region.is-highlighted{fill:rgba(255,175,40,.28);stroke:#a86f00;stroke-width:3}
 .floorplan-canvas.has-source-image .floorplan-region.is-selected{fill:rgba(37,104,215,.22);stroke:#145bc4;stroke-width:4}
+
+/* Facilities are first-class map elements, never unresolved booths. */
+.floorplan-region.is-facility{fill:#fff3c7;stroke:#8a6810;stroke-width:2;stroke-dasharray:none}
+.floorplan-region.is-facility.kind-entrance{fill:#dff4e7;stroke:#23724a}
+.floorplan-region.is-facility.kind-exit{fill:#ffe6d8;stroke:#a74b1f}
+.floorplan-region.is-facility.kind-restroom{fill:#e9e5fb;stroke:#6650a8}
+.floorplan-region.is-facility.kind-information,.floorplan-region.is-facility.kind-first-aid{fill:#dfeeff;stroke:#2d67a5}
+.floorplan-label.is-facility{fill:#24313b;font-weight:850;font-size:12px}
+.floorplan-legend-facility{color:#75580b;font-weight:750}
+.floorplan-region.is-facility:hover,.floorplan-viewport g:focus .floorplan-region.is-facility{fill:#ffe8a1;stroke-width:3}
+.floorplan-region.is-facility.is-selected{fill:rgba(37,104,215,.3);stroke:#145bc4;stroke-width:4}
+.floorplan-facility-detail{grid-template-columns:minmax(130px,.45fr) 1fr!important}
+.floorplan-facility-detail>p{margin:0!important}

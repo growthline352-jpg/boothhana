@@ -2,6 +2,7 @@
   "complete": true,
   "shapes": [
     {
+      "kind": "BOOTH",
       "label": "B1",
       "points": [
         {
@@ -25,6 +26,7 @@
       "boundaryConfirmed": true
     },
     {
+      "kind": "BOOTH",
       "label": "B2",
       "points": [
         {
@@ -48,6 +50,7 @@
       "boundaryConfirmed": true
     },
     {
+      "kind": "BOOTH",
       "label": "A-03a",
       "points": [
         {
@@ -71,6 +74,7 @@
       "boundaryConfirmed": true
     },
     {
+      "kind": "BOOTH",
       "label": "A-03b",
       "points": [
         {

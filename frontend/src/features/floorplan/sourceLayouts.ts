@@ -1,9 +1,21 @@
 import df2610 from './layouts/df2610.json'
 import dongneSunday from './layouts/dongne-sunday-20261004.json'
 import jipconomy2026 from './layouts/jipconomy-2026.json'
+import type { MapElementKind } from './api'
 
 export interface SourceLayoutBooth {
   code: string
+  hall: string | null
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export interface SourceLayoutFacility {
+  id: string
+  kind: Exclude<MapElementKind,'BOOTH'>
+  label: string
   hall: string | null
   x: number
   y: number
@@ -18,9 +30,10 @@ export interface SourceLayout {
   width: number
   height: number
   booths: SourceLayoutBooth[]
+  facilities?: SourceLayoutFacility[]
 }
 
-const layouts: SourceLayout[] = [df2610, dongneSunday, jipconomy2026]
+const layouts: SourceLayout[] = [df2610 as SourceLayout, dongneSunday as SourceLayout, jipconomy2026 as SourceLayout]
 
 function sourceKey(value: string) {
   try {

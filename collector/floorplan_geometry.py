@@ -6,6 +6,7 @@ from PIL import Image
 from media_fetch import inspect_image,MediaError
 from floorplan_contract import utf16_length
 EXTRACTOR='cli-floorplan-v8.1'
+KINDS={'BOOTH','RESTROOM','ENTRANCE','EXIT','INFORMATION','ELEVATOR','ESCALATOR','STAIRS','FIRST_AID','FOOD','STAGE','SERVICE','OTHER'}
 
 def tiles(data:bytes,content_type:str,folder:Path,tile_size=1400,overlap=240,max_tiles=40):
     digest=inspect_image(data,content_type)
@@ -54,6 +55,9 @@ def merge_tiles(outputs:list[tuple[dict,dict]],width:int,height:int):
                 complete=False;warnings.append('Invalid/overlong extraction warning omitted; review source')
             else:warnings.append(warning)
         for shape in result['shapes']:
+            kind=shape.get('kind','BOOTH')
+            if kind not in KINDS:
+                complete=False;warnings.append('Invalid map element kind omitted; review source');continue
             label=shape['label']
             if label is not None and (not isinstance(label,str) or utf16_length(label)>80):
                 complete=False;warnings.append('Invalid/overlong booth label omitted; review source');continue
@@ -70,7 +74,7 @@ def merge_tiles(outputs:list[tuple[dict,dict]],width:int,height:int):
                 if old['label']==label and intersection/max(union,1e-12)>.7:duplicate=True;break
             if not duplicate:
                 identity=hashlib.sha256(json.dumps([label,ps],sort_keys=True).encode()).hexdigest()[:20]
-                shapes.append({**shape,'id':'b-'+identity,'points':ps})
+                shapes.append({**shape,'kind':kind,'id':('b-' if kind=='BOOTH' else 'f-')+identity,'points':ps})
             if len(shapes)>3000:raise ValueError('Maximum 3000 floorplan regions')
     # Deduplication cannot prove exhaustive extraction. Warnings remain visible for review.
     return {'extractorVersion':EXTRACTOR,'complete':complete,'shapes':shapes,'warnings':list(dict.fromkeys(warnings))[:200]}

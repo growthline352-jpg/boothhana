@@ -27,4 +27,14 @@ describe('PlanCanvas source image presentation',()=>{
     expect(html).not.toContain('has-source-image')
     expect(html).not.toContain('<image')
   })
+
+  it('renders facilities as labeled map elements instead of unresolved booths',()=>{
+    const facility:Shape={...booth,id:'facility-wc',kind:'RESTROOM',label:'화장실'}
+    const html=renderToStaticMarkup(<PlanCanvas width={1000} height={700} imageUrl={null} shapes={[facility]} selected={null} onSelect={()=>{}} linkedIds={[]}/>)
+
+    expect(html).toContain('시설 화장실')
+    expect(html).toContain('is-facility kind-restroom')
+    expect(html).not.toContain('참가자 연결 미확인')
+    expect(html).toContain('◆ 편의시설')
+  })
 })

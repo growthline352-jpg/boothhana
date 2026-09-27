@@ -16,6 +16,12 @@ from PIL import Image,PngImagePlugin
 
 CODE=re.compile(r'^\s*([A-Z]{1,4})(\s*-\s*|\s*)(\d{1,4})([A-Z]?)(?=\s|$)',re.I)
 IMAGE_PATH=re.compile(r'\.(?:png|jpe?g|webp|gif)(?:$|[?#])',re.I)
+FACILITY_KINDS={
+    '화장실':'RESTROOM','입구':'ENTRANCE','입구/재입장':'ENTRANCE','출구':'EXIT',
+    '운영본부':'INFORMATION','안내데스크':'INFORMATION','엘리베이터':'ELEVATOR',
+    '에스컬레이터':'ESCALATOR','계단':'STAIRS','의무실':'FIRST_AID','푸드존':'FOOD',
+    '무대':'STAGE','택배접수':'SERVICE',
+}
 
 def _code(label:str):
     match=CODE.match(label)
@@ -25,7 +31,7 @@ def _code(label:str):
 
 class _AccessibleMap(HTMLParser):
     def __init__(self):
-        super().__init__(convert_charrefs=True);self.zones=[];self.booths=[];self.seen=set()
+        super().__init__(convert_charrefs=True);self.zones=[];self.booths=[];self.facilities=[];self.seen=set();self.seen_facilities=set()
     def handle_starttag(self,tag,attrs):
         values=dict(attrs)
         zone=values.get('data-zone-name') or values.get('data-hall-name') or values.get('data-hall')
@@ -36,6 +42,14 @@ class _AccessibleMap(HTMLParser):
         code=_code(values['aria-label'])
         key=(current,code)
         if code and key not in self.seen:self.seen.add(key);self.booths.append({'code':code,'hall':current or None})
+    def handle_data(self,data):
+        label=' '.join(data.split())
+        kind=FACILITY_KINDS.get(label)
+        if not kind:return
+        current=self.zones[-1][1] if self.zones else ''
+        key=(current,label)
+        if key not in self.seen_facilities:
+            self.seen_facilities.add(key);self.facilities.append({'kind':kind,'label':label,'hall':current or None})
     def handle_startendtag(self,tag,attrs):
         self.handle_starttag(tag,attrs);self.handle_endtag(tag)
     def handle_endtag(self,tag):
@@ -48,21 +62,30 @@ def parse_accessible_booths(html:str):
     if len(parser.booths)<4:raise ValueError('Official page has fewer than four accessible booth positions')
     return parser.booths
 
+def parse_accessible_layout(html:str):
+    parser=_AccessibleMap();parser.feed(html);parser.close()
+    if len(parser.booths)<4:raise ValueError('Official page has fewer than four accessible booth positions')
+    return parser.booths,parser.facilities
+
 def _parts(code:str):
     match=re.fullmatch(r'([A-Z]{1,4})-?(\d{1,4})([A-Z]?)',code,re.I)
     if not match:raise ValueError('Unsupported booth code in accessible map')
     return match.group(1).upper(),int(match.group(2)),match.group(3).upper()
 
 def build_schematic(html:str):
-    booths=parse_accessible_booths(html)
+    booths,facilities=parse_accessible_layout(html)
     zones=OrderedDict()
+    facility_zones=OrderedDict()
     max_number=1
     for booth in booths:
         row,number,suffix=_parts(booth['code']);max_number=max(max_number,number)
         rows=zones.setdefault(booth['hall'] or '전시관 미확인',OrderedDict())
         rows.setdefault(row,[]).append((booth,number,suffix))
+    for facility in facilities:facility_zones.setdefault(facility['hall'] or '전시관 미확인',[]).append(facility)
     row_count=sum(len(rows) for rows in zones.values())
-    width=max(720,min(1800,max_number*44+96));height=max(480,row_count*64+len(zones)*42+48)
+    width=max(720,min(1800,max_number*44+96));facility_columns=max(1,(width-80)//152)
+    facility_rows=sum((len(facility_zones.get(hall,[]))+facility_columns-1)//facility_columns for hall in zones)
+    height=max(480,row_count*64+len(zones)*42+facility_rows*60+48)
     margin_x=40;base=(width-margin_x*2)/max_number;y=26;shapes=[]
     for hall,rows in zones.items():
         y+=34
@@ -72,12 +95,17 @@ def build_schematic(html:str):
                 x=margin_x+(number-1)*base+(base/2*slot if half else 0)+2
                 w=(base/2 if half else base)-4;h=48
                 token=sha256((hall+'\0'+booth['code']).encode('utf-8')).hexdigest()[:20]
-                shapes.append({'id':'dom-'+token,'label':booth['code'],'points':[{'x':x/width,'y':y/height},{'x':(x+w)/width,'y':y/height},{'x':(x+w)/width,'y':(y+h)/height},{'x':x/width,'y':(y+h)/height}],'recognition':'READABLE','boundaryConfirmed':True})
+                shapes.append({'id':'dom-'+token,'kind':'BOOTH','label':booth['code'],'points':[{'x':x/width,'y':y/height},{'x':(x+w)/width,'y':y/height},{'x':(x+w)/width,'y':(y+h)/height},{'x':x/width,'y':(y+h)/height}],'recognition':'READABLE','boundaryConfirmed':True})
             y+=64
+        for index,facility in enumerate(facility_zones.get(hall,[])):
+            column=index%facility_columns;row=index//facility_columns;x=margin_x+column*152;fy=y+row*60;w=140;h=44
+            token=sha256((hall+'\0'+facility['kind']+'\0'+facility['label']).encode('utf-8')).hexdigest()[:20]
+            shapes.append({'id':'facility-'+token,'kind':facility['kind'],'label':facility['label'],'points':[{'x':x/width,'y':fy/height},{'x':(x+w)/width,'y':fy/height},{'x':(x+w)/width,'y':(fy+h)/height},{'x':x/width,'y':(fy+h)/height}],'recognition':'READABLE','boundaryConfirmed':True})
+        y+=((len(facility_zones.get(hall,[]))+facility_columns-1)//facility_columns)*60
         y+=8
-    canonical=json.dumps([{'code':b['code'],'hall':b['hall']} for b in booths],ensure_ascii=False,sort_keys=True,separators=(',',':'))
+    canonical=json.dumps({'booths':[{'code':b['code'],'hall':b['hall']} for b in booths],'facilities':facilities},ensure_ascii=False,sort_keys=True,separators=(',',':'))
     layout_hash=sha256(canonical.encode('utf-8')).hexdigest()
-    geometry={'extractorVersion':'accessible-html-schematic-v1','complete':True,'shapes':shapes,'warnings':['공식 클릭형 배치도의 접근성 부스번호를 자동 배치한 안내도입니다. 통로·출입구·실제 간격은 공식 원문을 확인하세요.']}
+    geometry={'extractorVersion':'accessible-html-schematic-v2','complete':True,'shapes':shapes,'warnings':['공식 클릭형 배치도의 접근성 부스번호와 명시된 시설 정보를 자동 정리한 안내도입니다. 실제 통로·거리·표시되지 않은 시설은 공식 원문을 확인하세요.']}
     info=PngImagePlugin.PngInfo();info.add_text('boothhana-layout-sha256',layout_hash)
     output=BytesIO();Image.new('RGB',(width,height),'white').save(output,format='PNG',pnginfo=info,optimize=True)
     data=output.getvalue();return data,'image/png',sha256(data).hexdigest(),width,height,geometry
