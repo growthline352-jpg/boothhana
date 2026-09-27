@@ -16,6 +16,20 @@ export const DEFAULT_API_TIMEOUT_MS = 20_000
 // Render's free web service may need close to a minute to wake after inactivity.
 // Use this only for the first public/auth reads that can trigger that wake-up.
 export const COLD_START_API_TIMEOUT_MS = 75_000
+export const COLD_START_RETRY_DELAY_MS = 1_200
+const CANONICAL_VERCEL_HOST = 'boothhana.vercel.app'
+
+export function canonicalProductionUrl(href: string, production = import.meta.env.PROD): string | null {
+  if (!production) return null
+  try {
+    const url = new URL(href)
+    if (!url.hostname.endsWith('.vercel.app') || url.hostname === CANONICAL_VERCEL_HOST) return null
+    url.protocol = 'https:'
+    url.hostname = CANONICAL_VERCEL_HOST
+    url.port = ''
+    return url.href
+  } catch { return null }
+}
 
 export class ApiError extends Error {
   status: number
@@ -146,6 +160,39 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     return result
   }
   return send(false)
+}
+
+function retryablePublicRead(error: unknown) {
+  if (error instanceof ApiError) return [502, 503, 504].includes(error.status)
+  return error instanceof TypeError || (error instanceof DOMException && ['AbortError', 'TimeoutError'].includes(error.name))
+}
+
+function waitForColdStartRetry(signal?: AbortSignal | null) {
+  if (!signal) return new Promise<void>(resolve => setTimeout(resolve, COLD_START_RETRY_DELAY_MS))
+  signal.throwIfAborted()
+  return new Promise<void>((resolve, reject) => {
+    const done = () => { signal.removeEventListener('abort', aborted); resolve() }
+    const aborted = () => { clearTimeout(timer); reject(signal.reason) }
+    const timer = setTimeout(done, COLD_START_RETRY_DELAY_MS)
+    signal.addEventListener('abort', aborted, { once: true })
+  })
+}
+
+/** Retry one idempotent public read when Render is still waking up. */
+export async function publicRead<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = (init?.method ?? 'GET').toUpperCase()
+  if (!['GET', 'HEAD'].includes(method)) throw new Error('publicRead는 읽기 요청에만 사용할 수 있습니다.')
+  const { signal: callerSignal, ...request } = init ?? {}
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const timeoutSignal = AbortSignal.timeout(COLD_START_API_TIMEOUT_MS)
+    const signal = callerSignal ? AbortSignal.any([callerSignal, timeoutSignal]) : timeoutSignal
+    try { return await api<T>(path, { ...request, method, signal }) }
+    catch (error) {
+      if (attempt === 1 || callerSignal?.aborted || !retryablePublicRead(error)) throw error
+      await waitForColdStartRetry(callerSignal)
+    }
+  }
+  throw new Error('공개 정보를 불러오지 못했습니다.')
 }
 
 export { API_BASE_URL }

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { COLD_START_API_TIMEOUT_MS } from '../../api/client'
+import { COLD_START_API_TIMEOUT_MS, COLD_START_RETRY_DELAY_MS, canonicalProductionUrl } from '../../api/client'
 import { presentPublicParticipant, publicCatalogApi, type PublicParticipant } from './api'
 
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 function participant(overrides: Partial<PublicParticipant> = {}): PublicParticipant {
  return {
@@ -50,5 +50,44 @@ describe('public catalog requests', () => {
 
   expect(timeout).toHaveBeenCalledWith(COLD_START_API_TIMEOUT_MS)
   expect(COLD_START_API_TIMEOUT_MS).toBe(75_000)
+ })
+
+ it('retries one transient cold-start failure', async () => {
+  vi.useFakeTimers()
+  const fetch=vi.fn()
+   .mockRejectedValueOnce(new DOMException('The operation timed out','TimeoutError'))
+   .mockResolvedValueOnce(new Response(JSON.stringify({items:[],page:0,size:20,total:0}),{
+    status:200,headers:{'Content-Type':'application/json'},
+   }))
+  vi.stubGlobal('fetch',fetch)
+
+  const result=publicCatalogApi.events()
+  await vi.advanceTimersByTimeAsync(COLD_START_RETRY_DELAY_MS)
+
+  await expect(result).resolves.toMatchObject({items:[],total:0})
+  expect(fetch).toHaveBeenCalledTimes(2)
+ })
+
+ it('does not retry permanent HTTP failures', async () => {
+  const fetch=vi.fn().mockResolvedValue(new Response(JSON.stringify({
+   status:403,code:'FORBIDDEN',message:'접근 권한이 없습니다.',
+  }),{status:403,headers:{'Content-Type':'application/json'}}))
+  vi.stubGlobal('fetch',fetch)
+
+  await expect(publicCatalogApi.events()).rejects.toMatchObject({status:403,code:'FORBIDDEN'})
+  expect(fetch).toHaveBeenCalledTimes(1)
+ })
+})
+
+describe('canonicalProductionUrl', () => {
+ it('moves Vercel preview hosts to the production host without losing the route', () => {
+  expect(canonicalProductionUrl('https://boothhana-git-fix-example.vercel.app/discover/13?view=map#booths',true))
+   .toBe('https://boothhana.vercel.app/discover/13?view=map#booths')
+ })
+
+ it('leaves the production host, custom domains and local development alone', () => {
+  expect(canonicalProductionUrl('https://boothhana.vercel.app/discover',true)).toBeNull()
+  expect(canonicalProductionUrl('https://events.example.com/discover',true)).toBeNull()
+  expect(canonicalProductionUrl('https://preview.vercel.app/discover',false)).toBeNull()
  })
 })

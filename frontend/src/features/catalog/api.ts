@@ -1,4 +1,4 @@
-import { api, COLD_START_API_TIMEOUT_MS } from '../../api/client'
+import { api, publicRead } from '../../api/client'
 import type { EventData, EventSource, Page, ReviewState } from '../collection/api'
 export type { EventData, Page, ReviewState }
 export type EvidenceScope = 'EVENT_LISTED' | 'EVENT_SALE_CONFIRMED' | 'PROFILE' | 'GENERAL_CATALOG' | 'PAST_REFERENCE' | 'UNKNOWN'
@@ -63,10 +63,10 @@ export function presentPublicParticipant(row: PublicParticipant): PublicParticip
 }
 
 export const publicCatalogApi={
- browse:(query:string)=>api<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`,{signal:AbortSignal.timeout(COLD_START_API_TIMEOUT_MS)}),
- events:(page=0)=>api<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`,{signal:AbortSignal.timeout(COLD_START_API_TIMEOUT_MS)}),
+ browse:(query:string)=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`),
+ events:(page=0)=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`),
  event:async(id:string)=>{
-  const value=await api<PublicEvent>(`/api/public/catalog/events/${id}`,{signal:AbortSignal.timeout(COLD_START_API_TIMEOUT_MS)})
+  const value=await publicRead<PublicEvent>(`/api/public/catalog/events/${id}`)
   return {...value,participants:value.participants.map(presentPublicParticipant)}
  },
 }
