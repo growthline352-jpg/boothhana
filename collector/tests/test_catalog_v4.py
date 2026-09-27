@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 import weekly
 from catalog_rules import parse_schema,validate_stage,validate_discovery,check_participant,check_sales
 from rules import InvalidResult
-from media_fetch import check_url,public_addresses,inspect_image,MediaError,fetch_image,request_target
+from media_fetch import check_url,public_addresses,inspect_image,MediaError,fetch_image,request_target,normalize_image_content_type
 from catalog_transport import Api
 from transport import DeliveryError
 from PIL import Image
@@ -72,6 +72,9 @@ class CatalogRulesTests(unittest.TestCase):
  def test_disjoint_days_preserved(self):
   accepted,_=validate_discovery(fixture('events'),date(2026,10,1),date(2026,10,31),[]);self.assertEqual(len(accepted[0]['occurrences']),2)
 class MediaTests(unittest.TestCase):
+ def test_nonstandard_jpg_mime_is_normalized(self):
+  self.assertEqual(normalize_image_content_type('image/jpg; charset=binary'),'image/jpeg')
+  self.assertEqual(normalize_image_content_type('image/pjpeg'),'image/jpeg')
  def test_unicode_request_target_is_percent_encoded(self):
   from urllib.parse import urlsplit
   self.assertEqual(request_target(urlsplit('https://example.com/홍보 이미지.jpg?종류=배너')), '/%ED%99%8D%EB%B3%B4%20%EC%9D%B4%EB%AF%B8%EC%A7%80.jpg?%EC%A2%85%EB%A5%98=%EB%B0%B0%EB%84%88')
@@ -164,12 +167,12 @@ class PipelineTests(unittest.TestCase):
  def cli(self,cfg,folder,prompt,schema):
   name='events' if schema.name.startswith('event') else 'participants' if folder.name.startswith('participants') else 'sales'
   return (FIX/(name+'.json')).read_bytes(),True,{}
- def test_three_stages_save_parent_ids(self):
-  with patch.object(weekly,'execute_search',side_effect=self.cli) as cli:self.assertEqual(weekly.Pipeline(self.cfg,self.root/'run',self.scope).run(),0);self.assertEqual(cli.call_count,3)
+ def test_enrichment_and_three_catalog_stages_save_parent_ids(self):
+  with patch.object(weekly,'execute_search',side_effect=self.cli) as cli:self.assertEqual(weekly.Pipeline(self.cfg,self.root/'run',self.scope).run(),0);self.assertEqual(cli.call_count,4)
   stages=[b for p,b in self.calls if p.endswith('/stages')];self.assertEqual([b['stage'] for b in stages],['PARTICIPANTS','SALES']);self.assertEqual(stages[1]['participantId'],21)
  def test_success_resume_does_not_research_or_duplicate(self):
   with patch.object(weekly,'execute_search',side_effect=self.cli) as cli:
-   first=weekly.Pipeline(self.cfg,self.root/'run',self.scope);first.run();count=len(self.calls);second=weekly.Pipeline(self.cfg,self.root/'run',self.scope,resume=True);second.run();self.assertEqual(cli.call_count,3);self.assertEqual(len(self.calls),count+1)
+   first=weekly.Pipeline(self.cfg,self.root/'run',self.scope);first.run();count=len(self.calls);second=weekly.Pipeline(self.cfg,self.root/'run',self.scope,resume=True);second.run();self.assertEqual(cli.call_count,4);self.assertEqual(len(self.calls),count+1)
  def test_budget_stops_with_partial_not_success(self):
   self.cfg['maxCliCalls']=1
   with patch.object(weekly,'execute_search',side_effect=self.cli):self.assertEqual(weekly.Pipeline(self.cfg,self.root/'run',self.scope).run(),2)

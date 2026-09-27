@@ -51,7 +51,7 @@ function LoadBooth({eventId,participantId}:{eventId:string;participantId:string}
   if(state.loading)return <><PageMetadata/><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'부스 정보를 불러오고 있어요'}/></>
   const row=state.data?.participants.find(participant=>String(participant.id)===participantId)
   if(state.error||!state.data||!row)return <section className="content-wrap section-pad"><PageMetadata unavailable/><ErrorState error={state.error||new Error('공개 중인 부스 정보를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to={catalogEventPath(eventId,{})}>행사 상세로</Link></section>
-  return <><PageMetadata catalog={state.data}/><CatalogBoothPage eventId={eventId} value={state.data} row={row}/></>
+  return <><PageMetadata catalog={state.data} participant={row}/><CatalogBoothPage eventId={eventId} value={state.data} row={row}/></>
 }
 function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;row:PublicParticipant}) {
   const location=useLocation(),navigate=useNavigate(),[params]=useSearchParams()

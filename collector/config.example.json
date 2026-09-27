@@ -13,6 +13,8 @@
   "maxCliCalls": 160,
   "maxRuntimeMinutes": 240,
   "maxImages": 100,
+  "maxEventEnrichments": 12,
+  "priorityEventKeywords": [],
   "imageAllowedHosts": [],
   "blockedSourceHosts": [
     "witchform.com"

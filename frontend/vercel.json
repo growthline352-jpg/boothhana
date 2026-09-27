@@ -3,9 +3,20 @@
     "api/page.mjs": {
       "includeFiles": "seo-template/index.html",
       "maxDuration": 10
+    },
+    "api/sitemap.mjs": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
+    {
+      "source": "/robots.txt",
+      "destination": "/api/robots"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
     {
       "source": "/",
       "destination": "/api/page?path=/"

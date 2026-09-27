@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { injectMetadata, normalizePath, pageMetadata, siteOrigin } from '../seo/metadata.mjs'
+import { injectCrawlableContent, injectMetadata, normalizePath, pageMetadata, renderCrawlableContent, siteOrigin } from '../seo/metadata.mjs'
 
 const MAX_RESPONSE = 4 * 1024 * 1024
 /** Configured API origin only; never request Host, user URLs, cookies or redirects. */
@@ -25,10 +25,10 @@ export async function readBoundedJson(response) {
   } finally { reader.releaseLock() }
   return JSON.parse(Buffer.concat(chunks).toString('utf8'))
 }
-export async function renderPage({ path, search = '', template, siteUrl, apiBase, fetcher = fetch }) {
+export async function renderPage({ path, search = '', template, siteUrl, verification = '', apiBase, fetcher = fetch }) {
   path = normalizePath(path)
-  let catalog = null, unavailable = false, status = 200
-  const match = /^\/discover\/([1-9]\d*)$/.exec(path)
+  let catalog = null, participant = null, unavailable = false, status = 200
+  const match = /^\/discover\/([1-9]\d*)(?:\/booths\/([1-9]\d*))?$/.exec(path)
   if (match) {
     const origin = apiOrigin(apiBase)
     if (!origin || !Number.isSafeInteger(Number(match[1]))) { unavailable = true; status = 503 }
@@ -42,14 +42,20 @@ export async function renderPage({ path, search = '', template, siteUrl, apiBase
         else {
           catalog = await readBoundedJson(response)
           if (Number(catalog?.id) !== Number(match[1]) || typeof catalog?.event?.name !== 'string' || !catalog.event.name.trim()) throw new Error('Invalid public event')
+          if (match[2]) {
+            participant = catalog.participants?.find(row => Number(row?.id) === Number(match[2])) || null
+            if (!participant) { unavailable = true; status = 404 }
+          }
         }
       } catch { catalog = null; unavailable = true; status = 503 }
       finally { clearTimeout(timer) }
     }
   }
   if (path === '/not-found') status = 404
-  const meta = pageMetadata({ path, search, siteUrl, catalog, unavailable })
-  return { status, meta, html: injectMetadata(template, meta) }
+  const meta = pageMetadata({ path, search, siteUrl, verification, catalog, participant, unavailable })
+  const withMetadata = injectMetadata(template, meta)
+  const content = unavailable ? '' : renderCrawlableContent({ path, catalog, participant })
+  return { status, meta, html: injectCrawlableContent(withMetadata, content) }
 }
 export function createHandler(loadTemplate = () => readFile(new URL('../seo-template/index.html', import.meta.url), 'utf8')) {
   return async function handler(req, res) {
@@ -66,7 +72,7 @@ export function createHandler(loadTemplate = () => readFile(new URL('../seo-temp
       search.delete('path') // framework routing parameter is not a user-visible search filter
       const siteUrl = siteOrigin(process.env.PUBLIC_SITE_URL || '')
       const template = await loadTemplate()
-      const page = await renderPage({ path, search: search.toString(), template, siteUrl, apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '' })
+      const page = await renderPage({ path, search: search.toString(), template, siteUrl, verification: process.env.GOOGLE_SITE_VERIFICATION || '', apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '' })
       res.statusCode = page.status
       res.setHeader('X-Robots-Tag', page.meta.robots)
       if (page.status === 503) res.setHeader('Retry-After', '60')

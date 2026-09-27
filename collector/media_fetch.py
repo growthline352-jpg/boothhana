@@ -11,6 +11,11 @@ MAX_HTML_BYTES=4*1024*1024
 MAX_PIXELS=25_000_000
 class MediaError(ValueError): pass
 
+def normalize_image_content_type(value: str):
+    """Accept the common but non-standard image/jpg response as JPEG."""
+    value=value.split(';')[0].strip().lower()
+    return 'image/jpeg' if value in ('image/jpg','image/pjpeg') else value
+
 def public_addresses(host: str,port: int,resolver=socket.getaddrinfo):
     addresses=[]
     for row in resolver(host,port,type=socket.SOCK_STREAM):
@@ -71,7 +76,7 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PI
                 url=urljoin(url,target);continue
             if response.status!=200: raise MediaError(f'Image HTTP {response.status}')
             if response.getheader('Content-Encoding','identity') not in ('identity',''): raise MediaError('Compressed transport not accepted')
-            type_=response.getheader('Content-Type','').split(';')[0].strip().lower()
+            type_=normalize_image_content_type(response.getheader('Content-Type',''))
             length=response.getheader('Content-Length')
             if length is not None and (not length.isdigit() or not 0<int(length)<=MAX_BYTES): raise MediaError('Declared image size invalid')
             data=bytearray()
