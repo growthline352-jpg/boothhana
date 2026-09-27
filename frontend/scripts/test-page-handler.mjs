@@ -20,5 +20,6 @@ try {
 
 assert.equal(response.statusCode, 200)
 assert.match(headers.get('content-type'), /text\/html/)
-assert.match(body, /<div id="root"><\/div>/)
+assert.match(body, /<div id="root"><main[^>]+data-seo-fallback/)
+assert.match(body, /서울·경기 행사와 참가 부스 찾기/)
 console.log('Page handler resolves its template independently of process.cwd().')

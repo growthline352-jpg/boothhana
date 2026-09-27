@@ -20,6 +20,17 @@ const catalog = {
   banner: { url: 'https://cdn.example/event.jpg' }, participants: [participant],
   assets: [{ type: 'BOOTH_CUT', participantId: 26, url: 'https://cdn.example/booth.jpg' }],
 }
+const listing = [{ id: 13, name: '41회 서울 프로젝트돌', venue: '세텍', startDate: '2026-09-30', urlPath: '/discover/13' }]
+
+test('home and discovery have distinct titles and crawlable ItemList event links', () => {
+  const home = pageMetadata({ path: '/', siteUrl, listing })
+  const discover = pageMetadata({ path: '/discover', siteUrl, listing })
+  assert.notEqual(home.title, discover.title)
+  assert.ok(discover.schema['@graph'].some(node => node['@type'] === 'ItemList'))
+  const content = renderCrawlableContent({ path: '/discover', listing })
+  assert.match(content, /href="\/discover\/13"/)
+  assert.match(content, /41회 서울 프로젝트돌/)
+})
 
 test('filtered browse views are noindex and point at the stable category URL', () => {
   const meta = pageMetadata({ path: '/discover', search: 'category=exhibitions&q=wine&page=2', siteUrl })
@@ -76,4 +87,15 @@ test('server renderer resolves a public booth and returns 404 for an unknown boo
   const missing = await renderPage({ path: '/discover/13/booths/999', template, siteUrl, apiBase: 'https://api.example', fetcher })
   assert.equal(missing.status, 404)
   assert.equal(missing.meta.robots, 'noindex,follow')
+})
+
+test('server renderer adds best-effort crawlable browse content without failing when listing API is unavailable', async () => {
+  const template = '<!-- BOOTH_META_START --><!-- BOOTH_META_END --><div id="root"></div>'
+  const ok = async () => new Response(JSON.stringify({ items: listing.map(row => ({ id: row.id, event: { name: row.name, venueName: row.venue, occurrences: [{ startDate: row.startDate, endDate: row.startDate }] } })) }), { status: 200, headers: { 'content-type': 'application/json' } })
+  const rendered = await renderPage({ path: '/discover', template, siteUrl, apiBase: 'https://api.example', fetcher: ok })
+  assert.equal(rendered.status, 200)
+  assert.match(rendered.html, /href="\/discover\/13"/)
+  const unavailable = await renderPage({ path: '/discover', template, siteUrl, apiBase: 'https://api.example', fetcher: async () => new Response('', { status: 503 }) })
+  assert.equal(unavailable.status, 200)
+  assert.match(unavailable.html, /공개 행사 목록을 불러오고 있습니다/)
 })

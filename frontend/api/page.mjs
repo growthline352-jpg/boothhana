@@ -25,12 +25,63 @@ export async function readBoundedJson(response) {
   } finally { reader.releaseLock() }
   return JSON.parse(Buffer.concat(chunks).toString('utf8'))
 }
+
+const CATALOG_CATEGORY = { subculture: 'SUBCULTURE', exhibitions: 'EXHIBITION', festivals: 'FESTIVAL' }
+const clean = value => typeof value === 'string' ? value.trim() : ''
+function catalogListing(rows) {
+  if (!Array.isArray(rows)) return []
+  return rows.flatMap(row => {
+    const id = Number(row?.id), event = row?.event
+    if (!Number.isSafeInteger(id) || id < 1 || !clean(event?.name)) return []
+    const occurrence = Array.isArray(event.occurrences) ? event.occurrences[0] : null
+    return [{
+      id, name: clean(event.name), description: clean(event.description), venue: clean(event.venueName), address: clean(event.address),
+      startDate: clean(occurrence?.startDate), endDate: clean(occurrence?.endDate), urlPath: `/discover/${id}`,
+    }]
+  })
+}
+function platformListing(rows) {
+  if (!Array.isArray(rows)) return []
+  return rows.flatMap(row => {
+    const id = Number(row?.id)
+    if (!Number.isSafeInteger(id) || id < 1 || !clean(row?.name)) return []
+    return [{
+      id, name: clean(row.name), description: clean(row.description), venue: clean(row.venue), address: '',
+      startDate: clean(row.startAt).slice(0, 10), endDate: clean(row.endAt).slice(0, 10), urlPath: `/events/${id}`,
+    }]
+  })
+}
+async function fetchJson(origin, path, signal, fetcher) {
+  const response = await fetcher(`${origin}${path}`, {
+    signal, redirect: 'error', credentials: 'omit', headers: { Accept: 'application/json' },
+  })
+  if (!response.ok) throw new Error(`Public SEO source returned ${response.status}`)
+  return readBoundedJson(response)
+}
+async function fetchBrowseListing(origin, path, search, fetcher) {
+  const params = new URLSearchParams(search)
+  if ([...params.keys()].some(key => key !== 'category')) return []
+  // Do not hold the initial document behind a sleeping Render instance; crawlers can retry after it wakes.
+  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 1500)
+  try {
+    if (path === '/events') return platformListing(await fetchJson(origin, '/api/public/events', controller.signal, fetcher))
+    const requested = params.get('category') || 'subculture'
+    if (!(requested in CATALOG_CATEGORY)) return []
+    const categories = path === '/' ? Object.values(CATALOG_CATEGORY) : [CATALOG_CATEGORY[requested]]
+    const settled = await Promise.allSettled(categories.map(category => fetchJson(origin, `/api/public/catalog/events?category=${category}&page=0&size=${path === '/' ? 12 : 24}&sort=RECENT`, controller.signal, fetcher)))
+    const unique = new Map()
+    for (const result of settled) if (result.status === 'fulfilled') {
+      for (const row of catalogListing(result.value?.items)) unique.set(row.urlPath, row)
+    }
+    return [...unique.values()].slice(0, 36)
+  } finally { clearTimeout(timer) }
+}
 export async function renderPage({ path, search = '', template, siteUrl, verification = '', apiBase, fetcher = fetch }) {
   path = normalizePath(path)
-  let catalog = null, participant = null, unavailable = false, status = 200
+  let catalog = null, participant = null, listing = [], unavailable = false, status = 200
+  const origin = apiOrigin(apiBase)
   const match = /^\/discover\/([1-9]\d*)(?:\/booths\/([1-9]\d*))?$/.exec(path)
   if (match) {
-    const origin = apiOrigin(apiBase)
     if (!origin || !Number.isSafeInteger(Number(match[1]))) { unavailable = true; status = 503 }
     else {
       const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 4000)
@@ -51,10 +102,14 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
       finally { clearTimeout(timer) }
     }
   }
+  if (!match && origin && ['/', '/discover', '/events'].includes(path)) {
+    // Listing markup improves crawlability, but a sleeping API must not turn a public listing page into a 503.
+    try { listing = await fetchBrowseListing(origin, path, search, fetcher) } catch { listing = [] }
+  }
   if (path === '/not-found') status = 404
-  const meta = pageMetadata({ path, search, siteUrl, verification, catalog, participant, unavailable })
+  const meta = pageMetadata({ path, search, siteUrl, verification, catalog, participant, listing, unavailable })
   const withMetadata = injectMetadata(template, meta)
-  const content = unavailable ? '' : renderCrawlableContent({ path, catalog, participant })
+  const content = unavailable ? '' : renderCrawlableContent({ path, search, catalog, participant, listing })
   return { status, meta, html: injectCrawlableContent(withMetadata, content) }
 }
 export function createHandler(loadTemplate = () => readFile(new URL('../seo-template/index.html', import.meta.url), 'utf8')) {

@@ -7,7 +7,7 @@ test('sitemap contains canonical category and event URLs with valid escaping', (
   assert.match(output, /https:\/\/boothhana\.example\/discover\?category=exhibitions/)
   assert.match(output, /category=exhibitions<\/loc>/)
   assert.match(output, /<loc>https:\/\/boothhana\.example\/discover\/13<\/loc><lastmod>2026-09-27<\/lastmod>/)
-  assert.doesNotMatch(output, /<loc>https:\/\/boothhana\.example\/events<\/loc>/)
+  assert.match(output, /<loc>https:\/\/boothhana\.example\/events<\/loc>/)
   assert.match(renderRobots('https://boothhana.example'), /Sitemap: https:\/\/boothhana\.example\/sitemap\.xml/)
 })
 

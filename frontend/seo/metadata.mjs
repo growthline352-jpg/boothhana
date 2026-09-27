@@ -87,14 +87,37 @@ function eventNode(catalog, canonical, image) {
   if (keywords.length) node.keywords = keywords.join(', ')
   return node
 }
-function schemaForPage({ origin, canonical, title, description, image, catalog, participant }) {
+function listingRows(rows) {
+  if (!Array.isArray(rows)) return []
+  return rows.flatMap(row => {
+    const id = Number(row?.id), name = text(row?.name, 160), urlPath = typeof row?.urlPath === 'string' && /^\/(?:discover|events)\/[1-9]\d*$/.test(row.urlPath) ? row.urlPath : ''
+    return Number.isSafeInteger(id) && id > 0 && name && urlPath ? [{ ...row, id, name, urlPath }] : []
+  }).slice(0, 200)
+}
+function schemaForPage({ origin, canonical, title, description, image, catalog, participant, listing, path, category }) {
   const { graph, webpage } = baseGraph(origin, canonical, title, description, image)
-  if (!catalog?.event) return { '@context': 'https://schema.org', '@graph': graph }
-  const category = categoryFor(catalog.event)
+  if (!catalog?.event) {
+    const rows = listingRows(listing)
+    if (rows.length) {
+      const itemList = {
+        '@type': 'ItemList', '@id': `${canonical}#events`, name: title, numberOfItems: rows.length,
+        itemListElement: rows.map((row, index) => ({ '@type': 'ListItem', position: index + 1, name: row.name, url: `${origin}${row.urlPath}` })),
+      }
+      webpage.mainEntity = { '@id': itemList['@id'] }
+      graph.push(itemList)
+    }
+    if (path !== '/') {
+      const label = path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category] || '행사 찾기'
+      const trail = breadcrumb([{ name: '홈', url: `${origin}/` }, { name: label, url: canonical }], canonical)
+      webpage.breadcrumb = { '@id': trail['@id'] }; graph.push(trail)
+    }
+    return { '@context': 'https://schema.org', '@graph': graph }
+  }
+  const eventCategory = categoryFor(catalog.event)
   const eventCanonical = `${origin}/discover/${catalog.id}`
   const crumbs = [
     { name: '홈', url: `${origin}/` },
-    { name: CATEGORY_LABEL[category], url: categoryUrl(origin, category) },
+    { name: CATEGORY_LABEL[eventCategory], url: categoryUrl(origin, eventCategory) },
     { name: text(catalog.event.name, 160), url: eventCanonical },
   ]
   const event = eventNode(catalog, eventCanonical, imageUrl(selectedBanner(catalog)?.url))
@@ -119,7 +142,7 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 
-export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', catalog = null, participant = null, unavailable = false } = {}) {
+export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', catalog = null, participant = null, listing = [], unavailable = false } = {}) {
   path = normalizePath(path)
   const origin = siteOrigin(siteUrl)
   const params = new URLSearchParams(search)
@@ -164,6 +187,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
       title = unavailable ? '공개 행사 안내를 확인할 수 없습니다 | 부스하나' : '행사 안내 확인 중 | 부스하나'
       description = '공개된 행사 정보를 확인하고 있습니다. 잠시 후 다시 확인해 주세요.'
     }
+  } else if (path === '/discover') {
+    title = '서울·경기 서브컬처 행사 | 부스하나'
+    description = '서울·경기 동인 행사, 인형 행사, 온리전과 팝업의 일정·장소·참가 부스를 찾아보세요.'
   } else if (path === '/events') {
     title = '예약 가능한 행사 | 부스하나'
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
@@ -176,7 +202,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   // Query filters are alternate views of the same browse/detail content and point to a stable canonical URL.
   const canonical = origin ? origin + path + (browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
   const robots = indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
-  const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null }) : null
+  const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null, listing, path, category }) : null
   return { title, description, canonical, robots, image, schema, verification: verificationToken(verification) }
 }
 
@@ -199,9 +225,20 @@ function list(values, max = 12) {
   return Array.isArray(values) ? values.map(value => text(value, 100)).filter(Boolean).slice(0, max) : []
 }
 /** Real public content for non-JavaScript crawlers; React replaces this same-content fallback after loading. */
-export function renderCrawlableContent({ path = '/', catalog = null, participant = null } = {}) {
+export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [] } = {}) {
   path = normalizePath(path)
-  if (!catalog?.event) return ''
+  if (!catalog?.event) {
+    if (!['/', '/discover', '/events'].includes(path)) return ''
+    const params = new URLSearchParams(search)
+    if ((path === '/' || path === '/discover') && [...params.keys()].some(key => key !== 'category')) return ''
+    const category = params.get('category') || 'subculture'
+    if ((path === '/' || path === '/discover') && !['subculture', 'exhibitions', 'festivals'].includes(category)) return ''
+    const rows = listingRows(listing)
+    const heading = path === '/' ? '서울·경기 행사와 참가 부스 찾기' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category]
+    const intro = path === '/events' ? '부스하나에 직접 등록된 예약 가능 행사입니다.' : '공개된 일정과 장소를 확인하고 행사별 참가 부스와 상품 정보를 찾아보세요.'
+    return `<main class="content-wrap section-pad" data-seo-fallback><h1>${esc(heading)}</h1><p>${esc(intro)}</p>
+      ${rows.length ? `<h2>공개 행사</h2><ul>${rows.map(row => `<li><a href="${row.urlPath}">${esc(row.name)}</a>${row.startDate ? ` · <time datetime="${esc(text(row.startDate, 10))}">${esc(text(row.startDate, 10))}</time>` : ''}${row.venue ? ` · ${esc(text(row.venue, 160))}` : ''}</li>`).join('')}</ul>` : '<p>공개 행사 목록을 불러오고 있습니다.</p>'}</main>`
+  }
   const event = catalog.event
   const eventPath = `/discover/${catalog.id}`
   if (/\/booths\/[1-9]\d*$/.test(path) && participant?.participant) {
@@ -218,7 +255,7 @@ export function renderCrawlableContent({ path = '/', catalog = null, participant
     </main>`
   }
   const occurrence = event.occurrences?.[0]
-  const participants = Array.isArray(catalog.participants) ? catalog.participants.slice(0, 30) : []
+  const participants = Array.isArray(catalog.participants) ? catalog.participants.slice(0, 200) : []
   return `<main class="content-wrap section-pad" data-seo-fallback>
     <article><h1>${esc(text(event.name, 160))}</h1>
     <p>${esc(text(event.description, 3000) || '공개된 행사 일정과 참가 부스를 안내합니다.')}</p>

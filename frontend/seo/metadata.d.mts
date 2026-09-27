@@ -17,12 +17,13 @@ export interface PublicCatalogMeta {
   assets?: { type: string; participantId: number | null; url: string }[]
   participants?: PublicParticipantMeta[]
 }
+export interface PublicListingMeta { id: number; name: string; description?: string; venue?: string; address?: string; startDate?: string; endDate?: string; urlPath: string }
 export const SITE_TITLE: string
 export const SITE_DESCRIPTION: string
 export function siteOrigin(raw: string): string
 export function normalizePath(raw: string): string
-export function pageMetadata(input?: { path?: string; search?: string; siteUrl?: string; verification?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; unavailable?: boolean }): PageMeta
+export function pageMetadata(input?: { path?: string; search?: string; siteUrl?: string; verification?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[]; unavailable?: boolean }): PageMeta
 export function renderMetadata(meta: PageMeta): string
-export function renderCrawlableContent(input?: { path?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null }): string
+export function renderCrawlableContent(input?: { path?: string; search?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[] }): string
 export function injectMetadata(template: string, meta: PageMeta): string
 export function injectCrawlableContent(template: string, content: string): string

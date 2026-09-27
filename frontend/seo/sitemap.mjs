@@ -50,6 +50,7 @@ export function renderSitemap(siteUrl, events) {
     { loc: `${origin}/discover`, lastmod: newest },
     { loc: `${origin}/discover?category=exhibitions`, lastmod: newest },
     { loc: `${origin}/discover?category=festivals`, lastmod: newest },
+    { loc: `${origin}/events`, lastmod: newest },
     ...events.map(event => ({ loc: `${origin}/discover/${event.id}`, lastmod: event.publishedAt })),
   ]
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(entry => `  <url><loc>${xml(entry.loc)}</loc>${entry.lastmod ? `<lastmod>${xml(entry.lastmod)}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>\n`
