@@ -17,5 +17,5 @@ export function PageMetadata({ catalog = null, unavailable = false }: { catalog?
 /** The detail loader owns its metadata so a parent effect cannot overwrite it. */
 export function RouteMetadata() {
   const location = useLocation()
-  return /^\/discover\/[1-9]\d*\/?$/.test(location.pathname) ? null : <PageMetadata />
+  return /^\/discover\/[1-9]\d*(?:\/booths\/[1-9]\d*)?\/?$/.test(location.pathname) ? null : <PageMetadata />
 }

@@ -5,7 +5,7 @@ import { AdminSupportList,AdminSupportDetail } from '../features/support/AdminSu
 import { SupportBoundary } from '../features/support/SupportBoundary'
 import { GoodsAdminPage } from '../features/goods/GoodsAdminPage'
 import { CatalogAdminPage } from '../features/catalog/CatalogAdminPage'
-import { CatalogPublicPage, CatalogPublicDetail } from '../features/catalog/CatalogPublicPage'
+import { CatalogPublicPage, CatalogPublicDetail, CatalogPublicBoothDetail } from '../features/catalog/CatalogPublicPage'
 import { createBrowserRouter, Navigate } from 'react-router'
 import { SubcultureCollectionPage } from '../features/collection/SubcultureCollectionPage'
 import { PublicLayout } from '../components/layout/PublicLayout'
@@ -30,6 +30,7 @@ export const router = createBrowserRouter([
     { path: 'login', element: <LoginPage /> },
     { path: 'events', element: <EventsPage /> },
     { path: 'discover', element: <CatalogPublicPage /> },
+    { path: 'discover/:eventId/booths/:participantId', element: <CatalogPublicBoothDetail /> },
     { path: 'discover/:eventId', element: <CatalogPublicDetail /> },
     { path: 'events/:eventId', element: <EventDetailPage /> },
     { path: 'booths/:boothId', element: <BoothDetailPage /> },

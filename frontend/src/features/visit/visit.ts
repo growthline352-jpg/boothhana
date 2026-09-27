@@ -42,6 +42,7 @@ export function attendance(row: PublicParticipant, day: string, hall = ''): 'con
 }
 export type VisitTab = 'booths' | 'map' | 'info'
 export interface VisitQuery {day: string; hall: string; q: string; tab: VisitTab; booth: number | null; focus: number | null; product?: number | null}
+export interface VisitContext {day?: string; hall?: string}
 const positiveId = (v: string | null) => v && /^\d+$/.test(v) && Number.isSafeInteger(Number(v)) && Number(v) > 0 ? Number(v) : null
 export function parseVisit(params: URLSearchParams, event: EventData): VisitQuery {
   const tab = params.get('view')
@@ -60,6 +61,21 @@ export function visitParams(query: VisitQuery): URLSearchParams {
   if (query.focus) p.set('focus', String(query.focus))
   if(query.product)p.set('product',String(query.product))
   return p
+}
+function pathWithContext(path: string, context: VisitContext, view: VisitTab = 'booths', focus?: number | null) {
+  const params = new URLSearchParams()
+  if (validDay(context.day)) params.set('day', context.day)
+  if (context.hall) params.set('hall', context.hall.trim().slice(0, 150))
+  if (view !== 'booths') params.set('view', view)
+  if (focus && Number.isSafeInteger(focus) && focus > 0) params.set('focus', String(focus))
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
+}
+export function catalogEventPath(eventId: string | number, context: VisitContext, view: VisitTab = 'booths', focus?: number | null) {
+  return pathWithContext(`/discover/${eventId}`, context, view, focus)
+}
+export function catalogBoothPath(eventId: string | number, participantId: string | number, context: VisitContext) {
+  return pathWithContext(`/discover/${eventId}/booths/${participantId}`, context)
 }
 export function publicLink(value: string | null | undefined): string | null {
   try { if (!value) return null; const u = new URL(value)
