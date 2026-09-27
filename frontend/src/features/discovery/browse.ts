@@ -77,14 +77,67 @@ export function dateLabel(value: string): string {
   return Number.isNaN(d.getTime()) ? '날짜 미확인' : new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short', timeZone: 'Asia/Seoul' }).format(d)
 }
 export function occurrenceLabel(o: Occurrence): string {
-  return o.startDate === o.endDate ? dateLabel(o.startDate) : `${dateLabel(o.startDate)} - ${dateLabel(o.endDate)}`
+  return o.startDate === o.endDate ? dateLabel(o.startDate) : `${dateLabel(o.startDate)} ~ ${dateLabel(o.endDate)}`
 }
 
-/** Select display dates without modifying or coalescing the source's discrete operating days. */
+function sortedOccurrences(occurrences: Occurrence[]): Occurrence[] {
+  return [...occurrences].sort((a, b) => a.startDate.localeCompare(b.startDate)
+    || a.endDate.localeCompare(b.endDate) || (a.startTime || '').localeCompare(b.startTime || ''))
+}
+
+function followsOrOverlaps(previous: Occurrence, current: Occurrence): boolean {
+  if (current.startDate <= previous.endDate) return true
+  const next = new Date(`${previous.endDate}T12:00:00Z`)
+  if (Number.isNaN(next.getTime())) return false
+  next.setUTCDate(next.getUTCDate() + 1)
+  return current.startDate <= next.toISOString().slice(0, 10)
+}
+
+/** Merge adjacent operating segments for date-only presentation without changing collected schedules. */
+export function coalescedEventDates(occurrences: Occurrence[]): Occurrence[] {
+  const merged: Occurrence[] = []
+  for (const current of sortedOccurrences(occurrences)) {
+    const previous = merged.at(-1)
+    if (previous && followsOrOverlaps(previous, current)) {
+      if (current.endDate > previous.endDate) previous.endDate = current.endDate
+      continue
+    }
+    merged.push({ startDate: current.startDate, endDate: current.endDate, startTime: null, endTime: null })
+  }
+  return merged
+}
+
+export function eventDateLabel(occurrences: Occurrence[]): string {
+  const ranges = coalescedEventDates(occurrences)
+  return ranges.length ? ranges.map(occurrenceLabel).join(' · ') : '일정 확인 필요'
+}
+
+/** Preserve day-specific hours when the final day or another segment closes at a different time. */
+export function eventTimeLabels(occurrences: Occurrence[]): string[] {
+  const schedules: Occurrence[] = []
+  for (const current of sortedOccurrences(occurrences)) {
+    const previous = schedules.at(-1)
+    if (previous && previous.startTime === current.startTime && previous.endTime === current.endTime
+      && followsOrOverlaps(previous, current)) {
+      if (current.endDate > previous.endDate) previous.endDate = current.endDate
+      continue
+    }
+    schedules.push({ ...current })
+  }
+  if (!schedules.length) return ['시간 미확인']
+  const timed = schedules.map(schedule => {
+    if (schedule.startTime && schedule.endTime) return `${schedule.startTime} – ${schedule.endTime}`
+    if (schedule.startTime) return `${schedule.startTime}부터`
+    if (schedule.endTime) return `${schedule.endTime}까지`
+    return '시간 미확인'
+  })
+  return schedules.length === 1 ? timed : schedules.map((schedule, index) => `${occurrenceLabel(schedule)} · ${timed[index]}`)
+}
+
+/** Select display dates while keeping source occurrence records immutable. */
 export function cardOccurrences(occurrences: Occurrence[], today: string, period: Period = 'all', limit = 3, from = '', to = '') {
   const range = periodRange(period, today, from, to)
-  const sorted = [...occurrences].sort((a, b) => a.startDate.localeCompare(b.startDate)
-    || (a.startTime || '').localeCompare(b.startTime || '') || a.endDate.localeCompare(b.endDate))
+  const sorted = coalescedEventDates(occurrences)
   const past = sorted.filter(o => o.endDate < today)
   // In all-period browsing, forthcoming dates take priority; entirely past events show their latest days.
   const candidates = period === 'all'

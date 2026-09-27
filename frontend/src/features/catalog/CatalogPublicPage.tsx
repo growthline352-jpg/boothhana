@@ -8,7 +8,7 @@ import { useMemo, useRef, useEffect, useState } from 'react'
 import { Link, Navigate, useParams, useLocation, useSearchParams, useNavigate } from 'react-router'
 import { DiscoveryPage } from '../discovery/DiscoveryPage'
 import { safeReturnTo, categoryForType, categoryHref } from '../discovery/categories'
-import { dateLabel, seoulToday } from '../discovery/browse'
+import { dateLabel, eventDateLabel, eventTimeLabels, seoulToday } from '../discovery/browse'
 import { useRemote } from '../../app/useRemote'
 import { LoadingState, ErrorState } from '../../components/ui/States'
 import { publicCatalogApi, type PublicEvent, type PublicParticipant } from './api'
@@ -123,14 +123,14 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
     return()=>cancelAnimationFrame(frame)
   },[state.tab,state.focus,state.booth])
   const visitChange=(day:string)=>{update({day,hall:'',focus:null,booth:null});setMessage('방문일 기준으로 참가 부스와 위치를 바꿨어요.')}
-  const selectedOccurrence=e.occurrences.find(o=>o.startDate<=state.day&&o.endDate>=state.day)
   const official=e.sources.find(s=>['OFFICIAL','ORGANIZER_SOCIAL'].includes(s.kind)&&s.access==='ORIGINAL'&&publicLink(s.url))
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page">
     <Link className="discovery-back-link" to={back} state={{catalogRestore:true}}>← {categoryForType(e.subcategory).label} 목록</Link>
     <header className="visit-summary"><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 외부 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1>
       {status.notice&&<p className="visit-important-note" role="status">{status.notice} {status.operation.sourceUrl&&<SafeLink url={status.operation.sourceUrl}>상태 안내 원문</SafeLink>}{status.operation.checkedOn&&<small> · {status.operation.checkedOn} 확인</small>}</p>}
-      <dl className="visit-facts"><div><dt>방문일</dt><dd>{state.day?dateLabel(state.day):'일정 확인 필요'} · {selectedOccurrence?.startTime||'시간 미확인'}{selectedOccurrence?.endTime?` – ${selectedOccurrence.endTime}`:''}</dd></div>
+      <dl className="visit-facts"><div><dt>행사일</dt><dd>{eventDateLabel(e.occurrences)}</dd></div>
+        <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
         <div><dt>장소</dt><dd>{e.venueName||'장소 미공개·미확인'}{e.address&&<small>{e.address}</small>}</dd></div>
         <div><dt>입장</dt><dd>{e.admission||'입장 조건 미확인 · 무료 여부는 주최 공지를 확인하세요.'}</dd></div></dl>
       <div className="visit-primary-actions"><a className="btn primary" href="#visit-browse" onClick={()=>update({tab:'booths'})}>참가 부스 {value.participants.length}곳 보기</a><a className="btn secondary" href="#visit-browse" onClick={()=>update({tab:'map'})}>배치도에서 찾기</a>{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
