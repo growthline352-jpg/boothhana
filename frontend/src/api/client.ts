@@ -13,6 +13,9 @@ export function normalizeApiBase(value: string): string {
 }
 const API_BASE_URL = normalizeApiBase(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080')
 export const DEFAULT_API_TIMEOUT_MS = 20_000
+// Render's free web service may need close to a minute to wake after inactivity.
+// Use this only for the first public/auth reads that can trigger that wake-up.
+export const COLD_START_API_TIMEOUT_MS = 75_000
 
 export class ApiError extends Error {
   status: number

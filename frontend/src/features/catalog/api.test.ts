@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { presentPublicParticipant, type PublicParticipant } from './api'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { COLD_START_API_TIMEOUT_MS } from '../../api/client'
+import { presentPublicParticipant, publicCatalogApi, type PublicParticipant } from './api'
+
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 function participant(overrides: Partial<PublicParticipant> = {}): PublicParticipant {
  return {
@@ -33,5 +36,19 @@ describe('presentPublicParticipant', () => {
    ],
   }})
   expect(presentPublicParticipant(row).sales?.summary).toBe('첫 번째 책 · 두 번째 굿즈')
+ })
+})
+
+describe('public catalog requests', () => {
+ it('allows a sleeping production service enough time to wake up', async () => {
+  const timeout=vi.spyOn(AbortSignal,'timeout')
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({items:[],page:0,size:20,total:0}),{
+   status:200,headers:{'Content-Type':'application/json'},
+  })))
+
+  await publicCatalogApi.events()
+
+  expect(timeout).toHaveBeenCalledWith(COLD_START_API_TIMEOUT_MS)
+  expect(COLD_START_API_TIMEOUT_MS).toBe(75_000)
  })
 })

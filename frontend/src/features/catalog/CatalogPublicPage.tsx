@@ -12,7 +12,7 @@ import { dateLabel, seoulToday } from '../discovery/browse'
 import { useRemote } from '../../app/useRemote'
 import { LoadingState, ErrorState } from '../../components/ui/States'
 import { publicCatalogApi, type PublicEvent, type PublicParticipant } from './api'
-import { BoothDrawer } from './BoothDrawer'
+import { BoothDetail } from './BoothDetail'
 import { InteractiveFloorPlans } from '../floorplan/InteractiveFloorPlans'
 import { matchesPublicParticipant } from './publicSearch'
 import { labels, scopes, SafeLink, LocationText, StoredImage } from './Shared'
@@ -29,8 +29,10 @@ export function CatalogPublicDetail() {
 }
 function LoadEvent({eventId}:{eventId:string}) {
   const state=useRemote(()=>publicCatalogApi.event(eventId),[eventId])
+  const [slow,setSlow]=useState(false)
+  useEffect(()=>{if(!state.loading){setSlow(false);return}const timer=window.setTimeout(()=>setSlow(true),7_000);return()=>window.clearTimeout(timer)},[state.loading,eventId])
   usePageScroll(!state.loading)
-  if(state.loading)return <><PageMetadata /><a className="btn secondary" href={`/offline/index.html#${eventId}`}>통신이 느린가요? 저장 자료 바로 열기</a><LoadingState label="행사 안내를 불러오고 있어요"/></>
+  if(state.loading)return <><PageMetadata /><a className="btn secondary" href={`/offline/index.html#${eventId}`}>통신이 느린가요? 저장 자료 바로 열기</a><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'행사 안내를 불러오고 있어요'}/></>
   if(state.error||!state.data)return <section className="content-wrap section-pad"><PageMetadata unavailable /><ErrorState error={state.error||new Error('공개 안내를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to="/discover">다른 행사 찾기</Link><a className="btn secondary" href={`/offline/index.html#${eventId}`}>저장 자료 바로 열기</a></section>
   return <><PageMetadata catalog={state.data} /><CatalogEventDetail eventId={eventId} value={state.data}/></>
 }
@@ -49,7 +51,7 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
   const status=eventStatus(e,today),days=visitDays(e)
   const storedReturn=(location.state as {catalogReturnTo?:unknown}|null)?.catalogReturnTo
   const back=storedReturn?safeReturnTo(storedReturn):categoryHref(categoryForType(e.subcategory).key)
-  const trigger=useRef<HTMLElement|null>(null),mapHeading=useRef<HTMLDivElement>(null),mapActionPending=useRef(false)
+  const trigger=useRef<HTMLElement|null>(null),detailHeading=useRef<HTMLHeadingElement>(null),mapHeading=useRef<HTMLDivElement>(null),mapActionPending=useRef(false)
   const [message,setMessage]=useState('')
   const halls=useMemo(()=>[...new Set(value.participants.flatMap(p=>p.participant.locations)
     .filter(l=>!l.startDate||!l.endDate||(l.startDate<=state.day&&l.endDate>=state.day)).map(l=>l.hall).filter((h):h is string=>!!h))].sort(),[value.participants,state.day])
@@ -72,9 +74,9 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
   }
   const open=(id:number,element:HTMLElement)=>{trigger.current=element;update({booth:id},!state.booth)}
   const close=()=>{
-    // Deep-linked modals have no local predecessor: do not navigate away from the application.
+    // A deep link has no local predecessor, so keep the visitor on this event.
     if(typeof routeState.catalogModalFrom==='string'&&routeState.catalogModalFrom.split('?')[0]===`/discover/${eventId}`)void navigate(-1)
-    else update({booth:null})
+    else {const returnTarget=trigger.current;update({booth:null});requestAnimationFrame(()=>returnTarget?.focus())}
   }
   const showMap=(id:number)=>{
     mapActionPending.current=true;setMessage('');update({tab:'map',focus:id,booth:null,q:''})
@@ -85,8 +87,16 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
     const frame=requestAnimationFrame(()=>{mapHeading.current?.scrollIntoView({block:'start',behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});mapHeading.current?.focus({preventScroll:true})})
     return()=>cancelAnimationFrame(frame)
   },[state.tab,state.focus,state.booth])
+  useEffect(()=>{
+    if(!chosen)return
+    let frame=0
+    const timer=window.setTimeout(()=>{frame=requestAnimationFrame(()=>{
+      detailHeading.current?.closest<HTMLElement>('.booth-detail')?.scrollIntoView({block:'start',behavior:window.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})
+      detailHeading.current?.focus({preventScroll:true})
+    })},0)
+    return()=>{window.clearTimeout(timer);if(frame)cancelAnimationFrame(frame)}
+  },[chosen])
   const visitChange=(day:string)=>{update({day,hall:'',focus:null,booth:null});setMessage('방문일 기준으로 참가 부스와 위치를 바꿨어요.')}
-  const shareUrl=new URL(`${location.pathname}?${visitParams(state)}`,window.location.origin).href
   const selectedOccurrence=e.occurrences.find(o=>o.startDate<=state.day&&o.endDate>=state.day)
   const official=e.sources.find(s=>['OFFICIAL','ORGANIZER_SOCIAL'].includes(s.kind)&&s.access==='ORIGINAL'&&publicLink(s.url))
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
@@ -119,9 +129,10 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
       <p>기록을 확인하기 전에는 부스가 없다고 판단하지 않습니다. 공개된 전체 부스는 바로 볼 수 있어요.</p>
       <div className="row-actions"><button className="btn primary" type="button" onClick={resetFilters}>전체 부스 보기</button><Link className="btn secondary" to={`/library?event=${eventId}`}>보관함에서 확인</Link></div>
     </div>}
+    {chosen&&<BoothDetail eventId={Number(eventId)} event={e} row={chosen} assets={value.assets.filter(asset=>asset.participantId===chosen.id)} day={state.day} hall={state.hall} viewedVersion={value.publishedAt} eventNotice={status.notice} onMap={()=>showMap(chosen.id)} onClose={close} headingRef={detailHeading}/>}
     <section hidden={state.tab!=='booths'||memoryBlocked} aria-label="참가 부스 목록">
-      <div className="visit-list-heading"><h2>소개된 부스 <strong>{list.length}</strong>곳</h2><small>공개된 {value.participants.length}곳 중 현재 조건 · 전체 참가 명단은 아닙니다.</small></div>
-      <div className="catalog-booth-grid">{list.map(p=><ParticipantCard key={p.id} eventId={Number(eventId)} row={p} day={state.day} hall={state.hall} assets={value.assets} open={open} showMap={showMap}/>)}</div>
+      <div className="visit-list-heading"><h2>{chosen?'같은 행사 부스':'소개된 부스'} <strong>{list.length}</strong>곳</h2><small>공개된 {value.participants.length}곳 중 현재 조건 · 전체 참가 명단은 아닙니다.</small></div>
+      <div className="catalog-booth-grid">{list.map(p=><ParticipantCard key={p.id} eventId={Number(eventId)} row={p} day={state.day} hall={state.hall} assets={value.assets} open={open} showMap={showMap} selected={chosen?.id===p.id}/>)}</div>
       {!list.length&&<div className="visit-empty"><h3>현재 소개된 부스 중에는 결과가 없어요.</h3><p>미수집·위치 미확인은 실제 미참가를 뜻하지 않아요.</p><div className="row-actions"><button className="btn secondary" onClick={resetFilters}>모든 부스 조건 해제</button><button className="btn secondary" onClick={()=>update({tab:'info'})}>공식 참가 안내 확인</button></div></div>}
     </section>
     {/* Retain mounted map state while a drawer or another view is open. */}
@@ -133,17 +144,16 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
       <small>공개본 갱신: {new Date(value.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}. 수집 후 변경될 수 있으므로 방문 전 주최 측 최신 공지를 확인하세요.</small>
     </section>
     <OfflineDownloadPanel eventId={Number(eventId)} day={state.day}/>
-    {chosen&&<BoothDrawer eventId={Number(eventId)} viewedVersion={value.publishedAt} key={chosen.id} row={chosen} assets={value.assets.filter(a=>a.participantId===chosen.id)} trigger={trigger.current} close={close} day={state.day} hall={state.hall} onMap={()=>showMap(chosen.id)} shareUrl={shareUrl} eventNotice={status.notice}/>}
   </section>
 }
-function ParticipantCard({eventId,row,day,hall,assets,open,showMap}:{eventId:number;row:PublicParticipant;day:string;hall:string;assets:PublicEvent['assets'];open:(id:number,el:HTMLElement)=>void;showMap:(id:number)=>void}) {
+function ParticipantCard({eventId,row,day,hall,assets,open,showMap,selected=false}:{eventId:number;row:PublicParticipant;day:string;hall:string;assets:PublicEvent['assets'];open:(id:number,el:HTMLElement)=>void;showMap:(id:number)=>void;selected?:boolean}) {
   const thumb=assets.find(a=>a.participantId===row.id&&['BOOTH_CUT','PRODUCT','LOGO'].includes(a.type))
   const locations=relevantLocations(row.participant.locations,day,hall),known=attendance(row,day,hall)
-  return <article className={`panel catalog-booth-card visit-booth-card${thumb?' has-image':''}`}>
+  return <article className={`panel catalog-booth-card visit-booth-card${thumb?' has-image':''}${selected?' is-selected':''}`}>
     {thumb&&<figure><StoredImage url={thumb.url} alt={thumb.caption||row.participant.registrationName}/><figcaption>{thumb.credit} · <SafeLink url={thumb.attribution}>출처</SafeLink></figcaption></figure>}
     <div className="visit-booth-body"><LocationText locations={locations}/><h3>{row.participant.registrationName}</h3><p className="visit-booth-summary">{row.sales?.summary||'판매정보를 확인하고 있어요.'}</p>
       {known==='unknown'&&<small className="visit-warning">선택 날짜·전시관 참가 여부 미확인</small>}
       {row.sales&&<small>{scopes[row.sales.evidenceScope]}</small>}<p className="item-meta">{row.participant.subjects.join(' · ')}</p>
-      <div className="row-actions"><SaveButton target={{type:'PARTICIPANT',eventId,id:row.id,participantId:row.id}} day={day} hall={hall} compact/><button className="btn secondary" onClick={()=>showMap(row.id)}>지도에서 보기</button><button className="btn primary" aria-haspopup="dialog" onClick={ev=>open(row.id,ev.currentTarget)}>상품 보기</button></div>
+      <div className="row-actions"><SaveButton target={{type:'PARTICIPANT',eventId,id:row.id,participantId:row.id}} day={day} hall={hall} compact/><button className="btn secondary" onClick={()=>showMap(row.id)}>지도에서 보기</button><button className="btn primary" aria-current={selected?'true':undefined} onClick={ev=>open(row.id,ev.currentTarget)}>부스 상세</button></div>
     </div></article>
 }

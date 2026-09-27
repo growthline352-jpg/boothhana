@@ -1,4 +1,4 @@
-import { api, resetCsrfToken } from './client'
+import { api, COLD_START_API_TIMEOUT_MS, resetCsrfToken } from './client'
 import { createImageUploadTask } from './image-upload'
 import type {
   BoothNotice,
@@ -25,7 +25,7 @@ const writeNotice = (x: Partial<BoothNotice>) => ({title:x.title,body:x.body,pin
 const writeLines = (items: ReservationItem[]) => items.map(x=>({eventProductId:x.eventProductId,quantity:x.quantity}))
 
 export const authApi = {
-  me: () => api<User>('/api/me', { cache: 'no-store', signal: AbortSignal.timeout(15_000) }),
+  me: () => api<User>('/api/me', { cache: 'no-store', signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
   adminLogin: (username: string, password: string) => api<void>('/api/auth/admin/login', {
     method: 'POST', body: JSON.stringify({ username, password }),
   }),
@@ -38,12 +38,12 @@ export const authApi = {
 }
 
 export const publicApi = {
-  events: () => api<EventSummary[]>('/api/public/events'),
-  event: (id: string) => api<EventSummary>(`/api/public/events/${id}`),
-  eventBooths: (id: string) => api<BoothSummary[]>(`/api/public/events/${id}/booths`),
-  booth: (id: string) => api<BoothSummary>(`/api/public/booths/${id}`),
-  products: (id: string) => api<EventProduct[]>(`/api/public/booths/${id}/products`),
-  product: (id: string) => api<EventProduct>(`/api/public/products/${id}`),
+  events: () => api<EventSummary[]>('/api/public/events', { signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
+  event: (id: string) => api<EventSummary>(`/api/public/events/${id}`, { signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
+  eventBooths: (id: string) => api<BoothSummary[]>(`/api/public/events/${id}/booths`, { signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
+  booth: (id: string) => api<BoothSummary>(`/api/public/booths/${id}`, { signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
+  products: (id: string) => api<EventProduct[]>(`/api/public/booths/${id}/products`, { signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
+  product: (id: string) => api<EventProduct>(`/api/public/products/${id}`, { signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
 }
 
 export const reservationApi = {
