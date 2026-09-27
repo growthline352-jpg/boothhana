@@ -4,6 +4,7 @@ import { dateLabel } from '../discovery/browse'
 import { attendance, relevantLocations } from '../visit/visit'
 import type { EventData } from '../collection/api'
 import type { ProductRow, PublicAsset, PublicParticipant } from './api'
+import { hasMappableLocation } from './BoothDetail.utils'
 import { labels, ProductCard, SafeLink, StoredImage } from './Shared'
 import { useMemo, useState, type RefObject } from 'react'
 
@@ -59,6 +60,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
   headingRef?: RefObject<HTMLHeadingElement | null>
 }) {
   const place = locationLabel(row, day, hall)
+  const canOpenMap = hasMappableLocation(row, day, hall)
   const state = attendance(row, day, hall)
   const images = detailImages(assets)
   const members = unique(row.participant.members.map(member => member.name))
@@ -107,7 +109,9 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
           {eventNotice && <p className="visit-important-note">{eventNotice}</p>}
           {state !== 'confirmed' && <p className="visit-warning">{state === 'other' ? '선택한 날짜·전시관에는 이 부스의 참가 위치가 등록되어 있지 않아요.' : '선택한 날짜·전시관의 참가 여부를 아직 확인하지 못했어요.'}</p>}
           <div className="row-actions booth-detail-actions">
-            <button type="button" className="btn primary" onClick={onMap}>배치도에서 위치 보기</button>
+            {canOpenMap
+              ? <button type="button" className="btn primary" onClick={onMap}>배치도에서 위치 보기</button>
+              : <span className="visit-warning" role="status">부스번호가 공개되면 배치도에서 위치를 확인할 수 있어요.</span>}
             <SaveButton target={{ type: 'PARTICIPANT', eventId, id: row.id, participantId: row.id }} day={day} hall={hall}/>
             <ShareQr target={{ type: 'PARTICIPANT', eventId, id: row.id, participantId: row.id }} day={day} hall={hall} title={row.participant.registrationName}/>
           </div>
@@ -164,7 +168,9 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
           <div><dt>운영</dt><dd>{occurrence?.startTime || '시간 미확인'}{occurrence?.endTime ? ` ~ ${occurrence.endTime}` : ''}</dd></div>
           <div><dt>입장</dt><dd>{event.admission || '조건 미확인'}</dd></div>
         </dl>
-        <button type="button" className="btn primary wide" onClick={onMap}>배치도에서 확인</button>
+        {canOpenMap
+          ? <button type="button" className="btn primary wide" onClick={onMap}>배치도에서 확인</button>
+          : <p className="visit-warning">현재는 공개된 부스번호가 없어 배치도에 연결하지 않았어요.</p>}
         <p>공개된 등록 정보 기준이며 행사 당일 위치와 운영 여부가 달라질 수 있어요.</p>
       </aside>
     </div>
