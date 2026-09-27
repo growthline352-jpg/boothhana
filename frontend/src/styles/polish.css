@@ -190,6 +190,14 @@ hr { border: 0; border-top: 1px solid var(--line); }
 .discovery-poster-stationery_goods { background: #eef4f0; }
 .discovery-event-status { top: 14px; left: 14px; padding: 6px 10px; font-size: 12px; border-radius: 7px; font-weight: 700; background: #fff; color: #3d5266; box-shadow: 0 1px 5px #14253708; }
 .discovery-event-status.is-today { color: #176344; background: #edf9f0; }
+.discovery-card-label > b { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 5px 9px; border: 1px solid #c9d8e7; border-radius: 7px; background: #eef5fb; color: #315f8e; font-size: 12px; font-weight: 800; }
+.discovery-card-label > b::before { content: ''; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; }
+.discovery-card-label > b.is-today { border-color: #9fcdb5; background: #e8f6ee; color: #176344; box-shadow: 0 0 0 2px #e1f2e8; }
+.discovery-card-label > b.is-past { border-color: #d9dee4; background: #f2f4f6; color: #687481; }
+.discovery-event-card:has(.discovery-card-label > b.is-upcoming) { border-color: #cbd9e7; }
+.discovery-event-card:has(.discovery-card-label > b.is-upcoming) .discovery-event-poster { box-shadow: inset 0 -3px #6287ad; }
+.discovery-event-card:has(.discovery-card-label > b.is-today) { border-color: #8fc2a7; box-shadow: 0 4px 14px #1e684416; }
+.discovery-event-card:has(.discovery-card-label > b.is-today) .discovery-event-poster { box-shadow: inset 0 -4px #2f7b58; }
 .discovery-event-body { padding: 20px; }
 .discovery-event-type { color: var(--d-accent); font-size: 12px; font-weight: 700; }
 .discovery-event-body h3 { font-size: 20px; line-height: 1.5; margin: 7px 0 16px; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
