@@ -1,12 +1,11 @@
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
-import { ReportLink, OwnershipLink } from '../support/ReportLink'
 import { dateLabel } from '../discovery/browse'
 import { attendance, relevantLocations } from '../visit/visit'
 import type { EventData } from '../collection/api'
-import type { PublicAsset, PublicParticipant } from './api'
-import { labels, scopes, SafeLink, StoredImage } from './Shared'
-import type { RefObject } from 'react'
+import type { ProductRow, PublicAsset, PublicParticipant } from './api'
+import { labels, ProductCard, SafeLink, StoredImage } from './Shared'
+import { useMemo, useState, type RefObject } from 'react'
 
 function unique(values: (string | null | undefined)[]) {
   return [...new Set(values.map(value => value?.trim()).filter((value): value is string => Boolean(value)))]
@@ -24,22 +23,36 @@ function locationLabel(row: PublicParticipant, day: string, hall: string) {
 }
 
 function detailImages(assets: PublicAsset[]) {
-  const order = new Map([['BOOTH_CUT', 0], ['LOGO', 1], ['SALES_SHEET', 2], ['PRODUCT', 3]])
+  const order = new Map([['BOOTH_CUT', 0], ['LOGO', 1], ['SALES_SHEET', 2]])
   return [...assets]
-    .filter(asset => ['BOOTH_CUT', 'LOGO', 'SALES_SHEET', 'PRODUCT'].includes(asset.type))
+    .filter(asset => ['BOOTH_CUT', 'LOGO', 'SALES_SHEET'].includes(asset.type))
     .sort((a, b) => (order.get(a.type) ?? 9) - (order.get(b.type) ?? 9))
     .filter((asset, index, values) => values.findIndex(item => item.url === asset.url) === index)
     .slice(0, 3)
 }
 
-export function BoothDetail({ eventId, event, row, assets, day, hall, viewedVersion, eventNotice, onMap, onClose, headingRef }: {
+function eventProducts(row: PublicParticipant) {
+  const rows: ProductRow[] = row.productRows?.length
+    ? row.productRows
+    : (row.sales?.products ?? []).map(data => ({ id: null, data }))
+  return rows.filter(({ data }) => ['EVENT_LISTED', 'EVENT_SALE_CONFIRMED'].includes(data.evidenceScope))
+}
+
+type ProductSort = 'default' | 'price-asc' | 'price-desc' | 'name'
+
+function productPriceValue(row: ProductRow) {
+  if (!row.data.price) return null
+  const value = Number(row.data.price.amount)
+  return Number.isFinite(value) ? value : null
+}
+
+export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotice, onMap, onClose, headingRef }: {
   eventId: number
   event: EventData
   row: PublicParticipant
   assets: PublicAsset[]
   day: string
   hall: string
-  viewedVersion: string
   eventNotice?: string | null
   onMap: () => void
   onClose: () => void
@@ -57,6 +70,23 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, viewedVers
   const occurrence = event.occurrences.find(item => item.startDate <= day && item.endDate >= day)
   const officialLinks = unique(row.participant.officialLinks)
   const summary = row.sales?.summary || (topics.length ? `${topics.slice(0, 3).join(' · ')} 관련 부스` : '공개된 부스 소개를 확인하고 있어요.')
+  const products = eventProducts(row)
+  const unlinkedProductImages = assets.filter(asset => asset.type === 'PRODUCT' && asset.productId === null)
+  const [productQuery, setProductQuery] = useState('')
+  const [productSort, setProductSort] = useState<ProductSort>('default')
+  const visibleProducts = useMemo(() => {
+    const query = productQuery.trim().toLocaleLowerCase('ko-KR')
+    const filtered = products.filter(entry => !query || entry.data.name.toLocaleLowerCase('ko-KR').includes(query))
+    if (productSort === 'default') return filtered
+    return filtered.map((entry, index) => ({ entry, index })).sort((a, b) => {
+      if (productSort === 'name') return a.entry.data.name.localeCompare(b.entry.data.name, 'ko-KR') || a.index - b.index
+      const left = productPriceValue(a.entry), right = productPriceValue(b.entry)
+      if (left === null && right !== null) return 1
+      if (left !== null && right === null) return -1
+      if (left === null || right === null) return a.index - b.index
+      return (productSort === 'price-asc' ? left - right : right - left) || a.index - b.index
+    }).map(item => item.entry)
+  }, [productQuery, productSort, products])
 
   return <section className="booth-detail" aria-labelledby={`booth-detail-title-${row.id}`}>
     <div className="booth-detail-topline">
@@ -90,21 +120,42 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, viewedVers
         </figure>) : <div className="booth-detail-placeholder"><span>{place.code}</span><strong>{row.participant.registrationName}</strong><small>대표 이미지를 준비하고 있어요</small></div>}
       </div>
     </div>
+    <section className="booth-detail-products" aria-labelledby={`booth-products-${row.id}`}>
+      <div className="booth-detail-section-heading">
+        <div><span>판매 상품</span><h3 id={`booth-products-${row.id}`}>이 부스에서 만날 수 있어요</h3></div>
+        <strong>{productQuery.trim() ? `${visibleProducts.length}/${products.length}개` : `${products.length}개 확인`}</strong>
+      </div>
+      {products.length > 0 && <div className="booth-product-tools">
+        <label className="field booth-product-search"><span>상품명 검색</span><input className="input" type="search" value={productQuery} onChange={event => setProductQuery(event.target.value)} placeholder="상품명을 입력하세요"/></label>
+        <label className="field booth-product-sort"><span>정렬</span><select className="select" value={productSort} onChange={event => setProductSort(event.target.value as ProductSort)}><option value="default">기본순</option><option value="price-asc">가격 낮은순</option><option value="price-desc">가격 높은순</option><option value="name">이름순</option></select></label>
+      </div>}
+      {products.length > 0 && visibleProducts.length > 0 ? <div className="catalog-products booth-product-grid">
+        {visibleProducts.map((entry, index) => {
+          const exactImages = entry.id === null ? [] : assets.filter(asset => asset.type === 'PRODUCT' && asset.productId === entry.id)
+          const fallbackImages = products.length === 1 ? unlinkedProductImages.slice(0, 1) : []
+          return <ProductCard
+            key={entry.id ?? `${entry.data.sourceEntryId ?? entry.data.name}-${index}`}
+            product={entry.data}
+            images={exactImages.length ? exactImages : fallbackImages}
+            verification={entry.verification}
+            memoryTarget={entry.id === null ? undefined : { type: 'PRODUCT', eventId, id: entry.id, participantId: row.id }}
+            reportTarget={entry.id === null ? undefined : { namespace: 'CATALOG', type: 'PRODUCT', eventId, id: entry.id }}
+            day={day}
+            hall={hall}
+          />
+        })}
+      </div> : products.length > 0 ? <div className="booth-detail-products-empty">
+        <strong>일치하는 상품이 없어요.</strong>
+        <p>다른 상품명을 입력하거나 검색어를 지워 주세요.</p>
+        <button type="button" className="btn secondary" onClick={() => setProductQuery('')}>검색 초기화</button>
+      </div> : <div className="booth-detail-products-empty">
+        <strong>공개 확인된 판매 상품이 아직 없어요.</strong>
+        <p>판매하지 않는다는 뜻은 아니며, 참가자의 공식 안내에서 최신 품목을 확인해 주세요.</p>
+        {officialLinks[0] && <SafeLink url={officialLinks[0]}>공식 판매 안내 확인 ↗</SafeLink>}
+      </div>}
+      <p className="booth-detail-product-note">상품·가격·재고는 수집 당시 공개 안내 기준이며 행사 당일 달라질 수 있어요.</p>
+    </section>
     <div className="booth-detail-information">
-      <section className="booth-detail-official" aria-labelledby={`booth-info-${row.id}`}>
-        <h3 id={`booth-info-${row.id}`}>부스 정보와 공식 안내</h3>
-        <dl>
-          <div><dt>참가 작가·업체</dt><dd>{members.join(' · ') || '별도 명칭 미확인'}</dd></div>
-          <div><dt>취급 주제</dt><dd>{topics.join(' · ') || '공개된 주제 미확인'}</dd></div>
-          <div><dt>정보 범위</dt><dd>{row.sales ? scopes[row.sales.evidenceScope] : '참가 부스 정보만 확인'}</dd></div>
-          <div><dt>공식 안내</dt><dd>{officialLinks.length ? officialLinks.map((url, index) => <SafeLink key={url} url={url}>참가자 안내 {index + 1}</SafeLink>) : '링크 미확인'}</dd></div>
-        </dl>
-        {!!row.sales?.warnings.length && <div className="booth-detail-warnings">{row.sales.warnings.map((warning, index) => <p className="visit-warning" key={index}>{warning}</p>)}</div>}
-        <div className="row-actions booth-detail-minor-actions">
-          <ReportLink target={{ namespace: 'CATALOG', type: 'PARTICIPANT', eventId, id: row.id, day, hall }} label="부스 정보 신고" viewedVersion={viewedVersion}/>
-          <OwnershipLink eventId={eventId} participantId={row.id}/>
-        </div>
-      </section>
       <aside className="booth-detail-visit" aria-label="선택한 부스 방문 정보">
         <div><span>방문 정보</span><strong>{day ? dateLabel(day) : '일정 미확인'}</strong></div>
         <dl>

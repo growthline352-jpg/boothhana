@@ -15,21 +15,28 @@ export function SafeLink({url,children}:{url:string|null|undefined;children?:Rea
 export function LocationText({locations}:{locations:Location[]}){return <>{locations.length?locations.map((l,i)=><span className="catalog-location" key={i}>{l.code||labels[l.status]||l.status}{l.hall&&` · ${l.hall}`}{l.zone&&` · ${l.zone}`}{l.startDate&&` · ${l.startDate}${l.endDate!==l.startDate?'~'+l.endDate:''}`}</span>):'위치 미확인'}</>}
 export function Pager({page,total,change}:{page:number;total:number;change:(v:number)=>void}){return <nav className="catalog-pager" aria-label="페이지"><button className="btn secondary" disabled={!page} onClick={()=>change(page-1)}>이전</button><span>{page+1} / {Math.max(1,Math.ceil(total/20))} · {total}건</span><button className="btn secondary" disabled={(page+1)*20>=total} onClick={()=>change(page+1)}>다음</button></nav>}
 export const saleStates:Record<string,string>={PLANNED:'판매 예정',ON_SALE:'판매 중으로 안내됨',SOLD_OUT:'품절 안내',CANCELED:'판매 취소 안내',UNKNOWN:'판매 상태 미확인'}
+function productPrice(product:Product){
+ if(!product.price)return '가격 미확인'
+ const amount=Number(product.price.amount)
+ if(product.price.currency==='KRW'&&Number.isFinite(amount))return amount===0?'무료':`${amount.toLocaleString('ko-KR')}원`
+ return `${Number.isFinite(amount)?amount.toLocaleString('ko-KR'):product.price.amount} ${product.price.currency}`
+}
 export function ProductCard({product,images=[],verification,reportTarget,memoryTarget,day='',hall=''}:{memoryTarget?:MemoryTarget;day?:string;hall?:string;reportTarget?:Target;product:Product;images?:PublicAsset[];verification?:ProductCheck}){
  const inactive=['SOLD_OUT','CANCELED'].includes(product.saleState),stale=verification?.state==='NOT_RECONFIRMED'
  return <article data-product-id={memoryTarget?.id} tabIndex={-1} className={`catalog-product${images.length?'':' is-compact'}`}>
   {images.length>0&&<div className="catalog-product-media"><StoredImage url={images[0].url} alt={product.name}/></div>}
   <div className="catalog-product-body"><h3>{product.name}</h3>{memoryTarget&&<SaveButton target={memoryTarget} day={day} hall={hall} compact/>}
-   <p className="visit-product-price">{product.price?`${Number(product.price.amount).toLocaleString('ko-KR')} ${product.price.currency}`:'가격 미확인'}</p>
+   <p className="visit-product-price">{productPrice(product)}</p>
    <div className="visit-product-badges"><span className="chip muted">{scopes[product.evidenceScope]}</span><span className={`chip ${inactive?'warning':'muted'}`}>{saleStates[product.saleState]||saleStates.UNKNOWN}</span></div>
    {stale&&<p className="visit-warning">최근 수집에서 재확인되지 않음 · 현재 판매 여부 확인 필요</p>}
-   <p className="catalog-product-description">{product.summary}</p>{product.warnings.length>0&&<div className="catalog-product-warnings">{product.warnings.map((warning,i)=><p key={i}>{warning}</p>)}</div>}
+   <p className="catalog-product-description">{product.summary}</p>
    {product.productUrl&&<SafeLink url={product.productUrl}>{inactive||stale?'판매 상태 확인':'판매 공지 확인'} ↗</SafeLink>}
    <details className="visit-product-evidence"><summary>확인일·출처·가격 조건</summary>
     {verification?.state==='LEGACY'&&<small>이전 수집 정보 · 재확인 이력 없음</small>}
     {verification?.lastSeenAt&&<small>마지막 상품 확인: {new Date(verification.lastSeenAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}</small>}
     {product.price&&<small>표시 기본금액 · {product.price.checkedOn} 확인 · {product.price.note||'옵션·배송비 확인 필요'}</small>}
     <p>{product.subjects.join(' · ')}</p><small>수집 당시 안내이며 현장·실시간 재고를 보장하지 않습니다.</small>
+    {product.warnings.length>0&&<div className="catalog-product-warnings">{product.warnings.map((warning,i)=><p key={i}>{warning}</p>)}</div>}
     {product.sources.map((source,i)=><p key={i}><SafeLink url={source.url}>판매 정보 출처 {i+1}</SafeLink></p>)}
    </details>{reportTarget&&<ReportLink target={reportTarget} label="상품 정보 신고"/>}{reportTarget&&images[0]&&<ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:reportTarget.eventId,id:images[0].id}} label="이미지 문제 신고"/>}{images[0]&&<small>{images[0].credit} · <SafeLink url={images[0].attribution}>이미지 출처</SafeLink></small>}
   </div></article>

@@ -62,17 +62,25 @@ function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;
   const eventReturn=typeof storedReturn==='string'&&storedReturn.split('?')[0]===`/discover/${eventId}`?safeReturnTo(storedReturn):canonicalEventPath
   const status=eventStatus(event,seoulToday())
   const related=value.participants.filter(participant=>participant.id!==row.id&&attendance(participant,state.day,state.hall)!=='other')
+  const relatedPreview=related.slice(0,4)
   const openMap=()=>void navigate(catalogEventPath(eventId,context,'map',row.id))
   return <section className="content-wrap section-pad visit-page">
     <nav className="discovery-back-link" aria-label="현재 위치">
       <Link to="/">홈</Link>{' / '}<Link to={categoryHref(categoryForType(event.subcategory).key)}>행사 목록</Link>{' / '}<Link to={eventReturn}>{event.name}</Link>{' / '}<span aria-current="page">부스 상세</span>
     </nav>
-    <BoothDetail eventId={Number(eventId)} event={event} row={row} assets={value.assets.filter(asset=>asset.participantId===row.id)} day={state.day} hall={state.hall} viewedVersion={value.publishedAt} eventNotice={status.notice} onMap={openMap} onClose={()=>void navigate(eventReturn)}/>
-    <section aria-label="같은 행사 부스 목록">
-      <div className="visit-list-heading"><h2>같은 행사 부스 <strong>{related.length}</strong>곳</h2><small>현재 부스를 제외한 공개 참가 부스입니다.</small></div>
-      <div className="catalog-booth-grid">{related.map(participant=><ParticipantCard key={participant.id} eventId={Number(eventId)} row={participant} day={state.day} hall={state.hall} assets={value.assets}/>)}</div>
-    </section>
+    <BoothDetail eventId={Number(eventId)} event={event} row={row} assets={value.assets.filter(asset=>asset.participantId===row.id)} day={state.day} hall={state.hall} eventNotice={status.notice} onMap={openMap} onClose={()=>void navigate(eventReturn)}/>
+    {relatedPreview.length>0&&<section className="booth-related" aria-label="같은 행사 추천 부스">
+      <div className="visit-list-heading"><h2>같은 행사에서 더 둘러보기</h2><Link to={eventReturn}>전체 부스 보기</Link></div>
+      <div className="booth-related-grid">{relatedPreview.map(participant=><RelatedBoothCard key={participant.id} eventId={Number(eventId)} row={participant} day={state.day} hall={state.hall}/>)}</div>
+    </section>}
   </section>
+}
+function RelatedBoothCard({eventId,row,day,hall}:{eventId:number;row:PublicParticipant;day:string;hall:string}) {
+  const locations=relevantLocations(row.participant.locations,day,hall)
+  return <Link className="booth-related-card" to={catalogBoothPath(eventId,row.id,{day,hall})}>
+    <LocationText locations={locations}/><strong>{row.participant.registrationName}</strong>
+    <small>{row.participant.subjects.slice(0,2).join(' · ')||'참가 정보 보기'}</small>
+  </Link>
 }
 export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicEvent}) {
   const location=useLocation(),navigate=useNavigate(),[params,setParams]=useSearchParams()
