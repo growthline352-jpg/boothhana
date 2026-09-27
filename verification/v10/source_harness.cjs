@@ -10,26 +10,29 @@ function harness(options={}){
  const link=({to,state,children,...props})=>jsx('a',{...props,href:to,children})
  const router={Link:link,NavLink:link,Outlet:()=>env.outlet(),useLocation:()=>env.location,useParams:()=>options.params||{},useNavigationType:()=>env.navigationType,useBlocker:()=>options.blocker||{state:'unblocked'},useNavigate:()=>to=>{env.calls.push('NAV:'+to);if(to===-1&&env.history.length){Object.assign(env.location,env.history.pop());env.navigationType='POP'}},useSearchParams:()=>[new URLSearchParams(env.location.search),(next,config={})=>{const query=new URLSearchParams(next).toString();env.calls.push(query);if(!config.replace)env.history.push({...env.location});Object.assign(env.location,{search:'?'+query,state:config.state||null});env.navigationType=config.replace?'REPLACE':'PUSH'}]}
  const api={catalogApi:options.catalogApi||{},publicCatalogApi:{browse:async query=>{env.calls.push('API:'+query);return env.remote.data},event:async()=>env.remote.data,events:async()=>env.remote.data}}
- function load(rel){let file=path.isAbsolute(rel)?rel:path.join(root,rel);if(cache.has(file))return cache.get(file)
+ function load(rel){let file=path.isAbsolute(rel)?rel:path.join(root,rel),normalizedFile=file.replace(/\\/g,'/');if(cache.has(file))return cache.get(file)
   if(file.endsWith('.css'))return{}
   const module={exports:{}};cache.set(file,module.exports)
   const result=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}})
   function requireLocal(name){
    if(name.endsWith('/PageMetadata'))return {PageMetadata:()=>null,RouteMetadata:()=>null};
    if(name==='qrcode')return {default:{toDataURL:async()=>"data:image/png;base64,TEST_ONLY"},toDataURL:async()=>"data:image/png;base64,TEST_ONLY"};
+   // Vite's import.meta.env is valid in the browser build but cannot be parsed by
+   // this CommonJS VM harness. Components under test only need the resolved base.
+   if(name.endsWith('/api/client'))return {API_BASE_URL:'https://api.test',...options.apiClient};
    if(name.endsWith('/library/LibraryProvider')||name==='./LibraryProvider')return {useLibrary:()=>options.library||{owner:'guest',index:[],guest:[],version:0,loading:false,error:'',refresh:async()=>{}},resolveGuestPage:async()=>[]};
-   if(file.includes('/library/')&&name==='./api')return {libraryApi:options.libraryApi||{}};
+   if(normalizedFile.includes('/library/')&&name==='./api')return {libraryApi:options.libraryApi||{}};
    if(name==='react')return {...react,...options.reactOverrides}
    if(name==='react/jsx-runtime')return{jsx,jsxs:jsx,Fragment:'Fragment'}
    if(name==='react-router')return router
    if(name.endsWith('/api/image-upload'))return {ImageUploadController:class{},ImageUploadTask:class{}}
    if(name.endsWith('/useAuth'))return{useAuth:()=>env.auth}
-   if(name.endsWith('/useRemote'))return{useRemote:fn=>{if(options.callLoader)void fn();return file.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
-   if(file.includes('/support/')&&name==='./api')return {supportApi:options.supportApi||{}}
-   if(file.includes('/goods/')&&name==='./api')return {goodsApi:options.goodsApi||{bestsellers:async()=>({basis:'POS_LOGGED_UNITS',windowDays:30,from:'2026-08-17T00:00:00Z',to:'2026-09-16T00:00:00Z',asOf:'2026-09-16T00:00:00Z',items:[]})}}
-   if(file.includes('/floorplan/')&&name==='./api')return {floorplanApi:options.floorplanApi||{}}
+   if(name.endsWith('/useRemote'))return{useRemote:fn=>{if(options.callLoader)void fn();return normalizedFile.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
+   if(normalizedFile.includes('/support/')&&name==='./api')return {supportApi:options.supportApi||{}}
+   if(normalizedFile.includes('/goods/')&&name==='./api')return {goodsApi:options.goodsApi||{bestsellers:async()=>({basis:'POS_LOGGED_UNITS',windowDays:30,from:'2026-08-17T00:00:00Z',to:'2026-09-16T00:00:00Z',asOf:'2026-09-16T00:00:00Z',items:[]})}}
+   if(normalizedFile.includes('/floorplan/')&&name==='./api')return {floorplanApi:options.floorplanApi||{}}
    if(name==='../../api'||name==='../api')return {creatorApi:{},adminApi:{},authApi:{}}
-   if(name==='./api'&&file.includes('/catalog/'))return api
+   if(name==='./api'&&normalizedFile.includes('/catalog/'))return api
    if(name==='../catalog/api'||((file.endsWith('CatalogPublicPage.tsx')||file.endsWith('BannerSelectionPanel.tsx')||file.endsWith('CatalogAdminPage.tsx'))&&name==='./api'))return api
    if(name.endsWith('.css'))return{}
    let target=path.resolve(path.dirname(file),name)
