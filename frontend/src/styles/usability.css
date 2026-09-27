@@ -43,6 +43,42 @@
 .public-shell .visit-memory-state { padding: 28px; margin: 16px 0; background: #f5f8fa; border: 1px solid var(--u-border); border-radius: 14px; }
 .public-shell .visit-memory-state h2 { font-size: 20px; }
 .public-shell .visit-memory-state p { color: var(--u-muted); }
+
+/* Event detail: one clear path from event facts to booth exploration. */
+.public-shell .visit-summary { display: grid; grid-template-columns: minmax(0,1fr) 220px; gap: 40px; align-items: stretch; padding: 34px 36px; border-radius: 16px; border-color: #d5dde4; box-shadow: 0 8px 26px rgba(35,52,67,.05); }
+.public-shell .visit-summary-copy { display: flex; flex-direction: column; min-width: 0; }
+.public-shell .visit-summary-kicker { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.public-shell .visit-summary-kicker .eyebrow { margin: 0; font-size: 13px; font-weight: 750; }
+.public-shell .visit-summary h1 { max-width: 760px; margin: 0 0 22px; font-size: clamp(30px,3.2vw,42px); line-height: 1.3; letter-spacing: -.035em; }
+.public-shell .visit-status { order: -1; padding: 5px 8px; }
+.public-shell .visit-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0; margin: 0 0 24px; border-top: 1px solid #e4e9ed; border-bottom: 1px solid #e4e9ed; }
+.public-shell .visit-facts > div { display: block; padding: 16px 18px 16px 0; }
+.public-shell .visit-facts > div + div { padding-left: 18px; border-left: 1px solid #e4e9ed; }
+.public-shell .visit-facts dt { margin-bottom: 7px; font-size: 12px; font-weight: 750; color: #6b7783; }
+.public-shell .visit-facts dd { font-size: 15px; line-height: 1.55; font-weight: 700; color: #24394d; }
+.public-shell .visit-facts small { margin-top: 5px; font-weight: 500; line-height: 1.5; }
+.public-shell .visit-primary-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.public-shell .visit-primary-actions > * { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 11px 16px; border-radius: 9px; font-size: 14px; font-weight: 750; text-decoration: none; }
+.public-shell .visit-primary-actions > a:not(.btn) { color: #37566f; text-decoration: underline; text-underline-offset: 4px; }
+.public-shell .visit-utility-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 14px; margin-top: 18px; padding-top: 14px; border-top: 1px solid #eef1f3; }
+.public-shell .visit-utility-actions > a,.public-shell .visit-utility-actions > button,.public-shell .visit-utility-actions .btn { display: inline-flex; align-items: center; min-height: 40px; padding: 7px 2px; border: 0; background: transparent; color: #566a7d; font-size: 13px; font-weight: 650; text-decoration: underline; text-underline-offset: 4px; box-shadow: none; }
+.public-shell .visit-utility-actions .memory-save-control { gap: 5px; }
+.public-shell .visit-summary-copy > .item-meta { margin-top: 8px; color: #73808d; }
+.public-shell .visit-poster { display: flex; flex-direction: column; width: 220px; margin: 0; }
+.public-shell .visit-poster img { width: 100%; height: 272px; border-radius: 10px; background: #f5f7f8; }
+.public-shell .visit-poster figcaption { margin-top: 8px; line-height: 1.55; }
+.public-shell .visit-controls { padding: 0; margin: 22px 0 18px; overflow: hidden; border-radius: 14px; }
+.public-shell .visit-controls-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding: 22px 24px 0; }
+.public-shell .visit-controls-head .eyebrow { margin: 0 0 4px; color: #8e4238; font-size: 12px; font-weight: 750; }
+.public-shell .visit-controls-head h2 { margin: 0; font-size: 22px; line-height: 1.35; }
+.public-shell .visit-view-switch { flex-shrink: 0; margin: 0; padding: 0; border: 1px solid #d9e1e8; border-radius: 9px; background: #f4f6f8; overflow: hidden; }
+.public-shell .visit-view-switch button { min-height: 44px; padding: 10px 17px; border: 0; border-right: 1px solid #d9e1e8; border-radius: 0; background: transparent; font-size: 14px; }
+.public-shell .visit-view-switch button:last-child { border-right: 0; }
+.public-shell .visit-view-switch button.is-current { background: #fff; color: #963c32; border-bottom: 0; box-shadow: inset 0 -3px #b54b3c; }
+.public-shell .visit-condition-row { grid-template-columns: 170px 170px minmax(0,1fr); gap: 14px; margin-top: 20px; padding: 20px 24px 22px; border-top: 1px solid #e6ebef; background: #f8fafb; }
+.public-shell .visit-condition-row[hidden] { display: none; }
+.public-shell .visit-feedback { margin: 0; padding: 0 24px 14px; background: #f8fafb; }
+.public-shell .visit-feedback:empty { display: none; }
 .public-shell .offline-download-panel { margin: 28px 0; background: #f3f8f5; border: 1px solid #cfded5; border-radius: 16px; padding: 24px; }
 .public-shell .offline-panel-heading { display: flex; gap: 16px; align-items: flex-start; }
 .public-shell .offline-panel-icon { display: grid; place-items: center; width: 46px; height: 46px; flex-shrink: 0; font-size: 26px; background: #fff; border: 1px solid #c9dacf; border-radius: 12px; color: #225a41; }
@@ -98,6 +134,18 @@
  .public-shell .discovery-footer { padding-bottom: calc(92px + env(safe-area-inset-bottom,0px)); }
  .public-shell .visit-task-nav a { flex: 1; justify-content: center; font-size: 13px; white-space: nowrap; }
  .public-shell .visit-task-nav a:last-child { flex-basis: 100%; }
+ .public-shell .visit-summary { grid-template-columns: minmax(0,1fr) 150px; gap: 24px; padding: 26px 24px; }
+ .public-shell .visit-summary h1 { font-size: 30px; }
+ .public-shell .visit-facts { grid-template-columns: 1fr; }
+ .public-shell .visit-facts > div { padding: 11px 0; }
+ .public-shell .visit-facts > div + div { padding-left: 0; border-left: 0; border-top: 1px solid #e9edf0; }
+ .public-shell .visit-poster { width: 150px; }
+ .public-shell .visit-poster img { height: 195px; }
+ .public-shell .visit-controls-head { align-items: flex-start; flex-direction: column; padding: 20px 18px 0; gap: 16px; }
+ .public-shell .visit-view-switch { display: grid; grid-template-columns: repeat(3,1fr); width: 100%; }
+ .public-shell .visit-view-switch button { padding-inline: 8px; }
+ .public-shell .visit-condition-row { grid-template-columns: 1fr 1fr; padding: 18px; }
+ .public-shell .visit-search { grid-column: 1 / -1; }
  .public-shell .offline-download-panel { padding: 18px; }
  .public-shell .offline-panel-heading h2 { font-size: 20px; }
  .public-shell .offline-panel-overview > a { margin-left: 0; width: 100%; }
@@ -108,6 +156,27 @@
  .public-shell .memory-page-heading .row-actions { width: 100%; }
  .public-shell .memory-page-heading .row-actions > * { flex: 1; justify-content: center; font-size: 14px; }
  .public-shell .memory-editor > header, .public-shell .memory-qr-dialog > header { top: -20px; }
+}
+@media (max-width: 520px) {
+ .public-shell .visit-page { padding-inline: 16px !important; }
+ .public-shell .visit-summary { display: flex; flex-direction: column; gap: 20px; padding: 0 0 22px; overflow: hidden; border-radius: 14px; }
+ .public-shell .visit-summary-copy { padding-inline: 18px; }
+ .public-shell .visit-poster { order: -1; display: block; width: 100%; }
+ .public-shell .visit-poster img { height: 174px; border: 0; border-bottom: 1px solid #e2e7eb; border-radius: 0; }
+ .public-shell .visit-poster figcaption { padding-inline: 18px; font-size: 11px; }
+ .public-shell .visit-summary-kicker { margin-bottom: 9px; }
+ .public-shell .visit-summary h1 { margin-bottom: 17px; font-size: 27px; line-height: 1.35; }
+ .public-shell .visit-facts { margin-bottom: 18px; }
+ .public-shell .visit-facts > div { display: grid; grid-template-columns: 52px 1fr; gap: 10px; padding: 10px 0; }
+ .public-shell .visit-facts dt { margin: 2px 0 0; }
+ .public-shell .visit-primary-actions { display: grid; grid-template-columns: 1fr 1fr; }
+ .public-shell .visit-primary-actions > * { padding-inline: 10px; text-align: center; }
+ .public-shell .visit-primary-actions > a:not(.btn) { grid-column: 1 / -1; justify-content: flex-start; }
+ .public-shell .visit-utility-actions { gap: 2px 12px; }
+ .public-shell .visit-condition-row { grid-template-columns: 1fr; }
+ .public-shell .visit-search { grid-column: auto; }
+ .public-shell .visit-controls-head h2 { font-size: 20px; }
+ .public-shell .visit-view-switch button { min-width: 0; font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
  .public-shell .discovery-shortcuts > a { transition: none; }
