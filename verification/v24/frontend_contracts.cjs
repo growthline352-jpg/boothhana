@@ -1,6 +1,7 @@
 /** TypeScript compiler AST: inventories source contracts, not browser/HTTP execution. */
 const fs=require('node:fs'),path=require('node:path'),ts=require('../v4/load_ts.cjs')()
 const root=path.resolve(process.env.BOOTHHANA_REVIEW_BASELINE||process.argv[2]||path.resolve(__dirname,'../..'))
+const relative=file=>path.relative(root,file).split(path.sep).join('/')
 const files=[];function walk(p){for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())walk(f);else if(/\.tsx?$/.test(f)&&!/\.(?:test|spec)\.tsx?$/.test(f))files.push(f)}}walk(path.join(root,'frontend/src'))
 const calls=[],interfaces=[],forwarders=[]
 for(const file of files){
@@ -35,13 +36,13 @@ for(const file of files){
   return null
  }
  function visit(n){
-  if(ts.isInterfaceDeclaration(n))interfaces.push({name:n.name.text,file:path.relative(root,file),extends:(n.heritageClauses||[]).flatMap(h=>h.types.map(t=>t.expression.getText(sf))),fields:n.members.filter(ts.isPropertySignature).map(m=>({name:name(m),type:m.type?.getText(sf)||'',optional:!!m.questionToken}))})
+  if(ts.isInterfaceDeclaration(n))interfaces.push({name:n.name.text,file:relative(file),extends:(n.heritageClauses||[]).flatMap(h=>h.types.map(t=>t.expression.getText(sf))),fields:n.members.filter(ts.isPropertySignature).map(m=>({name:name(m),type:m.type?.getText(sf)||'',optional:!!m.questionToken}))})
   if(ts.isCallExpression(n)&&['api','post','request','fetch'].includes(n.expression.getText(sf))){
    const callee=n.expression.getText(sf),arg=n.arguments[1],props=arg&&ts.isObjectLiteralExpression(arg)?arg.properties:[]
    let method=callee==='post'?'POST':'GET';const mp=props.find(p=>name(p)==='method');if(mp&&ts.isPropertyAssignment(mp))method=mp.initializer.text||'UNKNOWN'
    const paths=[...new Set(evaluate(n.arguments[0]))];const line=sf.getLineAndCharacterOfPosition(n.getStart()).line+1
    let bodyFields=null;const bp=props.find(p=>name(p)==='body');if(bp&&ts.isPropertyAssignment(bp)&&ts.isCallExpression(bp.initializer)&&bp.initializer.expression.getText(sf)==='JSON.stringify') {const body=objectBody(bp.initializer.arguments[0]);if(body)bodyFields=body.properties.map(name)}
-   const item={file:path.relative(root,file),line,callee,method,paths,bodyFields,expression:n.arguments[0]?.getText(sf)}
+   const item={file:relative(file),line,callee,method,paths,bodyFields,expression:n.arguments[0]?.getText(sf)}
    if(paths.some(p=>typeof p==='string'&&p.startsWith('/api/')))calls.push(item);else if(['api','post','request'].includes(callee))forwarders.push(item)
   }
   ts.forEachChild(n,visit)

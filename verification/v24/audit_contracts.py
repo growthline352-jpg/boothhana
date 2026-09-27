@@ -55,7 +55,13 @@ def run():
                     continue
             if required:opaque.append({'file':c['file'],'line':c['line'],'path':path,'bodyType':required[0]['type'],'reason':'forwarded/variable/nested body: runtime binding coverage required'})
     # Every unresolvable api(...) invocation is a reviewed forwarding helper, not a vanished endpoint.
-    allowed={('frontend/src/features/library/api.ts','path'),('frontend/src/features/support/api.ts','url')}
+    allowed={
+        # publicRead is the reviewed idempotent GET wrapper that adds the Render
+        # cold-start deadline/retry before forwarding to api(...).
+        ('frontend/src/api/client.ts','path'),
+        ('frontend/src/features/library/api.ts','path'),
+        ('frontend/src/features/support/api.ts','url'),
+    }
     for f in front['forwarders']:
         if (f['file'],f['expression']) not in allowed:issues.append('Unreviewed API forwarding expression: '+str(f))
     schema=inventory(ROOT)
