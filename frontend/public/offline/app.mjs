@@ -13,7 +13,7 @@ network();window.addEventListener('online',()=>{network();void load()});window.a
 function meta(pack){return `${stamp(pack.savedAt)} 저장 · ${stamp(pack.expiresAt)}까지 · ${(pack.bytes/1024/1024).toFixed(1)}MiB`}
 async function home(request=generation){
  const rows=await listPacks();if(request!==generation||location.hash)return;root.replaceChildren();root.append(el('h2',`이 기기에 저장한 행사 ${rows.length}/5`))
- if(!rows.length)root.append(el('p','저장한 행사가 없습니다. 인터넷이 연결됐을 때 행사 상세에서 [오프라인 저장]을 눌러 주세요. 만료되거나 브라우저가 삭제한 자료도 다시 내려받아야 합니다.'))
+ if(!rows.length)root.append(el('p','저장한 행사가 없습니다. 인터넷이 연결됐을 때 내 보관함의 행사 카드에서 [오프라인 정보 저장]을 눌러 주세요. 만료되거나 브라우저가 삭제한 자료도 다시 내려받아야 합니다.'))
  for(const p of rows){const card=el('article',undefined,'card'),a=el('a',p.name);a.href='#'+p.id;card.append(el('h3'));card.querySelector('h3').append(a);card.append(el('p',meta(p),'muted'))
   if(p.missing||p.omittedImages||p.noApprovedPlan)card.append(el('p','일부 이미지 또는 배치도는 포함되지 않았습니다.','warning'))
   card.append(button('이 행사 삭제',async()=>{if(confirm('이 행사의 기기 저장 자료를 삭제할까요?')){await deletePack(p.id);await load()}}));root.append(card)}

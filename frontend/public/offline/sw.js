@@ -1,6 +1,6 @@
 /* Scope is /offline/ ONLY. Never intercept/cache /api, auth, creator, admin or account HTML. */
 // Storage schema stays v19/DB2; v24 validates managed map byte hashes.
-const CACHE='boothhana-offline-shell-v24-1'
+const CACHE='boothhana-offline-shell-v24-2'
 const FILES=['/offline/index.html','/offline/app.mjs','/offline/store.mjs','/offline/policy.mjs','/offline/style.css','/offline/manifest.webmanifest','/offline/icon.svg']
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE)

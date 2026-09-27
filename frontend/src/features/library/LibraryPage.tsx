@@ -18,6 +18,7 @@ import { VerificationNotice } from './VerificationNotice'
 import { MemoryDrafts,type MemoryDraft } from './MemoryDrafts'
 import { guestEntry,memoryHref,refreshedEntry } from './memory'
 import { ShareQr } from './ShareQr'
+import { OfflineEventButton } from '../offline/OfflineDownloadPanel'
 import type { MemoryEntry,MemoryPage,ResolvedMemory } from './types'
 const kindNames:Record<string,string>={EVENT:'행사',PARTICIPANT:'업체·서클',PRODUCT:'제품·상품'}
 
@@ -65,7 +66,7 @@ export function LibraryPage(){
  const sectionGroups=group?[...new Set(rows.map(x=>x.target.eventId))].map(id=>({id,name:rows.find(x=>x.target.eventId===id)?.current?.memory.eventName||'현재 공개되지 않는 행사',items:rows.filter(x=>x.target.eventId===id)})):[{id:0,name:'',items:rows}]
  return <section className="content-wrap section-pad memory-page">
   <header className="memory-page-heading"><div><p className="eyebrow">MY COLLECTION</p><h1>내 보관함</h1><p>가보기 전에 발견하고, 다녀온 뒤에도 다시 찾아보세요.</p></div><div className="row-actions"><Link className="btn primary" to="/discover">행사 찾기</Link><a className="btn secondary" href="/offline/index.html">오프라인 자료 열기</a></div></header>
-  <p className="memory-offline-hint">보관함의 저장과 현장용 다운로드는 달라요. 인터넷 없이 볼 자료는 행사 상세에서 <strong>오프라인 저장</strong>을 해 주세요.</p>
+  <p className="memory-offline-hint">인터넷 없이 볼 행사는 아래의 행사 카드에서 <strong>오프라인 정보 저장</strong>을 눌러 주세요. 함께 저장한 부스·상품 표시도 포함됩니다.</p>
   <aside className={`memory-storage-notice ${guest?'is-device':''}`}>
    {owner==='loading'?<p>계정을 확인하고 있어요.</p>:owner==='error'?<><strong>계정 확인이 필요해요</strong><p>개인 기록은 잠시 숨겼으며 기기 저장으로 바꾸지 않았어요. 기존 기록은 삭제하지 않았습니다.</p><button className="btn secondary" onClick={()=>void auth.refresh()}>계정 다시 확인</button></>:guest?<><strong>이 기기에 임시 저장 중</strong><p>로그인 없이 90일간 사용할 수 있어요. 브라우저 기록 삭제·시크릿 모드 종료 시 사라질 수 있고, 같은 기기를 사용하는 사람이 메모를 볼 수 있어요.</p><a className="btn secondary" href={auth.loginUrl}>로그인하고 계정에 보관</a></>:<><strong>{auth.user?.displayName}님의 개인 보관함</strong><p>메모와 방문 기록은 나만 볼 수 있어요. 저장은 업체에 연락처를 전달하거나 마케팅에 동의하는 행동이 아닙니다.</p></>}
   </aside>
@@ -95,6 +96,7 @@ export function MemoryCard({entry:e,guest,open}:{entry:MemoryEntry;guest:boolean
    {e.available&&e.current&&e.target.type==='PRODUCT'&&<><p className="memory-sale-state">{saleStates[e.current.saleState]||saleStates.UNKNOWN}</p><VerificationNotice verification={e.current.verification}/></>}
    <p className="memory-summary">{context?.summary||(!e.available?'이전에 보던 자료는 더 이상 제공하지 않아요. 메모 열람·기록 삭제는 가능합니다.':'소개를 확인하고 있어요.')}</p>
    {e.note&&<p className="memory-note-preview"><span>내 메모</span>{e.note}</p>}{e.visitedDays.length>0&&<p className="memory-visited">✓ 직접 방문 표시 · {e.visitedDays.join(' · ')}</p>}
+   {e.available&&e.target.type==='EVENT'&&<OfflineEventButton eventId={e.target.eventId} day={e.day}/>}
    <div className="row-actions"><button className="btn primary" onClick={ev=>open(e,ev.currentTarget)}>메모·방문 기록</button>{e.available&&<Link className="btn secondary" to={memoryHref(e.target,e.day,e.hall,true)}>지도에서 보기</Link>}</div>
    {e.available&&<Link className="memory-record-link" to={memoryHref(e.target,e.day,e.hall)} onClick={()=>{if(!guest)void libraryApi.activity(e.id,'OPEN').catch(()=>{})}}>업체·상품 다시 보기 →</Link>}
   </div></article>
