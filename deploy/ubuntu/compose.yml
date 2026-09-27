@@ -1,0 +1,60 @@
+name: boothhana-production
+
+services:
+  boothhana-api:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      PORT: "8080"
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/gcs-service-account.json
+    expose:
+      - "8080"
+    volumes:
+      - ./secrets/gcs-service-account.json:/run/secrets/gcs-service-account.json:ro
+    restart: unless-stopped
+    stop_grace_period: 45s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    networks:
+      - app
+
+  caddy:
+    image: caddy:2.10-alpine
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN must be set in deploy/ubuntu/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - boothhana-api
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

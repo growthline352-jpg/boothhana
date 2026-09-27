@@ -1,0 +1,47 @@
+name: Keep Render API awake
+
+on:
+  schedule:
+    # Render Free sleeps after 15 minutes. Offset from the top of the hour to
+    # reduce GitHub Actions scheduling delays during peak load.
+    - cron: "3-58/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-api-keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    if: ${{ vars.RENDER_KEEPALIVE_ENABLED != 'false' }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 3
+    env:
+      HEALTH_URL: ${{ vars.RENDER_HEALTH_URL || 'https://boothhana2-api-zn7x.onrender.com/api/public/health/live' }}
+    steps:
+      - name: Ping public liveness endpoint
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for attempt in 1 2 3; do
+            status="$(curl --silent --show-error --location \
+              --output /tmp/boothhana-health.json \
+              --write-out '%{http_code}' \
+              --connect-timeout 10 \
+              --max-time 90 \
+              "$HEALTH_URL")" || status="000"
+
+            if [[ "$status" == "200" ]] && grep -q '"status":"UP"' /tmp/boothhana-health.json; then
+              cat /tmp/boothhana-health.json
+              exit 0
+            fi
+
+            echo "Health check attempt ${attempt} failed with HTTP ${status}." >&2
+            [[ -f /tmp/boothhana-health.json ]] && cat /tmp/boothhana-health.json >&2
+            sleep $((attempt * 5))
+          done
+
+          exit 1

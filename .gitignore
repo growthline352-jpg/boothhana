@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+deploy/ubuntu/secrets/
 
 # Frontend
 node_modules/
