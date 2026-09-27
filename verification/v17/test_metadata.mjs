@@ -7,10 +7,11 @@ import { pageMetadata, renderMetadata, injectMetadata, normalizePath, siteOrigin
 import { createHandler, renderPage, apiOrigin, readBoundedJson } from '../../frontend/api/page.mjs'
 const template = await readFile(new URL('../../frontend/index.html', import.meta.url), 'utf8')
 const siteUrl = 'https://boothhana.example', apiBase = 'https://api.example'
+const indexRobots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
 const catalog = { id: 7, event: { name: '[TEST] 문구 행사', description: '공개 행사 소개' }, banner: { url: 'https://assets.example/approved.png' }, assets: [] }
 const json = value => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } })
 test('home scope, Korean metadata and explicit canonical', () => {
- const m = pageMetadata({ siteUrl }); assert.match(m.title, /서울·경기/); assert.equal(m.robots, 'index,follow'); assert.equal(m.canonical, siteUrl + '/')
+ const m = pageMetadata({ siteUrl }); assert.match(m.title, /서울·경기/); assert.equal(m.robots, indexRobots); assert.equal(m.canonical, siteUrl + '/')
  const html = injectMetadata(template, m); assert.match(html, /lang="ko"/); assert.equal((html.match(/<title/g) || []).length, 1)
  assert.equal((html.match(/rel="canonical"/g) || []).length, 1); assert.match(html, /og:description/); assert.match(html, /application\/ld\+json/)
 })
@@ -32,7 +33,7 @@ test('account pages omit data and URL query values from metadata', () => {
 })
 test('event canonical drops visit/filter state and only uses approved banner', () => {
  const m = pageMetadata({ path: '/discover/7', search: '?day=2026-09-18&my=saved', siteUrl, catalog })
- assert.equal(m.canonical, siteUrl + '/discover/7'); assert.equal(m.image, catalog.banner.url); assert.equal(m.robots, 'index,follow')
+ assert.equal(m.canonical, siteUrl + '/discover/7'); assert.equal(m.image, catalog.banner.url); assert.equal(m.robots, indexRobots)
  const noBanner = pageMetadata({ path: '/discover/7', siteUrl, catalog: { ...catalog, banner: null, assets: [{ type: 'BANNER', participantId: null, url: 'https://assets.example/revoked.png' }] } })
  assert.ok(!renderMetadata(noBanner).includes('revoked.png'))
 })
