@@ -2,12 +2,13 @@
 These tests do not substitute for the opt-in PostgreSQL/JDBC tests.
 """
 import copy,io,json,os,sys,tempfile,unittest,uuid
+from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 from contextlib import redirect_stdout,redirect_stderr
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import weekly
-from catalog_rules import parse_schema,validate_stage
+from catalog_rules import InvalidResult,parse_schema,validate_discovery,validate_stage
 FIX=weekly.ROOT/'examples/v5'
 def fixture(name):return json.loads((FIX/(name+'.json')).read_text())
 SCOPE={'region':'SEOUL','timezone':'Asia/Seoul','startDate':'2026-10-01','endDate':'2026-10-31'}
@@ -165,12 +166,28 @@ class ReviewV5PipelineTests(unittest.TestCase):
   result=fixture('sales');result['coverage'].update(reportedTotal=10,totalUnit='PRODUCTS',completeness='COMPLETE',nextPageUrl=None)
   normalized,keys,total=self.runner().normalize_sales_result(result,state)
   self.assertEqual(total,10);self.assertEqual(len(keys),1);self.assertEqual(normalized['searchStatus'],'PARTIAL');self.assertEqual(normalized['coverage']['completeness'],'PARTIAL')
- def test_discovery_leads_are_passed_as_untrusted_candidates(self):
+ def test_discovery_leads_are_passed_as_community_candidates(self):
   lead='https://example.com/community-schedule';self.cfg['discoveryLeadUrls']=[lead];seen=[]
   def cli(cfg,folder,prompt,schema):
    if folder.name=='discovery':seen.append(prompt)
    return self.server.cli(cfg,folder,prompt,schema)
-  self.run_one(cli=cli);self.assertIn(lead,seen[0]);self.assertIn('UNTRUSTED DISCOVERY LEADS',seen[0])
+  self.run_one(cli=cli);self.assertIn(lead,seen[0]);self.assertIn('DISCOVERY SOURCE REGISTRY',seen[0]);self.assertIn('COMMUNITY_INDEX',seen[0])
+ def test_discovery_event_names_are_passed_as_priority_candidates(self):
+  self.cfg['discoveryEventNames']=['행사 후보 A','행사 후보 A','행사 후보 B'];seen=[]
+  def cli(cfg,folder,prompt,schema):
+   if folder.name=='discovery':seen.append(prompt)
+   return self.server.cli(cfg,folder,prompt,schema)
+  self.run_one(cli=cli);self.assertIn('priorityCandidateNames',seen[0]);self.assertEqual(seen[0].count('행사 후보 A'),1);self.assertIn('행사 후보 B',seen[0])
+ def test_community_only_discovery_cannot_claim_complete(self):
+  result=fixture('events');result['sourceCoverage']=[{'channel':'COMMUNITY_INDEX','status':'CHECKED','queries':['community calendar'],'checkedUrls':['https://example.com/community'],'notes':'candidate names only'}]
+  normalized,issues=weekly.enforce_discovery_coverage(result)
+  self.assertEqual(normalized['searchStatus'],'PARTIAL');self.assertIn('missing VENUE_CALENDAR',issues);self.assertIn('no authoritative source page checked',issues)
+ def test_all_discovery_channels_with_authoritative_page_can_complete(self):
+  result=fixture('events');normalized,issues=weekly.enforce_discovery_coverage(result)
+  self.assertEqual(normalized['searchStatus'],'COMPLETE');self.assertEqual(issues,[])
+ def test_discovery_coverage_rejects_blocked_checked_url(self):
+  result=fixture('events');result['sourceCoverage'][0]['checkedUrls']=['https://witchform.com/event']
+  with self.assertRaises(InvalidResult):validate_discovery(result,date(2026,1,1),date(2026,12,31),['witchform.com'])
  def test_cli_failure_records_failed_attempt_and_counts_call(self):
   self.server.targets=[{'id':21,'eventId':11,'revision':1,'event':self.server.event['event'],'participant':fixture('participants')['participants'][0]}]
   def cli(*a):

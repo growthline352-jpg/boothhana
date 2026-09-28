@@ -71,7 +71,6 @@
           }
         },
         "required": [
-          "kind",
           "label",
           "points",
           "recognition",

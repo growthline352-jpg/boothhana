@@ -11,12 +11,21 @@
   "maxParticipantPages": 10,
   "maxSales": 100,
   "maxSalesPagesPerParticipant": 5,
-  "maxCliCalls": 160,
+  "maxCliCalls": 240,
   "maxRuntimeMinutes": 240,
   "maxImages": 100,
-  "maxEventEnrichments": 12,
+  "maxEventEnrichments": 50,
   "priorityEventKeywords": [],
+  "discoveryEventNames": [],
   "discoveryLeadUrls": [],
+  "discoverySourceSeeds": {
+    "VENUE_CALENDAR": [],
+    "ORGANIZER_OFFICIAL": [],
+    "PUBLIC_AGENCY": [],
+    "TICKETING": [],
+    "PARTICIPANT_SOCIAL": [],
+    "COMMUNITY_INDEX": []
+  },
   "imageAllowedHosts": [],
   "blockedSourceHosts": [
     "witchform.com"

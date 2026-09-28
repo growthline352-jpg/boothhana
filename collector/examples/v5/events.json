@@ -5,6 +5,14 @@
   "queries": [
     "TEST"
   ],
+  "sourceCoverage": [
+    {"channel": "VENUE_CALENDAR", "status": "CHECKED", "queries": ["TEST venue"], "checkedUrls": ["https://example.com/venue"], "notes": "test"},
+    {"channel": "ORGANIZER_OFFICIAL", "status": "CHECKED", "queries": ["TEST organizer"], "checkedUrls": ["https://example.com/organizer"], "notes": "test"},
+    {"channel": "PUBLIC_AGENCY", "status": "NO_RESULTS", "queries": ["TEST public"], "checkedUrls": [], "notes": "test"},
+    {"channel": "TICKETING", "status": "NO_RESULTS", "queries": ["TEST ticket"], "checkedUrls": [], "notes": "test"},
+    {"channel": "PARTICIPANT_SOCIAL", "status": "NO_RESULTS", "queries": ["TEST participant"], "checkedUrls": [], "notes": "test"},
+    {"channel": "COMMUNITY_INDEX", "status": "NO_RESULTS", "queries": ["TEST community"], "checkedUrls": [], "notes": "test"}
+  ],
   "events": [
     {
       "name": "[TEST] 서울 서브컬처 가상 행사",

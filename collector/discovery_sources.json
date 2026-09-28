@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1",
+  "channels": [
+    {
+      "channel": "VENUE_CALENDAR",
+      "purpose": "전시장 공식 월간 일정에서 박람회·행사 후보를 찾는다.",
+      "seeds": [
+        "https://www.coex.co.kr/exhibitions/",
+        "https://www.kintex.com/",
+        "https://www.setec.or.kr/",
+        "https://atcenter.at.or.kr/",
+        "https://ddp.or.kr/",
+        "https://www.scc.or.kr/"
+      ],
+      "queryTemplates": [
+        "{year}년 {month}월 서울 경기 전시장 행사 일정",
+        "{start_date} {end_date} 코엑스 킨텍스 SETEC aT센터 DDP 수원컨벤션 행사"
+      ]
+    },
+    {
+      "channel": "ORGANIZER_OFFICIAL",
+      "purpose": "주최사·행사 공식 사이트와 공식 SNS에서 회차별 공지를 찾는다.",
+      "seeds": [
+        "https://comicw.net/",
+        "https://projectdoll.net/",
+        "https://illustar.net/",
+        "https://agfkorea.com/"
+      ],
+      "queryTemplates": [
+        "{year} {month} 서브컬처 동인 인형 문구 굿즈 행사 공식",
+        "{year} {month} 박람회 축제 서울 경기 공식 주최"
+      ]
+    },
+    {
+      "channel": "PUBLIC_AGENCY",
+      "purpose": "서울시·경기도·자치구·시군·관광기관의 공식 행사와 축제 일정을 찾는다.",
+      "seeds": [
+        "https://festival.seoul.go.kr/",
+        "https://korean.visitkorea.or.kr/"
+      ],
+      "queryTemplates": [
+        "site:go.kr {year} {month} 서울 축제 행사",
+        "site:go.kr {year} {month} 경기도 축제 행사"
+      ]
+    },
+    {
+      "channel": "TICKETING",
+      "purpose": "예매·예약 플랫폼에서 공식 판매 중인 행사를 역으로 발견한다.",
+      "seeds": [
+        "https://www.ticketlink.co.kr/",
+        "https://tickets.interpark.com/",
+        "https://ticket.yes24.com/",
+        "https://booking.naver.com/"
+      ],
+      "queryTemplates": [
+        "{year} {month} 서울 경기 행사 예매 박람회 축제",
+        "{year} {month} 서브컬처 행사 티켓 예매"
+      ]
+    },
+    {
+      "channel": "PARTICIPANT_SOCIAL",
+      "purpose": "참가 브랜드·작가·서클의 공개 공지에서 공식 목록에 늦게 반영된 행사를 찾는다.",
+      "seeds": [],
+      "queryTemplates": [
+        "{year} {month} 참가 부스 인포 서울 경기 행사",
+        "{year} {month} 참가합니다 부스번호 행사"
+      ]
+    },
+    {
+      "channel": "COMMUNITY_INDEX",
+      "purpose": "커뮤니티 일정표와 행사 모음에서 누락 후보 이름만 찾고 공식 원문으로 재확인한다.",
+      "seeds": [],
+      "queryTemplates": [
+        "{year} {month} 서브컬처 행사 일정 모음",
+        "{year} {month} 서울 경기 박람회 축제 일정 모음"
+      ]
+    }
+  ]
+}

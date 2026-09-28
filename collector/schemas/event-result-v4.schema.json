@@ -25,6 +25,63 @@
       },
       "maxItems": 50
     },
+    "sourceCoverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "VENUE_CALENDAR",
+              "ORGANIZER_OFFICIAL",
+              "PUBLIC_AGENCY",
+              "TICKETING",
+              "PARTICIPANT_SOCIAL",
+              "COMMUNITY_INDEX"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CHECKED",
+              "NO_RESULTS",
+              "PARTIAL",
+              "INACCESSIBLE"
+            ]
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 300
+            },
+            "maxItems": 20
+          },
+          "checkedUrls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 2048
+            },
+            "maxItems": 50
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "channel",
+          "status",
+          "queries",
+          "checkedUrls",
+          "notes"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 6
+    },
     "events": {
       "type": "array",
       "items": {

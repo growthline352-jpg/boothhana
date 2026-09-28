@@ -80,6 +80,8 @@ def validate_stage(result: dict,stage: str,event: dict,blocked: list[str]):
 
 def validate_discovery(result: dict,start,end,blocked):
     if result['searchStatus']=='FAILED' and result['events']: raise InvalidResult('Failed discovery has events')
+    for coverage in result.get('sourceCoverage',[]):
+        for url in coverage['checkedUrls']: allowed_source(url,blocked)
     accepted=[];rejected=[]
     for e in result['events']:
         errors,warnings=check_event(e,start,end)

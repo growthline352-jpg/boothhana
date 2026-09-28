@@ -40,6 +40,9 @@ class GeometryTests(unittest.TestCase):
  def test_map_element_kind_preserved(self):
   g=geometry();g['shapes'][0]['kind']='RESTROOM';g['shapes'][0]['label']='화장실';v=merge_tiles([({'x':0,'y':0,'width':1000,'height':700},g)],1000,700)
   self.assertEqual(v['shapes'][0]['kind'],'RESTROOM');self.assertTrue(v['shapes'][0]['id'].startswith('f-'))
+ def test_legacy_shape_without_kind_defaults_to_booth(self):
+  g=geometry();g['shapes'][0].pop('kind');v=merge_tiles([({'x':0,'y':0,'width':1000,'height':700},g)],1000,700)
+  self.assertEqual(v['shapes'][0]['kind'],'BOOTH');self.assertTrue(v['shapes'][0]['id'].startswith('b-'))
  def test_rotated_exif_refused(self):
   image=Image.new('RGB',(100,100));ex=image.getexif();ex[274]=6;b=io.BytesIO();image.save(b,format='JPEG',exif=ex)
   with tempfile.TemporaryDirectory() as t:self.assertRaises(Exception,tiles,b.getvalue(),'image/jpeg',Path(t))
