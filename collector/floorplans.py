@@ -69,9 +69,10 @@ class FloorplanBatch:
         return value
     def discover(self,target):
         event=target['eventId'];self.heartbeat(event)
-        prompt=(ROOT/'prompts/floorplan-discovery.md').read_text(encoding='utf-8')+'\nEVENT DATA:\n'+json.dumps(target['event'],ensure_ascii=False)
+        context={'event':target['event'],'floorplanHints':target.get('floorplanHints',[])}
+        prompt=(ROOT/'prompts/floorplan-discovery.md').read_text(encoding='utf-8')+'\nEVENT AND COLLECTED FLOORPLAN HINTS:\n'+json.dumps(context,ensure_ascii=False)
         path=self.folder/f'event-{event}'/'discovery'
-        result=merge_interactive_candidates(self.job(path,prompt,'floorplan-discovery.schema.json',fixture='discovery.json'),target['event'])
+        result=merge_interactive_candidates(self.job(path,prompt,'floorplan-discovery.schema.json',fixture='discovery.json'),target['event'],target.get('floorplanHints'))
         validate_payload(result,ROOT/'schemas/floorplan-discovery.schema.json')
         for p in result['plans']:
             for k in ('imageUrl','pageUrl'):public_url(p[k]);self.check_blocked(p[k])
@@ -126,7 +127,7 @@ class FloorplanBatch:
         targets=json.loads(self.event_file.read_text(encoding='utf-8')) if self.event_file else json.loads((self.fixtures/'targets.json').read_text(encoding='utf-8')) if self.fixtures else ([] if self.dry else self.request('GET',f'/targets?imminent={str(imminent).lower()}&limit={self.cfg["floorplanMaxEvents"]}'))
         if self.dry and not self.fixtures and not self.event_file:
             raise RunError('Live dry-run requires --event-file with sanitized event data; server reads are disabled')
-        if not isinstance(targets,list) or any(not isinstance(t,dict) or type(t.get('eventId')) is not int or not isinstance(t.get('event'),dict) for t in targets):raise RunError('Expected [{eventId: number, event: object}]')
+        if not isinstance(targets,list) or any(not isinstance(t,dict) or type(t.get('eventId')) is not int or not isinstance(t.get('event'),dict) or not isinstance(t.get('floorplanHints',[]),list) for t in targets):raise RunError('Expected [{eventId: number, event: object, floorplanHints?: array}]')
         for target in targets[:self.cfg['floorplanMaxEvents']]:
             event=target['eventId'];errors=[];entry={'eventId':event,'sources':[]};self.events.append(entry);claimed=False
             if self.api:self.event_queue.mark_stage(event,'FLOORPLAN','RUNNING')

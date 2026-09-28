@@ -23,4 +23,28 @@ class FloorplanFacilityRulesTests {
   assertEquals("RESTROOM",mapping.shapes().get(1).shape().mapKind());
   assertTrue(mapping.shapes().get(1).links().isEmpty());
  }
+
+ @Test void uniqueCodeLinksWhenCollectedParticipantHasNoHall(){
+  var booth=new Shape("booth-a1","A-01",box(.1,.1),"READABLE",true,"BOOTH");
+  var geometry=new Geometry("test",true,List.of(booth),List.of());
+  var scope=new PlanScope("1관",null,List.of("2026-10-03"),"1관 배치도");
+  var roster=List.of(new Roster(7,"참가자",List.of(new Place("A-01",null,null,List.of("2026-10-03"),null))));
+
+  var mapping=FloorplanRules.map(geometry,scope,roster,Map.of());
+
+  assertEquals(1,mapping.matched());
+  assertEquals("UNIQUE_CODE",mapping.shapes().getFirst().links().getFirst().method());
+ }
+
+ @Test void conflictingKnownHallNeverAutoLinks(){
+  var booth=new Shape("booth-a1","A-01",box(.1,.1),"READABLE",true,"BOOTH");
+  var geometry=new Geometry("test",true,List.of(booth),List.of());
+  var scope=new PlanScope("1관",null,List.of("2026-10-03"),"1관 배치도");
+  var roster=List.of(new Roster(7,"참가자",List.of(new Place("A-01","2관",null,List.of("2026-10-03"),null))));
+
+  var mapping=FloorplanRules.map(geometry,scope,roster,Map.of());
+
+  assertEquals(0,mapping.matched());
+  assertEquals("UNMAPPED",mapping.shapes().getFirst().status());
+ }
 }

@@ -121,27 +121,34 @@ def _event_days(event:dict):
         while start<=end and len(days)<90:days.append(start.isoformat());start+=timedelta(days=1)
     return list(dict.fromkeys(days))
 
-def merge_interactive_candidates(result:dict,event:dict):
-    """Promote known FLOOR_PLAN links into the reviewed source pipeline.
+def merge_interactive_candidates(result:dict,event:dict,hints:list[dict]|None=None):
+    """Merge verified discovery with direct-image hints from earlier stages.
 
-    Event collection already classifies these URLs as official floorplans. Do not
-    make a second web-search call rediscover the same image before it can enter the
-    reviewed asset pipeline.
+    A FLOOR_PLAN HTML URL is only a research starting point. Treating every such
+    page as an accessible interactive map made ordinary announcement pages fail
+    later in ``build_schematic``. Direct image URLs can safely enter the reviewed
+    source pipeline without rediscovery; HTML pages must first be opened and
+    classified by the discovery job.
     """
     if result.get('status')=='ERROR':return result
     value=json.loads(json.dumps(result,ensure_ascii=False));plans=value.setdefault('plans',[])
-    existing={u for p in plans for u in (p.get('pageUrl'),p.get('imageUrl')) if u};days=_event_days(event);interactive=False
+    existing={u for p in plans for u in (p.get('pageUrl'),p.get('imageUrl')) if u};days=_event_days(event)
+    candidates=[]
     for link in event.get('discoveryLinks') or []:
+        if link.get('kind')=='FLOOR_PLAN' and link.get('url'):
+            candidates.append({'url':link['url'],'hall':None,'zone':None,'dates':days,'title':(event.get('name') or '행사')[:260]+' 배치도','evidence':'행사 데이터에 등록된 공식 배치도 직접 이미지 링크.'})
+    candidates.extend(hints or [])
+    for link in candidates:
         url=link.get('url')
-        if link.get('kind')!='FLOOR_PLAN' or not url or url in existing:continue
-        is_image=bool(IMAGE_PATH.search(urlsplit(url).path));interactive=interactive or not is_image
-        plans.append({'imageUrl':url,'pageUrl':url,'scope':{'hall':None,'zone':None,'dates':days,'title':(event.get('name') or '행사')[:260]+(' 배치도' if is_image else ' 클릭형 배치도')},'evidence':('행사 데이터에 등록된 공식 배치도 이미지 링크.' if is_image else '행사 데이터에 등록된 공식 클릭형 배치도 링크. 접근성 부스번호를 검토 후 변환합니다.')})
+        if not url or url in existing or not IMAGE_PATH.search(urlsplit(url).path):continue
+        scope_days=list(dict.fromkeys(link.get('dates') or days))[:90]
+        plans.append({'imageUrl':url,'pageUrl':url,'scope':{'hall':link.get('hall'),'zone':link.get('zone'),'dates':scope_days,'title':(link.get('title') or (event.get('name') or '행사')[:260]+' 배치도')[:300]},'evidence':(link.get('evidence') or '참가부스 위치 데이터에 연결된 배치도 직접 이미지 링크.')[:1000]})
         existing.add(url)
         if len(plans)>=20:break
     if plans:
         value['status']='FOUND';value['availableOn']=None
         value['checkedUrls']=list(dict.fromkeys([*(value.get('checkedUrls') or []),*(p['pageUrl'] for p in plans)]))[:30]
-        if interactive:
+        if any(is_interactive_source(p) for p in plans):
             note='클릭형 HTML 배치도는 원본 이미지를 복제하지 않고 접근성 부스번호만 공통 안내도로 변환합니다.'
             value['warnings']=list(dict.fromkeys([*(value.get('warnings') or []),note]))[:50]
     return value

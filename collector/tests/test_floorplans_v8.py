@@ -121,15 +121,35 @@ class WorkerTests(unittest.TestCase):
  def test_schema_discovery(self):
   import jsonschema
   jsonschema.validate(json.loads((FIX/'discovery.json').read_text()),json.loads((ROOT/'schemas/floorplan-discovery.schema.json').read_text()))
- def test_interactive_link_enters_reviewed_source_pipeline(self):
+ def test_html_hint_is_not_fabricated_as_interactive_map(self):
   event={'name':'행사','occurrences':[{'startDate':'2026-10-10','endDate':'2026-10-11'}],'discoveryLinks':[{'kind':'FLOOR_PLAN','url':'https://example.com/event/map'}]}
   value=merge_interactive_candidates({'status':'NOT_FOUND','availableOn':None,'plans':[],'checkedUrls':['https://example.com/event'],'warnings':[]},event)
-  self.assertEqual(value['status'],'FOUND');self.assertEqual(value['plans'][0]['imageUrl'],value['plans'][0]['pageUrl']);self.assertEqual(value['plans'][0]['scope']['dates'],['2026-10-10','2026-10-11'])
+  self.assertEqual(value['status'],'NOT_FOUND');self.assertEqual(value['plans'],[])
+ def test_verified_interactive_map_is_preserved(self):
+  url='https://example.com/event/map';event={'name':'행사','occurrences':[{'startDate':'2026-10-10','endDate':'2026-10-11'}]}
+  plan={'imageUrl':url,'pageUrl':url,'scope':{'hall':None,'zone':None,'dates':['2026-10-10','2026-10-11'],'title':'클릭형 배치도'},'evidence':'접근성 부스 컨트롤을 확인함'}
+  value=merge_interactive_candidates({'status':'FOUND','availableOn':None,'plans':[plan],'checkedUrls':[url],'warnings':[]},event)
+  self.assertEqual(value['plans'],[plan]);self.assertTrue(any('클릭형 HTML' in warning for warning in value['warnings']))
  def test_known_floorplan_image_does_not_require_rediscovery(self):
   url='https://official.example/floorplans/2026-map.jpg'
   event={'name':'행사','occurrences':[{'startDate':'2026-10-10','endDate':'2026-10-11'}],'discoveryLinks':[{'kind':'FLOOR_PLAN','url':url}]}
   value=merge_interactive_candidates({'status':'NOT_FOUND','availableOn':None,'plans':[],'checkedUrls':[],'warnings':[]},event)
   self.assertEqual(value['status'],'FOUND');self.assertEqual(value['plans'][0]['imageUrl'],url);self.assertEqual(value['plans'][0]['pageUrl'],url);self.assertNotIn('클릭형 HTML',value['warnings'])
+ def test_participant_floorplan_hint_promotes_direct_image_with_scope(self):
+  url='https://official.example/floorplans/hall-a.png';event={'name':'행사','occurrences':[{'startDate':'2026-10-10','endDate':'2026-10-11'}]}
+  hints=[{'url':url,'hall':'A홀','zone':None,'dates':['2026-10-11'],'title':'A홀 배치도','evidence':'참가부스 위치 데이터'}]
+  value=merge_interactive_candidates({'status':'NOT_FOUND','availableOn':None,'plans':[],'checkedUrls':[],'warnings':[]},event,hints)
+  self.assertEqual(value['status'],'FOUND');self.assertEqual(value['plans'][0]['scope']['hall'],'A홀');self.assertEqual(value['plans'][0]['scope']['dates'],['2026-10-11'])
+ def test_discovery_prompt_receives_participant_floorplan_hints(self):
+  target=json.loads((FIX/'targets.json').read_text(encoding='utf-8'))[0]
+  target['floorplanHints']=[{'url':'https://official.example/map-page','hall':None,'zone':None,'dates':[],'title':'배치도','evidence':'부스 위치 링크'}]
+  batch=FloorplanBatch(self.cfg,self.path/'hint-run',dry=True,event_file=self.path/'unused.json')
+  observed={}
+  def fake(path,prompt,schema,**kwargs):
+   observed['prompt']=prompt
+   return {'status':'NOT_FOUND','availableOn':None,'plans':[],'checkedUrls':['https://official.example/map-page'],'warnings':[]}
+  with patch.object(batch,'job',side_effect=fake):batch.discover(target)
+  self.assertIn('floorplanHints',observed['prompt']);self.assertIn('official.example/map-page',observed['prompt'])
  def test_accessible_html_becomes_complete_schematic(self):
   html=(FIX/'interactive.html').read_text(encoding='utf-8');booths=parse_accessible_booths(html)
   self.assertEqual([(b['hall'],b['code']) for b in booths],[('제1전시실','A-16'),('제1전시실','A-17'),('제1전시실','A-13A'),('제2전시실','B-01'),('제2전시실','B-02')])
