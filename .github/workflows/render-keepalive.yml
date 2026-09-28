@@ -12,13 +12,17 @@ permissions:
 
 concurrency:
   group: render-api-keepalive
-  cancel-in-progress: true
+  # A Render Free cold start can take almost three minutes. A later schedule
+  # must not cancel the request that is already waking the service.
+  cancel-in-progress: false
 
 jobs:
   ping:
     if: ${{ vars.RENDER_KEEPALIVE_ENABLED != 'false' }}
     runs-on: ubuntu-slim
-    timeout-minutes: 3
+    # Three 90-second attempts plus retry backoff need more than three minutes
+    # when the instance is fully asleep.
+    timeout-minutes: 6
     env:
       HEALTH_URL: ${{ vars.RENDER_HEALTH_URL || 'https://boothhana2-api-zn7x.onrender.com/api/public/health/live' }}
     steps:
