@@ -132,6 +132,12 @@ timer의 `OnCalendar=Sun *-*-* 03:00:00 Asia/Seoul`은 서버 기본시간이 UT
 
 ## 6. 기본 예산·부분 수집
 
+검증이 끝난 수동 조사 파일은 한 달 단위뿐 아니라 분기 범위로도 넣을 수 있습니다.
+
+```bash
+python import_manual_events.py --config config.local.json --start 2026-10-01 --end 2026-12-31 --input manual-data/2026-q4-subculture-official-events.json
+```
+
 config 값:
 
 | 키 | 기본 | 의미 |
@@ -139,18 +145,20 @@ config 값:
 | maxEvents | 50 | 실행당 행사 수 |
 | maxParticipantPages | 10 | 행사당 참가명단 페이지 작업 수 |
 | maxSales | 100 | 실행당 판매정보 조사 대상 수 |
+| maxSalesPagesPerParticipant | 5 | 부스별 상품 목록을 이어 읽는 최대 페이지 수. 다음 주소는 다음 실행에도 보존 |
 | maxCliCalls | 160 | 실행당 CLI 호출 수 |
 | maxRuntimeMinutes | 240 | 전체 조사/이미지 처리 시간 예산 |
 | timeoutSeconds | 900 | CLI 한 작업 제한시간 |
 | maxImages | 100 | 사용 승인된 이미지 저장 시도 수 |
 | maxEventEnrichments | 12 | 실행당 누락 행사 재조사 수. 0이면 보완 단계 중지 |
 | priorityEventKeywords | [] | 동률일 때 먼저 조사할 행사명 키워드. 이후에도 오래된 시도 순환 유지 |
+| discoveryLeadUrls | [] | 누락 후보용 일정 인덱스. 공식 원문으로 재검증하며 리드 자체는 사실 근거로 저장하지 않음 |
 | imageAllowedHosts | [] | 외부 이미지 허용 호스트. 기본 다운로드불가 |
 | blockedSourceHosts | [witchform.com] | 제한 출처. 사용 가능 범위는 운영자가 확인 |
 
 한도/명단 미공개/원문접근실패는 PARTIAL로 남고, 확보된 항목은 보관됩니다. 아직 조사 차례가 오지 않은 누락 행사는 정상적인 `enrichmentQueued` 건수로 기록되며 실행 실패로 취급하지 않습니다. 상품목록이 없으면 요약/분야만 저장합니다. 이번 행사 판매 확인이 없으면 상시 상품으로 표시합니다. 개수 채우기를 위한 추측을 허용하지 않습니다.
 
-새로 저장한 부스 전부를 한 번에 조사하는 것은 maxSales에 의해 제한될 수 있습니다. 다음 주는 미시도 부스를 먼저, 그다음 마지막 시도가 오래된 부스부터 선택합니다. 명단 커서는 다음 주와 v5 재개 실행에서도 유지됩니다. 동일 참가·상품은 보수적인 sourceID/주소 기준으로 연결하므로 다른 주소로 중복 발견될 때 관리자 검토가 필요합니다.
+새로 저장한 부스 전부를 한 번에 조사하는 것은 maxSales에 의해 제한될 수 있습니다. 다음 주는 미시도 부스를 먼저, 그다음 마지막 시도가 오래된 부스부터 선택합니다. 명단 커서와 상품 페이지 커서는 다음 실행과 v5 재개 실행에서도 유지됩니다. 상품표가 100개를 넘으면 `coverage.nextPageUrl`을 따라 최대 `maxSalesPagesPerParticipant` 페이지까지 이어가고, 출처 표기 총수보다 적게 확보한 결과는 완료로 처리하지 않습니다. 동일 참가·상품은 보수적인 sourceID/주소 기준으로 연결하므로 다른 주소로 중복 발견될 때 관리자 검토가 필요합니다.
 
 ## 7. 이미지
 

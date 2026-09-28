@@ -10,11 +10,13 @@
   "maxEvents": 50,
   "maxParticipantPages": 10,
   "maxSales": 100,
+  "maxSalesPagesPerParticipant": 5,
   "maxCliCalls": 160,
   "maxRuntimeMinutes": 240,
   "maxImages": 100,
   "maxEventEnrichments": 12,
   "priorityEventKeywords": [],
+  "discoveryLeadUrls": [],
   "imageAllowedHosts": [],
   "blockedSourceHosts": [
     "witchform.com"

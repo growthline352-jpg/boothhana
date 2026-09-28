@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1",
+  "searchStatus": "PARTIAL",
+  "summary": "커뮤니티 일정 인덱스에서 찾은 수도권 후보를 공식 주최사·전시장·공공기관 원문으로 다시 확인했다. 호요랜드 2026, 일러스타 페스 14, 한일축제한마당 2026 in Seoul, AGF 2026은 확인했으며 블루 아카이브 5주년 페스티벌은 공식 공지에서 날짜만 확인되고 장소 상세가 아직 별도 공지 전이라 이 파일에는 확정 행사로 넣지 않았다. 부산·울산 개최 행사는 현재 서울·경기 서비스 범위 밖이라 제외했다.",
+  "queries": [
+    "2026 남은 행사 일정 서브컬쳐행사 갤러리 3501",
+    "호요랜드 2026 공식 10월 2일 5일 킨텍스",
+    "일러스타 페스 14 공식 2026 10월 10일 11일 킨텍스",
+    "한일축제한마당 2026 in Seoul 공식 코엑스 D홀",
+    "Anime x Game Festival 2026 공식 행사정보"
+  ],
+  "events": [
+    {
+      "name": "호요랜드 2026",
+      "subcategory": "ONLY_EVENT",
+      "organizer": "HoYoverse",
+      "edition": "2026",
+      "region": "GYEONGGI",
+      "venueName": "킨텍스 제2전시장 7·8홀",
+      "address": "경기도 고양시 일산서구 킨텍스로 217-59",
+      "description": "HoYoverse 게임과 팬 콘텐츠를 한자리에서 소개하는 공식 오프라인 행사다.",
+      "admission": null,
+      "subjects": ["HoYoverse", "게임", "팬행사"],
+      "occurrences": [
+        {"startDate": "2026-10-02", "endDate": "2026-10-05", "startTime": null, "endTime": null}
+      ],
+      "sources": [
+        {"url": "https://hoyo.link/QeZgP0ARF", "kind": "OFFICIAL", "access": "INACCESSIBLE", "evidence": "HoYoverse 공식 단축 링크가 행사 상세로 안내되지만 자동 수집 환경에서는 원문 접근이 제한됐다."},
+        {"url": "https://comicw.net/", "kind": "AGGREGATOR", "access": "ORIGINAL", "evidence": "코믹월드 공식 서브컬처 일정이 호요랜드 2026을 2026-10-02~05 경기도 행사로 안내한다."}
+      ],
+      "banners": [],
+      "warnings": ["입장권·일별 운영시간·부스/프로그램 상세는 HoYoverse 공식 상세 원문 재확인 필요"],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {"kind": "OFFICIAL", "url": "https://hoyo.link/QeZgP0ARF", "status": "PUBLISHED", "note": "HoYoverse 공식 행사 안내"}
+      ],
+      "operationStatus": {"state": "SCHEDULED", "note": "공식 행사 링크와 수도권 행사 일정에서 개최 확인", "sourceUrl": "https://hoyo.link/QeZgP0ARF", "checkedOn": "2026-09-28"}
+    },
+    {
+      "name": "일러스타 페스 14",
+      "subcategory": "COMIC_DOUJIN",
+      "organizer": "스타라이크",
+      "edition": "제14회",
+      "region": "GYEONGGI",
+      "venueName": "킨텍스 제1전시장 4·5홀",
+      "address": "경기도 고양시 일산서구 킨텍스로 217-60",
+      "description": "크리에이터 마켓, 기업 전시, 코스플레이, 버추얼 크리에이터와 공연을 함께 운영하는 종합 서브컬처 행사다.",
+      "admission": null,
+      "subjects": ["동인", "크리에이터마켓", "게임", "코스플레이"],
+      "occurrences": [
+        {"startDate": "2026-10-10", "endDate": "2026-10-11", "startTime": null, "endTime": null}
+      ],
+      "sources": [
+        {"url": "https://illustar.net/", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "공식 홈페이지가 2026-10-10~11, 킨텍스 제1전시장 4·5홀 개최와 행사 배치도·부스 정보 메뉴를 안내한다."}
+      ],
+      "banners": [],
+      "warnings": ["공식 서클 배치번호 공지와 웹 부스정보를 페이지 끝까지 수집해야 함"],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {"kind": "OFFICIAL", "url": "https://illustar.net/", "status": "PUBLISHED", "note": "행사 공식 홈페이지"},
+        {"kind": "PARTICIPANTS", "url": "https://illustar.net/", "status": "PUBLISHED", "note": "공식 부스 정보 및 서클 배치번호 안내"},
+        {"kind": "FLOOR_PLAN", "url": "https://illustar.net/", "status": "PUBLISHED", "note": "공식 행사 배치도 메뉴"}
+      ],
+      "operationStatus": {"state": "SCHEDULED", "note": "공식 홈페이지에 개최 예정으로 게시", "sourceUrl": "https://illustar.net/", "checkedOn": "2026-09-28"}
+    },
+    {
+      "name": "한일축제한마당 2026 in Seoul",
+      "subcategory": "CULTURE",
+      "organizer": "한일축제한마당 2026 in Seoul 실행위원회",
+      "edition": "제22회",
+      "region": "SEOUL",
+      "venueName": "코엑스 D홀",
+      "address": "서울특별시 강남구 영동대로 513",
+      "description": "한일 문화·시민·청소년·지방자치단체 교류와 무대, 홍보·체험·푸드 부스를 운영하는 문화교류 축제다.",
+      "admission": "무료",
+      "subjects": ["한일교류", "문화", "체험", "푸드"],
+      "occurrences": [
+        {"startDate": "2026-10-10", "endDate": "2026-10-10", "startTime": "11:00", "endTime": "18:30"}
+      ],
+      "sources": [
+        {"url": "https://www.coex.co.kr/exhibitions/%ED%95%9C%EC%9D%BC%EC%B6%95%EC%A0%9C%ED%95%9C%EB%A7%88%EB%8B%B9-2026-in-seoul/", "kind": "VENUE", "access": "ORIGINAL", "evidence": "코엑스 공식 상세가 2026-10-10 11:00~18:30, D홀, 무료입장과 지자체·기업·체험·푸드 부스를 안내한다."},
+        {"url": "https://www.kr.emb-japan.go.jp/itpr_ko/event_20260610.html", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "주한일본대사관 공식 공지가 2026-10-10 코엑스 D홀과 실행·운영위원회를 명시한다."}
+      ],
+      "banners": [],
+      "warnings": ["개별 참가 부스 명단은 공식 홈페이지 공개 여부를 추가 확인해야 함"],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {"kind": "OFFICIAL", "url": "https://omatsuri.kr/", "status": "PUBLISHED", "note": "행사 공식 홈페이지"}
+      ],
+      "operationStatus": {"state": "SCHEDULED", "note": "코엑스와 주한일본대사관 공식 안내에서 개최 확인", "sourceUrl": "https://www.coex.co.kr/exhibitions/%ED%95%9C%EC%9D%BC%EC%B6%95%EC%A0%9C%ED%95%9C%EB%A7%88%EB%8B%B9-2026-in-seoul/", "checkedOn": "2026-09-28"}
+    },
+    {
+      "name": "Anime X Game Festival 2026",
+      "subcategory": "ONLY_EVENT",
+      "organizer": "AGF 2026 조직위원회",
+      "edition": "AGF 2026",
+      "region": "GYEONGGI",
+      "venueName": "킨텍스 제1전시장 1·2·3·4·5홀",
+      "address": "경기도 고양시 일산서구 킨텍스로 217-60",
+      "description": "애니메이션, 게임, 버추얼 콘텐츠, 출판과 캐릭터 굿즈 관련 국내외 공식 판권사가 참가하는 종합 서브컬처 행사다.",
+      "admission": null,
+      "subjects": ["애니메이션", "게임", "버추얼", "굿즈"],
+      "occurrences": [
+        {"startDate": "2026-12-04", "endDate": "2026-12-06", "startTime": "09:30", "endTime": "18:00"}
+      ],
+      "sources": [
+        {"url": "https://agfkorea.com/event?idx=5", "kind": "OFFICIAL", "access": "ORIGINAL", "evidence": "AGF 공식 행사정보가 2026-12-04~06 09:30~18:00, 킨텍스 제1전시장 1~5홀과 참가업체 범위를 안내한다."}
+      ],
+      "banners": [],
+      "warnings": ["참가사·배치도 메뉴가 있으므로 공개되는 개별 브랜드와 부스 위치를 페이지 단위로 후속 수집해야 함"],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {"kind": "OFFICIAL", "url": "https://agfkorea.com/event?idx=5", "status": "PUBLISHED", "note": "AGF 2026 공식 행사정보"},
+        {"kind": "PARTICIPANTS", "url": "https://agfkorea.com/event?idx=5", "status": "PUBLISHED", "note": "공식 참가사 안내 메뉴"},
+        {"kind": "FLOOR_PLAN", "url": "https://agfkorea.com/event?idx=5", "status": "PUBLISHED", "note": "공식 행사장 배치도 메뉴"}
+      ],
+      "operationStatus": {"state": "SCHEDULED", "note": "AGF 공식 행사정보에 개최 예정으로 게시", "sourceUrl": "https://agfkorea.com/event?idx=5", "checkedOn": "2026-09-28"}
+    }
+  ]
+}

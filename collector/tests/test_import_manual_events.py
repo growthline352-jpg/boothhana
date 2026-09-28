@@ -21,6 +21,15 @@ class ManualEventImportTests(unittest.TestCase):
         self.assertFalse(batch["webSearchObserved"])
         self.assertEqual(len(batch["result"]["events"]), 41)
 
+    def test_q4_file_builds_explicit_range_batch(self):
+        result = json.loads(
+            (ROOT / "manual-data" / "2026-q4-subculture-official-events.json").read_text(encoding="utf-8")
+        )
+        batch = build_batch(result, None, ["witchform.com"], "2026-10-01", "2026-12-31")
+        self.assertEqual(batch["scope"]["startDate"], "2026-10-01")
+        self.assertEqual(batch["scope"]["endDate"], "2026-12-31")
+        self.assertEqual(len(batch["result"]["events"]), 4)
+
 
 if __name__ == "__main__":
     unittest.main()

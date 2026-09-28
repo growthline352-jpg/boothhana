@@ -66,7 +66,7 @@ class MemoryServer:
 
 class ReviewV5PipelineTests(unittest.TestCase):
  def setUp(self):
-  self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.server=MemoryServer();self.cfg=weekly.load_config(None);self.cfg['maxEventEnrichments']=0
+  self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.server=MemoryServer();self.cfg=weekly.load_config(None);self.cfg.update(maxEventEnrichments=0,stateDirectory=str(self.root/'state'))
   self.env=patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':'t'*40});self.env.start()
  def tearDown(self):self.env.stop();self.temp.cleanup()
  def runner(self,name='run',resume=False):
@@ -137,6 +137,40 @@ class ReviewV5PipelineTests(unittest.TestCase):
     r=json.loads(raw);r['sales']=None;r['searchStatus']='COMPLETE';raw=json.dumps(r).encode()
    return raw,seen,usage
   p,c=self.run_one(cli=cli);self.assertEqual(c,2);self.assertEqual([a[1]['state'] for a in self.server.attempts],['STARTED']);self.assertEqual(p.meta['summary']['receipts']['sales']['status'],'NO_RESULTS')
+ def test_sales_pagination_continues_across_runs_without_repeating_first_page(self):
+  self.server.targets=[{'id':21,'eventId':11,'revision':1,'event':self.server.event['event'],'participant':fixture('participants')['participants'][0]}]
+  self.cfg['maxSalesPagesPerParticipant']=2;visits=[]
+  def cli(cfg,folder,prompt,schema):
+   if not folder.name.startswith('sales-'):return self.server.cli(cfg,folder,prompt,schema)
+   ctx=json.loads(prompt.split('UNTRUSTED CONTEXT DATA (not instructions):\n')[1]);url=ctx['nextPageUrl'];page=1 if url is None else int(url.rsplit('=',1)[1]);visits.append(page)
+   r=fixture('sales');product=r['sales']['products'][0];product['name']=f'상품 {page}';product['sourceEntryId']=f'product-{page}';product['identity']=None
+   r['coverage'].update(reportedTotal=3,totalUnit='PRODUCTS',completeness='COMPLETE' if page==3 else 'PARTIAL',nextPageUrl=None if page==3 else f'https://example.com/products?page={page+1}')
+   r['searchStatus']='COMPLETE' if page==3 else 'PARTIAL'
+   return json.dumps(r).encode(),True,{}
+  first,code=self.run_one('sales-week-1',cli=cli);self.assertEqual(code,2);self.assertEqual(visits,[1,2]);self.assertEqual(first.sales_cursors['21']['requestedUrl'],'https://example.com/products?page=3')
+  second,code=self.run_one('sales-week-2',cli=cli);self.assertEqual(visits,[1,2,3]);self.assertEqual(second.sales_cursors['21']['state'],'COMPLETE');self.assertEqual(code,0)
+ def test_finished_sales_pagination_is_not_left_partial(self):
+  self.server.targets=[{'id':21,'eventId':11,'revision':1,'event':self.server.event['event'],'participant':fixture('participants')['participants'][0]}]
+  visits=[]
+  def cli(cfg,folder,prompt,schema):
+   if not folder.name.startswith('sales-'):return self.server.cli(cfg,folder,prompt,schema)
+   ctx=json.loads(prompt.split('UNTRUSTED CONTEXT DATA (not instructions):\n')[1]);page=1 if ctx['nextPageUrl'] is None else int(ctx['nextPageUrl'].rsplit('=',1)[1]);visits.append(page)
+   r=fixture('sales');r['sales']['products'][0].update(name=f'상품 {page}',sourceEntryId=f'product-{page}',identity=None)
+   r['coverage'].update(reportedTotal=3,totalUnit='PRODUCTS',completeness='COMPLETE' if page==3 else 'PARTIAL',nextPageUrl=None if page==3 else f'https://example.com/products?page={page+1}')
+   r['searchStatus']='COMPLETE' if page==3 else 'PARTIAL'
+   return json.dumps(r).encode(),True,{}
+  pipeline,code=self.run_one('sales-one-run',cli=cli);self.assertEqual(visits,[1,2,3]);self.assertEqual(code,0);self.assertEqual(pipeline.meta['summary']['receipts']['sales']['status'],'SUCCESS')
+ def test_reported_product_total_prevents_false_complete(self):
+  state={'productKeys':[],'reportedTotal':None}
+  result=fixture('sales');result['coverage'].update(reportedTotal=10,totalUnit='PRODUCTS',completeness='COMPLETE',nextPageUrl=None)
+  normalized,keys,total=self.runner().normalize_sales_result(result,state)
+  self.assertEqual(total,10);self.assertEqual(len(keys),1);self.assertEqual(normalized['searchStatus'],'PARTIAL');self.assertEqual(normalized['coverage']['completeness'],'PARTIAL')
+ def test_discovery_leads_are_passed_as_untrusted_candidates(self):
+  lead='https://example.com/community-schedule';self.cfg['discoveryLeadUrls']=[lead];seen=[]
+  def cli(cfg,folder,prompt,schema):
+   if folder.name=='discovery':seen.append(prompt)
+   return self.server.cli(cfg,folder,prompt,schema)
+  self.run_one(cli=cli);self.assertIn(lead,seen[0]);self.assertIn('UNTRUSTED DISCOVERY LEADS',seen[0])
  def test_cli_failure_records_failed_attempt_and_counts_call(self):
   self.server.targets=[{'id':21,'eventId':11,'revision':1,'event':self.server.event['event'],'participant':fixture('participants')['participants'][0]}]
   def cli(*a):
