@@ -19,6 +19,7 @@ import sys
 import tempfile
 import time
 import uuid
+from urllib.parse import urlsplit,urlunsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from rules import parse_result, inspect_result, parse_date, MAX_JSON_BYTES, InvalidResult
 from transport import send_batch, endpoint, DeliveryError
@@ -118,6 +119,35 @@ def audit_search(path: Path) -> tuple[bool,dict]:
             observed=True
         if e.get('type')=='turn.completed': usage=e.get('usage',{})
     return observed,usage
+
+def canonical_audit_url(value: str) -> str:
+    try:
+        parsed=urlsplit(value.strip())
+        if parsed.scheme not in ('http','https') or not parsed.hostname:return ''
+        host=parsed.hostname.lower().rstrip('.')
+        port='' if parsed.port is None or parsed.scheme=='https' and parsed.port==443 or parsed.scheme=='http' and parsed.port==80 else ':'+str(parsed.port)
+        path=parsed.path.rstrip('/') or '/'
+        return urlunsplit((parsed.scheme.lower(),host+port,path,parsed.query,''))
+    except (TypeError,ValueError):return ''
+
+def audit_opened_urls(path: Path) -> list[str]:
+    """Return URLs explicitly opened by completed CLI web actions, not search results."""
+    opened=[]
+    if not path.is_file() or path.stat().st_size>20*1024*1024:return opened
+    for line in path.read_text(encoding='utf-8',errors='replace').splitlines():
+        try:event=json.loads(line)
+        except ValueError:continue
+        item=event.get('item') or {}
+        if event.get('type')!='item.completed' or item.get('type') not in ('web_search','web_search_call'):continue
+        action=item.get('action') or {}
+        action_type=action.get('type') if isinstance(action,dict) else str(action)
+        values=[item.get('query')]
+        if isinstance(action,dict):values.extend(action.get(key) for key in ('url','uri','query'))
+        if action_type=='search':continue
+        for value in values:
+            normalized=canonical_audit_url(value) if isinstance(value,str) else ''
+            if normalized and normalized not in opened:opened.append(normalized)
+    return opened[:500]
 
 def stop_process(p: subprocess.Popen):
     if p.poll() is not None: return

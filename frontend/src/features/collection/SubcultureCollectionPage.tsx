@@ -54,6 +54,7 @@ function ReviewForm({ detail, close, saved, open }: { detail: Detail; close: () 
   const [note, setNote] = useState(detail.reviewNote)
   const [error, setError] = useState('')
   const e = detail.event
+  const sourceCoverage = detail.sourceCoverage ?? []
   const submit = async (state: ReviewState) => {
     if (!submission.begin()) return
     setError('')
@@ -68,6 +69,7 @@ function ReviewForm({ detail, close, saved, open }: { detail: Detail; close: () 
     <p className="collection-copy">{e.description}</p>
     <h3>검토 필요 항목</h3><ul>{detail.validationWarnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul>
     <h3>출처 · CLI가 보고한 확인 수준</h3><div className="collection-source-list">{e.sources.map((source, i) => <article key={i}><External url={source.url}>{source.url}</External><p>{source.kind} · {source.access === 'ORIGINAL' ? '원문 확인 보고' : source.access === 'SEARCH_SNIPPET' ? '검색 요약만 확인' : '접근 불가'}</p><blockquote>{source.evidence}</blockquote></article>)}</div>
+    <h3>출처군 조사 기록</h3>{sourceCoverage.length ? <div className="collection-source-list">{sourceCoverage.map(row => <article key={row.channel}><strong>{row.channel}</strong><p>{row.status} · 검색어 {row.queries.length}개 · 확인 URL {row.checkedUrls.length}개</p>{row.notes && <p>{row.notes}</p>}{row.checkedUrls.map(url => <p key={url}><External url={url}>{url}</External></p>)}</article>)}</div> : <p>이 후보를 수집한 이전 배치에는 출처군 기록이 없습니다.</p>}
     <h3>배너 후보</h3><p>자동 다운로드·GCS 저장·공개 미리보기를 하지 않습니다. 원본 회차와 사용 조건을 먼저 확인하세요.</p>{e.banners.length ? e.banners.map((banner, i) => <article className="collection-banner" key={i}><External url={banner.imageUrl}>이미지 후보 열기</External> · <External url={banner.pageUrl}>게시 페이지 열기</External><p>사용 조건: {banner.rights === 'UNKNOWN' ? '미확인' : '허락 문구가 있다고 보고됨 — 직접 확인 필요'} / 해당 회차: {banner.matchesEdition === true ? '일치한다고 보고됨' : '확인 필요'}</p>{banner.rightsEvidence && <p>{banner.rightsEvidence}</p>}</article>) : <p>이미지 후보 없음</p>}
     {detail.reviewedEvent && <details><summary>이전에 확인한 내용 보존본</summary><pre className="collection-json">{JSON.stringify(detail.reviewedEvent, null, 2)}</pre></details>}
     <label className="field"><span>검토 메모 / 수정이 필요한 사실</span><textarea className="textarea" rows={4} maxLength={2000} disabled={submission.pending} value={note} onChange={event => setNote(event.target.value)} /></label>

@@ -11,7 +11,7 @@ from unittest.mock import patch
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from rules import *
-from run import persist_refreshed_auth, child_environment, codex_command, date_window, audit_search, main, RunError, config
+from run import persist_refreshed_auth, child_environment, codex_command, date_window, audit_search, audit_opened_urls, main, RunError, config
 from transport import endpoint, DeliveryError
 ROOT=Path(__file__).resolve().parents[1]
 SAMPLE=json.loads((ROOT/'examples/sample.json').read_text(encoding='utf-8'))
@@ -100,6 +100,13 @@ class RunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             f=Path(temp)/'a';f.write_text('{"type":"item.started","item":{"type":"web_search"}}\n');self.assertFalse(audit_search(f)[0])
             f.write_text('{"type":"item.completed","item":{"type":"web_search"}}\n');self.assertTrue(audit_search(f)[0])
+    def test_audit_distinguishes_search_from_opened_page(self):
+        with tempfile.TemporaryDirectory() as temp:
+            f=Path(temp)/'a';f.write_text('\n'.join([
+                json.dumps({'type':'item.completed','item':{'type':'web_search','query':'event search','action':{'type':'search'}}}),
+                json.dumps({'type':'item.completed','item':{'type':'web_search','query':'https://Official.Example/event/#top','action':{'type':'other'}}}),
+            ]))
+            self.assertEqual(audit_opened_urls(f),['https://official.example/event'])
     def test_auth_refresh_preserved(self):
         with tempfile.TemporaryDirectory() as temp:
             a=Path(temp)/'auth.json';b=Path(temp)/'refreshed.json'

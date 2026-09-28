@@ -36,10 +36,16 @@ class CollectionPostgresTests {
     }
     private Receipt ingest(Batch b) { return tx.execute(s->service.ingest(b)); }
     @Test void sameBatchRetryDoesNotDuplicate() throws Exception {
-        Batch b=fixture();assertThat(ingest(b)).isEqualTo(ingest(b));
+        Batch b=fixture();Receipt receipt=ingest(b);assertThat(receipt).isEqualTo(ingest(b));assertThat(receipt.candidates()).hasSize(1);
         assertThat(jdbc.queryForObject("select count(*) from subculture_collection_run",Long.class)).isEqualTo(1L);
         assertThat(jdbc.queryForObject("select count(*) from subculture_event_candidate",Long.class)).isEqualTo(1L);
         assertThat(jdbc.queryForObject("select count(*) from subculture_collection_observation",Long.class)).isEqualTo(1L);
+    }
+    @Test void sourceCoverageIsAvailableOnCandidateDetail() throws Exception {
+        Batch original=fixture();var coverage=new SourceCoverage("ORGANIZER_OFFICIAL","CHECKED",List.of("행사 공식"),List.of("https://example.com/event"),"원문 확인");
+        var result=new SearchResult("1","COMPLETE","checked",List.of("행사 공식"),List.of(coverage),original.result().events());
+        Batch batch=new Batch("1",original.runId(),original.startedAt(),original.finishedAt(),original.executionMode(),original.webSearchObserved(),original.scope(),result);
+        Receipt receipt=ingest(batch);assertThat(service.detail(receipt.candidates().getFirst().id()).sourceCoverage()).containsExactly(coverage);
     }
     @Test void repeatedObservationKeepsCandidateButAddsRun() throws Exception {
         Batch b=fixture();ingest(b);Receipt second=ingest(fixture());assertThat(second.unchanged()).isEqualTo(1);

@@ -23,6 +23,10 @@ def missing_reasons(event: dict) -> list[str]:
     links = event.get('discoveryLinks') or []
     if event.get('eventFormat') == 'MULTI_BOOTH' and not any(row.get('kind') == 'PARTICIPANTS' and row.get('url') and row.get('status') == 'PUBLISHED' for row in links):
         reasons.append('MISSING_PARTICIPANT_SOURCE')
+    if event.get('eventFormat') == 'MULTI_BOOTH' and not any(row.get('kind') == 'FLOOR_PLAN' and row.get('url') and row.get('status') == 'PUBLISHED' for row in links):
+        reasons.append('MISSING_FLOORPLAN_SOURCE')
+    if event.get('eventFormat') == 'MULTI_BOOTH' and not any(row.get('kind') == 'SALES' and row.get('url') and row.get('status') == 'PUBLISHED' for row in links):
+        reasons.append('MISSING_SALES_SOURCE')
     if not any(row.get('matchesEdition') is True for row in event.get('banners') or []): reasons.append('MISSING_CURRENT_BANNER')
     return reasons
 

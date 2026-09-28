@@ -31,6 +31,14 @@ public final class CollectionRules {
         require(result.searchStatus()!=null && Set.of("COMPLETE", "PARTIAL", "FAILED").contains(result.searchStatus()), "검색 상태 오류");
         text(result.summary(), 2000, false);
         list(result.queries(), 50); result.queries().forEach(query -> text(query, 300, false));
+        list(result.sourceCoverage(),6);
+        for(SourceCoverage coverage:result.sourceCoverage()) {
+            require(Set.of("VENUE_CALENDAR","ORGANIZER_OFFICIAL","PUBLIC_AGENCY","TICKETING","PARTICIPANT_SOCIAL","COMMUNITY_INDEX").contains(coverage.channel()),"출처군 오류");
+            require(Set.of("CHECKED","NO_RESULTS","PARTIAL","INACCESSIBLE").contains(coverage.status()),"출처군 상태 오류");
+            list(coverage.queries(),20);coverage.queries().forEach(query->text(query,300,false));
+            list(coverage.checkedUrls(),50);coverage.checkedUrls().forEach(CollectionRules::url);
+            text(coverage.notes(),500,false);
+        }
         list(result.events(), 200);
         if (!"FAILED".equals(result.searchStatus())) {
             require(!result.queries().isEmpty(), "실행한 검색어가 없습니다.");
