@@ -172,12 +172,12 @@ class ReviewV5PipelineTests(unittest.TestCase):
    if folder.name=='discovery':seen.append(prompt)
    return self.server.cli(cfg,folder,prompt,schema)
   self.run_one(cli=cli);self.assertIn(lead,seen[0]);self.assertIn('DISCOVERY SOURCE REGISTRY',seen[0]);self.assertIn('COMMUNITY_INDEX',seen[0])
- def test_discovery_event_names_are_passed_as_priority_candidates(self):
+ def test_discovery_event_names_are_independent_candidate_jobs(self):
   self.cfg['discoveryEventNames']=['행사 후보 A','행사 후보 A','행사 후보 B'];seen=[]
   def cli(cfg,folder,prompt,schema):
-   if folder.name=='discovery':seen.append(prompt)
+   if folder.name.startswith('candidate-'):seen.append(prompt)
    return self.server.cli(cfg,folder,prompt,schema)
-  self.run_one(cli=cli);self.assertIn('priorityCandidateNames',seen[0]);self.assertEqual(seen[0].count('행사 후보 A'),1);self.assertIn('행사 후보 B',seen[0])
+  self.run_one(cli=cli);self.assertEqual(len(seen),2);self.assertEqual(sum(prompt.count('행사 후보 A') for prompt in seen),2);self.assertEqual(sum(prompt.count('행사 후보 B') for prompt in seen),2);self.assertFalse(any('행사 후보 A' in prompt and '행사 후보 B' in prompt for prompt in seen))
  def test_community_only_discovery_cannot_claim_complete(self):
   result=fixture('events');result['sourceCoverage']=[{'channel':'COMMUNITY_INDEX','status':'CHECKED','queries':['community calendar'],'checkedUrls':['https://example.com/community'],'notes':'candidate names only'}]
   normalized,issues=weekly.enforce_discovery_coverage(result)
@@ -185,6 +185,9 @@ class ReviewV5PipelineTests(unittest.TestCase):
  def test_all_discovery_channels_with_authoritative_page_can_complete(self):
   result=fixture('events');normalized,issues=weekly.enforce_discovery_coverage(result)
   self.assertEqual(normalized['searchStatus'],'COMPLETE');self.assertEqual(issues,[])
+ def test_checked_url_without_open_audit_is_partial(self):
+  result=fixture('events');normalized,missing=weekly.enforce_opened_url_coverage(result,[])
+  self.assertEqual(normalized['searchStatus'],'PARTIAL');self.assertTrue(missing)
  def test_discovery_coverage_rejects_blocked_checked_url(self):
   result=fixture('events');result['sourceCoverage'][0]['checkedUrls']=['https://witchform.com/event']
   with self.assertRaises(InvalidResult):validate_discovery(result,date(2026,1,1),date(2026,12,31),['witchform.com'])

@@ -11,7 +11,7 @@ def event(name='행사'):
 
 class DataQualityTests(unittest.TestCase):
  def test_missing_fields_are_explicit(self):
-  self.assertEqual(missing_reasons(event()),['MISSING_ADDRESS','MISSING_ADMISSION','MISSING_HOURS','MISSING_PARTICIPANT_SOURCE','MISSING_CURRENT_BANNER'])
+  self.assertEqual(missing_reasons(event()),['MISSING_ADDRESS','MISSING_ADMISSION','MISSING_HOURS','MISSING_PARTICIPANT_SOURCE','MISSING_FLOORPLAN_SOURCE','MISSING_SALES_SOURCE','MISSING_CURRENT_BANNER'])
  def test_merge_only_fills_gaps_and_preserves_identity(self):
   old=event();new=event();new.update(address='서울 주소',admission='무료',venueName='다른 장소')
   new['occurrences'][0].update(startTime='10:00',endTime='18:00')

@@ -28,7 +28,9 @@
 
 발견 단계는 전시장 일정·주최사 공식 채널·공공기관·예매처·참가자 공개 공지·커뮤니티 일정표를 서로 다른 출처군으로 조사합니다. 커뮤니티 일정표는 행사명 후보를 찾는 용도로만 쓰며 공식 원문으로 재확인합니다. 각 출처군의 검색어와 확인 URL을 `sourceCoverage`로 남기므로 한 목록만 읽고 전체 조사를 완료했다고 처리할 수 없습니다.
 
-발견된 행사와 기존 DB 행사는 행사명·회차·개최일을 포함한 한 건짜리 컨텍스트로 CLI에 차례대로 전달됩니다. CLI는 DB 행사 스펙의 주소·입장정보·운영시간·회차 포스터와 후속 참가부스·배치도·상품 조사 링크를 보완합니다. 이후 참가부스와 상품 단계가 행사별로 분리 실행되므로 행사 하나의 대량 상품 때문에 다른 행사 발견이 중단되지 않습니다.
+`discoveryEventNames`와 `--event-name` 후보는 월간 발견 프롬프트에 합치지 않습니다. 각 이름을 `event-name-queue-v1.json`에 등록하고 이름별 독립 CLI 작업으로 조사합니다. 작업마다 `FOUND / NOT_FOUND / PARTIAL / FAILED`, 시도 횟수, 다음 재시도 시각, 확인한 출처군과 연결된 DB 행사 ID를 보존합니다. 공식·주최사·전시장 원문 URL이 `event.sources`, `sourceCoverage.checkedUrls`, CLI의 완료된 페이지 열기 감사 기록에 함께 확인된 결과만 DB 수집함에 전달합니다. 최대 처리량 밖 후보는 삭제되지 않고 다음 실행에 남습니다.
+
+발견된 행사와 기존 DB 행사는 행사명·회차·개최일을 포함한 한 건짜리 컨텍스트로 CLI에 차례대로 전달됩니다. CLI는 DB 행사 스펙의 주소·입장정보·운영시간·회차 포스터와 후속 참가부스·배치도·상품 조사 링크를 보완합니다. 행사명 큐에는 연결된 행사의 `PARTICIPANTS / FLOORPLAN / SALES` 단계 상태와 실패 사유도 기록됩니다. 실제 페이지 커서·재시도 시점은 기존 서버 참가부스 진행표, 배치도 watch, 판매 페이지 커서가 담당하므로 한 단계 실패가 다른 행사의 진행을 막지 않습니다.
 
 누락 정보 보완 단계는 주소·입장정보·운영시간·참가부스 출처·해당 회차 포스터가 비어 있는 공개 행사를 다시 조사합니다. 한 회차에 전부 처리하지 않고 `maxEventEnrichments`만큼 순환하며, 미시도 행사를 먼저 고르고 그다음 마지막 시도가 오래된 행사부터 고릅니다. 공식 미발표 항목은 추측하지 않고 다음 회차에 다시 확인합니다.
 
@@ -160,7 +162,12 @@ config 값:
 | maxImages | 100 | 사용 승인된 이미지 저장 시도 수 |
 | maxEventEnrichments | 50 | 실행당 누락 행사 재조사 수. 0이면 보완 단계 중지 |
 | priorityEventKeywords | [] | 동률일 때 먼저 조사할 행사명 키워드. 이후에도 오래된 시도 순환 유지 |
-| discoveryEventNames | [] | 사람이 찾았거나 외부 목록에서 추출한 행사명 후보. CLI가 각 이름을 공식 원문으로 재검증 |
+| discoveryEventNames | [] | 사람이 찾았거나 외부 목록에서 추출한 행사명 후보. 이름별 영속 작업으로 등록되어 공식 원문을 재검증 |
+| maxEventNameJobs | 50 | 실행당 독립 행사명 조사 작업 수. 나머지는 큐에 보존 |
+| eventNameMaxAttempts | 8 | 행사명 후보별 최대 자동 조사 횟수 |
+| eventNameRetryHours | 24 | PARTIAL 후보 재시도 간격 |
+| eventNameNotFoundRetryHours | 168 | NOT_FOUND 후보 재확인 간격 |
+| eventNameFailureRetryHours | 6 | CLI/검증 실패 후보 재시도 간격 |
 | discoveryLeadUrls | [] | 누락 후보용 일정 인덱스. 공식 원문으로 재검증하며 리드 자체는 사실 근거로 저장하지 않음 |
 | discoverySourceSeeds | {} | 전시장·주최사·공공기관·예매처·참가자·커뮤니티 출처군별 추가 시작 URL |
 | imageAllowedHosts | [] | 외부 이미지 허용 호스트. 기본 다운로드불가 |
@@ -188,6 +195,7 @@ CLI에는 이미지 URL/게시 원문/보고된 조건만 찾게 합니다. 저�
 
 - pipeline.json: run ID, 기간, 상태, 건수·문제.
 - `stateDirectory/event-enrichment-attempts.json`: 행사별 마지막 보완 시도일·상태. 다음 실행의 순환 우선순위에 사용.
+- `stateDirectory/event-name-queue-v1.json`: 입력한 행사명별 조사 결과, 공식 출처군, DB 행사 ID, 참가부스·배치도·상품 단계와 재시도 상태.
 - jobs/*/payload.json + receipt.json: 보내려던 요청/서버 수신확인. 재시도는 같은ID/내용 유지.
 - codex.jsonl, codex.stderr.log: CLI 도구사용 감사·오류.
 - validation-rejections.json: 제외한 참가 데이터 사유.

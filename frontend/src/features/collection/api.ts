@@ -3,6 +3,7 @@ export type ReviewState = 'PENDING' | 'REVIEWED' | 'EXCLUDED'
 export type Subcategory = 'COMIC_DOUJIN' | 'DOLL' | 'ONLY_EVENT' | 'BIRTHDAY_CAFE' | 'STATIONERY_GOODS' | 'WINE' | 'WEDDING' | 'LIFESTYLE' | 'DESIGN' | 'BUSINESS' | 'WALK' | 'LIGHT' | 'MUSIC' | 'FOOD' | 'CULTURE'
 export interface Occurrence { startDate: string; endDate: string; startTime: string | null; endTime: string | null }
 export interface EventSource { url: string; kind: string; access: string; evidence: string }
+export interface SourceCoverage { channel: string; status: string; queries: string[]; checkedUrls: string[]; notes: string }
 export interface Banner { imageUrl: string; pageUrl: string; rights: string; rightsEvidence: string | null; matchesEdition: boolean | null }
 export interface OperationStatus { state: 'UNKNOWN'|'SCHEDULED'|'CANCELED'|'POSTPONED'|'RESCHEDULED'; note: string|null; sourceUrl: string|null; checkedOn: string|null }
 export interface EventData {
@@ -19,10 +20,12 @@ export interface Candidate {
 export interface Detail {
   id: number; revision: number; reviewState: ReviewState; event: EventData; reviewedEvent: EventData | null
   validationWarnings: string[]; reviewNote: string; possibleDuplicateOf: number | null; firstSeenAt: string; lastSeenAt: string
+  sourceCoverage?: SourceCoverage[]
 }
 export interface Receipt {
   runId: string; status: string; inserted: number; changed: number; unchanged: number; rejected: number
   rejections: { index: number; name: string; reasons: string[] }[]
+  candidates?: { index: number; id: number; name: string }[]
 }
 export interface Run {
   id: string; status: string; executionMode: string; startedAt: string; finishedAt: string

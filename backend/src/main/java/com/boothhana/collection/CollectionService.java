@@ -48,7 +48,7 @@ public class CollectionService {
             """,runId,hash,batch.executionMode(),batch.webSearchObserved(),json.writeValueAsString(batch.scope()),request,
             batch.result().summary(),Timestamp.from(Instant.parse(batch.startedAt())),Timestamp.from(Instant.parse(batch.finishedAt())));
         int inserted=0,changed=0,unchanged=0;
-        List<Rejection> rejects=new ArrayList<>();Set<String> seen=new HashSet<>();
+        List<Rejection> rejects=new ArrayList<>();List<CandidateRef> candidateRefs=new ArrayList<>();Set<String> seen=new HashSet<>();
         List<EventData> events=batch.result().events();
         for(int index=0;index<events.size();index++) {
             EventData event=events.get(index);CollectionRules.Check check=CollectionRules.event(event,batch.scope());
@@ -95,13 +95,14 @@ public class CollectionService {
                 insert into subculture_collection_observation(run_id,candidate_id,payload_json,warnings_json)
                 values(?,?,cast(? as jsonb),cast(? as jsonb))
                 """,runId,id,payload,warnings);
+            candidateRefs.add(new CandidateRef(index,id,event.name()));
         }
         String status;
         if("FAILED".equals(batch.result().searchStatus())) status="FAILED";
         else if(events.isEmpty()) status="PARTIAL".equals(batch.result().searchStatus())?"PARTIAL":"NO_RESULTS";
         else if(inserted+changed+unchanged==0) status="REJECTED_ALL";
         else status=(!rejects.isEmpty()||"PARTIAL".equals(batch.result().searchStatus()))?"PARTIAL":"SUCCESS";
-        Receipt receipt=new Receipt(runId.toString(),status,inserted,changed,unchanged,rejects.size(),rejects);
+        Receipt receipt=new Receipt(runId.toString(),status,inserted,changed,unchanged,rejects.size(),rejects,candidateRefs);
         jdbc.update("update subculture_collection_run set status=?,receipt_json=cast(? as jsonb) where id=?",status,json.writeValueAsString(receipt),runId);
         return receipt;
     }
@@ -117,7 +118,8 @@ public class CollectionService {
         return new PageData<>(items,page,size,total==null?0:total);
     }
     public CandidateDetail detail(long id) {
-        List<CandidateDetail> values=jdbc.query("select * from subculture_event_candidate where id=?",(rs,row)->detail(rs),id);
+        List<SourceCoverage> coverage=latestCoverage(id);
+        List<CandidateDetail> values=jdbc.query("select * from subculture_event_candidate where id=?",(rs,row)->detail(rs,coverage),id);
         if(values.isEmpty()) throw ApiException.notFound("수집 후보를 찾을 수 없습니다.");return values.getFirst();
     }
     @Transactional
@@ -146,11 +148,23 @@ public class CollectionService {
             rs.getString("starts_on"),rs.getString("ends_on"),rs.getString("review_state"),rs.getLong("revision"),
             rs.getObject("possible_duplicate_of",Long.class),instant(rs,"last_seen_at"));
     }
-    private CandidateDetail detail(ResultSet rs) throws SQLException {
+    private List<SourceCoverage> latestCoverage(long id) {
+        var rows=jdbc.queryForList("""
+            select r.request_json #> '{result,sourceCoverage}' coverage
+            from subculture_collection_observation o join subculture_collection_run r on r.id=o.run_id
+            where o.candidate_id=? and jsonb_typeof(r.request_json #> '{result,sourceCoverage}')='array'
+              and jsonb_array_length(r.request_json #> '{result,sourceCoverage}')>0
+            order by o.observed_at desc limit 1
+            """,id);
+        if(rows.isEmpty()||rows.getFirst().get("coverage")==null)return List.of();
+        SourceCoverage[] values=json.readValue(rows.getFirst().get("coverage").toString(),SourceCoverage[].class);
+        return values==null?List.of():List.of(values);
+    }
+    private CandidateDetail detail(ResultSet rs,List<SourceCoverage> coverage) throws SQLException {
         String reviewed=rs.getString("reviewed_payload_json");
         return new CandidateDetail(rs.getLong("id"),rs.getLong("revision"),rs.getString("review_state"),json.readValue(rs.getString("payload_json"),EventData.class),
             reviewed==null?null:json.readValue(reviewed,EventData.class),Arrays.asList(json.readValue(rs.getString("warnings_json"),String[].class)),
-            rs.getString("review_note"),rs.getObject("possible_duplicate_of",Long.class),instant(rs,"first_seen_at"),instant(rs,"last_seen_at"));
+            rs.getString("review_note"),rs.getObject("possible_duplicate_of",Long.class),instant(rs,"first_seen_at"),instant(rs,"last_seen_at"),coverage);
     }
     private static String instant(ResultSet rs,String column) throws SQLException { return rs.getTimestamp(column).toInstant().toString(); }
     private static void paging(int page,int size) { if(page<0||page>100000||size<1||size>100) throw ApiException.badRequest("page/size 범위 오류"); }

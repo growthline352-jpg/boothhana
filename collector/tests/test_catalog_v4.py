@@ -118,7 +118,8 @@ class ScheduleTests(unittest.TestCase):
    weekly.write_json(source/'pipeline.json',{'runnerVersion':5,'scope':scope,'dryRun':True})
    (source/'jobs'/'discovery').mkdir(parents=True)
    weekly.write_json(source/'jobs'/'discovery'/'validated-result.json',fixture('events'))
-   weekly.write_json(source/'jobs'/'discovery'/'audit.json',{'webSearchObserved':True,'usage':{'input_tokens':1}})
+   opened=[url for row in fixture('events')['sourceCoverage'] for url in row['checkedUrls']]
+   weekly.write_json(source/'jobs'/'discovery'/'audit.json',{'webSearchObserved':True,'usage':{'input_tokens':1},'openedUrls':opened})
    weekly.seed_discovery_checkpoint(source,target,scope,False)
    self.assertEqual(fixture('events'),json.loads((target/'jobs'/'discovery'/'validated-result.json').read_text(encoding='utf-8')))
    self.assertTrue(json.loads((target/'jobs'/'discovery'/'audit.json').read_text(encoding='utf-8'))['webSearchObserved'])

@@ -15,6 +15,7 @@ from floorplan_geometry import tiles,merge_tiles,EXTRACTOR
 from floorplan_contract import validate_payload,input_fingerprint,result_fingerprint
 from interactive_floorplan import build_schematic,is_interactive_source,merge_interactive_candidates
 from rules import public_url
+from event_queue import EventNameQueue
 BASE='/api/internal/subculture/v4/floorplans'
 
 class FloorplanBatch:
@@ -22,6 +23,8 @@ class FloorplanBatch:
         self.event_file=event_file;self.cfg=cfg;self.folder=folder;folder.mkdir(parents=True,exist_ok=True);self.dry=dry;self.fixtures=fixtures
         self.api=api if api is not None else (None if dry else Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']))
         self.started=time.monotonic();self.calls=0;self.issues=[];self.events=[]
+        queue_path=(folder/'event-name-queue-v1.json') if dry else Path(cfg['stateDirectory']).expanduser().resolve()/'event-name-queue-v1.json'
+        self.event_queue=EventNameQueue(queue_path)
         self.meta_path=folder/'floorplans.json';self.meta=json.loads(self.meta_path.read_text(encoding='utf-8')) if self.meta_path.exists() else {'version':8,'runId':str(uuid.uuid4()),'dryRun':dry,'startedAt':utcnow(),'state':'RUNNING'}
         if self.meta['version']!=8 or self.meta['dryRun']!=dry:raise RunError('Different checkpoint version/mode')
         self.lease=self.meta['runId'];write_json(self.meta_path,self.meta)
@@ -126,6 +129,7 @@ class FloorplanBatch:
         if not isinstance(targets,list) or any(not isinstance(t,dict) or type(t.get('eventId')) is not int or not isinstance(t.get('event'),dict) for t in targets):raise RunError('Expected [{eventId: number, event: object}]')
         for target in targets[:self.cfg['floorplanMaxEvents']]:
             event=target['eventId'];errors=[];entry={'eventId':event,'sources':[]};self.events.append(entry);claimed=False
+            if self.api:self.event_queue.mark_stage(event,'FLOORPLAN','RUNNING')
             try:
                 self.budget()
                 if self.api:self.request('POST',f'/events/{event}/claim',{'leaseId':self.lease});claimed=True
@@ -156,6 +160,11 @@ class FloorplanBatch:
                 if claimed:
                     try:self.request('POST',f'/events/{event}/finish',{'leaseId':self.lease,'message':'; '.join(errors)[:1000]})
                     except Exception as e:self.issues.append(f'event-{event}: finish {type(e).__name__}')
+                if self.api:
+                    discovery=entry.get('discovery')
+                    completed=discovery=='FOUND' and bool(entry.get('sources')) and not errors and not entry.get('waitingPermission')
+                    failed=discovery=='ERROR' and not entry.get('sources')
+                    self.event_queue.mark_stage(event,'FLOORPLAN','SUCCESS' if completed else 'FAILED' if failed else 'PARTIAL',errors)
                 self.save()
         self.save(finished=True);print(json.dumps({'state':self.meta['state'],'cliCalls':self.calls,'events':len(self.events),'issues':self.issues,'folder':str(self.folder)},ensure_ascii=False,indent=2));return 2 if self.issues else 0
     def save(self,finished=False):
