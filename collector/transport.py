@@ -13,8 +13,15 @@ def endpoint(base: str) -> str:
     u=urlsplit(base)
     if u.username or u.password or not u.hostname or u.query or u.fragment:
         raise DeliveryError('apiBaseUrl에는 인증정보/query/fragment를 넣지 마세요.')
-    if u.scheme!='https' and not (u.scheme=='http' and u.hostname in ('localhost','127.0.0.1','::1')):
-        raise DeliveryError('운영 API는 HTTPS가 필요합니다. HTTP는 localhost만 허용합니다.')
+    local_http=(
+        u.scheme=='http'
+        and (
+            u.hostname in ('localhost','127.0.0.1','::1')
+            or (u.hostname=='boothhana-api' and u.port==8080)
+        )
+    )
+    if u.scheme!='https' and not local_http:
+        raise DeliveryError('운영 API는 HTTPS가 필요합니다. HTTP는 localhost와 격리된 Docker API만 허용합니다.')
     if u.path not in ('','/'):
         raise DeliveryError('apiBaseUrl은 API 경로를 제외한 origin으로 입력하세요.')
     return base.rstrip('/')+'/api/internal/subculture/batches'
