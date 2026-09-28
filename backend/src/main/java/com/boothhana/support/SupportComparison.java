@@ -51,7 +51,7 @@ public final class SupportComparison {
                     } else if (price) {
                         out.put("products", products(data.get("productRows"),true));
                     } else {
-                        out.put("participant", pick(participant,"registrationName","kind","members","subjects"));
+                        out.put("participant", pick(participant,"registrationName","kind","members","subjects","description"));
                         out.put("locations",locations(participant.get("locations")));
                         out.put("sales",pick(map(data.get("sales")),"summary","evidenceScope","categories","subjects","salesMethod"));
                         out.put("products",products(data.get("productRows"),false));

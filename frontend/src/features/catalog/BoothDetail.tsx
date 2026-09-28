@@ -71,7 +71,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
   ]).slice(0, 6)
   const occurrence = event.occurrences.find(item => item.startDate <= day && item.endDate >= day)
   const officialLinks = unique(row.participant.officialLinks)
-  const summary = row.sales?.summary || (topics.length ? `${topics.slice(0, 3).join(' · ')} 관련 부스` : '공개된 부스 소개를 확인하고 있어요.')
+  const summary = row.participant.description?.trim() || row.sales?.summary || (topics.length ? `${topics.slice(0, 3).join(' · ')} 관련 부스` : '공개된 부스 소개를 확인하고 있어요.')
   const products = eventProducts(row)
   const unlinkedProductImages = assets.filter(asset => asset.type === 'PRODUCT' && asset.productId === null)
   const [productQuery, setProductQuery] = useState('')

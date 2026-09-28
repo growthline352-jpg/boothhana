@@ -50,13 +50,15 @@ class MemoryServer:
      counts=(len(data['result']['participants']),0,0,0);status='FAILED' if failed else 'SUCCESS' if done else 'PARTIAL';ids=[21]
     else:
      counts=(int(data['result']['sales'] is not None),0,0,0);status='FAILED' if data['result']['searchStatus']=='FAILED' else 'SUCCESS' if counts[0] else 'NO_RESULTS';ids=[]
-   r={'runId':rid,'status':status,**dict(zip(('inserted','changed','unchanged','rejected'),counts)),'participantIds':ids,'issues':[]};self.receipts[rid]=copy.deepcopy(r)
+   r={'runId':rid,'status':status,**dict(zip(('inserted','changed','unchanged','rejected'),counts)),'participantIds':ids,'issues':[]}
+   if path.endswith('/batches') and status in ('SUCCESS','PARTIAL') and sum(counts[:3]):r['candidates']=[{'id':11}]
+   self.receipts[rid]=copy.deepcopy(r)
    if self.fail_response and path.endswith('/stages'):
     self.fail_response=False;raise weekly.RunError('simulated response lost after commit')
    return r
   return {}
  def cli(self,cfg,folder,prompt,schema):
-  if folder.name=='discovery':r=fixture('events')
+  if folder.name=='discovery' or folder.name.startswith(('candidate-','enrichment-')):r=fixture('events')
   elif folder.name.startswith('participants-'):
    ctx=json.loads(prompt.split('UNTRUSTED CONTEXT DATA (not instructions):\n')[1]);url=ctx['nextPageUrl'];page=int(url.rsplit('=',1)[1]);self.visits.append(page)
    r=fixture('participants');r['participants'][0]['sourceEntryId']=f'page-{page}'
@@ -67,7 +69,7 @@ class MemoryServer:
 
 class ReviewV5PipelineTests(unittest.TestCase):
  def setUp(self):
-  self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.server=MemoryServer();self.cfg=weekly.load_config(None);self.cfg.update(maxEventEnrichments=0,stateDirectory=str(self.root/'state'))
+  self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.server=MemoryServer();self.cfg=weekly.load_config(None);self.cfg.update(maxEventEnrichments=0,stateDirectory=str(self.root/'state'),maxFestivalDiscoveryJobs=0,maxSubcultureDiscoveryJobs=0)
   self.env=patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':'t'*40});self.env.start()
  def tearDown(self):self.env.stop();self.temp.cleanup()
  def runner(self,name='run',resume=False):
@@ -103,8 +105,12 @@ class ReviewV5PipelineTests(unittest.TestCase):
   self.server.discovery_status='PARTIAL';self.server.discovery_counts=(0,1,0,1)
   p,c=self.run_one();self.assertEqual(c,2);self.assertEqual(p.stats['discovery'],1);self.assertEqual(p.meta['summary']['receipts']['discovery']['changed'],1)
  def test_no_results_is_not_failed(self):
-  self.server.discovery_status='NO_RESULTS';self.server.discovery_counts=(0,0,0,0)
-  p,c=self.run_one();self.assertEqual(c,0);self.assertEqual(p.meta['summary']['receipts']['discovery']['status'],'NO_RESULTS')
+  def cli(cfg,folder,prompt,schema):
+   raw,seen,usage=self.server.cli(cfg,folder,prompt,schema)
+   if folder.name=='discovery':
+    value=json.loads(raw);value['events']=[];value['searchStatus']='COMPLETE';raw=json.dumps(value).encode()
+   return raw,seen,usage
+  p,c=self.run_one(cli=cli);self.assertEqual(c,0);self.assertEqual(p.stats['discoveryLeads'],0);self.assertNotIn('discovery',p.meta['summary']['receipts'])
  def test_invalid_receipt_cannot_report_success(self):
   p=self.runner()
   with self.assertRaises(weekly.RunError):p.record_receipt('discovery',{'status':'SUCCESS','inserted':True,'changed':0,'unchanged':0,'rejected':0})
@@ -166,6 +172,11 @@ class ReviewV5PipelineTests(unittest.TestCase):
   result=fixture('sales');result['coverage'].update(reportedTotal=10,totalUnit='PRODUCTS',completeness='COMPLETE',nextPageUrl=None)
   normalized,keys,total=self.runner().normalize_sales_result(result,state)
   self.assertEqual(total,10);self.assertEqual(len(keys),1);self.assertEqual(normalized['searchStatus'],'PARTIAL');self.assertEqual(normalized['coverage']['completeness'],'PARTIAL')
+ def test_display_price_is_canonicalized_without_guessing(self):
+  self.assertEqual(weekly.Pipeline.normalize_price_amount('6,900원','KRW'),'6900')
+  self.assertEqual(weekly.Pipeline.normalize_price_amount('₩ 12,500','KRW'),'12500')
+  self.assertEqual(weekly.Pipeline.normalize_price_amount('$12.50','USD'),'12.50')
+  self.assertEqual(weekly.Pipeline.normalize_price_amount('6,900~7,900원','KRW'),'6,900~7,900원')
  def test_discovery_leads_are_passed_as_community_candidates(self):
   lead='https://example.com/community-schedule';self.cfg['discoveryLeadUrls']=[lead];seen=[]
   def cli(cfg,folder,prompt,schema):
@@ -175,9 +186,20 @@ class ReviewV5PipelineTests(unittest.TestCase):
  def test_discovery_event_names_are_independent_candidate_jobs(self):
   self.cfg['discoveryEventNames']=['행사 후보 A','행사 후보 A','행사 후보 B'];seen=[]
   def cli(cfg,folder,prompt,schema):
-   if folder.name.startswith('candidate-'):seen.append(prompt)
+   if folder.name.startswith('candidate-') and ('행사 후보 A' in prompt or '행사 후보 B' in prompt):seen.append(prompt)
    return self.server.cli(cfg,folder,prompt,schema)
   self.run_one(cli=cli);self.assertEqual(len(seen),2);self.assertEqual(sum(prompt.count('행사 후보 A') for prompt in seen),2);self.assertEqual(sum(prompt.count('행사 후보 B') for prompt in seen),2);self.assertFalse(any('행사 후보 A' in prompt and '행사 후보 B' in prompt for prompt in seen))
+ def test_broad_discovery_is_queued_then_researched_as_an_independent_job(self):
+  seen=[]
+  def cli(cfg,folder,prompt,schema):
+   seen.append(folder.name);return self.server.cli(cfg,folder,prompt,schema)
+  pipeline,_=self.run_one(cli=cli)
+  self.assertEqual(seen[0],'discovery');self.assertTrue(seen[1].startswith('candidate-'))
+  self.assertEqual(pipeline.stats['discoveryLeads'],1)
+  batches=[data for _,path,data in self.server.calls if path.endswith('/batches')]
+  self.assertEqual(len(batches),1);self.assertEqual(len(batches[0]['result']['events']),1)
+  lead=json.loads((pipeline.folder/'discovery-leads.json').read_text(encoding='utf-8'))
+  self.assertEqual(lead['accepted'],1);self.assertEqual(lead['queued'],1)
  def test_community_only_discovery_cannot_claim_complete(self):
   result=fixture('events');result['sourceCoverage']=[{'channel':'COMMUNITY_INDEX','status':'CHECKED','queries':['community calendar'],'checkedUrls':['https://example.com/community'],'notes':'candidate names only'}]
   normalized,issues=weekly.enforce_discovery_coverage(result)
@@ -196,7 +218,7 @@ class ReviewV5PipelineTests(unittest.TestCase):
   def cli(*a):
    if a[1].name.startswith('sales-'):raise weekly.RunError('CLI failed')
    return self.server.cli(*a)
-  p,c=self.run_one(cli=cli);self.assertEqual(c,2);self.assertEqual([a[1]['state'] for a in self.server.attempts],['STARTED','FAILED']);self.assertEqual(p.stats['cliCalls'],3)
+  p,c=self.run_one(cli=cli);self.assertEqual(c,2);self.assertEqual([a[1]['state'] for a in self.server.attempts],['STARTED','FAILED']);self.assertEqual(p.stats['cliCalls'],4)
  def test_recorded_failed_stage_not_failed_twice(self):
   self.server.targets=[{'id':21,'eventId':11,'revision':1,'event':self.server.event['event'],'participant':fixture('participants')['participants'][0]}]
   def cli(*a):

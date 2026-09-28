@@ -51,6 +51,7 @@ class VisitStatusTests(unittest.TestCase):
             schema=json.loads((ROOT/'schemas'/name).read_text());before=deepcopy(schema);out=output_schema_for_cli(schema)
             with self.subTest(name=name):
                 self.assertIn('operationStatus',out['properties']['events']['items']['required']);self.assertEqual(schema,before)
+                if 'sourceCoverage' in out['properties']:self.assertIn('sourceCoverage',out['required'])
     def test_participant_and_floorplan_cli_schemas_unchanged(self):
         for name in ['participants.schema.json','floorplan-analysis.schema.json']:
             path=ROOT/'schemas'/name

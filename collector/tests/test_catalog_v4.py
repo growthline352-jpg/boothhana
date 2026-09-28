@@ -31,6 +31,18 @@ class CatalogRulesTests(unittest.TestCase):
  def test_location_on_closed_day_rejected(self):
   self.p['participants'][0]['locations'][0].update(startDate='2026-10-12',endDate='2026-10-12')
   with self.assertRaises(ValueError):validate_stage(self.p,'PARTICIPANTS',self.event,[])
+ def test_location_may_span_adjacent_occurrence_rows(self):
+  self.event['occurrences']=[
+   {'startDate':'2026-10-10','endDate':'2026-10-11','startTime':'11:00','endTime':'19:00'},
+   {'startDate':'2026-10-12','endDate':'2026-10-12','startTime':'10:00','endTime':'18:00'}]
+  self.p['participants'][0]['locations'][0].update(startDate='2026-10-10',endDate='2026-10-12')
+  validate_stage(self.p,'PARTICIPANTS',self.event,[])
+ def test_location_cannot_span_a_closed_gap(self):
+  self.event['occurrences']=[
+   {'startDate':'2026-10-10','endDate':'2026-10-10','startTime':'11:00','endTime':'19:00'},
+   {'startDate':'2026-10-12','endDate':'2026-10-12','startTime':'10:00','endTime':'18:00'}]
+  self.p['participants'][0]['locations'][0].update(startDate='2026-10-10',endDate='2026-10-12')
+  with self.assertRaises(ValueError):validate_stage(self.p,'PARTICIPANTS',self.event,[])
  def test_reversed_location_dates(self):
   self.p['participants'][0]['locations'][0].update(startDate='2026-10-11',endDate='2026-10-10')
   with self.assertRaises(ValueError):validate_stage(self.p,'PARTICIPANTS',self.event,[])
@@ -158,10 +170,12 @@ class PipelineTests(unittest.TestCase):
       if b['eventId']!=11:return self.reply({},409)
       if b['stage']=='SALES' and b['participantId']!=21:return self.reply({},409)
       if b['stage']=='PARTICIPANTS' and hasattr(outer,'progress'):outer.progress[0].update(state='COMPLETE',revision=outer.progress[0]['revision']+1,pageIndex=outer.progress[0]['pageIndex']+1)
-     return self.reply({'runId':b['runId'],'status':'SUCCESS','inserted':1,'changed':0,'unchanged':0,'rejected':0,'participantIds':[21]})
+     receipt={'runId':b['runId'],'status':'SUCCESS','inserted':1,'changed':0,'unchanged':0,'rejected':0,'participantIds':[21]}
+     if self.path.endswith('/batches'):receipt['candidates']=[{'id':11}]
+     return self.reply(receipt)
     return self.reply({})
   self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler);self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
-  self.cfg=weekly.load_config(None);self.cfg.update(apiBaseUrl=f'http://127.0.0.1:{self.server.server_port}',stateDirectory=str(self.root))
+  self.cfg=weekly.load_config(None);self.cfg.update(apiBaseUrl=f'http://127.0.0.1:{self.server.server_port}',stateDirectory=str(self.root),maxFestivalDiscoveryJobs=0,maxSubcultureDiscoveryJobs=0)
   self.scope={'region':'SEOUL','timezone':'Asia/Seoul','startDate':'2026-10-01','endDate':'2026-10-31'}
   self.env=patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':'t'*40});self.env.start()
  def tearDown(self):self.env.stop();self.server.shutdown();self.server.server_close();self.tmp.cleanup()
@@ -169,11 +183,11 @@ class PipelineTests(unittest.TestCase):
   name='events' if schema.name.startswith('event') else 'participants' if folder.name.startswith('participants') else 'sales'
   return (FIX/(name+'.json')).read_bytes(),True,{}
  def test_enrichment_and_three_catalog_stages_save_parent_ids(self):
-  with patch.object(weekly,'execute_search',side_effect=self.cli) as cli:self.assertEqual(weekly.Pipeline(self.cfg,self.root/'run',self.scope).run(),0);self.assertEqual(cli.call_count,4)
+  with patch.object(weekly,'execute_search',side_effect=self.cli) as cli:self.assertEqual(weekly.Pipeline(self.cfg,self.root/'run',self.scope).run(),0);self.assertEqual(cli.call_count,5)
   stages=[b for p,b in self.calls if p.endswith('/stages')];self.assertEqual([b['stage'] for b in stages],['PARTICIPANTS','SALES']);self.assertEqual(stages[1]['participantId'],21)
  def test_success_resume_does_not_research_or_duplicate(self):
   with patch.object(weekly,'execute_search',side_effect=self.cli) as cli:
-   first=weekly.Pipeline(self.cfg,self.root/'run',self.scope);first.run();count=len(self.calls);second=weekly.Pipeline(self.cfg,self.root/'run',self.scope,resume=True);second.run();self.assertEqual(cli.call_count,4);self.assertEqual(len(self.calls),count+1)
+    first=weekly.Pipeline(self.cfg,self.root/'run',self.scope);first.run();count=len(self.calls);second=weekly.Pipeline(self.cfg,self.root/'run',self.scope,resume=True);second.run();self.assertEqual(cli.call_count,5);self.assertEqual(len(self.calls),count+1)
  def test_budget_stops_with_partial_not_success(self):
   self.cfg['maxCliCalls']=1
   with patch.object(weekly,'execute_search',side_effect=self.cli):self.assertEqual(weekly.Pipeline(self.cfg,self.root/'run',self.scope).run(),2)
@@ -184,6 +198,17 @@ class PipelineTests(unittest.TestCase):
  def test_dry_run_has_no_api_or_real_cli(self):
   with patch.object(weekly,'execute_search',side_effect=AssertionError('real CLI forbidden')):self.assertEqual(weekly.Pipeline(self.cfg,self.root/'dry',self.scope,True,FIX).run(),0)
   self.assertFalse(self.calls)
+ def test_only_event_names_dry_run_reaches_participants_and_sales_without_broad_discovery(self):
+  self.cfg['discoveryEventNames']=[fixture('events')['events'][0]['name']]
+  folder=self.root/'targeted'
+  with patch.object(weekly,'execute_search',side_effect=AssertionError('fixture mode must not run CLI')):
+   pipeline=weekly.Pipeline(self.cfg,folder,self.scope,True,FIX);self.assertEqual(pipeline.run(only_event_names=True),0)
+   resumed=weekly.Pipeline(self.cfg,folder,self.scope,True,FIX,resume=True);self.assertEqual(resumed.run(),0)
+  self.assertFalse((folder/'jobs'/'discovery').exists())
+  self.assertTrue(any(key.startswith('candidate-') for key in pipeline.receipts))
+  self.assertTrue(any(key.startswith('participants-') for key in pipeline.receipts))
+  self.assertTrue(any(key.startswith('sales-') for key in pipeline.receipts))
+  self.assertTrue(json.loads((folder/'pipeline.json').read_text(encoding='utf-8'))['onlyEventNames'])
  def test_missing_search_audit_cannot_save_data(self):
   with patch.object(weekly,'execute_search',side_effect=lambda *a:(self.cli(*a)[0],False,{})):self.assertEqual(weekly.Pipeline(self.cfg,self.root/'run',self.scope).run(),2)
   self.assertFalse([p for p,b in self.calls if p.endswith('/stages') or p.endswith('/batches')])

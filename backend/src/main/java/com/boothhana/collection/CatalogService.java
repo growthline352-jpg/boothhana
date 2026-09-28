@@ -353,7 +353,7 @@ public class CatalogService {
     }
     @Transactional public ParticipantView editParticipant(long id,EditInput input) {
         var row=one("select * from subculture_participant where id=? for update",id);
-        checkEdit(row,input,Set.of("registrationName","kind","members","locations","subjects","officialLinks","warnings"),Participant.class);
+        checkEdit(row,input,Set.of("registrationName","kind","members","locations","subjects","description","officialLinks","warnings"),Participant.class);
         Participant data=effective(after(row,input),Participant.class);
         try {CatalogRules.participant(data);CatalogRules.locationDates(data,event(num(row,"event_id")));} catch(RuntimeException e) {throw ApiException.badRequest("참가정보 수정값 오류");}
         review("subculture_participant","id",id,row,input,data);

@@ -26,12 +26,34 @@ def utcnow() -> str:
 
 
 def normalize_name(value: str) -> str:
-    return re.sub(r"\s+", "", unicodedata.normalize("NFKC", value)).casefold()
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    # Official titles commonly add decorative quotes, middots, ampersands, or
+    # spacing that should not turn the same event into a different candidate.
+    return "".join(character for character in normalized if character.isalnum())
 
 
 def candidate_key(name: str, scope: dict) -> str:
     years = scope["startDate"][:4] + ":" + scope["endDate"][:4]
     material = "\x1f".join((normalize_name(name), years))
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+def discovered_candidate_key(event: dict, scope: dict) -> str:
+    """Keep separate editions/dates of a recurring event as separate jobs."""
+    identity = {
+        "edition": event.get("edition"),
+        "organizer": event.get("organizer"),
+        "venueName": event.get("venueName"),
+        "occurrences": [
+            {"startDate": row.get("startDate"), "endDate": row.get("endDate")}
+            for row in event.get("occurrences") or []
+        ],
+    }
+    material = "\x1f".join((
+        normalize_name(event.get("name") or ""),
+        scope["startDate"][:4] + ":" + scope["endDate"][:4],
+        json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+    ))
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
 
@@ -76,37 +98,64 @@ class EventNameQueue:
         self.value["updatedAt"] = utcnow()
         _write(self.path, self.value)
 
-    def enqueue(self, names: list[str], scope: dict) -> list[dict]:
-        queued = []
-        for raw in names:
-            name = raw.strip()
-            key = candidate_key(name, scope)
-            item = self.candidates.get(key)
-            if item is None:
-                item = {
-                    "key": key,
-                    "name": name,
-                    "scope": dict(scope),
-                    "state": "PENDING",
-                    "attempts": 0,
-                    "createdAt": utcnow(),
-                    "lastAttemptAt": None,
-                    "nextRetryAt": None,
-                    "eventId": None,
-                    "matchedEventName": None,
-                    "sourceCoverage": [],
-                    "issues": [],
-                    "stages": {stage: {"state": "PENDING", "attempts": 0, "lastAttemptAt": None, "issues": []} for stage in STAGE_NAMES},
-                }
-                self.candidates[key] = item
-            elif item.get("state") != "FOUND":
+    def _enqueue(self, name: str, scope: dict, key: str, origin: str, lead: dict | None = None) -> dict:
+        item = self.candidates.get(key)
+        if item is None:
+            item = {
+                "key": key,
+                "name": name,
+                "scope": dict(scope),
+                "state": "PENDING",
+                "attempts": 0,
+                "createdAt": utcnow(),
+                "lastAttemptAt": None,
+                "nextRetryAt": None,
+                "eventId": None,
+                "matchedEventName": None,
+                "sourceCoverage": [],
+                "issues": [],
+                "origins": [origin],
+                "discoveryLead": lead,
+                "stages": {stage: {"state": "PENDING", "attempts": 0, "lastAttemptAt": None, "issues": []} for stage in STAGE_NAMES},
+            }
+            self.candidates[key] = item
+        else:
+            origins = item.setdefault("origins", [])
+            if origin not in origins:
+                origins.append(origin)
+            if lead:
+                item["discoveryLead"] = lead
+            if item.get("state") != "FOUND":
                 item["scope"] = {
                     **item["scope"],
                     "startDate": min(item["scope"]["startDate"], scope["startDate"]),
                     "endDate": max(item["scope"]["endDate"], scope["endDate"]),
                 }
-            queued.append(item)
+        return item
+
+    def enqueue(self, names: list[str], scope: dict) -> list[dict]:
+        queued = []
+        for raw in names:
+            name = raw.strip()
+            key = candidate_key(name, scope)
+            queued.append(self._enqueue(name, scope, key, "EXPLICIT"))
         if names:
+            self.save()
+        return queued
+
+    def enqueue_discovered(self, events: list[dict], scope: dict) -> list[dict]:
+        """Persist broad-discovery output as leads; it is not trusted event data yet."""
+        queued = []
+        for event in events:
+            name = str(event.get("name") or "").strip()
+            if not name:
+                continue
+            lead = {
+                key: event.get(key)
+                for key in ("name", "edition", "organizer", "venueName", "region", "occurrences", "sources")
+            }
+            queued.append(self._enqueue(name, scope, discovered_candidate_key(event, scope), "MONTHLY_DISCOVERY", lead))
+        if queued:
             self.save()
         return queued
 

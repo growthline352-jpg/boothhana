@@ -18,6 +18,7 @@
     {
       "sourceEntryId": "test-circle-1",
       "registrationName": "[TEST] 공동 A + B",
+      "description": "두 참가자가 함께 운영하는 테스트용 공동 부스입니다.",
       "kind": "JOINT",
       "members": [
         {

@@ -41,6 +41,10 @@ public final class CatalogIdentity {
     private static String idKey(String type,String origin,String id) { return sha(type+":id\u001f"+origin+"\u001f"+id); }
     private static List<String> keys(String type,Identity i,String legacy,String name,String detail,List<Source> sources) {
         LinkedHashSet<String> keys=new LinkedHashSet<>();
+        // Participant matching is already scoped to one event. Keep one conservative
+        // normalized-name alias so the official roster and a social booth-info post
+        // can converge without treating a booth number as identity.
+        if(type.equals("participant")) keys.add(sha("participant:name\u001f"+normalize(name)));
         if(i!=null&&i.entryId()!=null) keys.add(idKey(type,i.sourceSystem(),i.entryId()));
         if(i!=null&&i.detailUrl()!=null) keys.add(sha(type+":url\u001f"+canonical(i.detailUrl())));
         if(detail!=null) keys.add(sha(type+":url\u001f"+canonical(detail)));
