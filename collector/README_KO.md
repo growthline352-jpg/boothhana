@@ -84,6 +84,10 @@ Codex 실행 파일이 PATH에 없다면 `codexExecutable`에 절대 경로를 �
 # 실제 검색과 스테이징 저장
 .\.venv\Scripts\python.exe weekly.py --config config.local.json --month 2026-10
 
+# 행사명 후보를 직접 넘겨 공식 원문 확인부터 시작
+.\.venv\Scripts\python.exe weekly.py --config config.local.json --month 2026-10 `
+  --event-name "행사명 A" --event-name "행사명 B"
+
 # 같은 기간의 검증된 dry-run 발견 결과를 실제 DB에 재사용
 .\.venv\Scripts\python.exe weekly.py --config config.local.json --month 2026-10 --seed-checkpoint 'C:/Users/me/.boothhana-collector/weekly-v18/<dry-run-folder>'
 
@@ -91,7 +95,7 @@ Codex 실행 파일이 PATH에 없다면 `codexExecutable`에 절대 경로를 �
 .\.venv\Scripts\python.exe weekly.py --config config.local.json --scheduled
 ```
 
-가상 fixture는 dry-run에서만 허용하며 실제 서비스 DB로 전송할 수 없습니다. 기간 지정은 `--month YYYY-MM` 또는 `--start YYYY-MM-DD --end YYYY-MM-DD` 중 하나입니다. `--seed-checkpoint`는 동일 기간·v5 감사 메타데이터·완료된 웹 검색 기록이 있는 체크포인트만 허용하며 임의 JSON을 우회 수집하지 않습니다.
+가상 fixture는 dry-run에서만 허용하며 실제 서비스 DB로 전송할 수 없습니다. 기간 지정은 `--month YYYY-MM` 또는 `--start YYYY-MM-DD --end YYYY-MM-DD` 중 하나입니다. `--event-name`은 반복해서 쓸 수 있으며 이름만 신뢰해 저장하지 않고 같은 발견·공식 원문 검증·DB 스펙 변환을 거칩니다. `--seed-checkpoint`는 동일 기간·v5 감사 메타데이터·완료된 웹 검색 기록이 있는 체크포인트만 허용하며 임의 JSON을 우회 수집하지 않습니다.
 
 공식 일정표를 사람이 대조해 보강한 이벤트 JSON은 별도 수동 배치로 검증·수입할 수 있습니다. 수동 수입은 CLI 웹 검색으로 위장하지 않으며, 운영 공개 전에 동일한 관리자 검토를 거칩니다.
 

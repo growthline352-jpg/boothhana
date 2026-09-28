@@ -464,12 +464,17 @@ class Pipeline:
         return 2 if self.issues else 0
 
 def main(argv=None):
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',type=Path);p.add_argument('--month');p.add_argument('--start');p.add_argument('--end');p.add_argument('--scheduled',action='store_true');p.add_argument('--dry-run',action='store_true');p.add_argument('--fixtures',type=Path);p.add_argument('--resume',type=Path);p.add_argument('--seed-checkpoint',type=Path);p.add_argument('--skip-discovery',action='store_true')
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',type=Path);p.add_argument('--month');p.add_argument('--start');p.add_argument('--end');p.add_argument('--event-name',action='append',default=[]);p.add_argument('--scheduled',action='store_true');p.add_argument('--dry-run',action='store_true');p.add_argument('--fixtures',type=Path);p.add_argument('--resume',type=Path);p.add_argument('--seed-checkpoint',type=Path);p.add_argument('--skip-discovery',action='store_true')
     args=p.parse_args(argv)
     if args.fixtures and not args.dry_run:raise RunError('Fixtures are allowed only with --dry-run; never stored to service DB')
     if args.resume and (args.month or args.start or args.end):raise RunError('Resume preserves the original period')
+    if args.resume and args.event_name:raise RunError('Resume preserves the original event-name candidates')
     if args.seed_checkpoint and (args.resume or args.scheduled or args.fixtures):raise RunError('Seed checkpoint requires a new, explicit live date range')
-    cfg=load_config(args.config);start,end=date_window(args.month,args.start,args.end)
+    cfg=load_config(args.config)
+    names=list(dict.fromkeys([*cfg['discoveryEventNames'],*(name.strip() for name in args.event_name)]))
+    if len(names)>200 or any(not name or len(name)>200 for name in names):raise RunError('event-name format')
+    cfg['discoveryEventNames']=names
+    start,end=date_window(args.month,args.start,args.end)
     if args.resume:
         previous=json.loads((args.resume/'pipeline.json').read_text(encoding='utf-8'))
         if previous.get('scope',{}).get('region')!='SEOUL_GYEONGGI':
