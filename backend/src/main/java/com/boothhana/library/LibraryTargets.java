@@ -95,7 +95,8 @@ public class LibraryTargets {
     public Resolved project(Target t,Map<String,Object> row){var e=object(row.get("live_event"));var p=object(row.get("live_participant"));var s=object(row.get("live_sales"));var product=object(row.get("live_product"));
         if(e.isEmpty()||(!"EVENT".equals(t.type())&&p.isEmpty())||("PRODUCT".equals(t.type())&&product.isEmpty()))return new Resolved(t,false,null);
         String title="EVENT".equals(t.type())?text(e,"name"):"PARTICIPANT".equals(t.type())?text(p,"registrationName"):text(product,"name");
-        String summary="EVENT".equals(t.type())?text(e,"description"):"PARTICIPANT".equals(t.type())?text(s,"summary"):text(product,"summary");
+        String summary="EVENT".equals(t.type())?text(e,"description"):"PARTICIPANT".equals(t.type())
+            ?(!text(p,"description").isBlank()?text(p,"description"):text(s,"summary")):text(product,"summary");
         Set<String> tags=new LinkedHashSet<>(strings(e.get("subjects")));tags.addAll(strings(p.get("subjects")));tags.addAll(strings(s.get("categories")));tags.addAll(strings(s.get("subjects")));tags.addAll(strings(product.get("categories")));tags.addAll(strings(product.get("subjects")));
         for(var member:objects(p.get("members"))){tags.add(text(member,"name"));tags.addAll(strings(member.get("aliases")));}
         var memory=new Memory(title,text(e,"name"),text(p,"registrationName"),summary.length()>1200?summary.substring(0,1200):summary,tags.stream().filter(x->!x.isBlank()).limit(100).toList());

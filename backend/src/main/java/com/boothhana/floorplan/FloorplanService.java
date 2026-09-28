@@ -30,6 +30,25 @@ public class FloorplanService {
  private static UUID uuid(String text){try{return UUID.fromString(text);}catch(RuntimeException e){throw ApiException.badRequest("올바른 작업 UUID가 필요합니다.");}}
  private void lease(long id,String token){event(id,true);var r=one("select * from subculture_floorplan_watch where event_id=? for update",id);if(Boolean.TRUE.equals(r.get("disabled"))||!uuid(token).equals(r.get("lease_id"))||r.get("lease_until")==null||((Timestamp)r.get("lease_until")).toInstant().isBefore(Instant.now()))throw ApiException.conflict("배치도 작업 권한이 만료되었습니다.");db.update("update subculture_floorplan_watch set lease_until=now()+interval '25 minutes' where event_id=?",id);}
  private List<String> eventDates(EventData e){List<String> days=new ArrayList<>();for(var o:e.occurrences()){LocalDate end=LocalDate.parse(o.endDate());for(LocalDate d=LocalDate.parse(o.startDate());!d.isAfter(end);d=d.plusDays(1)){if(days.size()>366)break;days.add(d.toString());}}return days;}
+ private List<Map<String,Object>> floorplanHints(long id,EventData event){Map<String,List<Place>> grouped=new LinkedHashMap<>();List<String> eventDays=eventDates(event);
+  // A map URL remains useful as a discovery seed even when the booth number is
+  // still UNKNOWN, so hints are read from every collected location. Mapping itself
+  // continues to use only ASSIGNED locations through roster().
+  for(var row:db.queryForList("select * from subculture_participant where event_id=? and review_state<>'EXCLUDED' order by id",id)){
+   CatalogModels.Participant participant=effective(row,CatalogModels.Participant.class);
+   for(CatalogModels.Location location:participant.locations())if(location.floorPlanUrl()!=null&&!location.floorPlanUrl().isBlank()){
+    List<String> dates=new ArrayList<>();if(location.startDate()!=null&&location.endDate()!=null){for(LocalDate d=LocalDate.parse(location.startDate()),end=LocalDate.parse(location.endDate());!d.isAfter(end)&&dates.size()<367;d=d.plusDays(1))dates.add(d.toString());}else dates.addAll(eventDays);
+    grouped.computeIfAbsent(location.floorPlanUrl(),k->new ArrayList<>()).add(new Place(location.code(),location.hall(),location.zone(),dates,location.floorPlanUrl()));
+   }
+  }
+  List<Map<String,Object>> out=new ArrayList<>();for(var entry:grouped.entrySet()){
+   List<Place> places=entry.getValue();Set<String> halls=new TreeSet<>(),zones=new TreeSet<>(),dates=new TreeSet<>();
+   for(Place p:places){if(p.hall()!=null&&!p.hall().isBlank())halls.add(p.hall());if(p.zone()!=null&&!p.zone().isBlank())zones.add(p.zone());dates.addAll(p.dates());}
+   Map<String,Object> hint=new LinkedHashMap<>();hint.put("url",entry.getKey());hint.put("hall",halls.size()==1?halls.iterator().next():null);hint.put("zone",zones.size()==1?zones.iterator().next():null);
+   hint.put("dates",dates.isEmpty()?eventDates(event):List.copyOf(dates));hint.put("title",event.name()+" 배치도");hint.put("evidence","참가부스 위치 데이터에 연결된 배치도 URL. 공식 원문을 다시 확인해야 함.");out.add(hint);
+   if(out.size()==20)break;
+  }return out;
+ }
  private PlanScope verifiedScope(PlanScope s,EventData e){FloorplanRules.scope(s);Set<String> days=new HashSet<>(eventDates(e));if(!days.containsAll(s.dates()))throw ApiException.badRequest("배치도 적용 날짜가 행사 운영일과 다릅니다.");return s;}
  private String scopeKey(long asset,PlanScope s){return CollectionRules.sha(FloorplanRules.scopeIdentity(asset,s));}
 
@@ -40,14 +59,23 @@ public class FloorplanService {
   var rows=db.queryForList("""
    select e.*,w.last_checked_at,w.next_check_at,w.last_status from subculture_event_candidate e
    join subculture_floorplan_watch w on w.event_id=e.id
-   where e.review_state<>'EXCLUDED' and not w.disabled and (w.next_check_at<=now() or (? and w.last_checked_at<now()-interval '1 day'))
+   where e.review_state<>'EXCLUDED' and not w.disabled and (
+      w.next_check_at<=now() or (? and w.last_checked_at<now()-interval '1 day')
+      or exists(select 1 from jsonb_array_elements(coalesce((e.payload_json||e.overrides_json)->'discoveryLinks','[]'::jsonb)) link
+        where link->>'kind'='FLOOR_PLAN' and nullif(link->>'url','') is not null
+        and not coalesce(w.result_json->'checkedUrls','[]'::jsonb) @> jsonb_build_array(to_jsonb(link->>'url')))
+      or exists(select 1 from subculture_participant p
+        cross join lateral jsonb_array_elements(coalesce((p.payload_json||p.overrides_json)->'locations','[]'::jsonb)) location
+        where p.event_id=e.id and p.review_state<>'EXCLUDED' and nullif(location->>'floorPlanUrl','') is not null
+        and not coalesce(w.result_json->'checkedUrls','[]'::jsonb) @> jsonb_build_array(to_jsonb(location->>'floorPlanUrl')))
+    )
     and (w.lease_until is null or w.lease_until<now())
     and exists(select 1 from jsonb_array_elements((e.payload_json||e.overrides_json)->'occurrences') o
       where (o->>'endDate')::date >= (now() at time zone 'Asia/Seoul')::date
       and (o->>'startDate')::date <= (now() at time zone 'Asia/Seoul')::date + ?)
    order by w.next_check_at,e.id limit ?
    """,imminent,imminent?14:90,limit);
-  return rows.stream().map(r->{Map<String,Object> out=new LinkedHashMap<>();out.put("eventId",num(r,"id"));out.put("event",effective(r,EventData.class));out.put("status",r.get("last_status"));out.put("nextCheckAt",stamp(r.get("next_check_at")));return out;}).toList();
+  return rows.stream().map(r->{Map<String,Object> out=new LinkedHashMap<>();long id=num(r,"id");EventData data=effective(r,EventData.class);out.put("eventId",id);out.put("event",data);out.put("floorplanHints",floorplanHints(id,data));out.put("status",r.get("last_status"));out.put("nextCheckAt",stamp(r.get("next_check_at")));return out;}).toList();
  }
  @Transactional public Map<String,Object> claim(long id,Claim c){event(id,true);watch(id);UUID token=uuid(c.leaseId());int n=db.update("update subculture_floorplan_watch set lease_id=?,lease_until=now()+interval '25 minutes' where event_id=? and not disabled and (lease_until is null or lease_until<now() or lease_id=?)",token,id,token);if(n!=1)throw ApiException.conflict("다른 배치도 작업이 실행 중입니다.");return Map.of("leaseId",token.toString());}
  @Transactional public Map<String,Object> heartbeat(long id,Claim c){lease(id,c.leaseId());return Map.of("leaseId",c.leaseId());}

@@ -1,0 +1,17 @@
+{
+  "apiBaseUrl": "http://localhost:8080",
+  "stateDirectory": "~/.boothhana-collector-smoke",
+  "timeoutSeconds": 900,
+  "maxEvents": 1,
+  "maxParticipantPages": 1,
+  "maxSales": 1,
+  "maxSalesPagesPerParticipant": 1,
+  "maxCliCalls": 4,
+  "maxRuntimeMinutes": 60,
+  "maxEventNameJobs": 1,
+  "maxFestivalDiscoveryJobs": 0,
+  "maxSubcultureDiscoveryJobs": 0,
+  "maxEventEnrichments": 0,
+  "maxXRecentPages": 0,
+  "downloadApprovedImages": false
+}

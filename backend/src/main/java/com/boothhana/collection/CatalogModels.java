@@ -12,12 +12,18 @@ public final class CatalogModels {
     public record Image(String type, String imageUrl, String pageUrl, String rightsEvidence, String caption) {}
     public record Identity(String sourceSystem, String entryId, String detailUrl) {}
     public record Participant(String sourceEntryId, String registrationName, String kind, List<Member> members,
-        List<Location> locations, List<String> subjects, List<String> officialLinks, List<Source> sources,
+        List<Location> locations, List<String> subjects, String description, List<String> officialLinks, List<Source> sources,
         List<Image> images, List<String> warnings, Identity identity) {
         public Participant(String sourceEntryId,String registrationName,String kind,List<Member> members,
-                List<Location> locations,List<String> subjects,List<String> officialLinks,List<Source> sources,
+                List<Location> locations,List<String> subjects,String description,List<String> officialLinks,List<Source> sources,
                 List<Image> images,List<String> warnings) {
-            this(sourceEntryId,registrationName,kind,members,locations,subjects,officialLinks,sources,images,warnings,null);
+            this(sourceEntryId,registrationName,kind,members,locations,subjects,description,officialLinks,sources,images,warnings,null);
+        }
+        /** Read legacy snapshots that predate a dedicated participant description. */
+        public Participant(String sourceEntryId,String registrationName,String kind,List<Member> members,
+                List<Location> locations,List<String> subjects,List<String> officialLinks,List<Source> sources,
+                List<Image> images,List<String> warnings,Identity identity) {
+            this(sourceEntryId,registrationName,kind,members,locations,subjects,null,officialLinks,sources,images,warnings,identity);
         }
     }
     public record Price(String amount, String currency, String checkedOn, String note) {}

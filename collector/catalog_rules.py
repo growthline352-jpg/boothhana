@@ -2,6 +2,7 @@
 from __future__ import annotations
 from pathlib import Path
 import json,re
+from datetime import timedelta
 from urllib.parse import urlsplit
 from jsonschema import Draft202012Validator
 from rules import public_url,check_event,parse_date,MAX_JSON_BYTES,InvalidResult
@@ -46,7 +47,12 @@ def check_participant(p: dict,event: dict,blocked: list[str]):
         if bool(loc['startDate'])!=bool(loc['endDate']): raise InvalidResult('Location date pair required')
         if loc['startDate']:
             a,b=parse_date(loc['startDate']),parse_date(loc['endDate'])
-            if a>b or not any(parse_date(o['startDate'])<=a<=b<=parse_date(o['endDate']) for o in event['occurrences']): raise InvalidResult('Location outside actual event dates')
+            covered=[]
+            day=a
+            while day<=b:
+                covered.append(any(parse_date(o['startDate'])<=day<=parse_date(o['endDate']) for o in event['occurrences']))
+                day+=timedelta(days=1)
+            if a>b or not all(covered): raise InvalidResult('Location outside actual event dates')
         if loc['floorPlanUrl']: allowed_source(loc['floorPlanUrl'],blocked)
 
 def check_sales(s: dict,blocked: list[str]):

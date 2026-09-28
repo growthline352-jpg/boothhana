@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "1",
+  "festival": {
+    "officialIndexes": [
+      {
+        "name": "서울시 FUN SEOUL",
+        "type": "OFFICIAL_INDEX",
+        "cadenceDays": 7,
+        "seeds": ["https://festival.seoul.go.kr/"],
+        "queryTemplates": ["FUN SEOUL {year}년 {month}월 축제 서울"]
+      },
+      {
+        "name": "한국관광공사 대한민국 구석구석",
+        "type": "PUBLIC_DATA",
+        "cadenceDays": 7,
+        "seeds": ["https://korean.visitkorea.or.kr/"],
+        "queryTemplates": ["site:korean.visitkorea.or.kr {year} {month} 서울 경기도 축제"]
+      },
+      {
+        "name": "문화공공데이터 지역축제",
+        "type": "PUBLIC_DATA",
+        "cadenceDays": 14,
+        "seeds": ["https://www.culture.go.kr/data/"],
+        "queryTemplates": ["site:culture.go.kr {year} {month} 서울 경기 지역축제"]
+      },
+      {
+        "name": "서울 열린데이터 문화행사",
+        "type": "PUBLIC_DATA",
+        "cadenceDays": 14,
+        "seeds": ["https://data.seoul.go.kr/"],
+        "queryTemplates": ["site:data.seoul.go.kr 문화행사 축제 {year} {month}"]
+      },
+      {
+        "name": "경기관광공사·경기문화재단",
+        "type": "PUBLIC_AGENCY",
+        "cadenceDays": 7,
+        "seeds": ["https://ggtour.or.kr/", "https://www.ggcf.kr/"],
+        "queryTemplates": ["경기관광공사 경기문화재단 {year} {month} 축제 행사"]
+      },
+      {
+        "name": "서울 공공시설 축제",
+        "type": "PUBLIC_FACILITY",
+        "cadenceDays": 7,
+        "seeds": ["https://hangang.seoul.go.kr/", "https://parks.seoul.go.kr/"],
+        "queryTemplates": ["site:seoul.go.kr {year} {month} 한강 공원 전통시장 축제"]
+      }
+    ],
+    "localAuthorityQueryTemplates": [
+      "{authority}청 공식 {year}년 {month}월 축제 행사",
+      "{authority} 문화재단 관광재단 {year} {month} 축제",
+      "site:go.kr {authority} {start_date} {end_date} 축제 부스 모집 교통통제"
+    ],
+    "seoulDistricts": [
+      "종로구", "중구", "용산구", "성동구", "광진구", "동대문구", "중랑구", "성북구", "강북구", "도봉구",
+      "노원구", "은평구", "서대문구", "마포구", "양천구", "강서구", "구로구", "금천구", "영등포구", "동작구",
+      "관악구", "서초구", "강남구", "송파구", "강동구"
+    ],
+    "gyeonggiMunicipalities": [
+      "수원시", "용인시", "고양시", "화성시", "성남시", "부천시", "남양주시", "안산시", "평택시", "안양시",
+      "시흥시", "파주시", "김포시", "의정부시", "광주시", "하남시", "광명시", "군포시", "양주시", "오산시",
+      "이천시", "안성시", "구리시", "의왕시", "포천시", "양평군", "여주시", "동두천시", "과천시", "가평군", "연천군"
+    ]
+  },
+  "subculture": {
+    "searchGroups": [
+      {
+        "name": "온리전",
+        "xQuery": "온리전 -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com 온리전 after:{published_since}", "온리전 서울 경기 after:{published_since}"]
+      },
+      {
+        "name": "생일카페",
+        "xQuery": "(생일카페 OR 생카) -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com (생일카페 OR 생카) after:{published_since}", "(생일카페 OR 생카) 서울 경기 after:{published_since}"]
+      },
+      {
+        "name": "팝업 / 콜라보 카페",
+        "xQuery": "(팝업 OR 콜라보카페 OR \"콜라보 카페\") -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com (팝업 OR 콜라보카페 OR \"콜라보 카페\") after:{published_since}", "(팝업 OR 콜라보카페 OR \"콜라보 카페\") 서울 경기 after:{published_since}"]
+      },
+      {
+        "name": "부스 모집 / 부스 인포",
+        "xQuery": "(\"부스 모집\" OR \"부스 인포\" OR 부스인포) -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com (\"부스 모집\" OR \"부스 인포\" OR 부스인포) after:{published_since}", "(\"부스 모집\" OR \"부스 인포\" OR 부스인포) 서울 경기 after:{published_since}"]
+      },
+      {
+        "name": "현장수령 / 선입금",
+        "xQuery": "(현장수령 OR 선입금) -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com (현장수령 OR 선입금) 행사 after:{published_since}", "(현장수령 OR 선입금) 행사 서울 경기 after:{published_since}"]
+      },
+      {
+        "name": "행사 / 전시 / 굿즈전",
+        "xQuery": "(행사 OR 전시 OR 굿즈전) (서울 OR 경기 OR 수원 OR 일산) -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com (행사 OR 전시 OR 굿즈전) (서울 OR 경기 OR 수원 OR 일산) after:{published_since}", "(행사 OR 전시 OR 굿즈전) (서브컬처 OR 캐릭터 OR 굿즈) 서울 경기 after:{published_since}"]
+      }
+    ]
+  }
+}

@@ -151,7 +151,10 @@ public class CatalogService {
             for(var banner:e.banners()) { media.register(id,null,null,new Image("BANNER",banner.imageUrl(),banner.pageUrl(),banner.rightsEvidence(),e.name()));count++; }
             for(var link:e.discoveryLinks()) {
                 if("FLOOR_PLAN".equals(link.kind()) && link.url()!=null && java.net.URI.create(link.url()).getPath().toLowerCase(java.util.Locale.ROOT).matches(".*\\.(png|jpe?g|webp|gif)$")) {
-                    media.register(id,null,null,new Image("FLOOR_PLAN",link.url(),e.sources().getFirst().url(),null,Objects.toString(link.note(),"배치도")));count++;
+                    // Use the direct image itself as the source page until discovery finds a
+                    // richer official post. This keeps the floorplan worker's later observation
+                    // idempotent instead of creating a second asset for the same image.
+                    media.register(id,null,null,new Image("FLOOR_PLAN",link.url(),link.url(),null,Objects.toString(link.note(),"배치도")));count++;
                 }
             }
         }
@@ -353,7 +356,7 @@ public class CatalogService {
     }
     @Transactional public ParticipantView editParticipant(long id,EditInput input) {
         var row=one("select * from subculture_participant where id=? for update",id);
-        checkEdit(row,input,Set.of("registrationName","kind","members","locations","subjects","officialLinks","warnings"),Participant.class);
+        checkEdit(row,input,Set.of("registrationName","kind","members","locations","subjects","description","officialLinks","warnings"),Participant.class);
         Participant data=effective(after(row,input),Participant.class);
         try {CatalogRules.participant(data);CatalogRules.locationDates(data,event(num(row,"event_id")));} catch(RuntimeException e) {throw ApiException.badRequest("참가정보 수정값 오류");}
         review("subculture_participant","id",id,row,input,data);

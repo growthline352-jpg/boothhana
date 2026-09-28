@@ -101,6 +101,13 @@
             "type": "string",
             "maxLength": 255
           },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -351,6 +358,7 @@
         "required": [
           "sourceEntryId",
           "registrationName",
+          "description",
           "kind",
           "members",
           "locations",

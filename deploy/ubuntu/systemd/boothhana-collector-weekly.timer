@@ -1,0 +1,12 @@
+[Unit]
+Description=Run BoothHana weekly collector Sunday 03:00 Asia/Seoul
+
+[Timer]
+OnCalendar=Sun *-*-* 03:00:00 Asia/Seoul
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=5min
+Unit=boothhana-collector-weekly.service
+
+[Install]
+WantedBy=timers.target

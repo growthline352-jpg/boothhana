@@ -1,0 +1,13 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.log
+.env
+config.local.json
+runtime
+output
+smoke-runs
+finalize_integrated_events.py
+fix_festival_banners.py

@@ -18,7 +18,7 @@ export function BoothContent({row,assets,day='',hall='',onMap,shareUrl,eventNoti
     <LocationText locations={locations}/>
     {eventNotice&&<p className="visit-important-note">{eventNotice}</p>}
     {state!=='confirmed'&&<p className="visit-warning">{state==='other'?'선택한 날짜·전시관에는 이 부스의 참가 위치가 등록되어 있지 않아요.':'선택한 날짜·전시관의 참가 여부를 아직 확인하지 못했어요.'}</p>}
-    <p className="catalog-summary">{row.sales?.summary||topics.join(' · ')||'공개된 부스 소개를 확인하고 있어요.'}</p>
+    <p className="catalog-summary">{row.participant.description?.trim()||row.sales?.summary||topics.join(' · ')||'공개된 부스 소개를 확인하고 있어요.'}</p>
     {topics.length>0&&<div className="booth-detail-tags">{topics.map(topic=><span key={topic}>{topic}</span>)}</div>}
     <div className="row-actions">
       {eventId&&<SaveButton target={{type:'PARTICIPANT',eventId,id:row.id,participantId:row.id}} day={day} hall={hall}/>}

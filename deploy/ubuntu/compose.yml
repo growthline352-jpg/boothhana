@@ -10,6 +10,9 @@ services:
     environment:
       PORT: "8080"
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/gcs-service-account.json
+      # Collector-only credentials must not leak into the API process through .env.
+      CODEX_API_KEY: ""
+      X_BEARER_TOKEN: ""
     expose:
       - "8080"
     volumes:
@@ -22,6 +25,48 @@ services:
       driver: json-file
       options:
         max-size: 10m
+        max-file: "5"
+    networks:
+      - app
+
+  boothhana-collector:
+    profiles:
+      - jobs
+    build:
+      context: ../../collector
+      dockerfile: Dockerfile
+      args:
+        CODEX_VERSION: ${CODEX_VERSION:-0.144.1}
+    environment:
+      BOOTH_COLLECTOR_TOKEN: ${BOOTH_COLLECTOR_TOKEN:?BOOTH_COLLECTOR_TOKEN must be set}
+      X_BEARER_TOKEN: ${X_BEARER_TOKEN:-}
+      TZ: Asia/Seoul
+    command:
+      - python
+      - run_scheduled.py
+      - --config
+      - /etc/boothhana/collector.json
+    volumes:
+      - ./collector.config.json:/etc/boothhana/collector.json:ro
+      - collector_state:/var/lib/boothhana-collector/state
+      - collector_auth:/var/lib/boothhana-collector/codex
+    depends_on:
+      boothhana-api:
+        condition: service_healthy
+    restart: "no"
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    cpus: ${COLLECTOR_CPUS:-2.0}
+    mem_limit: ${COLLECTOR_MEMORY_LIMIT:-3g}
+    stop_grace_period: 45s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
         max-file: "5"
     networks:
       - app
@@ -39,7 +84,8 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - boothhana-api
+      boothhana-api:
+        condition: service_healthy
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -58,3 +104,5 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  collector_state:
+  collector_auth:

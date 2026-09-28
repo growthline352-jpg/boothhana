@@ -28,9 +28,13 @@
 
 발견 단계는 전시장 일정·주최사 공식 채널·공공기관·예매처·참가자 공개 공지·커뮤니티 일정표를 서로 다른 출처군으로 조사합니다. 커뮤니티 일정표는 행사명 후보를 찾는 용도로만 쓰며 공식 원문으로 재확인합니다. 각 출처군의 검색어와 확인 URL을 `sourceCoverage`로 남기므로 한 목록만 읽고 전체 조사를 완료했다고 처리할 수 없습니다.
 
-`discoveryEventNames`와 `--event-name` 후보는 월간 발견 프롬프트에 합치지 않습니다. 각 이름을 `event-name-queue-v1.json`에 등록하고 이름별 독립 CLI 작업으로 조사합니다. 작업마다 `FOUND / NOT_FOUND / PARTIAL / FAILED`, 시도 횟수, 다음 재시도 시각, 확인한 출처군과 연결된 DB 행사 ID를 보존합니다. 공식·주최사·전시장 원문 URL이 `event.sources`, `sourceCoverage.checkedUrls`, CLI의 완료된 페이지 열기 감사 기록에 함께 확인된 결과만 DB 수집함에 전달합니다. 최대 처리량 밖 후보는 삭제되지 않고 다음 실행에 남습니다.
+`discoveryEventNames`와 `--event-name` 후보는 월간 발견 프롬프트에 합치지 않습니다. 각 이름을 `event-name-queue-v1.json`에 등록하고 이름별 독립 CLI 작업으로 조사합니다. 작업마다 `FOUND / NOT_FOUND / PARTIAL / FAILED`, 시도 횟수, 다음 재시도 시각, 확인한 출처군과 연결된 DB 행사 ID를 보존합니다. 공식·주최사·전시장 원문 URL이 `event.sources`와 `sourceCoverage.checkedUrls`에 함께 확인된 결과만 DB 수집함에 전달합니다. CLI 감사 로그가 연 URL을 제공하는 버전에서는 그 URL도 기계적으로 대조하며, URL 상세를 제공하지 않는 버전은 `openedUrlAuditAvailable=false`로 기록하고 관리자 검토를 유지합니다. 최대 처리량 밖 후보는 삭제되지 않고 다음 실행에 남습니다.
 
-발견된 행사와 기존 DB 행사는 행사명·회차·개최일을 포함한 한 건짜리 컨텍스트로 CLI에 차례대로 전달됩니다. CLI는 DB 행사 스펙의 주소·입장정보·운영시간·회차 포스터와 후속 참가부스·배치도·상품 조사 링크를 보완합니다. 행사명 큐에는 연결된 행사의 `PARTICIPANTS / FLOORPLAN / SALES` 단계 상태와 실패 사유도 기록됩니다. 실제 페이지 커서·재시도 시점은 기존 서버 참가부스 진행표, 배치도 watch, 판매 페이지 커서가 담당하므로 한 단계 실패가 다른 행사의 진행을 막지 않습니다.
+월간 발견 결과는 행사 데이터로 곧바로 DB에 쓰지 않습니다. 행사명·회차·개최일·장소·발견 출처를 `event-name-queue-v1.json`의 개별 리드로 먼저 보존한 뒤, 행사마다 독립 CLI 작업이 공식 원문을 다시 확인한 경우에만 DB 수집함에 전달합니다. 같은 이름이라도 개최일·회차·장소가 다르면 별도 작업으로 유지합니다. 기존 DB 행사는 누락 항목이 있을 때 한 건짜리 보완 작업으로 전달됩니다. 행사명 큐에는 연결된 행사의 `PARTICIPANTS / FLOORPLAN / SALES` 단계 상태와 실패 사유도 기록됩니다. 실제 페이지 커서·재시도 시점은 기존 서버 참가부스 진행표, 배치도 watch, 판매 페이지 커서가 담당하므로 한 단계 실패가 다른 행사의 진행을 막지 않습니다.
+
+축제 후보는 공공 축제 인덱스 6곳과 서울 25개 구·경기 31개 시군의 공식 채널을 `discovery-work-queue-v1.json`에서 순환 조사합니다. 서브컬처는 작품명마다 검색하지 않고 `온리전`, `생일카페`, `팝업 / 콜라보 카페`, `부스 모집 / 부스 인포`, `현장수령 / 선입금`, `행사 / 전시 / 굿즈전` 6개 고정 검색군을 매일 조사합니다. 게시·갱신 시각이 최근 7일인 공개 자료만 후보로 받고, 행사 개최일은 별도로 수집 범위와 대조합니다.
+
+`X_BEARER_TOKEN`이 설정되어 있으면 X 공식 최근 게시물 검색 API를 최대 `maxXRecentPages` 페이지까지 직접 조회합니다. 토큰은 CLI 입력·로그·결과 JSON에 포함하지 않습니다. 토큰이 없거나 API가 실패하면 공개 웹검색으로만 후보를 찾으며 해당 검색군은 `PARTIAL`로 남습니다. X 게시물은 후보 발견 근거일 뿐이며, 행사별 큐가 공식 계정·주최사·행사 원문을 독립적으로 다시 확인한 후에만 DB로 전달합니다.
 
 누락 정보 보완 단계는 주소·입장정보·운영시간·참가부스 출처·해당 회차 포스터가 비어 있는 공개 행사를 다시 조사합니다. 한 회차에 전부 처리하지 않고 `maxEventEnrichments`만큼 순환하며, 미시도 행사를 먼저 고르고 그다음 마지막 시도가 오래된 행사부터 고릅니다. 공식 미발표 항목은 추측하지 않고 다음 회차에 다시 확인합니다.
 
@@ -48,6 +52,7 @@ Codex CLI는 `exec` 비대화형 live web search와 JSON schema 출력을 사용
 - Python3.11 이상, 설치된 Codex CLI, 실행 계정의 인증.
 - 백엔드 최신 코드와 SQL001~007, HTTPS 주소(로컬 localhost 개발은 HTTP).
 - 백엔드와 실행기에 동일한 `BOOTH_COLLECTOR_TOKEN` (32자 이상 임의 값).
+- 선택: X 개발자 앱의 Bearer 토큰. `X_BEARER_TOKEN`이 없으면 공개 웹검색만 사용하고 X 검색은 미완료로 기록.
 - 작업 시간에 켜져 있는 수집 PC/서버. Windows 템플릿은 로그인된 실행 계정 필요.
 
 ```powershell
@@ -57,7 +62,7 @@ py -3 -m venv .venv
 Copy-Item config.example.json config.local.json
 ```
 
-`config.local.json`의 apiBaseUrl을 백엔드 주소로 설정합니다. 토큰은 JSON에 적지 않고 환경변수에 둡니다. 현재 터미널만 시험하려면 `$env:BOOTH_COLLECTOR_TOKEN`에 값을 설정하고, 예약 작업에는 해당 실행 계정이 값을 받을 수 있게 별도 준비하세요. 실제 비밀 값을 Git에 저장하지 않습니다.
+`config.local.json`의 apiBaseUrl을 백엔드 주소로 설정합니다. 토큰은 JSON에 적지 않고 환경변수에 둡니다. 현재 터미널만 시험하려면 `$env:BOOTH_COLLECTOR_TOKEN`과 선택적인 `$env:X_BEARER_TOKEN`에 값을 설정하고, 예약 작업에는 해당 실행 계정이 값을 받을 수 있게 별도 준비하세요. 실제 비밀 값을 Git에 저장하지 않습니다.
 
 ## 2. Codex 인증
 
@@ -90,6 +95,10 @@ Codex 실행 파일이 PATH에 없다면 `codexExecutable`에 절대 경로를 �
 .\.venv\Scripts\python.exe weekly.py --config config.local.json --month 2026-10 `
   --event-name "행사명 A" --event-name "행사명 B"
 
+# 지정 행사만 행사 검증 -> 참가부스 -> 상품까지 실제 소스로 회귀 테스트(DB 저장 없음)
+.\.venv\Scripts\python.exe weekly.py --config config.smoke.json --start 2026-10-01 --end 2026-10-03 `
+  --event-name "2026 서울국제주류&와인박람회 마곡" --only-event-names --dry-run
+
 # 같은 기간의 검증된 dry-run 발견 결과를 실제 DB에 재사용
 .\.venv\Scripts\python.exe weekly.py --config config.local.json --month 2026-10 --seed-checkpoint 'C:/Users/me/.boothhana-collector/weekly-v18/<dry-run-folder>'
 
@@ -97,7 +106,7 @@ Codex 실행 파일이 PATH에 없다면 `codexExecutable`에 절대 경로를 �
 .\.venv\Scripts\python.exe weekly.py --config config.local.json --scheduled
 ```
 
-가상 fixture는 dry-run에서만 허용하며 실제 서비스 DB로 전송할 수 없습니다. 기간 지정은 `--month YYYY-MM` 또는 `--start YYYY-MM-DD --end YYYY-MM-DD` 중 하나입니다. `--event-name`은 반복해서 쓸 수 있으며 이름만 신뢰해 저장하지 않고 같은 발견·공식 원문 검증·DB 스펙 변환을 거칩니다. `--seed-checkpoint`는 동일 기간·v5 감사 메타데이터·완료된 웹 검색 기록이 있는 체크포인트만 허용하며 임의 JSON을 우회 수집하지 않습니다.
+가상 fixture는 dry-run에서만 허용하며 실제 서비스 DB로 전송할 수 없습니다. 기간 지정은 `--month YYYY-MM` 또는 `--start YYYY-MM-DD --end YYYY-MM-DD` 중 하나입니다. `--event-name`은 반복해서 쓸 수 있으며 이름만 신뢰해 저장하지 않고 같은 발견·공식 원문 검증·DB 스펙 변환을 거칩니다. `--only-event-names`는 월간·분야별 후보 발견을 건너뛰고 지정 행사만 끝까지 검사하므로 실제 소스 회귀 테스트에 사용합니다. `--seed-checkpoint`는 동일 기간·v5 감사 메타데이터·완료된 웹 검색 기록이 있는 체크포인트만 허용하며 임의 JSON을 우회 수집하지 않습니다.
 
 공식 일정표를 사람이 대조해 보강한 이벤트 JSON은 별도 수동 배치로 검증·수입할 수 있습니다. 수동 수입은 CLI 웹 검색으로 위장하지 않으며, 운영 공개 전에 동일한 관리자 검토를 거칩니다.
 
@@ -168,6 +177,11 @@ config 값:
 | eventNameRetryHours | 24 | PARTIAL 후보 재시도 간격 |
 | eventNameNotFoundRetryHours | 168 | NOT_FOUND 후보 재확인 간격 |
 | eventNameFailureRetryHours | 6 | CLI/검증 실패 후보 재시도 간격 |
+| maxFestivalDiscoveryJobs | 12 | 실행당 공공 인덱스·지자체 축제 발견 작업 수. 나머지는 영속 큐에서 순환 |
+| maxSubcultureDiscoveryJobs | 6 | 실행당 최근 7일 서브컬처 고정 검색군 수. 기본값은 6개 전부 |
+| discoveryWorkRetryHours | 24 | 발견 작업이 실패 또는 일부 완료일 때 재시도 간격 |
+| xBearerTokenEnv | X_BEARER_TOKEN | X 공식 최근 검색 API Bearer 토큰을 읽을 환경변수 이름 |
+| maxXRecentPages | 2 | 검색군별 X API 최대 페이지 수(페이지당 최대 100건). 0이면 X API 중지 |
 | discoveryLeadUrls | [] | 누락 후보용 일정 인덱스. 공식 원문으로 재검증하며 리드 자체는 사실 근거로 저장하지 않음 |
 | discoverySourceSeeds | {} | 전시장·주최사·공공기관·예매처·참가자·커뮤니티 출처군별 추가 시작 URL |
 | imageAllowedHosts | [] | 외부 이미지 허용 호스트. 기본 다운로드불가 |
@@ -196,6 +210,7 @@ CLI에는 이미지 URL/게시 원문/보고된 조건만 찾게 합니다. 저�
 - pipeline.json: run ID, 기간, 상태, 건수·문제.
 - `stateDirectory/event-enrichment-attempts.json`: 행사별 마지막 보완 시도일·상태. 다음 실행의 순환 우선순위에 사용.
 - `stateDirectory/event-name-queue-v1.json`: 입력한 행사명별 조사 결과, 공식 출처군, DB 행사 ID, 참가부스·배치도·상품 단계와 재시도 상태.
+- `stateDirectory/discovery-work-queue-v1.json`: 축제 공식 출처·지자체와 최근 7일 서브컬처 검색군별 마지막 실행, 다음 실행, 발견 행사명, 실패 사유.
 - jobs/*/payload.json + receipt.json: 보내려던 요청/서버 수신확인. 재시도는 같은ID/내용 유지.
 - codex.jsonl, codex.stderr.log: CLI 도구사용 감사·오류.
 - validation-rejections.json: 제외한 참가 데이터 사유.

@@ -1,0 +1,9 @@
+.git
+.gitignore
+.gradle
+build
+out
+*.class
+.env
+.env.*
+!.env.example

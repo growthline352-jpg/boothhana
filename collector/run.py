@@ -177,6 +177,8 @@ def persist_refreshed_auth(source: Path, initial: bytes | None, refreshed: Path)
 def output_schema_for_cli(value: dict) -> dict:
     """Live results must state UNKNOWN explicitly; archived input schemas remain optional."""
     result=json.loads(json.dumps(value))
+    if 'sourceCoverage' in result.get('properties',{}):
+        result['required']=list(dict.fromkeys([*result.get('required',[]),'sourceCoverage']))
     event_schema=result.get('properties',{}).get('events',{}).get('items',{})
     if 'operationStatus' in event_schema.get('properties',{}):
         event_schema['required']=list(dict.fromkeys([*event_schema.get('required',[]),'operationStatus']))

@@ -210,7 +210,7 @@ def review_and_publish(admin: AdminApi, participant_ids: set[int], sales_ids: se
     return {"reviewedParticipants": reviewed_participants, "reviewedSales": reviewed_sales, "publishedEvents": published}
 
 
-PARTICIPANT_OVERRIDE_FIELDS = ("registrationName", "kind", "members", "locations", "subjects", "officialLinks", "warnings")
+PARTICIPANT_OVERRIDE_FIELDS = ("registrationName", "kind", "members", "locations", "subjects", "description", "officialLinks", "warnings")
 SALES_OVERRIDE_FIELDS = ("summary", "evidenceScope", "categories", "subjects", "salesMethod", "products", "warnings")
 
 

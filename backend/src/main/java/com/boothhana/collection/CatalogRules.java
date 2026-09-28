@@ -3,6 +3,7 @@ package com.boothhana.collection;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 import static com.boothhana.collection.CollectionRules.*;
 import static com.boothhana.collection.CatalogModels.*;
@@ -48,7 +49,7 @@ public final class CatalogRules {
             if(l.startDate()!=null) require(!date(l.startDate()).isAfter(date(l.endDate())),"위치 날짜 역전");
             if(l.floorPlanUrl()!=null) url(l.floorPlanUrl());
         }
-        strings(p.subjects(),30,150);strings(p.officialLinks(),20,2048);p.officialLinks().forEach(CollectionRules::url);
+        strings(p.subjects(),30,150);text(p.description(),1000,true);strings(p.officialLinks(),20,2048);p.officialLinks().forEach(CollectionRules::url);
         sources(p.sources());images(p.images());strings(p.warnings(),30,500);
         CatalogIdentity.validate(p.identity(),p.sourceEntryId(),p.sources());
     }
@@ -107,7 +108,11 @@ public final class CatalogRules {
     public static String productKey(ProductData p) { return CatalogIdentity.productKeys(p).getFirst(); }
     public static void locationDates(Participant p,CollectionModels.EventData e) {
         for(Location l:p.locations()) if(l.startDate()!=null) {
-            require(e.occurrences().stream().anyMatch(o->!date(l.startDate()).isBefore(date(o.startDate()))&&!date(l.endDate()).isAfter(date(o.endDate()))),"행사 운영일 밖의 부스 위치 날짜");
+            LocalDate end=date(l.endDate());
+            for(LocalDate day=date(l.startDate());!day.isAfter(end);day=day.plusDays(1)) {
+                LocalDate current=day;
+                require(e.occurrences().stream().anyMatch(o->!current.isBefore(date(o.startDate()))&&!current.isAfter(date(o.endDate()))),"행사 운영일 밖의 부스 위치 날짜");
+            }
         }
     }
     public static void edit(EditInput i,Set<String> allowed) {

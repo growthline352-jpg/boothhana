@@ -96,6 +96,9 @@ class RunnerTests(unittest.TestCase):
         for u in ['http://example.com','https://u:p@example.com','https://example.com?token=x','https://example.com/api']:
             self.assertRaises(DeliveryError,endpoint,u)
     def test_localhost_api_origin(self): self.assertEqual(endpoint('http://localhost:8080/'),'http://localhost:8080/api/internal/subculture/batches')
+    def test_isolated_docker_api_origin(self): self.assertEqual(endpoint('http://boothhana-api:8080'),'http://boothhana-api:8080/api/internal/subculture/batches')
+    def test_docker_api_origin_requires_exact_port(self):
+        with self.assertRaises(DeliveryError):endpoint('http://boothhana-api:8081')
     def test_audit_requires_completed_search(self):
         with tempfile.TemporaryDirectory() as temp:
             f=Path(temp)/'a';f.write_text('{"type":"item.started","item":{"type":"web_search"}}\n');self.assertFalse(audit_search(f)[0])

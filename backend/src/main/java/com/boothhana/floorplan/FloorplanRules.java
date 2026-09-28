@@ -57,11 +57,15 @@ public final class FloorplanRules {
    if(!s.boundaryConfirmed()||!"READABLE".equals(s.recognition())||key(s.label()).isBlank())issues.add("판독/영역 확인 필요");
    if(codes.getOrDefault(key(s.label()),0L)>1)issues.add("같은 도면에 중복 부스번호");
    if(geometry.shapes().stream().anyMatch(b->b!=s&&"BOOTH".equals(b.mapKind())&&overlap(s,b)>0.35))issues.add("다른 부스 영역과 겹침 — 위치 확인 필요");
-   Map<Long,Set<String>> found=new LinkedHashMap<>();
+   Map<Long,Set<String>> found=new LinkedHashMap<>();boolean usedMissingScope=false;
    for(Roster r:roster)for(Place loc:r.locations())if(!key(s.label()).isBlank()&&key(s.label()).equals(key(loc.code()))) {
     candidates.add(r.id());
-    // Missing one hall/zone is not evidence of an equal hall. Never erase half-booth suffixes.
-    if(!key(scope.hall()).equals(key(loc.hall()))||!key(scope.zone()).equals(key(loc.zone())))continue;
+    String scopeHall=key(scope.hall()),locationHall=key(loc.hall()),scopeZone=key(scope.zone()),locationZone=key(loc.zone());
+    // A known conflict is rejected. A missing hall/zone may still link when the
+    // booth code and dates identify one participant unambiguously below.
+    if(!scopeHall.isBlank()&&!locationHall.isBlank()&&!scopeHall.equals(locationHall))continue;
+    if(!scopeZone.isBlank()&&!locationZone.isBlank()&&!scopeZone.equals(locationZone))continue;
+    if(scopeHall.isBlank()!=locationHall.isBlank()||scopeZone.isBlank()!=locationZone.isBlank())usedMissingScope=true;
     if(scope.dates().isEmpty()!=loc.dates().isEmpty())continue;
     Set<String> dates=new TreeSet<>(scope.dates());dates.retainAll(loc.dates());
     if(!scope.dates().isEmpty()&&dates.isEmpty())continue;
@@ -73,9 +77,10 @@ public final class FloorplanRules {
     for(String d:item.getValue())if(!covered.add(d))ambiguous=true;
    }
    if(ambiguous)issues.add("동일 날짜/전시관에 참가자가 중복됨");
+   if(usedMissingScope&&found.size()>1)issues.add("전시관·구역 정보가 없어 자동 연결 불가");
    ManualLink m=manual.get(s.id());
    if(m!=null)links.add(new Link(m.participantId(),m.dates(),"MANUAL"));
-   else if(issues.isEmpty())for(var item:found.entrySet())links.add(new Link(item.getKey(),List.copyOf(item.getValue()),"EXACT"));
+   else if(issues.isEmpty())for(var item:found.entrySet())links.add(new Link(item.getKey(),List.copyOf(item.getValue()),usedMissingScope?"UNIQUE_CODE":"EXACT"));
    if(links.isEmpty()&&issues.isEmpty())issues.add("명단·날짜·전시관 일치 근거 미확보");
    boolean resolved=!links.isEmpty()&&(m!=null||issues.isEmpty());if(resolved)matched++;
    out.add(new MappedShape(s,resolved?m!=null?"MANUAL":"MATCHED":candidates.size()>1?"AMBIGUOUS":"UNMAPPED",links,List.copyOf(candidates),issues));

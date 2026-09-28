@@ -45,7 +45,7 @@ class ExpandedPackageRepairTests(unittest.TestCase):
             "members": [{"name": "Artist", "kind": "ARTIST", "aliases": [], "profileUrl": None}],
             "locations": [{"code": "A-01", "status": "ASSIGNED", "hall": None, "zone": None,
                            "startDate": "2026-10-01", "endDate": "2026-10-01", "floorPlanUrl": None}],
-            "subjects": [], "officialLinks": ["https://example.com/item/1"], "sources": [source()],
+            "subjects": [], "description": "Artist booth", "officialLinks": ["https://example.com/item/1"], "sources": [source()],
             "images": [], "warnings": [],
             "identity": {"sourceSystem": "https://example.com", "entryId": "p1", "detailUrl": "https://example.com/item/1"},
         }
@@ -84,7 +84,7 @@ class ExpandedPackageRepairTests(unittest.TestCase):
 
     def test_admin_overrides_keep_structured_values(self):
         participant = {field: [] for field in PARTICIPANT_OVERRIDE_FIELDS}
-        participant.update({"registrationName": "Booth", "kind": "CIRCLE"})
+        participant.update({"registrationName": "Booth", "kind": "CIRCLE", "description": None})
         sales = {field: [] for field in SALES_OVERRIDE_FIELDS}
         sales.update({"summary": "Summary", "evidenceScope": "EVENT_LISTED", "salesMethod": None,
                       "products": [{"price": {"amount": "4000", "currency": "KRW"}}]})

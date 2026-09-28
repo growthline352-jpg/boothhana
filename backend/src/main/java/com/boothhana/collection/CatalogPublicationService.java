@@ -32,7 +32,7 @@ public class CatalogPublicationService {
         if(rows.size()>3000) throw ApiException.badRequest("한 행사에 공개할 수 있는 참가 부스 한도를 초과했습니다.");
         for(var row:rows) {
             long id=((Number)row.get("id")).longValue();Participant p=json.readValue(row.get("reviewed_payload_json").toString(),Participant.class);
-            Participant safe=new Participant(p.sourceEntryId(),p.registrationName(),p.kind(),p.members(),p.locations(),p.subjects(),p.officialLinks(),p.sources(),List.of(),p.warnings(),p.identity());
+            Participant safe=new Participant(p.sourceEntryId(),p.registrationName(),p.kind(),p.members(),p.locations(),p.subjects(),p.description(),p.officialLinks(),p.sources(),List.of(),p.warnings(),p.identity());
             Map<String,Object> view=new LinkedHashMap<>();view.put("id",id);view.put("participant",safe);view.put("sales",null);
             if("REVIEWED".equals(row.get("sales_state"))&&row.get("sales_json")!=null) {
                 Sales s=json.readValue(row.get("sales_json").toString(),Sales.class);
