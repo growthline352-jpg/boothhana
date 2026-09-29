@@ -15,7 +15,7 @@ ok(hidden.includes('현재 공개되지 않는 정보'));ok(hidden.includes('PRI
 const draft=harness({library:{...library,owner:'guest',index:[],guest:[]},auth:{user:null,loading:false,loginUrl:'/api/auth/login'},remote:{loading:false,error:null,data:{items:[],page:0,size:24,total:0,groups:[]}}});const guestHtml=toHtml(draft.render(draft.load('frontend/src/features/library/LibraryPage.tsx').LibraryPage))
 ok(guestHtml.includes('이 기기에 임시 저장'));ok(guestHtml.includes('90일'));ok(guestHtml.includes('로그인하고 계정에 보관'))
 const saveMod=h.load('frontend/src/features/library/SaveButton.tsx'),saveTree=h.render(saveMod.SaveButton,{target:t,compact:true},true)
-ok(nodes(saveTree).some(x=>x.props?.['aria-pressed']===true));ok(toHtml(saveTree).includes('저장됨'))
+ok(nodes(saveTree).some(x=>x.props?.['aria-pressed']===true));ok(nodes(saveTree).some(x=>x.props?.['aria-label']==='보관함에서 저장 해제'));ok(!toHtml(saveTree).includes('저장됨'))
 const qr=h.load('frontend/src/features/library/ShareQr.tsx');const qrTree=h.render(qr.ShareQr,{target:t,day:'2026-09-16',hall:'1관',title:memory.title},true);ok(toHtml(qrTree).includes('공유·QR'))
 const root=path.resolve(__dirname,'../..'),pub=fs.readFileSync(path.join(root,'frontend/src/features/catalog/CatalogPublicPage.tsx'),'utf8'),map=fs.readFileSync(path.join(root,'frontend/src/features/floorplan/InteractiveFloorPlans.tsx'),'utf8')
 ok(pub.includes('savedParticipants'));ok(pub.includes('x.target.participantId!==null'));ok(pub.includes("x.visitedDays.includes(state.day)"));ok(map.includes('onlySaved||links(s).some'));ok(map.includes("linkedIds={plan.shapes.filter"));

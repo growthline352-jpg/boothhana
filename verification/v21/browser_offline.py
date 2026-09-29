@@ -83,6 +83,7 @@ def main():
    page.get_by_role('button',name='확대',exact=True).click();ok('offline simple floorplan zoom',page.locator('.plan-window img').evaluate("e=>e.style.width")=='150%')
    page.screenshot(path=str(OUT/'offline-mobile.png'),full_page=True)
    second=context.new_page();second.goto(BASE+'/offline/index.html#101');expect(second.get_by_role('heading',name='서울·경기 테스트 행사 101',exact=True)).to_be_visible();second.close();ok('new tab opens saved package completely offline')
+   library=context.new_page();library.goto(BASE+'/library?offline=1&offlineEvent=101');expect(library.get_by_role('heading',name='서울·경기 테스트 행사 101',exact=True)).to_be_visible();library.reload();expect(library.get_by_role('heading',name='서울·경기 테스트 행사 101',exact=True)).to_be_visible();library.close();ok('cold library navigation and reload open selected saved event offline')
    context.set_offline(False);page.wait_for_timeout(150)
    STATE['revoke']=True
    res=page.evaluate("async()=>{const s=await import('/offline/store.mjs');await s.revalidate(await s.getPack(101));return (await s.getPack(101)).blobs.length}")

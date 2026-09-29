@@ -11,21 +11,22 @@ export function OfflineEventButton({eventId,day}:{eventId:number;day:string}){
  const getSnapshot=auth?.getSnapshot
  const [checking,setChecking]=useState(true),[busy,setBusy]=useState(false),[saved,setSaved]=useState(false),[message,setMessage]=useState('')
  const owner=offlineOwner(getSnapshot?.())
+ const context=useRef({eventId,day,owner});context.current={eventId,day,owner}
  const selectionReady=!!owner&&!!library&&library.owner===owner&&!library.loading&&!library.error
  useEffect(()=>{
-  const active=alive,sequence=serial;active.current=true;const ticket=++sequence.current;setChecking(true);setMessage('')
-  const same=()=>active.current&&ticket===sequence.current&&offlineOwner(getSnapshot?.())===owner
+  const active=alive,sequence=serial;active.current=true;const ticket=++sequence.current;setChecking(true);setBusy(false);setMessage('')
+  const same=()=>active.current&&ticket===sequence.current&&context.current.eventId===eventId&&context.current.day===day&&context.current.owner===owner&&offlineOwner(getSnapshot?.())===owner
   if(!owner){setSaved(false);setChecking(false);return()=>{active.current=false;sequence.current++}}
   const refresh=async()=>{try{const module=await loadOfflineModule();await module.syncOwner(owner,same);const packs=await module.listPacks();if(same())setSaved(packs.some(pack=>pack.id===eventId))}catch{if(same())setSaved(false)}finally{if(same())setChecking(false)}}
   void refresh()
   let channel:BroadcastChannel|undefined
   try{channel=new BroadcastChannel('boothhana-offline-v18');channel.onmessage=()=>void refresh()}catch{/* status still refreshes after this component saves */}
   return()=>{active.current=false;sequence.current++;channel?.close()}
- },[eventId,getSnapshot,owner])
+ },[eventId,day,getSnapshot,owner])
  const download=async()=>{
   if(busy||!owner||!selectionReady)return
   const ticket=++serial.current;setBusy(true);setMessage('행사 정보와 부스 자료를 저장하고 있어요.')
-  const same=()=>alive.current&&ticket===serial.current&&offlineOwner(getSnapshot?.())===owner
+  const same=()=>alive.current&&ticket===serial.current&&context.current.eventId===eventId&&context.current.day===day&&context.current.owner===owner&&offlineOwner(getSnapshot?.())===owner
   try{
    const module=await loadOfflineModule();await module.syncOwner(owner,same)
    const selection=library.index.filter(item=>item.target.eventId===eventId&&item.target.type!=='EVENT').map(item=>({type:item.target.type,id:item.target.id}))

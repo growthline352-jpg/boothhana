@@ -37,36 +37,45 @@ for(const fails of [false,true])test(`logout invalidates old pending requests be
 const tick=async()=>{for(let i=0;i<4;i++)await new Promise(setImmediate)}
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {resolve,promise}}
 function panelHarness(){
- let cursor=0,props={eventId:1,day:'2026-09-20'},tree,rendered=false,download=null
+ let cursor=0,props={eventId:1,day:'2026-09-20'},tree,download=null,owner='guest',deleted=0
  const slots=[],effectQueue=[]
- const react={useContext:()=>({getSnapshot:()=>({status:'anonymous',user:null})}),
+ const auth={getSnapshot:()=>({owner})}
+ const react={useContext:()=>auth,
   useRef(initial){const i=cursor++;slots[i]??={current:initial};return slots[i]},
   useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return [slots[i],next=>{slots[i]=typeof next==='function'?next(slots[i]):next}]},
   useEffect(fn,deps){const i=cursor++,previous=slots[i];if(!previous||deps.some((x,n)=>x!==previous.deps[n]))effectQueue.push(()=>{previous?.clean?.();slots[i]={deps,clean:fn()}})},
  }
  const jsx=(type,props)=>({type,props:props||{}})
  const wait=deferred()
- const {OfflineDownloadPanel}=load('frontend/src/features/offline/OfflineDownloadPanel.tsx',{
-  react,'react/jsx-runtime':{jsx,jsxs:jsx},'../../app/auth-context':{AuthContext:{}},'../../api/client':{API_BASE_URL:'https://api.test'},
-  '../library/LibraryProvider':{useLibrary:()=>({owner:'guest',loading:false,error:'',index:[]})},
-  './OfflinePrivacyGuard':{offlineOwner:()=> 'guest'},
-  './offlineModule':{loadOfflineModule:async()=>({syncOwner:async()=>{},downloadEvent:async args=>{download=args;await wait.promise;return {bytes:0,missing:[],omittedImages:0,noApprovedPlan:true}}})},
+ const {OfflineEventButton}=load('frontend/src/features/offline/OfflineDownloadPanel.tsx',{
+  react,'react/jsx-runtime':{jsx,jsxs:jsx},'react-router':{Link:'a'},'../../app/auth-context':{AuthContext:{}},'../../api/client':{API_BASE_URL:'https://api.test'},
+  '../library/LibraryProvider':{useLibrary:()=>({owner,loading:false,error:'',index:[]})},
+  './OfflinePrivacyGuard':{offlineOwner:snapshot=>snapshot.owner},
+  './offlineModule':{loadOfflineModule:async()=>({syncOwner:async()=>{},listPacks:async()=>[{id:1}],clearAll:async()=>{deleted++},deletePack:async()=>{deleted++},downloadEvent:async args=>{download=args;await wait.promise;return {bytes:0,missing:[],omittedImages:0,noApprovedPlan:true}}})},
  })
- function render(next=props,{effects=true}={}){props=next;cursor=0;tree=OfflineDownloadPanel(props);if(effects){while(effectQueue.length)effectQueue.shift()()}rendered=true;return tree}
+ function render(next=props,{effects=true}={}){props=next;cursor=0;tree=OfflineEventButton(props);if(effects){while(effectQueue.length)effectQueue.shift()()}return tree}
  function all(node=tree){if(!node||typeof node!=='object')return [];return [node,...[].concat(node.props?.children||[]).flat(Infinity).flatMap(all)]}
- return {render,all,get download(){return download},finish:()=>wait.resolve(),state:slots}
+ return {render,all,get download(){return download},get deleted(){return deleted},setOwner:value=>{owner=value},finish:()=>wait.resolve(),unmount:()=>{for(const slot of slots)slot?.clean?.()}}
 }
 test('changing only the visit day cancels a pending export before old-day data can commit',async()=>{
- const h=panelHarness();h.render();h.all().find(x=>x.type==='input'&&x.props.type==='checkbox').props.onChange({target:{checked:true}});h.render()
- h.all().find(x=>x.type==='button'&&x.props.className==='btn primary').props.onClick();await tick()
+ const h=panelHarness();h.render();await tick();h.render()
+ h.all().find(x=>x.type==='button').props.onClick();await tick()
  assert.ok(h.download);assert.equal(h.download.stillAllowed(),true)
+ assert.equal(h.download.day,'2026-09-20')
  h.render({eventId:1,day:'2026-09-21'},{effects:false})
  assert.equal(h.download.stillAllowed(),false,'the day must be checked during render, before effects')
- h.finish();await tick()
+ h.finish();await tick();h.unmount()
 })
-test('visit-day change clears prior consent and completion UI without clearing saved event files',async()=>{
- const h=panelHarness();h.render();h.all().find(x=>x.type==='input'&&x.props.type==='checkbox').props.onChange({target:{checked:true}});h.render()
- assert.equal(h.all().find(x=>x.type==='input'&&x.props.type==='checkbox').props.checked,true)
- h.render({eventId:1,day:'2026-09-21'});h.render()
- assert.equal(h.all().find(x=>x.type==='input'&&x.props.type==='checkbox').props.checked,false)
+test('visit-day change clears pending UI and permits a new export without deleting saved files',async()=>{
+ const h=panelHarness();h.render();await tick();h.render();h.all().find(x=>x.type==='button').props.onClick();await tick()
+ const old=h.download;h.render({eventId:1,day:'2026-09-21'});await tick();h.render()
+ assert.equal(old.stillAllowed(),false);assert.equal(h.all().find(x=>x.type==='button').props.disabled,false)
+ assert.equal(h.all().some(x=>x.props.role==='status'),false);assert.equal(h.deleted,0)
+ h.all().find(x=>x.type==='button').props.onClick();await tick();assert.equal(h.download.day,'2026-09-21');assert.equal(h.download.stillAllowed(),true)
+ h.finish();await tick();h.unmount()
+})
+test('identity changes and unmount invalidate a pending library export',async()=>{
+ const h=panelHarness();h.render();await tick();h.render();h.all().find(x=>x.type==='button').props.onClick();await tick()
+ assert.equal(h.download.stillAllowed(),true);h.setOwner('member:2');assert.equal(h.download.stillAllowed(),false)
+ h.unmount();h.finish();await tick();assert.equal(h.download.stillAllowed(),false)
 })
