@@ -49,7 +49,9 @@ public class SupportService {
      if(!ev.isEmpty()){v.put("eventRevision",ev.getFirst().get("revision"));v.put("eventReviewState",ev.getFirst().get("review_state"));}
     }
    }
-   if("CLAIM".equals(r.get("kind"))){var grants=db.queryForList("select state,revision from exhibitor_manager where exhibitor_id=? and user_id=?",r.get("exhibitor_id"),r.get("requester_id"));v.put("management",grants.isEmpty()?null:grants.getFirst());}
+   if("CLAIM".equals(r.get("kind"))){var grants="ORGANIZER".equals(r.get("category"))
+    ?db.queryForList("select state,revision,organizer_id from event_manager where event_id=? and user_id=?",json.readValue(r.get("target_json").toString(),Target.class).eventId(),r.get("requester_id"))
+    :db.queryForList("select state,revision from exhibitor_manager where exhibitor_id=? and user_id=?",r.get("exhibitor_id"),r.get("requester_id"));v.put("management",grants.isEmpty()?null:grants.getFirst());}
    if("REPORT".equals(r.get("kind"))&&r.get("requester_id")!=null&&r.get("target_json")!=null){Target ref=json.readValue(r.get("target_json").toString(),Target.class);
     if("CATALOG".equals(ref.namespace())&&"PARTICIPANT".equals(ref.type()))v.put("verifiedManagers",db.queryForList("select e.id,e.name from exhibitor_manager m join subculture_exhibitor e on e.id=m.exhibitor_id join subculture_participant_member pm on pm.exhibitor_id=e.id where m.user_id=? and m.state='ACTIVE' and pm.participant_id=?",r.get("requester_id"),ref.id()));}
    v.put("requesterId",r.get("requester_id"));v.put("assignedTo",r.get("assigned_to"));v.put("exhibitorId",r.get("exhibitor_id"));
@@ -76,7 +78,7 @@ public class SupportService {
   if(page<0||page>100000||kind==null||!Set.of("REPORT","INQUIRY","CLAIM").contains(kind)||status!=null&&!status.isBlank()&&!Set.of("OPEN","IN_PROGRESS","WAITING_USER","ANSWERED","RESOLVED","CLOSED").contains(status))throw ApiException.badRequest("목록 조건을 확인해 주세요.");
   List<Object> args=new ArrayList<>(List.of(kind));String where=" where kind=?";
   if(category!=null&&!category.isBlank()){
-   if(!"INQUIRY".equals(kind)||!SupportRules.INQUIRY_REASONS.contains(category))throw ApiException.badRequest("분류를 확인해 주세요.");
+   if(!("INQUIRY".equals(kind)&&SupportRules.INQUIRY_REASONS.contains(category))&&!("CLAIM".equals(kind)&&Set.of("ORGANIZER","OWNERSHIP").contains(category)))throw ApiException.badRequest("분류를 확인해 주세요.");
    where+=" and category=?";args.add(category);
   }
   if(!actor.admin()){if(actor.userId()==null)throw ApiException.notFound("접수 내역 없음");where+=" and requester_id=?";args.add(actor.userId());}
@@ -94,9 +96,12 @@ public class SupportService {
   // Rate admission is committed by SupportOperations before this transaction.
   Resolved target=c.target()==null?null:targets.resolve(c.target(),actor.userId());
   if(c.kind().equals("REPORT")&&c.target().type().equals("RESERVATION"))throw ApiException.badRequest("예약은 고객문의로 접수해 주세요.");
-  if(c.kind().equals("CLAIM")){
+  if(c.kind().equals("CLAIM")&&"ORGANIZER".equals(c.category())) {
+   if(!db.queryForList("select 1 from event_manager where event_id=? and user_id=? and state='ACTIVE'",target.target().eventId(),actor.userId()).isEmpty())throw ApiException.conflict("이미 승인된 행사입니다.");
+   if(!db.queryForList("select 1 from support_ticket where requester_id=? and kind='CLAIM' and category='ORGANIZER' and target_json->>'eventId'=? and status in ('OPEN','IN_PROGRESS','WAITING_USER')",actor.userId(),Long.toString(target.target().eventId())).isEmpty())throw ApiException.conflict("이미 검토 중인 주최자 신청이 있습니다.");
+  } else if(c.kind().equals("CLAIM")){
    targets.requireClaimable(target.target(),c.exhibitorId());
-   if(!db.queryForList("select 1 from exhibitor_manager where exhibitor_id=? and user_id=? and state='ACTIVE'",c.exhibitorId(),actor.userId()).isEmpty())throw ApiException.conflict("이미 관리 관계가 승인된 업체입니다.");
+   if(!db.queryForList("select 1 from exhibitor_manager where exhibitor_id=? and user_id=? and state='ACTIVE' and permission='CATALOG_EDIT'",c.exhibitorId(),actor.userId()).isEmpty())throw ApiException.conflict("이미 관리 관계가 승인된 업체입니다.");
    if(!db.queryForList("select 1 from support_ticket where requester_id=? and exhibitor_id=? and kind='CLAIM' and status in ('OPEN','IN_PROGRESS','WAITING_USER')",actor.userId(),c.exhibitorId()).isEmpty())throw ApiException.conflict("이미 검토 중인 관리권 요청이 있습니다.");
   }
   db.update("""
