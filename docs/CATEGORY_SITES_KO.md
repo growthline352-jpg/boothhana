@@ -21,11 +21,14 @@
 
 ## 현재 상태 및 안전한 운영 적용 순서
 
-이 문서 작성 시 **로컬 구현 단계**다. DNS, Vercel 도메인, CORS, 운영 배포, Search Console 등록은 아직 미완료다.
-Ubuntu 이관 및 Brand Pilot 설정과 무관하며 해당 서비스는 변경하지 않는다.
+2026-09-29: PR #5 운영 배포와 세 분야의 Vercel 도메인·Cloudflare DNS only CNAME·Ubuntu API CORS 설정을 완료했다.
+세 전용 홈의 실제 행사 목록·검색 이동·고유 canonical·robots·사이트맵 응답을 확인했다.
+메인 포털 및 기존 주소 이동의 최종 전환은 두 플래그를 true로 설정한 배포가 Ready인지 확인해야 한다.
+Search Console 등록 및 색인 요청은 별도 작업이다. Brand Pilot 설정·컨테이너는 변경하지 않았다.
 
-로컬 검증: 프런트 48개 테스트, SEO/HTTP/사이트맵 17개 테스트 통과. `build:hosting` 통과.
-기존 번들 크기 경고는 남아 있으며 실제 세 호스트의 브라우저 로그인 검증은 DNS 연결 뒤 수행한다.
+배포 브랜치 검증: 프런트 44개 테스트, SEO/HTTP/사이트맵 17개 테스트 및 전체 CI 통과.
+`build:hosting`의 템플릿 스모크 테스트는 운영 환경값에 의존하지 않고 전환 전·후를 모두 검증한다.
+기존 번들 크기 경고는 남아 있다. 분야별 로그인·보관함·신고의 인증된 전체 흐름은 별도 검증이 필요하다.
 
 1. Vercel growth-16a6/boothhana에 세 도메인을 Production으로 등록한다.
 2. Vercel이 제시하는 정확한 CNAME 값을 Cloudflare의 subculture / expo / festival에 DNS only로 설정한다. 도메인 등록기관은 가비아지만 DNS 관리는 Cloudflare로 이전했다.
