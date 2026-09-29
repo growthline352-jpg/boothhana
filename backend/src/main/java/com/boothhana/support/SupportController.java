@@ -29,7 +29,7 @@ public class SupportController {
  @PostMapping("/api/me/support/tickets") @ResponseStatus(HttpStatus.CREATED) public Map<String,Object> create(Authentication a,@RequestBody Create c){return operations.create(c,user(a));}
  @GetMapping("/api/me/support/tickets/{id}") public Map<String,Object> detail(Authentication a,@PathVariable UUID id){return service.detail(id,user(a));}
  @PostMapping("/api/me/support/tickets/{id}/messages") public Map<String,Object> message(Authentication a,@PathVariable UUID id,@RequestBody Message m){return operations.message(id,m,user(a));}
- @GetMapping("/api/admin/support/tickets") public PageData<Map<String,Object>> queue(Authentication a,@RequestParam String kind,@RequestParam(defaultValue="")String status,@RequestParam(defaultValue="0")int page){return service.list(admin(a),kind,status,page);}
+ @GetMapping("/api/admin/support/tickets") public PageData<Map<String,Object>> queue(Authentication a,@RequestParam String kind,@RequestParam(defaultValue="")String status,@RequestParam(defaultValue="0")int page,@RequestParam(defaultValue="")String category){return service.list(admin(a),kind,status,page,category);}
  @GetMapping("/api/admin/support/tickets/{id}") public Map<String,Object> adminDetail(Authentication a,@PathVariable UUID id){return service.detail(id,admin(a));}
  @PostMapping("/api/admin/support/tickets/{id}/messages") public Map<String,Object> reply(Authentication a,@PathVariable UUID id,@RequestBody Message m){return operations.message(id,m,admin(a));}
  @PostMapping("/api/admin/support/tickets/{id}/actions") public Map<String,Object> action(Authentication a,@PathVariable UUID id,@RequestBody Action i){return operations.action(id,i,admin(a));}

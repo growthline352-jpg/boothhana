@@ -1,4 +1,5 @@
 import { OfflineDownloadPanel } from '../offline/OfflineDownloadPanel'
+import { EventComments } from './EventComments'
 import { PageMetadata } from '../../app/PageMetadata'
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
@@ -165,6 +166,7 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
       <small>공개본 갱신: {new Date(value.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}. 수집 후 변경될 수 있으므로 방문 전 주최 측 최신 공지를 확인하세요.</small>
     </section>
     <OfflineDownloadPanel eventId={Number(eventId)} day={state.day}/>
+    <EventComments key={eventId} eventId={Number(eventId)}/>
   </section>
 }
 function ParticipantCard({eventId,row,day,hall,assets,showMap}:{eventId:number;row:PublicParticipant;day:string;hall:string;assets:PublicEvent['assets'];showMap?:(id:number)=>void}) {

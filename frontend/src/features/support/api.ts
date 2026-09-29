@@ -24,7 +24,7 @@ export const supportApi={
  options:()=>api<Options>('/api/public/support/options',{cache:'no-store'}),
  target:(t:Target)=>post<Resolved>('/api/public/support/target',t),
  claimables:(t:Target)=>api<{id:number;name:string;profileUrl:string|null}[]>(`/api/public/support/claimables?eventId=${t.eventId}&participantId=${t.id}`,{cache:'no-store'}),
- list:(kind:TicketKind,page=0,status='',admin=false)=>api<Page<TicketSummary>>(`${prefix(admin)}/tickets?${new URLSearchParams({kind,page:String(page),status})}`,{cache:'no-store'}),
+ list:(kind:TicketKind,page=0,status='',admin=false,category='')=>api<Page<TicketSummary>>(`${prefix(admin)}/tickets?${new URLSearchParams({kind,page:String(page),status,category})}`,{cache:'no-store'}),
  receipt:(id:string)=>api<{found:boolean;id?:string}>(`${prefix()}/requests/${encodeURIComponent(id)}`,{cache:'no-store'}),
  create:(body:TicketInput)=>post<Ticket>('/api/me/support/tickets',body),
  detail:(id:string,admin=false)=>api<Ticket>(`${prefix(admin)}/tickets/${encodeURIComponent(id)}`,{cache:'no-store'}),

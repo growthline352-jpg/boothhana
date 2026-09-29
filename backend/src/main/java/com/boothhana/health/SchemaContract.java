@@ -3,10 +3,11 @@ package com.boothhana.health;
 import java.util.List;
 import java.util.Map;
 
-/** Explicit application-owned relations through SQL 016. No Supabase system tables. */
+/** Explicit application-owned relations through SQL 017. No Supabase system tables. */
 public final class SchemaContract {
     private SchemaContract() {}
     public static final Map<String,List<String>> TABLES=Map.ofEntries(
+        Map.entry("event_comment",List.of("id","event_id","user_id","body","deleted","created_at")),
         Map.entry("app_user",List.of("id","kakao_subject","display_name","created_at")),
         Map.entry("event",List.of("id","name","start_at","end_at","venue","description","image_key","reservation_start_at","reservation_end_at","status")),
         Map.entry("booth",List.of("id","owner_user_id","name","description","image_key","sns_url")),
