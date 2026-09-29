@@ -11,6 +11,7 @@ import { categoryHref } from './categories'
 import { browseApiParams, cardOccurrences, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
+import { currentSiteCategory } from './site'
 import './discovery.css'
 import '../visit/visit.css'
 
@@ -33,7 +34,8 @@ export function DiscoveryPage() {
   useEffect(() => { setDraft(state.q) }, [state.q, category.key])
   const update = (changes: Record<string, string>) => {
     const next = new URLSearchParams(params)
-    next.set('category', category.key)
+    if (currentSiteCategory()) next.delete('category')
+    else next.set('category', category.key)
     if (!('page' in changes)) next.delete('page')
     Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key))
     setParams(next)
@@ -42,7 +44,7 @@ export function DiscoveryPage() {
     e.preventDefault()
     if (category.enabled) navigate(searchResultsHref(params, category.key, draft))
   }
-  const reset = () => { setDraft(''); setParams({ category: category.key, period: 'all', view: 'results' }) }
+  const reset = () => { setDraft(''); setParams(currentSiteCategory() ? { period: 'all', view: 'results' } : { category: category.key, period: 'all', view: 'results' }) }
   const rows = data.data?.items ?? []
   const total = data.data?.total ?? 0
   const pages = Math.max(1, Math.ceil(total / 20))
@@ -55,6 +57,7 @@ export function DiscoveryPage() {
   return <div className={`discovery-page discovery-theme-${category.key}`}>
     <section className={`popga-home${isHome ? '' : ' is-results'}`} aria-label={isHome ? `${category.label} 추천` : `${category.label} 행사 검색`}>
       <div className="discovery-container">
+        {isHome && currentSiteCategory() && <header className="category-site-intro"><h1>부스하나 {category.label}</h1><p>{category.description}</p></header>}
         <form className="popga-search" role="search" onSubmit={submit}>
           <DiscoveryIcon name="search" size={21}/>
           <input type="search" value={draft} onChange={e => setDraft(e.target.value)} maxLength={100}

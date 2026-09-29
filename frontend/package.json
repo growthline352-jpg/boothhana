@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test": "vitest run",
-    "test:seo": "node --test seo/metadata.node-test.mjs seo/sitemap.node-test.mjs",
+    "test:seo": "node --test seo/metadata.node-test.mjs seo/sitemap.node-test.mjs seo/category-sites.node-test.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "build:hosting": "pnpm run build && pnpm run test:seo && node scripts/prepare-hosting.mjs && node scripts/test-page-handler.mjs"

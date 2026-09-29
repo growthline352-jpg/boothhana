@@ -1,3 +1,4 @@
+import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryOrigin, splitSitesEnabled } from './category-sites.mjs'
 /** Shared server/SPA metadata. Only PUBLIC catalog responses may be supplied here. */
 export const SITE_TITLE = '부스하나 | 서울·경기 행사·부스·상품 찾기'
 export const SITE_DESCRIPTION = '서울·경기 서브컬처·박람회·축제와 참가 부스, 상품을 찾아 저장하세요. 방문을 준비하고 다녀온 뒤에도 다시 찾을 수 있습니다.'
@@ -26,8 +27,8 @@ export function normalizePath(raw) {
   if (typeof raw !== 'string' || !raw.startsWith('/') || raw.startsWith('//') || /[\\?#]/.test(raw) || [...raw].some(char => char.charCodeAt(0) <= 0x20)) return '/not-found'
   return raw.length > 500 ? '/not-found' : raw.replace(/\/+$/, '') || '/'
 }
-function categoryFor(event) { return CATEGORY_BY_TYPE[event?.subcategory] || 'subculture' }
-function categoryUrl(origin, category) { return category === 'subculture' ? `${origin}/discover` : `${origin}/discover?category=${category}` }
+export function categoryFor(event) { return CATEGORY_BY_TYPE[event?.subcategory] || null }
+function categoryUrl(origin, category) { return categorySite(origin) ? `${categoryOrigin(category) || origin}/` : category === 'subculture' ? `${origin}/discover` : `${origin}/discover?category=${category}` }
 function dateTime(date, time) {
   if (!DATE.test(date || '')) return ''
   if (!TIME.test(time || '')) return date
@@ -52,7 +53,7 @@ function baseGraph(origin, canonical, title, description, image) {
   if (image) webpage.primaryImageOfPage = { '@type': 'ImageObject', url: image }
   return {
     webpage,
-    graph: [{ '@type': 'WebSite', '@id': websiteId, url: `${origin}/`, name: '부스하나', description: SITE_DESCRIPTION, inLanguage: 'ko-KR' }, webpage],
+    graph: [{ '@type': 'WebSite', '@id': websiteId, url: `${origin}/`, name: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', description: CATEGORY_SITES[categorySite(origin)]?.description || SITE_DESCRIPTION, inLanguage: 'ko-KR' }, webpage],
   }
 }
 function breadcrumb(items, canonical) {
@@ -113,7 +114,7 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
     }
     return { '@context': 'https://schema.org', '@graph': graph }
   }
-  const eventCategory = categoryFor(catalog.event)
+  const eventCategory = categoryFor(catalog.event) || 'subculture'
   const eventCanonical = `${origin}/discover/${catalog.id}`
   const crumbs = [
     { name: '홈', url: `${origin}/` },
@@ -142,15 +143,17 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 
-export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', catalog = null, participant = null, listing = [], unavailable = false } = {}) {
+export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', catalog = null, participant = null, listing = [], unavailable = false, splitSites = false } = {}) {
   path = normalizePath(path)
-  const origin = siteOrigin(siteUrl)
+  let origin = siteOrigin(siteUrl)
+  const split = splitSitesEnabled(origin, splitSites)
+  const hostCategory = categorySite(origin)
   const params = new URLSearchParams(search)
   const browse = path === '/' || path === '/discover'
   const detailMatch = /^\/discover\/([1-9]\d*)$/.exec(path)
   const boothMatch = /^\/discover\/([1-9]\d*)\/booths\/([1-9]\d*)$/.exec(path)
-  const category = params.get('category') || 'subculture'
-  const supported = ['subculture', 'exhibitions', 'festivals'].includes(category)
+  const category = hostCategory || params.get('category') || 'subculture'
+  const supported = ['subculture', 'exhibitions', 'festivals'].includes(category) && (!params.has('category') || ['subculture', 'exhibitions', 'festivals'].includes(params.get('category')))
   const filtered = [...params.keys()].some(key => key !== 'category')
   let title = SITE_TITLE, description = SITE_DESCRIPTION, indexable = browse && supported && !filtered
   let image = origin ? `${origin}/assets/brand/logo.png` : ''
@@ -199,18 +202,25 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     description = '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'
   }
 
-  // Query filters are alternate views of the same browse/detail content and point to a stable canonical URL.
-  const canonical = origin ? origin + path + (browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
+  if (split && validCatalog && categoryFor(catalog.event)) origin = categoryOrigin(categoryFor(catalog.event))
+  if (split && browse && supported && (hostCategory || path === '/discover' || params.has('category'))) {
+    origin = categoryOrigin(category)
+    title = `서울·경기 ${CATEGORY_SITES[category].label} 일정 | ${CATEGORY_SITES[category].name}`
+    description = CATEGORY_SITES[category].description
+  }
+  const canonicalPath = split && browse && (hostCategory || path === '/discover' || params.has('category')) && supported ? '/' : path
+  // Queries remain usable but only the unfiltered category home is an index target.
+  const canonical = origin ? origin + canonicalPath + (!split && browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
   const robots = indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
   const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null, listing, path, category }) : null
-  return { title, description, canonical, robots, image, schema, verification: verificationToken(verification) }
+  return { title, description, canonical, robots, image, schema, siteName: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', verification: verificationToken(verification) }
 }
 
 export function renderMetadata(meta) {
   const tag = (name, content, property = false) => `<meta data-booth-meta ${property ? 'property' : 'name'}="${name}" content="${esc(content)}" />`
   const tags = [
     `<title data-booth-meta>${esc(meta.title)}</title>`, tag('description', meta.description), tag('robots', meta.robots),
-    tag('og:type', 'website', true), tag('og:site_name', '부스하나', true), tag('og:locale', 'ko_KR', true),
+    tag('og:type', 'website', true), tag('og:site_name', meta.siteName || '부스하나', true), tag('og:locale', 'ko_KR', true),
     tag('og:title', meta.title, true), tag('og:description', meta.description, true),
     tag('twitter:card', meta.image ? 'summary_large_image' : 'summary'), tag('twitter:title', meta.title), tag('twitter:description', meta.description),
   ]
@@ -225,16 +235,19 @@ function list(values, max = 12) {
   return Array.isArray(values) ? values.map(value => text(value, 100)).filter(Boolean).slice(0, max) : []
 }
 /** Real public content for non-JavaScript crawlers; React replaces this same-content fallback after loading. */
-export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [] } = {}) {
+export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], siteUrl = '', splitSites = false } = {}) {
   path = normalizePath(path)
   if (!catalog?.event) {
     if (!['/', '/discover', '/events'].includes(path)) return ''
     const params = new URLSearchParams(search)
     if ((path === '/' || path === '/discover') && [...params.keys()].some(key => key !== 'category')) return ''
-    const category = params.get('category') || 'subculture'
+    if (path === '/' && siteUrl === PORTAL_ORIGIN && splitSites && !params.size) {
+      return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.name)}</a></h2><p>${esc(site.description)}</p></section>`).join('')}</main>`
+    }
+    const category = categorySite(siteUrl) || params.get('category') || 'subculture'
     if ((path === '/' || path === '/discover') && !['subculture', 'exhibitions', 'festivals'].includes(category)) return ''
     const rows = listingRows(listing)
-    const heading = path === '/' ? '서울·경기 행사와 참가 부스 찾기' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category]
+    const heading = categorySite(siteUrl) && path !== '/events' ? CATEGORY_SITES[category].name : path === '/' ? '서울·경기 행사와 참가 부스 찾기' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category]
     const intro = path === '/events' ? '부스하나에 직접 등록된 예약 가능 행사입니다.' : '공개된 일정과 장소를 확인하고 행사별 참가 부스와 상품 정보를 찾아보세요.'
     return `<main class="content-wrap section-pad" data-seo-fallback><h1>${esc(heading)}</h1><p>${esc(intro)}</p>
       ${rows.length ? `<h2>공개 행사</h2><ul>${rows.map(row => `<li><a href="${row.urlPath}">${esc(row.name)}</a>${row.startDate ? ` · <time datetime="${esc(text(row.startDate, 10))}">${esc(text(row.startDate, 10))}</time>` : ''}${row.venue ? ` · ${esc(text(row.venue, 160))}` : ''}</li>`).join('')}</ul>` : '<p>공개 행사 목록을 불러오고 있습니다.</p>'}</main>`
