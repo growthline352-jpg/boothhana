@@ -1,6 +1,6 @@
 import type { Target, TicketKind } from './api'
-export const kinds:Record<TicketKind,string>={REPORT:'정보 오류 신고',INQUIRY:'고객문의',CLAIM:'업체 관리권 요청'}
-export const categories:Record<TicketKind,Record<string,string>>={REPORT:{SCHEDULE_PLACE:'일정·장소',PARTICIPATION_LOCATION:'참가·부스 위치',PRODUCT_PRICE:'상품·가격·판매 상태',IMAGE_RIGHTS:'이미지·권리',OTHER:'기타 정보 오류'},INQUIRY:{ACCOUNT:'로그인·계정',SERVICE:'서비스 이용 오류',RESERVATION:'예약·수령',BUSINESS:'업체 등록·관리',EVENT_REQUEST:'행사 추가 요청',OTHER:'기타 문의'},CLAIM:{OWNERSHIP:'업체 운영·관리권 확인'}}
+export const kinds:Record<TicketKind,string>={REPORT:'정보 오류 신고',INQUIRY:'고객문의',CLAIM:'주최자·부스 운영자 인증'}
+export const categories:Record<TicketKind,Record<string,string>>={REPORT:{SCHEDULE_PLACE:'일정·장소',PARTICIPATION_LOCATION:'참가·부스 위치',PRODUCT_PRICE:'상품·가격·판매 상태',IMAGE_RIGHTS:'이미지·권리',OTHER:'기타 정보 오류'},INQUIRY:{ACCOUNT:'로그인·계정',SERVICE:'서비스 이용 오류',RESERVATION:'예약·수령',BUSINESS:'업체 등록·관리',EVENT_REQUEST:'행사 추가 요청',OTHER:'기타 문의'},CLAIM:{OWNERSHIP:'업체 운영·관리권 확인',ORGANIZER:'행사 주최자 확인'}}
 export const statuses:Record<string,string>={OPEN:'접수',IN_PROGRESS:'확인 중',WAITING_USER:'추가 정보 요청',ANSWERED:'답변 완료',RESOLVED:'처리 완료',CLOSED:'종료'}
 export const resolutions:Record<string,string>={UPDATED:'공개 정보 변경 확인',HIDDEN:'공개 숨김 확인',NO_CHANGE:'확인 후 정보 유지',DUPLICATE:'기존 신고에 연결',OTHER:'사유 안내 후 종료',CLOSE:'답변 후 종료',APPROVED:'관리 관계 승인',REJECTED:'관리 관계 반려'}
 export function parseKind(value:string|null):TicketKind{return value==='REPORT'||value==='CLAIM'?value:'INQUIRY'}
