@@ -2,6 +2,7 @@ import { AdminEventComments } from '../features/catalog/AdminEventComments'
 import { OwnershipManagement } from '../features/support/OwnershipManagement'
 import { AdminSeries } from '../features/support/AdminSeries'
 import { LibraryPage } from '../features/library/LibraryPage'
+import { AccountPage } from '../pages/AccountPage'
 import { SupportHome,SupportNew,SupportDetail,ManagedExhibitors } from '../features/support/SupportPages'
 import { GuestSupportPage } from '../features/support/GuestSupportPage'
 import { AdminSupportList,AdminSupportDetail } from '../features/support/AdminSupportPages'
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
+    { path: 'account', element: <SupportBoundary><AccountPage/></SupportBoundary> },
     { path: 'support/management', element: <SupportBoundary><OwnershipManagement/></SupportBoundary> },
     { path: 'support', element: <SupportBoundary><SupportHome/></SupportBoundary> },
     { path: 'support/new', element: <SupportBoundary><SupportNew/></SupportBoundary> },

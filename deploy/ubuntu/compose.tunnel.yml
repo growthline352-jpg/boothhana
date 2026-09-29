@@ -1,0 +1,71 @@
+# Isolated ingress: no host ports and no shared reverse-proxy/network changes.
+# Run from a directory containing api.env, secrets/, and collector.config.json.
+name: boothhana-production
+services:
+  boothhana-api:
+    image: ${BOOTHHANA_API_IMAGE:?Set an explicitly tested API image}
+    env_file:
+      - path: ./api.env
+        format: raw
+    environment:
+      PORT: "8080"
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/gcs-service-account.json
+      CODEX_API_KEY: ""
+      X_BEARER_TOKEN: ""
+      DB_POOL_SIZE: "5"
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom
+    volumes:
+      - ./secrets/gcs-service-account.json:/run/secrets/gcs-service-account.json:ro
+    restart: unless-stopped
+    mem_limit: 2g
+    stop_grace_period: 45s
+    security_opt: [no-new-privileges:true]
+    networks: [app]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "5"}
+  cloudflared:
+    image: ${CLOUDFLARED_IMAGE:?Set a pinned cloudflared image}
+    command: [tunnel, --no-autoupdate, run, --token-file, /run/secrets/tunnel-token]
+    volumes:
+      - ./secrets/tunnel-token:/run/secrets/tunnel-token:ro
+    depends_on:
+      boothhana-api: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [app]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  boothhana-collector:
+    profiles: [jobs]
+    image: ${BOOTHHANA_COLLECTOR_IMAGE:?Set an explicitly tested collector image}
+    env_file:
+      - path: ./collector.env
+        format: raw
+    environment:
+      TZ: Asia/Seoul
+    command: [python, run_scheduled.py, --config, /etc/boothhana/collector.json]
+    volumes:
+      - ./collector.config.json:/etc/boothhana/collector.json:ro
+      - collector_state:/var/lib/boothhana-collector/state
+      - collector_auth:/var/lib/boothhana-collector/codex
+    depends_on:
+      boothhana-api: {condition: service_healthy}
+    restart: "no"
+    read_only: true
+    tmpfs: ["/tmp:size=512m,mode=1777"]
+    cpus: 2.0
+    mem_limit: 3g
+    security_opt: [no-new-privileges:true]
+    networks: [app]
+    logging:
+      driver: json-file
+      options: {max-size: 20m, max-file: "5"}
+networks:
+  app: {driver: bridge}
+volumes:
+  collector_state:
+  collector_auth:
