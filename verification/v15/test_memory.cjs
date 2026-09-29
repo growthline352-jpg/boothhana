@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');const ts=require('../v4/load_ts.cjs')();const root=path.resolve(__dirname,'../..'),cache={};let n=0
 function ok(value,message){assert.ok(value,message);n++}function equal(a,b){assert.deepEqual(a,b);n++}function bad(fn){assert.throws(fn);n++}
 function load(rel){let p=path.resolve(root,rel);if(!path.extname(p))p+='.ts';if(cache[p])return cache[p].exports;let source=fs.readFileSync(p,'utf8'),m={exports:{}};cache[p]=m
- const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
+ const code=ts.transpileModule(source.replace(/\bimport\.meta\.env\b/g,'({})'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
  vm.runInThisContext(`(function(require,module,exports){${code}\n})`,{filename:p})(name=>name.startsWith('.')?load(path.relative(root,path.resolve(path.dirname(p),name))):require(name),m,m.exports);return m.exports}
 const {GuestStore}=load('frontend/src/features/library/guestStore.ts'),{targetKey,memoryHref,validTarget,matchesMemory,guestEntry}=load('frontend/src/features/library/memory.ts')
 class Storage {m=new Map;get length(){return this.m.size}key(i){return [...this.m.keys()][i]||null}getItem(k){return this.m.get(k)||null}setItem(k,v){this.m.set(k,v)}removeItem(k){this.m.delete(k)}}

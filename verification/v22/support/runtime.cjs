@@ -22,7 +22,7 @@ function runtime(options={}){
  const overrides={react:hooks,'react/jsx-runtime':{jsx,jsxs:jsx,Fragment:'Fragment'},...options.overrides};
  function load(relative){const file=path.isAbsolute(relative)?relative:path.resolve(root,relative);if(cache.has(file))return cache.get(file).exports;
   const m={exports:{}};cache.set(file,m);
-  const src=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
+  const src=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file.replace(/\.mjs$/,'.js'),compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
    .replace(/\bimport\.meta\.env\b/g,'__IMPORT_META_ENV__');
   const requireLocal=name=>{if(Object.hasOwn(overrides,name))return overrides[name];const supplied=options.resolve?.(name,file);if(supplied!==undefined)return supplied;if(name.endsWith('.css'))return {};if(!name.startsWith('.'))throw Error('Unmocked external dependency '+name);
    const base=path.resolve(path.dirname(file),name);for(const ext of ['', '.ts','.tsx','/index.ts'])if(fs.existsSync(base+ext)&&fs.statSync(base+ext).isFile())return load(base+ext);throw Error('Missing import '+name)};

@@ -1,5 +1,6 @@
 import { apiOrigin, readBoundedJson } from '../api/page.mjs'
 import { siteOrigin } from './metadata.mjs'
+import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite } from './category-sites.mjs'
 
 const CATEGORIES = ['SUBCULTURE', 'EXHIBITION', 'FESTIVAL']
 const MAX_URLS = 50_000
@@ -23,13 +24,15 @@ async function fetchCategory(origin, category, signal, fetcher) {
   return [first, ...rest].flatMap(value => value.items)
 }
 
-export async function publishedEvents({ apiBase, fetcher = fetch, timeoutMs = 20_000 }) {
+export async function publishedEvents({ apiBase, fetcher = fetch, timeoutMs = 20_000, category = null }) {
   const origin = apiOrigin(apiBase)
   if (!origin) throw new Error('SEO API origin is not configured')
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const rows = (await Promise.all(CATEGORIES.map(category => fetchCategory(origin, category, controller.signal, fetcher)))).flat()
+    if (category && !Object.hasOwn(CATEGORY_SITES, category)) throw new Error('Unknown sitemap category')
+    const selected = category ? [CATEGORY_SITES[category].code] : CATEGORIES
+    const rows = (await Promise.all(selected.map(category => fetchCategory(origin, category, controller.signal, fetcher)))).flat()
     const unique = new Map()
     for (const row of rows) {
       const id = Number(row?.id)
@@ -40,12 +43,18 @@ export async function publishedEvents({ apiBase, fetcher = fetch, timeoutMs = 20
   } finally { clearTimeout(timer) }
 }
 
-export function renderSitemap(siteUrl, events) {
+export function renderSitemap(siteUrl, events, splitSites = false) {
   const origin = siteOrigin(siteUrl)
   if (!origin) throw new Error('Public site origin is not configured')
   if (!Array.isArray(events) || events.length + 5 > MAX_URLS) throw new Error('Sitemap URL limit exceeded')
   const newest = events.map(event => event.publishedAt).filter(Boolean).sort().at(-1) || ''
-  const urls = [
+  const siteCategory = categorySite(origin)
+  const urls = siteCategory ? [
+    { loc: `${origin}/`, lastmod: newest },
+    ...events.map(event => ({ loc: `${origin}/discover/${event.id}`, lastmod: event.publishedAt })),
+  ] : splitSites && origin === PORTAL_ORIGIN ? [
+    { loc: `${origin}/`, lastmod: newest }, { loc: `${origin}/events`, lastmod: newest },
+  ] : [
     { loc: `${origin}/`, lastmod: newest },
     { loc: `${origin}/discover`, lastmod: newest },
     { loc: `${origin}/discover?category=exhibitions`, lastmod: newest },

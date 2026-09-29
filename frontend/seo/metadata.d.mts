@@ -1,4 +1,4 @@
-export interface PageMeta { title: string; description: string; canonical: string; robots: string; image: string; schema: Record<string, unknown> | null; verification: string }
+export interface PageMeta { title: string; description: string; canonical: string; robots: string; image: string; schema: Record<string, unknown> | null; verification: string; siteName?: string }
 export interface PublicParticipantMeta {
   id: number
   participant: { registrationName: string; subjects?: string[] }
@@ -22,8 +22,9 @@ export const SITE_TITLE: string
 export const SITE_DESCRIPTION: string
 export function siteOrigin(raw: string): string
 export function normalizePath(raw: string): string
-export function pageMetadata(input?: { path?: string; search?: string; siteUrl?: string; verification?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[]; unavailable?: boolean }): PageMeta
+export function categoryFor(event: { subcategory?: string } | null | undefined): import('./category-sites.mjs').SiteCategory | null
+export function pageMetadata(input?: { path?: string; search?: string; siteUrl?: string; verification?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[]; unavailable?: boolean; splitSites?: boolean }): PageMeta
 export function renderMetadata(meta: PageMeta): string
-export function renderCrawlableContent(input?: { path?: string; search?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[] }): string
+export function renderCrawlableContent(input?: { path?: string; search?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[]; siteUrl?: string; splitSites?: boolean }): string
 export function injectMetadata(template: string, meta: PageMeta): string
 export function injectCrawlableContent(template: string, content: string): string

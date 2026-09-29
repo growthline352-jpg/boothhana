@@ -6,7 +6,7 @@ try{
  fs.writeFileSync(declarations,`
 declare namespace React { type ReactNode=unknown; }
 declare module 'qrcode' {const QRCode:{toDataURL:(value:string,options?:any)=>Promise<string>};export default QRCode;}
-declare module '*.css' {} interface ImportMeta{env:{VITE_API_BASE_URL?:string;VITE_PUBLIC_SITE_URL?:string;PROD:boolean}}
+declare module '*.css' {} interface ImportMeta{env:{VITE_API_BASE_URL?:string;VITE_PUBLIC_SITE_URL?:string;VITE_CATEGORY_SITES_ENABLED?:string;PROD:boolean}}
 declare module 'react'{ export function useId():string; export function useSyncExternalStore<T>(subscribe:(listener:()=>void)=>()=>void,getSnapshot:()=>T,getServerSnapshot?:()=>T):T; 
  export type ReactNode=unknown;export interface RefObject<T>{current:T};export type SetStateAction<T>=T|((prev:T)=>T);export type Dispatch<T>=(value:T)=>void;
  export interface PointerEvent<T>{button:number;clientX:number;clientY:number;pointerId:number;target:EventTarget;currentTarget:T;preventDefault():void;}
