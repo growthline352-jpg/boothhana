@@ -7,6 +7,10 @@ import java.util.Map;
 public final class SchemaContract {
     private SchemaContract() {}
     public static final Map<String,List<String>> TABLES=Map.ofEntries(
+        Map.entry("organizer_identity",List.of("id","name","official_url","created_by","created_at")),
+        Map.entry("event_manager",List.of("event_id","user_id","organizer_id","claim_ticket_id","state","granted_by","granted_at","revoked_by","revoked_at","reason","revision")),
+        Map.entry("event_series",List.of("id","name","official_url","created_by","created_at")),
+        Map.entry("event_series_member",List.of("event_id","series_id","edition","revision","evidence_url","checked_by","checked_at")),
         Map.entry("event_comment",List.of("id","event_id","user_id","body","deleted","created_at")),
         Map.entry("app_user",List.of("id","kakao_subject","display_name","created_at")),
         Map.entry("event",List.of("id","name","start_at","end_at","venue","description","image_key","reservation_start_at","reservation_end_at","status")),
@@ -28,7 +32,7 @@ public final class SchemaContract {
         Map.entry("subculture_participant",List.of("id","event_id","identity_key","registration_name","payload_json","payload_hash","overrides_json","review_state","review_note","reviewed_payload_json","revision","first_seen_at","last_seen_at","identity_aliases","sales_last_attempt_at","sales_last_success_at","sales_attempt_status","sales_retry_after","sales_failure_count")),
         Map.entry("subculture_participant_member",List.of("participant_id","exhibitor_id")),
         Map.entry("subculture_sales",List.of("participant_id","payload_json","payload_hash","overrides_json","review_state","review_note","reviewed_payload_json","revision","collected_at","latest_payload_json","latest_stage_id","product_checks_json","reviewed_product_checks_json")),
-        Map.entry("subculture_catalog_product",List.of("id","participant_id","identity_key","name","payload_json","last_seen_at","identity_aliases","last_seen_stage_id")),
+        Map.entry("subculture_catalog_product",List.of("id","participant_id","identity_key","name","payload_json","last_seen_at","identity_aliases","last_seen_stage_id","owner_overrides_json")),
         Map.entry("subculture_stage_run",List.of("id","pipeline_id","event_id","participant_id","stage","request_hash","request_json","coverage_json","receipt_json","status","started_at","finished_at","received_at")),
         Map.entry("subculture_catalog_asset",List.of("id","event_id","participant_id","product_id","identity_key","type","image_url","page_url","caption","reported_rights","rights_state","rights_note","credit","last_attempt_at","storage_state","object_key","sha256","byte_size","content_type","error","revision","created_at","stored_at","offline_allowed")),
         Map.entry("subculture_catalog_review_history",List.of("id","target_type","target_id","before_json","after_json","created_at","actor_id")),
@@ -62,6 +66,10 @@ public final class SchemaContract {
      * This guards same-named but incompatible columns, not just missing columns. */
     public record ColumnShape(String udt,Integer length,boolean notNull) {}
     private static final String COLUMN_SPEC = """
+        organizer_identity=id:int8:0:1,name:varchar:160:1,official_url:varchar:2048:1,created_by:int8:0:1,created_at:timestamptz:0:1
+        event_manager=event_id:int8:0:1,user_id:int8:0:1,organizer_id:int8:0:1,claim_ticket_id:uuid:0:1,state:varchar:12:1,granted_by:int8:0:1,granted_at:timestamptz:0:1,revoked_by:int8:0:0,revoked_at:timestamptz:0:0,reason:text:0:1,revision:int8:0:1
+        event_series=id:int8:0:1,name:varchar:160:1,official_url:varchar:2048:1,created_by:int8:0:1,created_at:timestamptz:0:1
+        event_series_member=event_id:int8:0:1,series_id:int8:0:0,edition:varchar:160:1,revision:int8:0:1,evidence_url:varchar:2048:1,checked_by:int8:0:1,checked_at:timestamptz:0:1
         event_comment=id:uuid:0:1,event_id:int8:0:1,user_id:int8:0:1,body:text:0:1,deleted:bool:0:1,created_at:timestamptz:0:1
         app_user=id:int8:0:1,kakao_subject:varchar:255:1,display_name:varchar:255:1,created_at:timestamptz:0:1
         application_action=id:int8:0:1,application_id:int8:0:0,application_ref:int8:0:1,actor_id:int8:0:0,action:varchar:24:1,before_state:varchar:32:1,after_state:varchar:32:1,reason:text:0:1,revision:int8:0:1,created_at:timestamptz:0:1
@@ -82,7 +90,7 @@ public final class SchemaContract {
         reservation_item=id:int8:0:1,reservation_id:int8:0:1,event_product_id:int8:0:1,quantity:int4:0:1,unit_price:int8:0:1
         subculture_catalog_asset=id:int8:0:1,event_id:int8:0:1,participant_id:int8:0:0,product_id:int8:0:0,identity_key:bpchar:64:1,type:varchar:20:1,image_url:text:0:1,page_url:text:0:1,caption:text:0:0,reported_rights:text:0:0,rights_state:varchar:20:1,rights_note:text:0:1,credit:text:0:1,last_attempt_at:timestamptz:0:0,storage_state:varchar:20:1,object_key:text:0:0,sha256:bpchar:64:0,byte_size:int8:0:0,content_type:varchar:40:0,error:text:0:1,revision:int8:0:1,created_at:timestamptz:0:1,stored_at:timestamptz:0:0,offline_allowed:bool:0:1
         subculture_catalog_presentation=event_id:int8:0:1,banner_asset_id:int8:0:0,revision:int8:0:1,updated_at:timestamptz:0:1
-        subculture_catalog_product=id:int8:0:1,participant_id:int8:0:1,identity_key:bpchar:64:1,name:varchar:255:1,payload_json:jsonb:0:1,last_seen_at:timestamptz:0:1,identity_aliases:jsonb:0:1,last_seen_stage_id:uuid:0:0
+        subculture_catalog_product=id:int8:0:1,participant_id:int8:0:1,identity_key:bpchar:64:1,name:varchar:255:1,payload_json:jsonb:0:1,last_seen_at:timestamptz:0:1,identity_aliases:jsonb:0:1,last_seen_stage_id:uuid:0:0,owner_overrides_json:jsonb:0:1
         subculture_catalog_publication=event_id:int8:0:1,snapshot_json:jsonb:0:1,event_revision:int8:0:1,published_at:timestamptz:0:1
         subculture_catalog_review_history=id:int8:0:1,target_type:varchar:20:1,target_id:int8:0:1,before_json:jsonb:0:1,after_json:jsonb:0:1,created_at:timestamptz:0:1,actor_id:int8:0:0
         subculture_collection_observation=run_id:uuid:0:1,candidate_id:int8:0:1,payload_json:jsonb:0:1,warnings_json:jsonb:0:1,observed_at:timestamptz:0:1

@@ -25,10 +25,15 @@ public final class SupportRules {
  public static void create(Create c) {
   if(c==null||c.requestId()==null||c.kind()==null||!Set.of("REPORT","INQUIRY","CLAIM").contains(c.kind()))throw new IllegalArgumentException("접수 형식을 확인해 주세요.");
   text(c.title(),160,true);text(c.body(),10000,true);evidence(c.evidence());
-  Set<String> reasons="REPORT".equals(c.kind())?REPORT_REASONS:"CLAIM".equals(c.kind())?Set.of("OWNERSHIP"):INQUIRY_REASONS;
+  Set<String> reasons="REPORT".equals(c.kind())?REPORT_REASONS:"CLAIM".equals(c.kind())?Set.of("OWNERSHIP","ORGANIZER"):INQUIRY_REASONS;
   if(c.category()==null||!reasons.contains(c.category()))throw new IllegalArgumentException("접수 분류를 확인해 주세요.");
   if(!"INQUIRY".equals(c.kind())&&c.target()==null)throw new IllegalArgumentException("신고·관리권 신청 대상을 선택해 주세요.");
-  if("CLAIM".equals(c.kind())&&(c.exhibitorId()==null||c.exhibitorId()<1||(c.evidence()==null||c.evidence().isEmpty())))throw new IllegalArgumentException("업체와 공식 운영 근거 링크를 입력해 주세요.");
+  if("CLAIM".equals(c.kind())) {
+   if(c.evidence()==null||c.evidence().isEmpty())throw new IllegalArgumentException("공식 운영 근거 링크를 입력해 주세요.");
+   if("ORGANIZER".equals(c.category())) {
+    if(c.exhibitorId()!=null||!"CATALOG".equals(c.target().namespace())||!"EVENT".equals(c.target().type())||c.target().eventId()<1||!Objects.equals(c.target().id(),c.target().eventId()))throw new IllegalArgumentException("주최자 신청은 해당 행사만 선택해 주세요.");
+   } else if(c.exhibitorId()==null||c.exhibitorId()<1)throw new IllegalArgumentException("업체를 선택해 주세요.");
+  }
   if(!"CLAIM".equals(c.kind())&&c.exhibitorId()!=null)throw new IllegalArgumentException("잘못된 업체 연결입니다.");
   if(c.context()!=null){if(c.context().size()>5)throw new IllegalArgumentException("화면 문맥이 너무 큽니다.");for(var e:c.context().entrySet()){if(e.getKey()==null||!Set.of("pagePath","viewedVersion","viewedLabel","viewedAt","errorCode").contains(e.getKey()))throw new IllegalArgumentException("허용하지 않는 문맥입니다.");text(e.getValue(),1000,false);}}
  }

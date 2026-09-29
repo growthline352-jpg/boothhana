@@ -23,8 +23,16 @@ class GateReportingTests(unittest.TestCase):
             gate.OUT = Path(temp) / 'result.json'
             gate.ROOT = Path(temp)
             reports=gate.ROOT/'backend/build/test-results/test';reports.mkdir(parents=True)
-            for filename,name in [('TEST-com.boothhana.floorplan.FloorplanHttpContractTests.xml','withdrawalHasNoContentSuccess'),('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','v24TypedColumnContractMatchesRealPostgres')]:
-                (reports/filename).write_text(f'<testsuite><testcase name="{name}()"/></testsuite>')
+            suites={
+                'TEST-com.boothhana.floorplan.FloorplanHttpContractTests.xml':['withdrawalHasNoContentSuccess'],
+                'TEST-com.boothhana.release.ReleaseIntegrationTests.xml':[
+                    'v24TypedColumnContractMatchesRealPostgres',
+                    'verifiedOrganizerLifecyclePreservesOverridesAndRevokesAccess',
+                    'seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership',
+                    'verifiedBoothProductEditPreservesPendingCollectionAndIdentityThroughRepublication'],
+            }
+            for filename,names in suites.items():
+                (reports/filename).write_text('<testsuite>'+''.join(f'<testcase name="{name}()"/>' for name in names)+'</testsuite>')
             gate.OUT.write_text('{"state":"AUTOMATED_CHECKS_PASSED"}')
             parent = SimpleNamespace()
             parent.main = lambda: inherited(parent, gate.OUT)

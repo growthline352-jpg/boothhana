@@ -15,7 +15,9 @@ public final class SupportModels {
  public record GuestCreate(Create ticket,String accessKey,String website) {}
  public record GuestAccess(UUID ticketId,String accessKey) {}
  public record GuestMessage(GuestAccess access,Message message) {}
- public record ClaimDecision(long revision,String decision,String note,String reply) {}
+ public record ClaimDecision(long revision,String decision,String note,String reply,Long organizerId,String verifiedName,String officialUrl) {
+  public ClaimDecision(long revision,String decision,String note,String reply){this(revision,decision,note,reply,null,null,null);}
+ }
  public record Revoke(long revision,String reason) {}
  public record AttachmentInput(UUID uploadId,String contentType,long size,String sha256) {}
  public record Resolved(Target target,String label,String route,Object snapshot,String fingerprint,boolean visible) {}

@@ -1,4 +1,5 @@
 import { OfflineDownloadPanel } from '../offline/OfflineDownloadPanel'
+import { OwnershipPanel, EventHistory } from '../support/OwnershipPanels'
 import { EventComments } from './EventComments'
 import { PageMetadata } from '../../app/PageMetadata'
 import { SaveButton } from '../library/SaveButton'
@@ -128,7 +129,7 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page">
     <Link className="discovery-back-link" to={back} state={{catalogRestore:true}}>← {categoryForType(e.subcategory).label} 목록</Link>
-    <header className="visit-summary"><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 외부 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1>
+    <header className="visit-summary"><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 외부 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1><OwnershipPanel eventId={Number(eventId)}/>
       {status.notice&&<p className="visit-important-note" role="status">{status.notice} {status.operation.sourceUrl&&<SafeLink url={status.operation.sourceUrl}>상태 안내 원문</SafeLink>}{status.operation.checkedOn&&<small> · {status.operation.checkedOn} 확인</small>}</p>}
       <dl className="visit-facts"><div><dt>행사일</dt><dd>{eventDateLabel(e.occurrences)}</dd></div>
         <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
@@ -166,6 +167,7 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
       <small>공개본 갱신: {new Date(value.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}. 수집 후 변경될 수 있으므로 방문 전 주최 측 최신 공지를 확인하세요.</small>
     </section>
     <OfflineDownloadPanel eventId={Number(eventId)} day={state.day}/>
+    <EventHistory key={`history-${eventId}`} eventId={Number(eventId)}/>
     <EventComments key={eventId} eventId={Number(eventId)}/>
   </section>
 }

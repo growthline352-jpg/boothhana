@@ -31,6 +31,8 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static com.boothhana.collection.CatalogModels.*;
+import static com.boothhana.collection.CollectionModels.*;
 
 /** REAL entire app + actual SQL001..016 already applied by prepare_test_db.py.
  * NEVER use production, SSH tunnels or a database containing real data.
@@ -55,6 +57,9 @@ class ReleaseIntegrationTests {
  @Autowired PlatformTransactionManager transactionManager;
  @Autowired WebApplicationContext context;
  @Autowired SupportOperations support;
+ @Autowired OwnershipCatalogService ownership;
+ @Autowired com.boothhana.collection.CatalogService catalog;
+ @Autowired com.boothhana.collection.CatalogPublicationService publications;
  @Autowired tools.jackson.databind.json.JsonMapper json;
  @LocalServerPort int port;
  UserAccount owner,other;long eventId,boothId,productId;String subject;MockMvc http;
@@ -76,7 +81,7 @@ class ReleaseIntegrationTests {
  long count(String table){if(!Set.of("reservation","pos_sale").contains(table))throw new IllegalArgumentException();return db.queryForObject("select count(*) from "+table+" where event_booth_id=?",Long.class,boothId);}
  long receipts(){return db.queryForObject("select count(*) from trade_request where user_id=?",Long.class,owner.id);}
  @Test void schemaAndLeastPrivilegeRole() {
-  db.queryForList(SchemaContract.probeSql());assertThat(SchemaContract.TABLES).hasSize(44);
+  db.queryForList(SchemaContract.probeSql());assertThat(SchemaContract.TABLES).hasSize(48);
   for(String table:SchemaContract.TABLES.keySet()) {
    assertThat(db.queryForObject("select relrowsecurity from pg_class where oid=to_regclass(?)",Boolean.class,"public."+table)).as(table).isTrue();
    assertThat(db.queryForObject("select has_table_privilege('anon',?,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege('anon',?,'SELECT,INSERT,UPDATE')",Boolean.class,"public."+table,"public."+table)).as(table+" anon").isFalse();
@@ -99,5 +104,98 @@ class ReleaseIntegrationTests {
  @Test void v24TypedColumnContractMatchesRealPostgres() {
   assertThat(SchemaContract.columnIssues(db.queryForList(SchemaContract.columnProbeSql())))
    .as("SQL001..016 column types, lengths and nullability").isEmpty();
+ }
+ long catalogEvent(String label) {
+  var data=new com.boothhana.collection.CollectionModels.EventData(label,"ONLY_EVENT","테스트 단체","1회","SEOUL","서울 전시장","서울특별시 마포구","원래 소개","무료",List.of(),List.of(new com.boothhana.collection.CollectionModels.Occurrence("2026-10-03","2026-10-03","10:00","17:00")),List.of(new com.boothhana.collection.CollectionModels.Source("https://example.com/event","OFFICIAL","ORIGINAL","행사 안내")),List.of(),List.of());
+  String encoded=json.writeValueAsString(data),key=SupportRules.digest(UUID.randomUUID().toString());
+  long id=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,venue_name,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state,reviewed_payload_json) values(?,?,?,'ONLY_EVENT','서울 전시장','2026-10-03','2026-10-03',cast(? as jsonb),?,'[]','REVIEWED',cast(? as jsonb)) returning id",Long.class,key,key,label,encoded,key,encoded);
+  publications.publish(id,new com.boothhana.collection.CatalogModels.PublishInput(1));return id;
+ }
+ UUID claimOrganizer(long event) {
+  UUID id=UUID.randomUUID();support.create(new Create(id,"CLAIM","ORGANIZER","테스트 주최 단체","공식 계정 소유 확인 요청",List.of("https://example.com/official"),new Target("CATALOG","EVENT",event,event,null,null,null,null),Map.of(),null),new Principal(owner.id,false,false));return id;
+ }
+ @Test void verifiedOrganizerLifecyclePreservesOverridesAndRevokesAccess(){
+  long id=catalogEvent("[TEST] 인증 행사");UUID claim=claimOrganizer(id);var admin=new Principal(other.id,true,false);
+  assertThatThrownBy(()->support.decide(claim,new ClaimDecision(0,"APPROVE","검증","승인",null,"단체","https://example.com"),new Principal(owner.id,true,false))).isInstanceOf(ApiException.class);
+  support.decide(claim,new ClaimDecision(0,"APPROVE","공식 계정 소유 확인","주최자 연결 완료",null,"단체","https://example.com"),admin);
+  assertThat((List<?>)ownership.publicInfo(id).get("organizers")).hasSize(1);
+  assertThatThrownBy(()->ownership.editable("EVENT",id,0,other.id)).isInstanceOf(ApiException.class);
+  ownership.edit("EVENT",id,0,new OwnershipCatalogService.OwnerEdit(1,Map.of("description","주최자 수정"),"최신 안내"),owner.id);
+  assertThat(json.writeValueAsString(publications.detail(id))).contains("주최자 수정");
+  db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{description}','\"재수집 원본\"') where id=?",id);
+  assertThat(json.writeValueAsString(catalog.eventDetail(id).get("event"))).contains("주최자 수정");
+  assertThatThrownBy(()->ownership.edit("EVENT",id,0,new OwnershipCatalogService.OwnerEdit(1,Map.of("description","오래된 수정"),"사유"),owner.id)).isInstanceOf(ApiException.class);
+  ownership.revokeEvent(id,owner.id,new Revoke(0,"담당 관계 종료"),admin);
+  assertThat((List<?>)ownership.publicInfo(id).get("organizers")).isEmpty();
+  assertThatThrownBy(()->ownership.editable("EVENT",id,0,owner.id)).isInstanceOf(ApiException.class);
+ }
+ @Test void seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership(){
+  long a=catalogEvent("[TEST] 1회"),b=catalogEvent("[TEST] 2회");var admin=new Principal(other.id,true,false);
+  var first=ownership.linkSeries(a,new OwnershipCatalogService.SeriesInput(0,null,"[TEST] 시리즈","https://example.com/series","1회","https://example.com/1","공식 회차 확인"),admin);
+  long series=((Number)first.get("seriesId")).longValue();
+  ownership.linkSeries(b,new OwnershipCatalogService.SeriesInput(0,series,null,null,"2회","https://example.com/2","공식 회차 확인"),admin);
+  assertThat(((Number)ownership.history(a,0).get("total")).longValue()).isEqualTo(1);
+  assertThat((List<?>)ownership.publicInfo(b).get("organizers")).isEmpty();
+  assertThatThrownBy(()->ownership.linkSeries(a,new OwnershipCatalogService.SeriesInput(0,null,null,null,"","https://example.com/1","해제"),admin)).isInstanceOf(ApiException.class);
+  publications.unpublish(b);assertThat(((Number)ownership.history(a,0).get("total")).longValue()).isZero();
+  ownership.linkSeries(a,new OwnershipCatalogService.SeriesInput(1,null,null,null,"","https://example.com/1","잘못된 연결 해제"),admin);
+  assertThat(ownership.seriesLink(a,admin).get("seriesId")).isNull();
+ }
+ ProductData ownerTestProduct(String name) {
+  return new ProductData(null,name,"수집 상품 설명",null,List.of(),List.of(),"EVENT_SALE_CONFIRMED",null,"ON_SALE",null,
+   List.of(new Source("https://example.com/products","OFFICIAL","ORIGINAL","행사 판매 안내")),List.of(),List.of());
+ }
+ Sales ownerTestSales(List<ProductData> products) {
+  return new Sales("행사 판매 안내","EVENT_SALE_CONFIRMED",List.of(),List.of(),"현장 판매",products.getFirst().sources(),List.of(),products,List.of());
+ }
+ long insertOwnerTestProduct(long participant,ProductData product) {
+  return db.queryForObject("insert into subculture_catalog_product(participant_id,identity_key,name,payload_json) values(?,?,?,cast(? as jsonb)) returning id",Long.class,
+   participant,com.boothhana.collection.CatalogRules.productKey(product),product.name(),json.writeValueAsString(product));
+ }
+ @Test void verifiedBoothProductEditPreservesPendingCollectionAndIdentityThroughRepublication() {
+  long event=catalogEvent("[TEST] 부스 인증 행사");var admin=new Principal(other.id,true,false);
+  var member=new Member("[TEST] 작가 "+UUID.randomUUID(),"ARTIST",List.of(),"https://example.com/artist");
+  var booth=new Participant(null,member.name(),"ARTIST",List.of(member),List.of(),List.of(),"부스 소개",List.of(member.profileUrl()),
+   List.of(new Source("https://example.com/roster","OFFICIAL","ORIGINAL","공식 참가 명단")),List.of(),List.of());
+  String boothJson=json.writeValueAsString(booth),key=SupportRules.digest(UUID.randomUUID().toString());
+  long participant=db.queryForObject("insert into subculture_participant(event_id,identity_key,registration_name,payload_json,payload_hash,review_state,reviewed_payload_json) values(?,?,?,cast(? as jsonb),?,'REVIEWED',cast(? as jsonb)) returning id",Long.class,event,key,booth.registrationName(),boothJson,key,boothJson);
+  long exhibitor=db.queryForObject("insert into subculture_exhibitor(identity_key,name,profile_json) values(?,?,cast(? as jsonb)) returning id",Long.class,key,member.name(),json.writeValueAsString(member));
+  db.update("insert into subculture_participant_member(participant_id,exhibitor_id) values(?,?)",participant,exhibitor);
+  var original=ownerTestProduct("원래 상품명");long product=insertOwnerTestProduct(participant,original);
+  String initial=json.writeValueAsString(ownerTestSales(List.of(original)));
+  db.update("insert into subculture_sales(participant_id,payload_json,payload_hash,review_state,reviewed_payload_json) values(?,cast(? as jsonb),?,'REVIEWED',cast(? as jsonb))",participant,initial,key,initial);
+  publications.publish(event,new PublishInput(1));
+  UUID claim=UUID.randomUUID();
+  support.create(new Create(claim,"CLAIM","OWNERSHIP","작가 인증","공식 계정 소유 확인",List.of(member.profileUrl()),new Target("CATALOG","PARTICIPANT",event,participant,null,null,null,null),Map.of(),exhibitor),new Principal(owner.id,false,false));
+  support.decide(claim,new ClaimDecision(0,"APPROVE","공식 계정 확인","승인",null,null,member.profileUrl()),admin);
+  assertThat((List<?>)ownership.publicInfo(event).get("exhibitors")).hasSize(1);
+
+  // Emulate a newer collected snapshot awaiting review, with a separate existing admin override.
+  var pending=ownerTestProduct("아직 미공개 새 상품");long pendingId=insertOwnerTestProduct(participant,pending);
+  String collected=json.writeValueAsString(ownerTestSales(List.of(original,pending)));
+  db.update("update subculture_sales set payload_json=cast(? as jsonb),review_state='PENDING',overrides_json=cast(? as jsonb),revision=revision+1 where participant_id=?",collected,json.writeValueAsString(Map.of("summary","관리자 판매 안내")),participant);
+  var edit=new OwnershipCatalogService.ProductEdit(2,"작가가 바꾼 상품명","작가 상품 설명","5000","KRW","SOLD_OUT","상품 안내 수정");
+  assertThatThrownBy(()->ownership.editProduct(event,participant,product,edit,other.id)).isInstanceOf(ApiException.class);
+  ownership.editProduct(event,participant,product,edit,owner.id);
+  assertThatThrownBy(()->ownership.editProduct(event,participant,product,edit,owner.id)).isInstanceOf(ApiException.class);
+  var current=catalog.participant(participant).sales();
+  assertThat(current.data().products()).containsExactly(original,pending);
+  assertThat(current.overrides()).containsExactlyEntriesOf(Map.of("summary","관리자 판매 안내"));
+  assertThat(current.productRows()).extracting(ProductRow::id).containsExactly(product,pendingId);
+  assertThat(current.productRows().getFirst().data().name()).isEqualTo("작가가 바꾼 상품명");
+  String publicBeforeReview=json.writeValueAsString(publications.detail(event));
+  assertThat(publicBeforeReview).contains("작가가 바꾼 상품명").doesNotContain("아직 미공개 새 상품","관리자 판매 안내");
+  catalog.editSales(participant,new EditInput(current.revision(),"REVIEWED","새 수집 상품 검토",Map.of()));
+  publications.publish(event,new PublishInput(1));
+  var items=(List<?>)ownership.products(event,participant,owner.id).get("items");
+  assertThat(items).hasSize(2);
+  var first=(Map<?,?>)items.getFirst();
+  assertThat(((Number)first.get("id")).longValue()).isEqualTo(product);
+  assertThat(((Map<?,?>)first.get("data")).get("name")).isEqualTo("작가가 바꾼 상품명");
+  assertThat(json.writeValueAsString(items)).contains("아직 미공개 새 상품");
+  support.revoke(exhibitor,owner.id,new Revoke(0,"담당 관계 종료"),admin);
+  assertThat((List<?>)ownership.publicInfo(event).get("exhibitors")).isEmpty();
+  long revision=catalog.participant(participant).sales().revision();
+  assertThatThrownBy(()->ownership.editProduct(event,participant,product,new OwnershipCatalogService.ProductEdit(revision,"회수 후 수정","설명",null,null,"ON_SALE","실패해야 함"),owner.id)).isInstanceOf(ApiException.class);
  }
 }

@@ -75,6 +75,7 @@ export function PublicLayout() {
                 <span className="discovery-menu-caption">내 활동</span>
                 <Link to="/library"><span>내 보관함</span><small>메모·방문 기록</small></Link>
                 <Link to="/reservations"><span>내 예약</span><small>예약·수령 확인</small></Link>
+                <Link to="/support/management"><span>내 행사·부스 관리</span><small>주최자·운영자 인증</small></Link>
                 <Link to="/support"><span>고객센터</span><small>문의·신고 내역</small></Link>
               </div>
               <div className="discovery-menu-group">

@@ -23,7 +23,8 @@ const adminLinks: ConsoleLink[] = [
   { to: '/admin/inquiries?category=EVENT_REQUEST', label: '행사 추가 요청', icon: 'info' },
   { to: '/admin/reports', label: '신고 내역', icon: 'info' },
   { to: '/admin/inquiries', label: '문의 내역', icon: 'info' },
-  { to: '/admin/ownership', label: '업체 관리권', icon: 'building' },
+  { to: '/admin/ownership', label: '주최자·부스 인증', icon: 'building' },
+  { to: '/admin/event-series', label: '행사 회차 연결', icon: 'calendar' },
   { to: '/admin/subculture', label: '수집 관리', icon: 'grid' },
 ]
 
