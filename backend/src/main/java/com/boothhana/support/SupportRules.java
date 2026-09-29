@@ -12,7 +12,7 @@ import static com.boothhana.support.SupportModels.*;
 public final class SupportRules {
  private SupportRules() {}
  public static final Set<String> REPORT_REASONS=Set.of("SCHEDULE_PLACE","PARTICIPATION_LOCATION","PRODUCT_PRICE","IMAGE_RIGHTS","OTHER");
- public static final Set<String> INQUIRY_REASONS=Set.of("ACCOUNT","SERVICE","RESERVATION","BUSINESS","OTHER");
+ public static final Set<String> INQUIRY_REASONS=Set.of("ACCOUNT","SERVICE","RESERVATION","BUSINESS","EVENT_REQUEST","OTHER");
  public static String text(String value,int max,boolean required) {
   String s=value==null?"":value.strip();
   if((required&&s.isEmpty())||s.length()>max||s.codePoints().anyMatch(c->c==0))throw new IllegalArgumentException("입력 길이와 필수 항목을 확인해 주세요.");

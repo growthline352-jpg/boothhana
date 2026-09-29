@@ -70,8 +70,15 @@ public class SupportService {
  }
  Map<String,Object> summary(Map<String,Object> r){Map<String,Object> v=new LinkedHashMap<>();v.put("id",r.get("id").toString());v.put("number","BH-"+r.get("id").toString().substring(0,8).toUpperCase(Locale.ROOT));v.put("kind",r.get("kind"));v.put("category",r.get("category"));v.put("title",r.get("title"));v.put("status",r.get("status"));v.put("resolution",r.get("resolution"));v.put("revision",r.get("revision"));v.put("createdAt",time(r.get("created_at")));v.put("updatedAt",time(r.get("updated_at")));return v;}
  public PageData<Map<String,Object>> list(Principal actor,String kind,String status,int page){
+  return list(actor,kind,status,page,"");
+ }
+ public PageData<Map<String,Object>> list(Principal actor,String kind,String status,int page,String category){
   if(page<0||page>100000||kind==null||!Set.of("REPORT","INQUIRY","CLAIM").contains(kind)||status!=null&&!status.isBlank()&&!Set.of("OPEN","IN_PROGRESS","WAITING_USER","ANSWERED","RESOLVED","CLOSED").contains(status))throw ApiException.badRequest("목록 조건을 확인해 주세요.");
   List<Object> args=new ArrayList<>(List.of(kind));String where=" where kind=?";
+  if(category!=null&&!category.isBlank()){
+   if(!"INQUIRY".equals(kind)||!SupportRules.INQUIRY_REASONS.contains(category))throw ApiException.badRequest("분류를 확인해 주세요.");
+   where+=" and category=?";args.add(category);
+  }
   if(!actor.admin()){if(actor.userId()==null)throw ApiException.notFound("접수 내역 없음");where+=" and requester_id=?";args.add(actor.userId());}
   if(status!=null&&!status.isBlank()){where+=" and status=?";args.add(status);}
   long total=Objects.requireNonNull(db.queryForObject("select count(*) from support_ticket"+where,Long.class,args.toArray()));args.add(page*20);

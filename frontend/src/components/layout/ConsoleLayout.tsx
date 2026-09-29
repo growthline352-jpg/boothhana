@@ -19,6 +19,8 @@ const adminLinks: ConsoleLink[] = [
   { to: '/admin/events', label: '행사', icon: 'calendar' },
   { to: '/admin/goods-showcase', label: '메인 굿즈', icon: 'sparkles' },
   { to: '/admin/applications', label: '참가 신청', icon: 'ticket' },
+  { to: '/admin/comments', label: '행사 댓글', icon: 'info' },
+  { to: '/admin/inquiries?category=EVENT_REQUEST', label: '행사 추가 요청', icon: 'info' },
   { to: '/admin/reports', label: '신고 내역', icon: 'info' },
   { to: '/admin/inquiries', label: '문의 내역', icon: 'info' },
   { to: '/admin/ownership', label: '업체 관리권', icon: 'building' },

@@ -1,3 +1,4 @@
+import { AdminEventComments } from '../features/catalog/AdminEventComments'
 import { LibraryPage } from '../features/library/LibraryPage'
 import { SupportHome,SupportNew,SupportDetail,ManagedExhibitors } from '../features/support/SupportPages'
 import { GuestSupportPage } from '../features/support/GuestSupportPage'
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
     { path: 'events', element: <AdminEventsPage /> },
     { path: 'events/:eventId', element: <AdminEventFormPage /> },
     { path: 'applications', element: <AdminApplicationsPage /> },
+    { path: 'comments', element: <AdminEventComments/> },
     { path: 'reports', element: <SupportBoundary><AdminSupportList kind="REPORT"/></SupportBoundary> },
     { path: 'inquiries', element: <SupportBoundary><AdminSupportList kind="INQUIRY"/></SupportBoundary> },
     { path: 'ownership', element: <SupportBoundary><AdminSupportList kind="CLAIM"/></SupportBoundary> },
