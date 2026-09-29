@@ -13,7 +13,7 @@ function harness(options={}){
  function load(rel){let file=path.isAbsolute(rel)?rel:path.join(root,rel),normalizedFile=file.replace(/\\/g,'/');if(cache.has(file))return cache.get(file)
   if(file.endsWith('.css'))return{}
   const module={exports:{}};cache.set(file,module.exports)
-  const result=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}})
+  const result=ts.transpileModule(fs.readFileSync(file,'utf8').replace(/\bimport\.meta\.env\b/g,'({})'),{fileName:file.replace(/\.mjs$/,'.js'),compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}})
   function requireLocal(name){
    if(name.endsWith('/PageMetadata'))return {PageMetadata:()=>null,RouteMetadata:()=>null};
    if(name==='qrcode')return {default:{toDataURL:async()=>"data:image/png;base64,TEST_ONLY"},toDataURL:async()=>"data:image/png;base64,TEST_ONLY"};

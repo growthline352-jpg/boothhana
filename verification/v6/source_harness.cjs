@@ -13,7 +13,7 @@ function harness(options={}){
  function load(rel){let file=path.isAbsolute(rel)?rel:path.join(root,rel);if(cache.has(file))return cache.get(file)
   if(file.endsWith('.css'))return{}
   const module={exports:{}};cache.set(file,module.exports)
-  const result=ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}})
+  const result=ts.transpileModule(fs.readFileSync(file,'utf8').replace(/\bimport\.meta\.env\b/g,'({})'),{fileName:file.replace(/\.mjs$/,'.js'),compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}})
   function requireLocal(name){
    if(name==='qrcode')return{default:{toDataURL:async()=> 'data:image/png;base64,TEST_ONLY'},toDataURL:async()=> 'data:image/png;base64,TEST_ONLY'}
    if(name.endsWith('/library/LibraryProvider')||name==='./LibraryProvider')return{useLibrary:()=>options.library||{owner:'guest',index:[],guest:[],version:0,loading:false,error:'',refresh:async()=>{}},resolveGuestPage:async()=>[]}
