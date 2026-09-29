@@ -45,8 +45,17 @@ final class CatalogIdentityIndex {
             try {row=match(rows,CatalogIdentity.productKeys(p),CatalogIdentity.known(p.identity(),p.sourceEntryId(),p.sources()),true);} catch(ApiException ignored) { }
             Long id=row==null?null:((Number)row.get("id")).longValue();
             ProductCheck check=id==null?new ProductCheck("UNKNOWN",null):checks.getOrDefault(id.toString(),new ProductCheck("LEGACY",null));
-            result.add(new ProductRow(id,p,check));
+            // Resolve the collected identity BEFORE applying editable display fields.
+            // Renaming a legacy name-keyed product must not detach its ID or images.
+            result.add(new ProductRow(id,ownerProduct(p,row),check));
         }
         return result;
+    }
+    @SuppressWarnings("unchecked") private ProductData ownerProduct(ProductData product,Map<String,Object> row) {
+        if(row==null||row.get("owner_overrides_json")==null)return product;
+        Map<String,Object> fields=json.readValue(row.get("owner_overrides_json").toString(),Map.class);
+        Map<String,Object> data=json.readValue(json.writeValueAsString(product),Map.class);
+        for(String key:List.of("name","summary","price","saleState"))if(fields.containsKey(key))data.put(key,fields.get(key));
+        return json.readValue(json.writeValueAsString(data),ProductData.class);
     }
 }

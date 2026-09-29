@@ -1,4 +1,4 @@
-import { OfflineDownloadPanel } from '../offline/OfflineDownloadPanel'
+import { OwnershipPanel, EventHistory } from '../support/OwnershipPanels'
 import { EventComments } from './EventComments'
 import { PageMetadata } from '../../app/PageMetadata'
 import { SaveButton } from '../library/SaveButton'
@@ -40,8 +40,8 @@ function LoadEvent({eventId}:{eventId:string}) {
   const [slow,setSlow]=useState(false)
   useEffect(()=>{if(!state.loading){setSlow(false);return}const timer=window.setTimeout(()=>setSlow(true),7_000);return()=>window.clearTimeout(timer)},[state.loading,eventId])
   usePageScroll(!state.loading)
-  if(state.loading)return <><PageMetadata /><a className="btn secondary" href={`/offline/index.html#${eventId}`}>통신이 느린가요? 저장 자료 바로 열기</a><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'행사 안내를 불러오고 있어요'}/></>
-  if(state.error||!state.data)return <section className="content-wrap section-pad"><PageMetadata unavailable /><ErrorState error={state.error||new Error('공개 안내를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to="/discover">다른 행사 찾기</Link><a className="btn secondary" href={`/offline/index.html#${eventId}`}>저장 자료 바로 열기</a></section>
+  if(state.loading)return <><PageMetadata /><a className="btn secondary" href={`/library?offline=1&offlineEvent=${eventId}`}>통신이 느린가요? 저장 자료 바로 열기</a><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'행사 안내를 불러오고 있어요'}/></>
+  if(state.error||!state.data)return <section className="content-wrap section-pad"><PageMetadata unavailable /><ErrorState error={state.error||new Error('공개 안내를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to="/discover">다른 행사 찾기</Link><a className="btn secondary" href={`/library?offline=1&offlineEvent=${eventId}`}>저장 자료 바로 열기</a></section>
   return <><PageMetadata catalog={state.data} /><CatalogEventDetail eventId={eventId} value={state.data}/></>
 }
 function LoadBooth({eventId,participantId}:{eventId:string;participantId:string}) {
@@ -128,7 +128,7 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page">
     <Link className="discovery-back-link" to={back} state={{catalogRestore:true}}>← {categoryForType(e.subcategory).label} 목록</Link>
-    <header className="visit-summary"><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 외부 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1>
+    <header className="visit-summary"><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 외부 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1><OwnershipPanel eventId={Number(eventId)}/>
       {status.notice&&<p className="visit-important-note" role="status">{status.notice} {status.operation.sourceUrl&&<SafeLink url={status.operation.sourceUrl}>상태 안내 원문</SafeLink>}{status.operation.checkedOn&&<small> · {status.operation.checkedOn} 확인</small>}</p>}
       <dl className="visit-facts"><div><dt>행사일</dt><dd>{eventDateLabel(e.occurrences)}</dd></div>
         <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
@@ -165,7 +165,8 @@ export function CatalogEventDetail({eventId,value}:{eventId:string;value:PublicE
       {e.discoveryLinks?.filter(l=>l.url).map((l,i)=><p key={`l${i}`}><SafeLink url={l.url}>{({PARTICIPANTS:'공식 참가 명단',FLOOR_PLAN:'공식 배치도 게시물',SALES:'공식 판매 안내',OFFICIAL:'행사 공식 안내'} as Record<string,string>)[l.kind]||'행사 관련 안내'}</SafeLink>{l.note&&` · ${l.note}`}</p>)}
       <small>공개본 갱신: {new Date(value.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}. 수집 후 변경될 수 있으므로 방문 전 주최 측 최신 공지를 확인하세요.</small>
     </section>
-    <OfflineDownloadPanel eventId={Number(eventId)} day={state.day}/>
+    <Link className="btn secondary" to="/library">내 보관함에서 오프라인 정보 저장</Link>
+    <EventHistory key={`history-${eventId}`} eventId={Number(eventId)}/>
     <EventComments key={eventId} eventId={Number(eventId)}/>
   </section>
 }

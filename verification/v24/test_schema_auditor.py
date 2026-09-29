@@ -4,7 +4,7 @@ S=importlib.util.spec_from_file_location('schema_auditor_v24',Path(__file__).wit
 ROOT=Path(__file__).resolve().parents[2]
 class SchemaAuditorTests(unittest.TestCase):
  def test_current_ddl_names_and_typed_columns(self):
-  got=M.inventory(ROOT);self.assertEqual(got['tableCount'],44);self.assertEqual(got['columnCount'],403);self.assertEqual(got['readinessColumnsMismatch'],[])
+  got=M.inventory(ROOT);self.assertEqual(got['tableCount'],48);self.assertEqual(got['columnCount'],432);self.assertEqual(got['readinessColumnsMismatch'],[])
  def check_refused(self,extra):
   with tempfile.TemporaryDirectory() as folder:
    root=Path(folder);(root/'database').mkdir()

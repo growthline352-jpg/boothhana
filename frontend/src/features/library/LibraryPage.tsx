@@ -65,7 +65,9 @@ export function LibraryPage(){
  },[ready,state.loading,state.error,state.data,page,total,params,setParams])
  const sectionGroups=group?[...new Set(rows.map(x=>x.target.eventId))].map(id=>({id,name:rows.find(x=>x.target.eventId===id)?.current?.memory.eventName||'현재 공개되지 않는 행사',items:rows.filter(x=>x.target.eventId===id)})):[{id:0,name:'',items:rows}]
  return <section className="content-wrap section-pad memory-page">
-  <header className="memory-page-heading"><div><p className="eyebrow">MY COLLECTION</p><h1>내 보관함</h1><p>가보기 전에 발견하고, 다녀온 뒤에도 다시 찾아보세요.</p></div><div className="row-actions"><Link className="btn primary" to="/discover">행사 찾기</Link><a className="btn secondary" href="/offline/index.html">오프라인 자료 열기</a></div></header>
+  <header className="memory-page-heading"><div><p className="eyebrow">MY COLLECTION</p><h1>내 보관함</h1><p>가보기 전에 발견하고, 다녀온 뒤에도 다시 찾아보세요.</p></div><div className="row-actions"><Link className="btn primary" to="/discover">행사 찾기</Link></div></header>
+  <nav className="row-actions" aria-label="보관함 보기"><Link className="btn secondary" to="/library" aria-current={!params.has('offline')?'page':undefined}>저장한 항목</Link><Link className="btn secondary" to="/library?offline=1" aria-current={params.has('offline')?'page':undefined}>오프라인 저장한 행사</Link></nav>
+  {params.has('offline')?<iframe title="보관함에 오프라인 저장한 행사" src={`/offline/index.html?embedded=1${/^[1-9]\d*$/.test(params.get('offlineEvent')||'')?'#'+params.get('offlineEvent'):''}`} style={{width:'100%',height:'75vh',minHeight:480,border:0,marginTop:20}}/>:<>
   <p className="memory-offline-hint">인터넷 없이 볼 행사는 아래의 행사 카드에서 <strong>오프라인 정보 저장</strong>을 눌러 주세요. 함께 저장한 부스·상품 표시도 포함됩니다.</p>
   <aside className={`memory-storage-notice ${guest?'is-device':''}`}>
    {owner==='loading'?<p>계정을 확인하고 있어요.</p>:owner==='error'?<><strong>계정 확인이 필요해요</strong><p>개인 기록은 잠시 숨겼으며 기기 저장으로 바꾸지 않았어요. 기존 기록은 삭제하지 않았습니다.</p><button className="btn secondary" onClick={()=>void auth.refresh()}>계정 다시 확인</button></>:guest?<><strong>이 기기에 임시 저장 중</strong><p>로그인 없이 90일간 사용할 수 있어요. 브라우저 기록 삭제·시크릿 모드 종료 시 사라질 수 있고, 같은 기기를 사용하는 사람이 메모를 볼 수 있어요.</p><a className="btn secondary" href={auth.loginUrl}>로그인하고 계정에 보관</a></>:<><strong>{auth.user?.displayName}님의 개인 보관함</strong><p>메모와 방문 기록은 나만 볼 수 있어요. 저장은 업체에 연락처를 전달하거나 마케팅에 동의하는 행동이 아닙니다.</p></>}
@@ -83,6 +85,7 @@ export function LibraryPage(){
   {ready&&item&&selected.error&&<div className="notice-banner" role="alert">{selected.error.message}<button className="btn secondary" onClick={close}>닫기</button></div>}
   {ready&&item&&editorEntry&&<MemoryEditor key={`${owner}:${editorEntry.id}:${editorEntry.revision}`} entry={editorEntry} draft={drafts.read(owner,editorEntry.id,editorEntry.revision)} preserveDraft={value=>drafts.put(owner,value)} publicLoading={editorPublic.loading} publicError={!!editorPublic.error} guest={guest} trigger={trigger.current} close={close}/>}
   {guest&&library&&<details className="memory-device-settings"><summary>기기 임시 저장 관리</summary><p>계정에 가져오기 전 삭제하면 되돌릴 수 없어요.</p><button className="btn secondary" onClick={()=>{if(window.confirm('이 기기의 임시 저장과 메모를 모두 삭제할까요?'))library.clearGuest()}}>이 기기 임시 저장 모두 삭제</button></details>}
+ </>}
  </section>
 }
 export function MemoryCard({entry:e,guest,open}:{entry:MemoryEntry;guest:boolean;open:(entry:MemoryEntry,button:HTMLElement)=>void}){

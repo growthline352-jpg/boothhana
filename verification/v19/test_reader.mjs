@@ -19,10 +19,10 @@ class Element {
 }
 function pack(){return {id:1,name:'event-detail',savedAt:Date.now(),expiresAt:Date.now()+100000,bytes:10,copyId:'one',venue:'venue',address:'address',admission:'free',occurrences:[],operation:{},missing:[],warnings:[],sources:[],selectedDay:'',participants:[{id:10,name:'booth',summary:'old-summary',subjects:[],locations:[],links:[],products:[{id:20,name:'product'}]}],media:[{key:'asset:30',type:'PRODUCT',participantId:10,productId:20,credit:'credit',caption:'image'}],blobs:[{key:'asset:30',blob:new Blob(['image'])}]}}
 async function harness({list=async()=>[],value=pack(),hash='#1'}={}){
- const nodes=Object.fromEntries(['content','status','connection','clear'].map(id=>[id,new Element('div')])),timers=new Map(),channels=[],revoked=[],created=[];let n=0
- const state={value,list},context={console,Blob,Date,Promise,Number,Map,Set,URL:{createObjectURL(){const u='blob:'+created.length;created.push(u);return u},revokeObjectURL:u=>revoked.push(u)},
-  document:{querySelector:q=>nodes[q.slice(1)],createElement:tag=>new Element(tag),createTextNode:v=>({textContent:v}),addEventListener(){},visibilityState:'visible'},
-  window:{addEventListener(){}},location:{hash,origin:'https://app.test'},navigator:{onLine:false},confirm:()=>true,
+ const nodes=Object.fromEntries(['content','status','connection','clear','header','h1','.brand','.brand span'].map(id=>[id,new Element('div')])),timers=new Map(),channels=[],revoked=[],created=[];let n=0
+ const state={value,list},context={console,Blob,Date,Promise,Number,Map,Set,URLSearchParams,URL:{createObjectURL(){const u='blob:'+created.length;created.push(u);return u},revokeObjectURL:u=>revoked.push(u)},
+  document:{querySelector:q=>nodes[q.startsWith('#')?q.slice(1):q],createElement:tag=>new Element(tag),createTextNode:v=>({textContent:v}),addEventListener(){},visibilityState:'visible'},
+  window:{addEventListener(){}},location:{hash,search:'',pathname:'/offline/index.html',origin:'https://app.test'},navigator:{onLine:false},confirm:()=>true,
   setTimeout:(fn,ms)=>{timers.set(++n,{fn,ms});return n},clearTimeout:id=>timers.delete(id),
   BroadcastChannel:class{constructor(){channels.push(this)}},safeLink:v=>v||'',
   listPacks:()=>state.list(),getPack:async()=>state.value,deletePack:async()=>{state.value=null},clearAll:async()=>{state.value=null},revalidate:async()=>({state:'unreachable'}),ensureShell:async()=>true}

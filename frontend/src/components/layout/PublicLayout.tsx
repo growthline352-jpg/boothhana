@@ -55,7 +55,7 @@ export function PublicLayout() {
           </Link>)}
         </nav>
         <div className="discovery-header-tools">
-          <a className="memory-header-link discovery-offline-link" href="/offline/index.html" aria-label="오프라인 자료 열기"><DiscoveryIcon name="download" size={19}/><span>오프라인 자료</span></a><NavLink className="memory-header-link" aria-label="내 보관함" to="/library"><svg width="19" height="21" viewBox="0 0 18 20" aria-hidden="true"><path d="M4 2h10v16l-5-3-5 3Z" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>내 보관함</span></NavLink>
+          <NavLink className="memory-header-link" aria-label="내 보관함" to="/library"><svg width="19" height="21" viewBox="0 0 18 20" aria-hidden="true"><path d="M4 2h10v16l-5-3-5 3Z" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>내 보관함</span></NavLink>
           <NavLink className="discovery-reservations" aria-label="내 예약" to="/reservations"><DiscoveryIcon name="ticket" size={18}/><span>내 예약</span></NavLink>
           
           <details className="discovery-menu" ref={menu}>
@@ -73,14 +73,15 @@ export function PublicLayout() {
               {status === 'error' && <button className="discovery-account-retry" type="button" onClick={() => void refresh()}>계정 상태 다시 확인</button>}
               <div className="discovery-menu-group">
                 <span className="discovery-menu-caption">내 활동</span>
+                <Link to="/account"><span>내 정보</span><small>계정·활동 관리</small></Link>
                 <Link to="/library"><span>내 보관함</span><small>메모·방문 기록</small></Link>
                 <Link to="/reservations"><span>내 예약</span><small>예약·수령 확인</small></Link>
+                <Link to="/support/management"><span>내 행사·부스 관리</span><small>주최자·운영자 인증</small></Link>
                 <Link to="/support"><span>고객센터</span><small>문의·신고 내역</small></Link>
               </div>
               <div className="discovery-menu-group">
                 <span className="discovery-menu-caption">행사 이용</span>
                 <Link to="/events"><span>예약 가능한 행사</span><DiscoveryIcon name="arrow" size={16}/></Link>
-                <a href="/offline/index.html"><span>오프라인 자료</span><small>현장에서 열기</small></a>
               </div>
               {(user?.permissions.includes('CREATOR') || user?.permissions.includes('ADMIN')) && <div className="discovery-menu-group">
                 <span className="discovery-menu-caption">운영 메뉴</span>
@@ -100,7 +101,7 @@ export function PublicLayout() {
     <nav className="public-mobile-nav" aria-label="자주 쓰는 메뉴">
       <Link to={categoryHref(current ?? 'subculture')} aria-current={location.pathname==='/'||location.pathname.startsWith('/discover')?'page':undefined}><DiscoveryIcon name="search"/><span>행사 찾기</span></Link>
       <NavLink to="/library"><DiscoveryIcon name="bookmark"/><span>내 보관함</span></NavLink>
-      <a href="/offline/index.html"><DiscoveryIcon name="download"/><span>오프라인 자료</span></a>
+      <NavLink to="/account"><DiscoveryIcon name="menu"/><span>내 정보</span></NavLink>
     </nav>
     <footer className="discovery-footer"><div className="discovery-container discovery-footer-inner">
       <div><Link to="/" className="discovery-footer-brand">부스하나<span>취향을 따라, 오프라인으로.</span></Link>

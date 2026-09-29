@@ -1,3 +1,4 @@
+import { OwnershipPanel } from '../support/OwnershipPanels'
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
 import { dateLabel } from '../discovery/browse'
@@ -101,7 +102,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
           <span>부스 위치</span><strong>{place.code}</strong><small>{place.hall}{place.zone ? ` · ${place.zone}` : ''}</small>
         </div>
         <div className="booth-detail-copy">
-          <div className="booth-detail-verified"><span aria-hidden="true">●</span> 공개 검토 완료</div>
+          <OwnershipPanel eventId={eventId} participantId={row.id}/>
           <h2 id={`booth-detail-title-${row.id}`} ref={headingRef} tabIndex={-1}>{row.participant.registrationName}</h2>
           <p className="booth-detail-members">{members.length ? members.join(' · ') : '참가자명 미확인'}</p>
           {topics.length > 0 && <div className="booth-detail-tags">{topics.map(topic => <span key={topic}>{topic}</span>)}</div>}

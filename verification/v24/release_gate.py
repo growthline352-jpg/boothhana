@@ -34,6 +34,9 @@ def main():
         required=[
             ('TEST-com.boothhana.floorplan.FloorplanHttpContractTests.xml','withdrawalHasNoContentSuccess'),
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','v24TypedColumnContractMatchesRealPostgres'),
+            ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','verifiedOrganizerLifecyclePreservesOverridesAndRevokesAccess'),
+            ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership'),
+            ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','verifiedBoothProductEditPreservesPendingCollectionAndIdentityThroughRepublication'),
         ]
         for filename,name in required:
             report=ROOT/'backend/build/test-results/test'/filename

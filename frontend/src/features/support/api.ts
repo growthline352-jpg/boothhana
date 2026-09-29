@@ -32,7 +32,7 @@ export const supportApi={
  action:(id:string,body:ActionInput)=>post<Ticket>(`${prefix(true)}/tickets/${id}/actions`,body),
  hide:(id:string,body:ActionInput)=>post<Ticket>(`${prefix(true)}/tickets/${id}/hide`,body),
  publishReviewed:(id:string,body:{revision:number;expectedFingerprint:string;eventRevision:number;targetRevision:number;overrides:Record<string,unknown>;note:string;reply:string})=>post<Ticket>(`${prefix(true)}/tickets/${id}/publish-reviewed`,body),
- decideClaim:(id:string,body:{revision:number;decision:string;note:string;reply:string})=>post<Ticket>(`${prefix(true)}/tickets/${id}/claim-decision`,body),
+ decideClaim:(id:string,body:{revision:number;decision:string;note:string;reply:string;organizerId?:number|null;verifiedName?:string;officialUrl?:string})=>post<Ticket>(`${prefix(true)}/tickets/${id}/claim-decision`,body),
  revoke:(exhibitor:number,user:number,revision:number,reason:string)=>post<void>(`${prefix(true)}/managers/${exhibitor}/${user}/revoke`,{revision,reason}),
  managed:()=>api<Manager[]>(`${prefix()}/managed-exhibitors`,{cache:'no-store'}),
  guestCreate:(ticket:TicketInput,accessKey:string,website='')=>post<Ticket>('/api/public/support/guest/tickets',{ticket,accessKey,website}),

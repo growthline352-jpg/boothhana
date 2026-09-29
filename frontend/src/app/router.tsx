@@ -1,5 +1,8 @@
 import { AdminEventComments } from '../features/catalog/AdminEventComments'
+import { OwnershipManagement } from '../features/support/OwnershipManagement'
+import { AdminSeries } from '../features/support/AdminSeries'
 import { LibraryPage } from '../features/library/LibraryPage'
+import { AccountPage } from '../pages/AccountPage'
 import { SupportHome,SupportNew,SupportDetail,ManagedExhibitors } from '../features/support/SupportPages'
 import { GuestSupportPage } from '../features/support/GuestSupportPage'
 import { AdminSupportList,AdminSupportDetail } from '../features/support/AdminSupportPages'
@@ -24,6 +27,8 @@ export const router = createBrowserRouter([
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
+    { path: 'account', element: <SupportBoundary><AccountPage/></SupportBoundary> },
+    { path: 'support/management', element: <SupportBoundary><OwnershipManagement/></SupportBoundary> },
     { path: 'support', element: <SupportBoundary><SupportHome/></SupportBoundary> },
     { path: 'support/new', element: <SupportBoundary><SupportNew/></SupportBoundary> },
     { path: 'support/guest', element: <SupportBoundary><GuestSupportPage/></SupportBoundary> },
@@ -60,6 +65,7 @@ export const router = createBrowserRouter([
     { path: 'comments', element: <AdminEventComments/> },
     { path: 'reports', element: <SupportBoundary><AdminSupportList kind="REPORT"/></SupportBoundary> },
     { path: 'inquiries', element: <SupportBoundary><AdminSupportList kind="INQUIRY"/></SupportBoundary> },
+    { path: 'event-series', element: <SupportBoundary><AdminSeries/></SupportBoundary> },
     { path: 'ownership', element: <SupportBoundary><AdminSupportList kind="CLAIM"/></SupportBoundary> },
     { path: 'support/:id', element: <SupportBoundary><AdminSupportDetail/></SupportBoundary> },
     { path: 'goods-showcase', element: <GoodsAdminPage /> },
