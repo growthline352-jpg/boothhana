@@ -50,6 +50,16 @@ export function safeReturnTo(value: unknown): string {
   } catch { return categoryHref('subculture') }
 }
 
+/** A booth may return only to its own event, retaining the prior map/filter context. */
+export function safeEventReturnTo(value: unknown, eventId: string, fallback: string): string {
+  if (typeof value !== 'string') return fallback
+  try {
+    const url = new URL(value, 'https://boothhana.invalid')
+    return url.origin === 'https://boothhana.invalid' && url.pathname === `/discover/${eventId}`
+      ? url.pathname + url.search : fallback
+  } catch { return fallback }
+}
+
 export function categoryForType(type: string): DiscoveryCategory {
   return categories.find(c => c.filters.some(f=>f.value===type)) ?? categories[0]
 }

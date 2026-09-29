@@ -8,7 +8,7 @@ import { ReportLink } from '../support/ReportLink'
 import { useMemo, useRef, useEffect, useState } from 'react'
 import { Link, Navigate, useParams, useLocation, useSearchParams, useNavigate } from 'react-router'
 import { DiscoveryPage } from '../discovery/DiscoveryPage'
-import { safeReturnTo, categoryForType, categoryHref } from '../discovery/categories'
+import { safeReturnTo, safeEventReturnTo, categoryForType, categoryHref } from '../discovery/categories'
 import { dateLabel, eventDateLabel, eventTimeLabels, seoulToday } from '../discovery/browse'
 import { useRemote } from '../../app/useRemote'
 import { LoadingState, ErrorState } from '../../components/ui/States'
@@ -60,7 +60,7 @@ function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;
   const context={day:state.day,hall:state.hall}
   const canonicalEventPath=catalogEventPath(eventId,context)
   const storedReturn=(location.state as {catalogEventReturnTo?:unknown}|null)?.catalogEventReturnTo
-  const eventReturn=typeof storedReturn==='string'&&storedReturn.split('?')[0]===`/discover/${eventId}`?safeReturnTo(storedReturn):canonicalEventPath
+  const eventReturn=safeEventReturnTo(storedReturn,eventId,canonicalEventPath)
   const status=eventStatus(event,seoulToday())
   const related=value.participants.filter(participant=>participant.id!==row.id&&attendance(participant,state.day,state.hall)!=='other')
   const relatedPreview=related.slice(0,4)
