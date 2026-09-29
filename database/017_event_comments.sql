@@ -23,6 +23,7 @@ begin
  end loop;
  execute format('grant select,insert,update,delete on public.event_comment to %I',runtime_role);
  drop policy if exists event_comment_server on public.event_comment;
- execute format('create policy event_comment_server on public.event_comment for all to %I using(true) with check(true)',runtime_role);
+ drop policy if exists boothhana_server_v11 on public.event_comment;
+ execute format('create policy boothhana_server_v11 on public.event_comment for all to %I using(true) with check(true)',runtime_role);
 end $$;
 commit;
