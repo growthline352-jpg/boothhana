@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { RouteMetadata } from '../../app/PageMetadata'
+import { AnalyticsConsent } from '../../features/analytics/AnalyticsConsent'
 import { useAuth } from '../../app/useAuth'
 import { AuthStatusNotice } from '../../app/AuthStatusNotice'
 import { activeCategory, categories, categoryHref } from '../../features/discovery/categories'
@@ -107,5 +108,6 @@ export function PublicLayout() {
         <small>방문 전 주최 측의 최신 일정과 이용 조건을 확인해 주세요.</small></div>
       <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link></nav>
     </div></footer>
+    <AnalyticsConsent />
   </div>
 }
