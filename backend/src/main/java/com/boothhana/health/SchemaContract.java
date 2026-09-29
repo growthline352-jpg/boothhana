@@ -62,6 +62,7 @@ public final class SchemaContract {
      * This guards same-named but incompatible columns, not just missing columns. */
     public record ColumnShape(String udt,Integer length,boolean notNull) {}
     private static final String COLUMN_SPEC = """
+        event_comment=id:uuid:0:1,event_id:int8:0:1,user_id:int8:0:1,body:text:0:1,deleted:bool:0:1,created_at:timestamptz:0:1
         app_user=id:int8:0:1,kakao_subject:varchar:255:1,display_name:varchar:255:1,created_at:timestamptz:0:1
         application_action=id:int8:0:1,application_id:int8:0:0,application_ref:int8:0:1,actor_id:int8:0:0,action:varchar:24:1,before_state:varchar:32:1,after_state:varchar:32:1,reason:text:0:1,revision:int8:0:1,created_at:timestamptz:0:1
         booth=id:int8:0:1,owner_user_id:int8:0:1,name:varchar:255:1,description:text:0:1,image_key:varchar:512:0,sns_url:varchar:512:0
