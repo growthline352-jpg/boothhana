@@ -40,7 +40,7 @@ public class RulesTest {
         String diag=FailureDiagnostics.summary(wrapper);
         check(!diag.contains("secret"));check(!diag.contains("token"));check(diag.contains("IllegalArgumentException"));check(diag.contains("Svc.load:42"));
         root.initCause(wrapper);check(FailureDiagnostics.summary(wrapper).length()<2000);
-        check(SchemaContract.TABLES.size()==43);
+        check(SchemaContract.TABLES.size()==44);
         check(SchemaContract.TABLES.get("product").contains("version"));
         check(SchemaContract.TABLES.get("support_ticket").contains("guest_secret_hash"));
         check(SchemaContract.TABLES.get("event_booth").contains("version"));
