@@ -15,7 +15,15 @@ import { generateSchematicPlan } from './schematic'
 import { matchesFloorplanSearch } from './mapSearch'
 const stateText:Record<string,string>={SOURCE_CHANGED:'수정 배치도를 반영하고 있어요. 이전 위치 연결은 잠시 숨겼어요.',PUBLICATION_STALE:'행사·참가자 정보를 갱신하고 있어요.',ROSTER_CHANGED:'참가 명단이 바뀌어 위치를 다시 확인하고 있어요.',SCOPE_CHANGED:'적용 날짜·전시관을 다시 확인하고 있어요.',UNAVAILABLE:'이 배치도는 현재 제공되지 않아요.'}
 export function linksForDay(links:PlanLink[],day:string){return day?links.filter(l=>l.dates.includes(day)):[]}
-export function planApplies(plan:PublicPlan,day:string,hall:string){return (!day||plan.scope.dates.includes(day))&&(!hall||normalizePlace(plan.scope.hall)===normalizePlace(hall))}
+export function planApplies(plan:PublicPlan,day:string,hall:string,participants:PublicParticipant[]=[]){
+  if(day&&!plan.scope.dates.includes(day))return false
+  if(!hall)return true
+  if(plan.scope.hall)return normalizePlace(plan.scope.hall)===normalizePlace(hall)
+  // A single floorplan can cover multiple halls. Use its linked booths instead
+  // of treating an empty single-hall scope as "hall unknown".
+  const hallParticipants=new Set(participants.filter(p=>p.participant.locations.some(l=>normalizePlace(l.hall)===normalizePlace(hall))).map(p=>p.id))
+  return plan.shapes.some(shape=>shape.links.some(link=>hallParticipants.has(link.participantId)&&(!day||link.dates.includes(day))))
+}
 export function InteractiveFloorPlans({eventId,event,assets,participants,onOpen,day:providedDay,hall='',query='',focusParticipantId=null,onList,onClear,onlySaved=false,savedParticipantIds=[]}:{onlySaved?:boolean;savedParticipantIds?:number[];eventId:string;event:EventData;assets:PublicAsset[];participants:PublicParticipant[];onOpen:(id:number,trigger:HTMLElement)=>void;day?:string;hall?:string;query?:string;focusParticipantId?:number|null;onList?:()=>void;onClear?:()=>void}) {
   const day=providedDay??defaultDay(event)
   const state=useRemote(()=>floorplanApi.public(eventId),[eventId]),[chosen,setChosen]=useState('')
@@ -29,20 +37,21 @@ export function InteractiveFloorPlans({eventId,event,assets,participants,onOpen,
   if(state.loading)return <section className="panel"><p role="status">배치도를 확인하고 있어요…</p>{actions}</section>
   if(state.error)return <section className="panel"><h2>배치도를 불러오지 못했어요.</h2><p>부스 목록은 계속 확인할 수 있어요. 이미지 사용 상태를 확인할 수 없어 저장된 도면은 자동으로 대신 표시하지 않습니다.</p><button className="btn secondary" onClick={()=>void state.reload()}>다시 시도</button>{actions}
     <FloorPlans eventId={Number(eventId)} event={event} assets={[]} participants={participants}/></section>
-  const data=state.data,eligible=data?.plans.filter(p=>planApplies(p,day,hall))||[]
+  const data=state.data,eligible=data?.plans.filter(p=>planApplies(p,day,hall,participants))||[]
   const sourceUrl=floorplanLinks[0]?.url||officialUrl
   const schematic=generateSchematicPlan(event,participants,day,hall,sourceUrl)
-  const ready=eligible.filter(p=>p.state==='READY')
+  const ready=eligible.filter(p=>p.state==='READY').sort((a,b)=>a.scope.title.localeCompare(b.scope.title,'ko'))
   const matching=focusParticipantId?[...ready,...(schematic?[schematic]:[])].find(p=>p.shapes.some(s=>linksForDay(s.links,day).some(l=>l.participantId===focusParticipantId))):undefined
   const plan=ready.find(p=>p.id===chosen)||matching||ready[0]||schematic||eligible[0]
   // Never silently show a managed map whose version was withdrawn or superseded.
   const originals=assets.filter(a=>!data?.managedAssetIds.includes(a.id))
+  const uncoveredEvent={...event,discoveryLinks:event.discoveryLinks?.filter(link=>link.kind!=='FLOOR_PLAN'||!ready.some(p=>p.sourceUrl===link.url))}
   return <><section className="panel floorplan-public" aria-labelledby="floorplan-title"><h2 id="floorplan-title">방문일의 부스 위치 찾기</h2>
     <p className="item-meta">{day||'방문일 미확인'} · {hall||'전체 전시관'}. 위의 방문 조건과 검색어가 목록·배치도에 함께 적용돼요.</p>
-    {ready.length>1&&<label className="field"><span>이 날짜에 적용되는 배치도</span><select className="select" value={plan?.id} onChange={ev=>setChosen(ev.target.value)}>{ready.map(p=><option key={p.id} value={p.id}>{p.scope.title} · {p.scope.hall||'전시관 미확인'}</option>)}</select></label>}
+    {ready.length>1&&<label className="field"><span>이 날짜에 적용되는 배치도</span><select className="select" value={plan?.id} onChange={ev=>setChosen(ev.target.value)}>{ready.map(p=><option key={p.id} value={p.id}>{p.scope.title}{p.scope.hall&&p.scope.hall!==p.scope.title?` · ${p.scope.hall}`:''}</option>)}</select></label>}
     {plan?(plan.state==='READY'?<MapView key={plan.id} plan={plan} participants={participants} onOpen={onOpen} day={day} hall={hall} query={query} focusParticipantId={focusParticipantId} onList={onList} onClear={onClear} assets={assets} eventId={eventId} eventNotice={eventStatus(event,seoulToday()).notice} onlySaved={onlySaved} savedParticipantIds={savedParticipantIds}/>:<div role="status"><p>{stateText[plan.state]||'공개 전에 배치도를 확인하고 있어요.'}</p>{plan.state!=='UNAVAILABLE'&&<SafeLink url={plan.sourceUrl}>주최 측 최신 원문 확인</SafeLink>}{actions}</div>):<div className="visit-empty"><h3>{floorplanLinks.length?'클릭형 배치도는 준비 중이에요.':'이 방문 조건에 맞는 클릭형 배치도가 아직 없어요.'}</h3><p>{floorplanLinks.length?'현재는 주최 측이 공개한 공식 배치도에서 부스 위치를 확인할 수 있어요.':'미공개·미수집·확인 중일 수 있어요. 배치도가 없다는 뜻은 아닙니다.'}</p>{actions}</div>}
     {focusParticipantId&&!matching&&<p className="visit-warning" role="status">이 부스의 선택 날짜·전시관 위치를 지도에서 연결하지 못했어요. 번호와 공식 안내를 확인하세요.</p>}
-  </section><FloorPlans eventId={Number(eventId)} event={event} assets={originals} participants={participants}/></>
+  </section><FloorPlans eventId={Number(eventId)} event={uncoveredEvent} assets={originals} participants={participants}/></>
 }
 export function MapView({plan,participants,onOpen,day:providedDay,hall='',query='',focusParticipantId=null,onList,onClear,assets=[],eventId='',eventNotice,onlySaved=false,savedParticipantIds=[]}:{onlySaved?:boolean;savedParticipantIds?:number[];plan:PublicPlan;participants:PublicParticipant[];onOpen:(id:number,trigger:HTMLElement)=>void;day?:string;hall?:string;query?:string;focusParticipantId?:number|null;onList?:()=>void;onClear?:()=>void;assets?:PublicAsset[];eventId?:string;eventNotice?:string|null}) {
   const day=providedDay||'',[mapQuery,setMapQuery]=useState(query),[selected,setSelected]=useState<string|null>(()=>plan.shapes.find(s=>linksForDay(s.links,providedDay||'').some(l=>l.participantId===focusParticipantId))?.id||null),[focusRequest,setFocusRequest]=useState(0)
@@ -76,7 +85,7 @@ export function MapView({plan,participants,onOpen,day:providedDay,hall='',query=
     <details open={!!mapQuery||onlySaved}><summary>{mapQuery?'검색한 위치':'부스·시설 위치 목록'} · {matches.length}개 영역</summary><div className="floorplan-search-results">{matches.map(s=>{
       const people=links(s).map(l=>lookup.get(l.participantId)!)
       const facility=(s.kind||'BOOTH')!=='BOOTH'
-      return <article key={s.id}><div><strong>{s.label||(facility?'시설':'번호 미확인')} · {facility?'편의시설':people.map(p=>p.participant.registrationName).join(' / ')||'참가자 연결 미확인'}</strong><p>{facility?'주최 측 원본에 표시된 시설 위치':people.map(p=>p.sales?.summary||p.participant.subjects.join(' · ')).join(' / ')}</p><small>{day} · {plan.scope.hall||'전시관 미확인'}</small></div><div className="row-actions"><button className="btn secondary" onClick={()=>select(s.id)}>위치 보기</button>{!facility&&people.length===1&&<button className="btn primary" onClick={ev=>onOpen(people[0].id,ev.currentTarget)}>부스 상세</button>}</div></article>
+      return <article key={s.id}><div><strong>{s.label||(facility?'시설':'번호 미확인')} · {facility?'편의시설':people.map(p=>p.participant.registrationName).join(' / ')||'참가자 연결 미확인'}</strong><p>{facility?'주최 측 원본에 표시된 시설 위치':people.map(p=>p.sales?.summary||p.participant.subjects.join(' · ')).join(' / ')}</p><small>{day} · {plan.scope.hall||plan.scope.title}</small></div><div className="row-actions"><button className="btn secondary" onClick={()=>select(s.id)}>위치 보기</button>{!facility&&people.length===1&&<button className="btn primary" onClick={ev=>onOpen(people[0].id,ev.currentTarget)}>부스 상세</button>}</div></article>
     })}</div>{!matches.length&&<div className="visit-empty"><p>이 도면에서 연결된 부스 중에는 검색 결과가 없어요.</p>{onClear&&<button className="btn secondary" onClick={onClear}>검색어 지우기</button>}{onList&&<button className="btn secondary" onClick={onList}>참가 부스 목록</button>}</div>}</details>
     <p className="item-meta">{plan.credit} · <SafeLink url={plan.sourceUrl}>배치도 원문</SafeLink>{!plan.schematic&&<> · 공개 {new Date(plan.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}</>}</p>
   </>

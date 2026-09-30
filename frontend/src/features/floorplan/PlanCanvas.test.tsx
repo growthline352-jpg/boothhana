@@ -18,7 +18,7 @@ describe('PlanCanvas source image presentation',()=>{
     expect(html).toContain('has-source-image')
     expect(html).toContain('<image href="https://cdn.example/map.png"')
     expect(html).not.toContain('원본 배경')
-    expect(html).toContain('공식 원본 배치도를 그대로 표시합니다')
+    expect(html).toContain('배치도 이미지를 표시합니다')
   })
 
   it('does not apply source-image presentation to generated schematics',()=>{
