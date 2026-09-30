@@ -57,7 +57,7 @@ export function DiscoveryPage() {
   return <div className={`discovery-page discovery-theme-${category.key}`}>
     <section className={`popga-home${isHome ? '' : ' is-results'}`} aria-label={isHome ? `${category.label} 추천` : `${category.label} 행사 검색`}>
       <div className="discovery-container">
-        {isHome && currentSiteCategory() && <header className="category-site-intro"><h1>부스하나 {category.label}</h1><p>{category.description}</p></header>}
+        {isHome && currentSiteCategory() && <h1 className="discovery-sr-only">부스하나 {category.label}</h1>}
         <form className="popga-search" role="search" onSubmit={submit}>
           <DiscoveryIcon name="search" size={21}/>
           <input type="search" value={draft} onChange={e => setDraft(e.target.value)} maxLength={100}
