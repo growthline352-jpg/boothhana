@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { categoryFor, injectCrawlableContent, injectMetadata, normalizePath, pageMetadata, renderCrawlableContent, siteOrigin } from '../seo/metadata.mjs'
 import { PORTAL_ORIGIN, categorySite, categoryRedirect, requestSiteOrigin } from '../seo/category-sites.mjs'
+import { naverVerificationFor } from '../seo/naver-verification.mjs'
 
 const MAX_RESPONSE = 4 * 1024 * 1024
 /** Configured API origin only; never request Host, user URLs, cookies or redirects. */
@@ -81,7 +82,7 @@ async function fetchBrowseListing(origin, path, search, fetcher, siteUrl) {
     return [...unique.values()].slice(0, 36)
   } finally { clearTimeout(timer) }
 }
-export async function renderPage({ path, search = '', template, siteUrl, verification = '', apiBase, fetcher = fetch, splitSites = false }) {
+export async function renderPage({ path, search = '', template, siteUrl, verification = '', naverVerification = '', apiBase, fetcher = fetch, splitSites = false }) {
   path = normalizePath(path)
   let catalog = null, participant = null, listing = [], unavailable = false, status = 200
   const origin = apiOrigin(apiBase)
@@ -134,7 +135,7 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
     try { listing = await fetchBrowseListing(origin, path, search, fetcher, siteUrl) } catch { listing = [] }
   }
   if (path === '/not-found') status = 404
-  const meta = pageMetadata({ path, search, siteUrl, verification, catalog, participant, listing, unavailable, splitSites })
+  const meta = pageMetadata({ path, search, siteUrl, verification, naverVerification, catalog, participant, listing, unavailable, splitSites })
   const withMetadata = injectMetadata(template, meta)
   const content = unavailable ? '' : renderCrawlableContent({ path, search, catalog, participant, listing, siteUrl, splitSites })
   return { status, meta, html: injectCrawlableContent(withMetadata, content) }
@@ -154,7 +155,7 @@ export function createHandler(loadTemplate = () => readFile(new URL('../seo-temp
       search.delete('path') // framework routing parameter is not a user-visible search filter
       const siteUrl = requestSiteOrigin(req.headers?.host, siteOrigin(process.env.PUBLIC_SITE_URL || ''))
       const template = await loadTemplate()
-      const page = await renderPage({ path, search: search.toString(), template, siteUrl, verification: process.env.GOOGLE_SITE_VERIFICATION || '', apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '', splitSites: process.env.CATEGORY_SITES_ENABLED === 'true' })
+      const page = await renderPage({ path, search: search.toString(), template, siteUrl, verification: process.env.GOOGLE_SITE_VERIFICATION || '', naverVerification: naverVerificationFor(siteUrl), apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '', splitSites: process.env.CATEGORY_SITES_ENABLED === 'true' })
       res.statusCode = page.status
       if (page.location) { res.setHeader('Location', page.location); res.end(); return }
       res.setHeader('X-Robots-Tag', page.meta.robots)
