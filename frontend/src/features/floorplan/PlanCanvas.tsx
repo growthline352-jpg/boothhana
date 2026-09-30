@@ -114,7 +114,7 @@ export function PlanCanvas({width,height,imageUrl,shapes,selected,onSelect,highl
     {editable&&valid.find(s=>s.id===selected)?.points.map((p,i)=><circle key={i} data-vertex={i} data-owner={selected} cx={p.x*w} cy={p.y*h} r={w/150} className="floorplan-handle" aria-hidden="true"/>)}
   </svg></div>
   {linkedIds!==undefined&&<p className="floorplan-legend"><span>□ 위치번호만</span><span>■ 부스정보 연결</span><span className="floorplan-legend-facility">◆ 편의시설</span><span>■ 파란 테두리: 선택 위치</span></p>}
-  <small>{imageUrl&&!editable?'공식 원본 배치도를 그대로 표시합니다. 검색하거나 선택한 위치만 위에 강조됩니다. ':' '}손가락 두 개로 확대하고 끌어서 이동하세요. 작은 부스는 검색 결과로 선택하면 자동으로 확대됩니다. 현위치·최단 경로 안내는 제공하지 않습니다.</small>
+  <small>{imageUrl&&!editable?'배치도 이미지를 표시합니다. 검색하거나 선택한 위치만 위에 강조됩니다. ':' '}손가락 두 개로 확대하고 끌어서 이동하세요. 작은 부스는 검색 결과로 선택하면 자동으로 확대됩니다. 현위치·최단 경로 안내는 제공하지 않습니다.</small>
   </div>
   return expanded ? <dialog ref={dialog} className="floorplan-fullscreen" aria-label={detail ? `${detail.title} 판매정보` : '배치도 전체화면'}
     onCancel={ev=>{ev.preventDefault();if(detail)backToMap();else setExpanded(false)}}>
