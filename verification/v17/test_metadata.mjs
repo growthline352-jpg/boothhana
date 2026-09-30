@@ -8,7 +8,7 @@ import { createHandler, renderPage, apiOrigin, readBoundedJson } from '../../fro
 const template = await readFile(new URL('../../frontend/index.html', import.meta.url), 'utf8')
 const siteUrl = 'https://boothhana.example', apiBase = 'https://api.example'
 const indexRobots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
-const catalog = { id: 7, event: { name: '[TEST] 문구 행사', description: '공개 행사 소개' }, banner: { url: 'https://assets.example/approved.png' }, assets: [] }
+const catalog = { id: 17, event: { name: '[TEST] 문구 행사', description: '공개 행사 소개' }, banner: { url: 'https://assets.example/approved.png' }, assets: [] }
 const json = value => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } })
 test('home scope, Korean metadata and explicit canonical', () => {
  const m = pageMetadata({ siteUrl }); assert.match(m.title, /서울·경기/); assert.equal(m.robots, indexRobots); assert.equal(m.canonical, siteUrl + '/')
@@ -32,20 +32,20 @@ test('account pages omit data and URL query values from metadata', () => {
  }
 })
 test('event canonical drops visit/filter state and only uses approved banner', () => {
- const m = pageMetadata({ path: '/discover/7', search: '?day=2026-09-18&my=saved', siteUrl, catalog })
- assert.equal(m.canonical, siteUrl + '/discover/7'); assert.equal(m.image, catalog.banner.url); assert.equal(m.robots, indexRobots)
- const noBanner = pageMetadata({ path: '/discover/7', siteUrl, catalog: { ...catalog, banner: null, assets: [{ type: 'BANNER', participantId: null, url: 'https://assets.example/revoked.png' }] } })
+ const m = pageMetadata({ path: '/discover/17', search: '?day=2026-09-18&my=saved', siteUrl, catalog })
+ assert.equal(m.canonical, siteUrl + '/discover/17'); assert.equal(m.image, catalog.banner.url); assert.equal(m.robots, indexRobots)
+ const noBanner = pageMetadata({ path: '/discover/17', siteUrl, catalog: { ...catalog, banner: null, assets: [{ type: 'BANNER', participantId: null, url: 'https://assets.example/revoked.png' }] } })
  assert.ok(!renderMetadata(noBanner).includes('revoked.png'))
 })
 test('HTML attributes, titles, JSON-LD and replacement dollar tokens cannot inject markup', () => {
  const attack = { ...catalog, event: { name: '\"><script>alert(1)</script>$&', description: '</script><img src=x onerror=alert(1)> & \"' } }
- const m = pageMetadata({ path: '/discover/7', siteUrl, catalog: attack }); m.schema.name = '</script><script>alert(1)</script>'
+ const m = pageMetadata({ path: '/discover/17', siteUrl, catalog: attack }); m.schema.name = '</script><script>alert(1)</script>'
  const html = injectMetadata(template, m); assert.ok(!html.includes('<script>alert(1)</script>')); assert.ok(!html.includes('<img src=x'))
  assert.equal((html.match(/<!-- BOOTH_META_START -->/g) || []).length, 1); assert.match(html, /\\u003c/)
 })
 test('unavailable/wrong event never retains old event metadata', () => {
  for (const input of [{ unavailable: true, catalog }, { catalog: { ...catalog, id: 8 } }, { catalog: null }]) {
-  const m = pageMetadata({ path: '/discover/7', siteUrl, ...input }); assert.equal(m.robots, 'noindex,follow'); assert.ok(!m.title.includes('[TEST]'))
+  const m = pageMetadata({ path: '/discover/17', siteUrl, ...input }); assert.equal(m.robots, 'noindex,follow'); assert.ok(!m.title.includes('[TEST]'))
  }
 })
 test('path and API origin validation reject user-controlled absolute URLs', () => {
@@ -55,22 +55,22 @@ test('path and API origin validation reject user-controlled absolute URLs', () =
 })
 test('server emits event metadata in raw HTML without JavaScript and without cookies', async () => {
  let options, requested
- const page = await renderPage({ path: '/discover/7', template, siteUrl, apiBase, fetcher: async (url, init) => { requested = url; options = init; return json(catalog) } })
- assert.equal(page.status, 200); assert.match(page.html, /\[TEST\] 문구 행사/); assert.equal(requested, apiBase + '/api/public/catalog/events/7')
+ const page = await renderPage({ path: '/discover/17', template, siteUrl, apiBase, fetcher: async (url, init) => { requested = url; options = init; return json(catalog) } })
+ assert.equal(page.status, 200); assert.match(page.html, /\[TEST\] 문구 행사/); assert.equal(requested, apiBase + '/api/public/catalog/events/17')
  assert.equal(options.redirect, 'error'); assert.equal(options.credentials, 'omit'); assert.deepEqual(options.headers, { Accept: 'application/json' })
 })
 test('server returns 404 on withdrawn event, 503 on outage, and always noindex', async () => {
  for (const [status, expected] of [[404, 404], [410, 404], [401, 503], [429, 503], [500, 503]]) {
-  const page = await renderPage({ path: '/discover/7', template, siteUrl, apiBase, fetcher: async () => new Response('', { status }) })
+  const page = await renderPage({ path: '/discover/17', template, siteUrl, apiBase, fetcher: async () => new Response('', { status }) })
   assert.equal(page.status, expected); assert.equal(page.meta.robots, 'noindex,follow'); assert.ok(!page.html.includes('approved.png'))
  }
 })
 test('server handles invalid response and missing origin without a false indexed success', async () => {
  for (const item of [null, {}, { ...catalog, id: 8 }]) {
-  const page = await renderPage({ path: '/discover/7', template, siteUrl, apiBase, fetcher: async () => json(item) })
+  const page = await renderPage({ path: '/discover/17', template, siteUrl, apiBase, fetcher: async () => json(item) })
   assert.equal(page.status, 503); assert.equal(page.meta.robots, 'noindex,follow')
  }
- let calls = 0; await renderPage({ path: '/discover/7', template, siteUrl, apiBase: '', fetcher: async () => { calls++; return json(catalog) } }); assert.equal(calls, 0)
+ let calls = 0; await renderPage({ path: '/discover/17', template, siteUrl, apiBase: '', fetcher: async () => { calls++; return json(catalog) } }); assert.equal(calls, 0)
 })
 test('bounded response and missing template marker fail explicitly', async () => {
  await assert.rejects(readBoundedJson(new Response('x', { headers: { 'Content-Type': 'text/html' } })))

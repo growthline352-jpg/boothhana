@@ -22,6 +22,15 @@ const catalog = {
 }
 const listing = [{ id: 13, name: '41회 서울 프로젝트돌', venue: '세텍', startDate: '2026-09-30', urlPath: '/discover/13' }]
 
+test('D.Festa Sunday event URL redirects to its combined event while booth URLs stay separate', async () => {
+  const template = '<html><head></head><body></body></html>'
+  const sunday = await renderPage({ path: '/discover/7', template, siteUrl, apiBase: 'https://api.example' })
+  assert.equal(sunday.status, 308)
+  assert.equal(sunday.location, `${siteUrl}/discover/1?day=2026-10-04`)
+  const oldBooth = await renderPage({ path: '/discover/7', search: 'day=2026-10-04&booth=2751', template, siteUrl, apiBase: 'https://api.example' })
+  assert.equal(oldBooth.location, `${siteUrl}/discover/7/booths/2751?day=2026-10-04`)
+})
+
 test('home and discovery have distinct titles and crawlable ItemList event links', () => {
   const home = pageMetadata({ path: '/', siteUrl, listing })
   const discover = pageMetadata({ path: '/discover', siteUrl, listing })

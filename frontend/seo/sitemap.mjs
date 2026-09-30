@@ -47,6 +47,9 @@ export function renderSitemap(siteUrl, events, splitSites = false) {
   const origin = siteOrigin(siteUrl)
   if (!origin) throw new Error('Public site origin is not configured')
   if (!Array.isArray(events) || events.length + 5 > MAX_URLS) throw new Error('Sitemap URL limit exceeded')
+  // Sunday has its own roster/booth URLs, but its event landing page is
+  // consolidated into the Saturday canonical page.
+  events = events.filter(event => Number(event.id) !== 7)
   const newest = events.map(event => event.publishedAt).filter(Boolean).sort().at(-1) || ''
   const siteCategory = categorySite(origin)
   const urls = siteCategory ? [

@@ -32,12 +32,15 @@ const clean = value => typeof value === 'string' ? value.trim() : ''
 function catalogListing(rows) {
   if (!Array.isArray(rows)) return []
   return rows.flatMap(row => {
-    const id = Number(row?.id), event = row?.event
+    const sourceId = Number(row?.id), event = row?.event
+    const dfesta = (sourceId === 1 && clean(event?.name) === '제35회 디. 페스타 (토요일)')
+      || (sourceId === 7 && clean(event?.name) === '제35회 디. 페스타 (일요일)')
+    const id = dfesta ? 1 : sourceId
     if (!Number.isSafeInteger(id) || id < 1 || !clean(event?.name)) return []
     const occurrence = Array.isArray(event.occurrences) ? event.occurrences[0] : null
     return [{
-      id, name: clean(event.name), description: clean(event.description), venue: clean(event.venueName), address: clean(event.address),
-      startDate: clean(occurrence?.startDate), endDate: clean(occurrence?.endDate), urlPath: `/discover/${id}`,
+      id, name: dfesta ? '제35회 디. 페스타' : clean(event.name), description: clean(event.description), venue: clean(event.venueName), address: clean(event.address),
+      startDate: dfesta ? '2026-10-03' : clean(occurrence?.startDate), endDate: dfesta ? '2026-10-04' : clean(occurrence?.endDate), urlPath: `/discover/${id}`,
     }]
   })
 }
@@ -84,6 +87,16 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
   const origin = apiOrigin(apiBase)
   const redirect = categoryRedirect({ origin: siteUrl, path, search, enabled: splitSites })
   if (redirect) return { status: 308, location: redirect }
+  if (path === '/discover/7') {
+    const query = new URLSearchParams(search)
+    const legacyBooth = query.get('booth')
+    if (legacyBooth && /^[1-9]\d*$/.test(legacyBooth)) {
+      query.delete('booth')
+      return { status: 308, location: `${siteOrigin(siteUrl)}/discover/7/booths/${legacyBooth}${query.size ? `?${query}` : ''}` }
+    }
+    if (!query.has('day')) query.set('day', '2026-10-04')
+    return { status: 308, location: `${siteOrigin(siteUrl)}/discover/1?${query}` }
+  }
   const match = /^\/discover\/([1-9]\d*)(?:\/booths\/([1-9]\d*))?$/.exec(path)
   if (match) {
     if (!origin || !Number.isSafeInteger(Number(match[1]))) { unavailable = true; status = 503 }
@@ -97,6 +110,12 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
         else {
           catalog = await readBoundedJson(response)
           if (Number(catalog?.id) !== Number(match[1]) || typeof catalog?.event?.name !== 'string' || !catalog.event.name.trim()) throw new Error('Invalid public event')
+          if (Number(catalog.id) === 1 && catalog.event.name === '제35회 디. 페스타 (토요일)') {
+            catalog = { ...catalog, event: { ...catalog.event, name: '제35회 디. 페스타', occurrences: [
+              ...catalog.event.occurrences,
+              { startDate: '2026-10-04', endDate: '2026-10-04', startTime: '11:00', endTime: '16:00' },
+            ] } }
+          }
           if (match[2]) {
             participant = catalog.participants?.find(row => Number(row?.id) === Number(match[2])) || null
             if (!participant) { unavailable = true; status = 404 }
