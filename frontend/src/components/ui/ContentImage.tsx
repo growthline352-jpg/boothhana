@@ -17,8 +17,9 @@ export function ContentImage({ url, kind, alt, loading = 'lazy', fetchPriority =
   const fallback = !source || failedSource === source
   return <img
     src={fallback ? fallbackImages[kind] : source!}
-    alt={fallback ? `${fallbackLabels[kind]} 기본 이미지` : alt}
+    alt={fallback ? `${fallbackLabels[kind]} 이미지가 없습니다` : alt}
     data-fallback={fallback ? kind : undefined}
+    style={fallback ? { objectFit: 'contain', backgroundColor: '#f1f2f4' } : undefined}
     loading={loading}
     fetchPriority={fetchPriority}
     referrerPolicy="no-referrer"
