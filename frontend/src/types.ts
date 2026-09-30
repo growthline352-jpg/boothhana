@@ -6,6 +6,7 @@ export type ReservationStatus = 'RESERVED' | 'PICKED_UP' | 'CANCELED'
 export interface User {
   id: number
   displayName: string
+  profileImageUrl?: string | null
   permissions: Permission[]
 }
 

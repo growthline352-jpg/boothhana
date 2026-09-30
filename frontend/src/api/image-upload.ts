@@ -1,6 +1,6 @@
 import { api, ApiError } from './client'
 
-export type ImageTarget = 'booth' | 'product'
+export type ImageTarget = 'booth' | 'product' | 'profile'
 export interface ImageUploadTask { run(signal?: AbortSignal): Promise<string> }
 const TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 export function validateImageFile(file: File) {
@@ -10,6 +10,7 @@ export function validateImageFile(file: File) {
 
 export function createImageUploadTask(file: File, target: ImageTarget): ImageUploadTask {
   validateImageFile(file)
+  const endpoint = target === 'profile' ? '/api/me/uploads' : '/api/creator/uploads'
   // Created once per selected file. Retry uses the SAME ticket and hash through every stage.
   const uploadId = crypto.randomUUID()
   let digest: string | undefined
@@ -30,14 +31,14 @@ export function createImageUploadTask(file: File, target: ImageTarget): ImageUpl
           const hash = await crypto.subtle.digest('SHA-256', buffer)
           digest = Array.from(new Uint8Array(hash), value => value.toString(16).padStart(2, '0')).join('')
         }
-        const ticket = await api<{ uploadId: string; state: string }>('/api/creator/uploads/tickets', {
+        const ticket = await api<{ uploadId: string; state: string }>(`${endpoint}/tickets`, {
           method: 'POST', signal: controller.signal,
           body: JSON.stringify({ uploadId, target, contentType: file.type, fileSize: file.size, sha256: digest }),
         })
-        if (ticket.state === 'REGISTERED') await api<void>(`/api/creator/uploads/tickets/${uploadId}/content`, {
+        if (ticket.state === 'REGISTERED') await api<void>(`${endpoint}/tickets/${uploadId}/content`, {
           method: 'POST', signal: controller.signal, body: file, headers: { 'Content-Type': file.type },
         })
-        const completed = await api<{ objectKey: string }>(`/api/creator/uploads/tickets/${uploadId}/complete`, {
+        const completed = await api<{ objectKey: string }>(`${endpoint}/tickets/${uploadId}/complete`, {
           method: 'POST', signal: controller.signal,
         })
         return completed.objectKey

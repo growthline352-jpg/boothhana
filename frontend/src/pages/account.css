@@ -44,6 +44,28 @@
 }
 .account-welcome-action:hover { background: #f5d800; color: #1d2430; }
 .account-avatar { display: grid; width: 68px; height: 68px; flex: 0 0 68px; place-items: center; border: 1px solid #88a7c6; border-radius: 50%; background: #244a72; color: #fff; font-size: 27px; font-weight: 750; }
+.account-avatar img, .account-profile-preview img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+
+.account-profile-section { margin-top: 34px; padding: 28px 30px; border: 1px solid var(--account-line); border-radius: 10px; background: #fff; }
+.account-profile-heading h2 { margin: 0; font-size: 19px; font-weight: 800; }
+.account-profile-heading p { margin: 6px 0 0; color: var(--account-muted); font-size: 13px; }
+.account-profile-form { display: grid; gap: 22px; margin-top: 23px; }
+.account-profile-image-row { display: flex; align-items: center; gap: 18px; }
+.account-profile-preview { display: grid; width: 76px; height: 76px; flex: 0 0 76px; place-items: center; overflow: hidden; border-radius: 50%; background: #edf3f9; color: #27557f; font-size: 27px; font-weight: 750; }
+.account-profile-image-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.account-profile-image-actions small { flex-basis: 100%; color: var(--account-muted); font-size: 12px; }
+.account-profile-file, .account-profile-remove { display: inline-flex; align-items: center; min-height: 36px; padding: 6px 11px; border: 1px solid #bdcbd9; border-radius: 6px; background: #fff; color: var(--account-ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.account-profile-file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.account-profile-file:focus-within { outline: 2px solid #2167b0; outline-offset: 3px; }
+.account-profile-remove { color: #9c3d3d; }
+.account-profile-name { display: grid; gap: 8px; max-width: 360px; font-size: 13px; font-weight: 750; }
+.account-profile-name input { min-height: 42px; padding: 8px 11px; border: 1px solid #bdcbd9; border-radius: 6px; color: var(--account-ink); font: inherit; font-size: 15px; }
+.account-profile-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
+.account-profile-footer button { min-height: 42px; padding: 8px 16px; border: 0; border-radius: 6px; background: #18365a; color: #fff; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.account-profile-footer button:disabled { opacity: .55; cursor: wait; }
+.account-profile-footer p { margin: 0; font-size: 13px; }
+.account-profile-footer [role="alert"] { color: #a02d2d; }
+.account-profile-footer [role="status"] { color: #176043; }
 
 .account-quick-section { margin-top: 42px; }
 .account-quick-section h2, .account-group h2 { margin: 0 0 16px; font-size: 18px; font-weight: 800; letter-spacing: -.035em; }
@@ -86,6 +108,7 @@
   .account-welcome-action { width: 100%; }
   .account-welcome.is-member { flex-direction: row; align-items: center; }
   .account-avatar { width: 52px; height: 52px; flex-basis: 52px; font-size: 20px; }
+  .account-profile-section { margin-top: 24px; padding: 22px 18px; }
   .account-quick-section { margin-top: 32px; }
   .account-shortcuts, .account-groups { grid-template-columns: 1fr; }
   .account-shortcuts { gap: 10px; }

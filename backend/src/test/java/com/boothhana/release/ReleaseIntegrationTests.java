@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static com.boothhana.collection.CatalogModels.*;
 import static com.boothhana.collection.CollectionModels.*;
 
-/** REAL entire app + actual SQL001..016 already applied by prepare_test_db.py.
+/** REAL entire app + actual SQL001..019 already applied by prepare_test_db.py.
  * NEVER use production, SSH tunnels or a database containing real data.
  * OAuth provider/R2/real browsers/CLI are separate staging acceptance, not simulated success.
  * Class is skipped without opt-in; release_gate.py rejects a missing/skipped report. */
@@ -87,6 +87,18 @@ class ReleaseIntegrationTests {
    assertThat(db.queryForObject("select has_table_privilege('anon',?,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege('anon',?,'SELECT,INSERT,UPDATE')",Boolean.class,"public."+table,"public."+table)).as(table+" anon").isFalse();
    assertThat(db.queryForObject("select has_table_privilege('authenticated',?,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege('authenticated',?,'SELECT,INSERT,UPDATE')",Boolean.class,"public."+table,"public."+table)).as(table+" authenticated").isFalse();
   }
+ }
+ @Test void memberProfileUpdatePersistsAndUploadConstraintAllowsProfile() throws Exception {
+  String definition=db.queryForObject("select pg_get_constraintdef(oid) from pg_constraint where conrelid='image_upload'::regclass and conname='image_upload_target_check'",String.class);
+  assertThat(definition).contains("profile");
+  http.perform(patch("/api/me/profile").with(user(subject).roles("FAN")).contentType("application/json").content("{\"displayName\":\"새 닉네임\"}"))
+    .andExpect(status().isForbidden());
+  http.perform(patch("/api/me/profile").with(user(subject).roles("FAN")).with(csrf()).contentType("application/json").content("{\"displayName\":\"새 닉네임\",\"profileImageKey\":null,\"removeImage\":false}"))
+    .andExpect(result -> assertThat(result.getResponse().getStatus()).as(result.getResponse().getContentAsString()).isEqualTo(200))
+    .andExpect(jsonPath("$.displayName").value("새 닉네임"));
+  assertThat(db.queryForObject("select custom_display_name from app_user where id=?",Boolean.class,owner.id)).isTrue();
+  http.perform(get("/api/me").with(user(subject).roles("FAN")))
+    .andExpect(status().isOk()).andExpect(jsonPath("$.displayName").value("새 닉네임"));
  }
  @Test void reservationReplayUsesOneRecordAndDebit(){var input=new ReservationInput(boothId,lines(),UUID.randomUUID());long id=platform.createReservation(owner,input).id();assertThat(platform.createReservation(owner,input).id()).isEqualTo(id);assertThat(stock()).isEqualTo(8);assertThat(count("reservation")).isEqualTo(1);assertThat(receipts()).isEqualTo(1);}
  @Test void posReplayUsesOneRecordAndDebit(){var input=new PosInput(boothId,PaymentMethod.CASH,lines(),UUID.randomUUID());long id=platform.createPos(owner,input).id();assertThat(platform.createPos(owner,input).id()).isEqualTo(id);assertThat(stock()).isEqualTo(8);assertThat(count("pos_sale")).isEqualTo(1);assertThat(receipts()).isEqualTo(1);}

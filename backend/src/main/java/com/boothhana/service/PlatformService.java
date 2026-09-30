@@ -62,7 +62,25 @@ public class PlatformService {
     public Optional<ProductView> findPublicProduct(Long id) { return publicOptional(() -> publicProduct(id)); }
     public Optional<ReservationView> findUserReservation(UserAccount owner, Long id) { return publicOptional(() -> userReservation(owner, id)); }
 
-    public UserView user(UserAccount user, List<Permission> permissions) { return new UserView(user.id, user.displayName, permissions); }
+    public UserView user(UserAccount user, List<Permission> permissions) { return new UserView(user.id, user.displayName, image(user.profileImageKey), permissions); }
+
+    @Transactional
+    public UserView updateProfile(UserAccount user, List<Permission> permissions, ProfileInput input) {
+        String name = input.displayName() == null ? "" : input.displayName().strip();
+        if (name.codePointCount(0, name.length()) < 2 || name.codePointCount(0, name.length()) > 20
+                || name.codePoints().anyMatch(Character::isISOControl))
+            throw ApiException.badRequest("닉네임은 2~20자로 입력해 주세요.");
+        if (input.removeImage() && input.profileImageKey() != null)
+            throw ApiException.badRequest("이미지 변경과 삭제를 동시에 요청할 수 없습니다.");
+        if (input.profileImageKey() != null) {
+            if (input.profileImageKey().isBlank()) throw ApiException.badRequest("올바른 프로필 이미지가 아닙니다.");
+            validateImageKey(user.id, "profile", input.profileImageKey(), user.profileImageKey);
+            user.profileImageKey = input.profileImageKey();
+        } else if (input.removeImage()) user.profileImageKey = null;
+        user.displayName = name;
+        user.customDisplayName = true;
+        return user(users.save(user), permissions);
+    }
 
     public List<EventView> publicEvents() {
         List<Event> result = new ArrayList<>(events.findByStatusOrderByStartAtAsc(EventStatus.PUBLISHED));
