@@ -104,4 +104,17 @@ class R2UploadServiceTests {
         ticket();assertThatThrownBy(()->service.complete(43L,id)).isInstanceOf(ApiException.class);
         verifyNoInteractions(storage);
     }
+    @Test void profileEndpointCannotCompleteOrUploadAnotherTarget() {
+        ticket();
+        assertThatThrownBy(() -> service.upload(42L,id,"image/png",png.length,new ByteArrayInputStream(png),"profile"))
+            .isInstanceOf(ApiException.class);
+        assertThatThrownBy(() -> service.complete(42L,id,"profile")).isInstanceOf(ApiException.class);
+        verifyNoInteractions(storage);
+    }
+    @Test void profileIsAnAllowedVerifiedImageTarget() {
+        ImageUploadRules.validateOwnerAndTarget(42L,"profile");
+        ImageUploadRules.validateFinalKey(42L,"profile","verified/profile/42/12345678-1234-1234-1234-123456789abc.png");
+        assertThatThrownBy(() -> ImageUploadRules.validateFinalKey(43L,"profile","verified/profile/42/12345678-1234-1234-1234-123456789abc.png"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
 }

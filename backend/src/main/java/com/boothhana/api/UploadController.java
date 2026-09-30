@@ -12,23 +12,27 @@ import java.io.IOException;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/creator/uploads")
+@RequestMapping({"/api/creator/uploads", "/api/me/uploads"})
 public class UploadController {
     private final CurrentUser current;
     private final R2UploadService uploads;
     public UploadController(CurrentUser current, R2UploadService uploads) { this.current = current; this.uploads = uploads; }
     @PostMapping("/tickets")
-    public UploadTicketView register(Authentication auth, @Valid @RequestBody UploadTicketInput input) {
+    public UploadTicketView register(Authentication auth, @Valid @RequestBody UploadTicketInput input, HttpServletRequest request) {
+        if (request.getRequestURI().startsWith("/api/me/") && !"profile".equals(input.target()))
+            throw ApiException.forbidden("프로필 이미지만 업로드할 수 있습니다.");
         return uploads.register(current.require(auth).id, input);
     }
     @PostMapping("/tickets/{id}/content") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void content(Authentication auth, @PathVariable UUID id, HttpServletRequest request) throws IOException {
         Long owner = current.require(auth).id;
-        uploads.upload(owner, id, request.getContentType(), request.getContentLengthLong(), request.getInputStream());
+        uploads.upload(owner, id, request.getContentType(), request.getContentLengthLong(), request.getInputStream(),
+            request.getRequestURI().startsWith("/api/me/") ? "profile" : null);
     }
     @PostMapping("/tickets/{id}/complete")
-    public UploadCompleteView complete(Authentication auth, @PathVariable UUID id) {
-        return uploads.complete(current.require(auth).id, id);
+    public UploadCompleteView complete(Authentication auth, @PathVariable UUID id, HttpServletRequest request) {
+        return uploads.complete(current.require(auth).id, id,
+            request.getRequestURI().startsWith("/api/me/") ? "profile" : null);
     }
     @PostMapping({"/presign", "/complete"})
     public void legacy() {

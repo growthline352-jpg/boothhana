@@ -6,6 +6,7 @@ import { useAuth } from '../../app/useAuth'
 import { AuthStatusNotice } from '../../app/AuthStatusNotice'
 import { activeCategory, categories, categoryHref } from '../../features/discovery/categories'
 import { DiscoveryIcon } from '../../features/discovery/DiscoveryIcon'
+import { ProfileAvatar } from '../ui/ProfileAvatar'
 import '../../features/discovery/discovery.css'
 
 export function PublicLayout() {
@@ -19,7 +20,6 @@ export function PublicLayout() {
   const accountRole = user?.permissions.includes('ADMIN')
     ? '관리자'
     : user?.permissions.includes('CREATOR') ? '크리에이터' : '일반 사용자'
-  const accountInitial = user?.displayName.trim() ? Array.from(user.displayName.trim())[0] : '내'
   useEffect(() => { if(location.pathname!=='/'&&!location.pathname.startsWith('/discover'))window.scrollTo({ top: 0, left: 0, behavior: 'auto' }) }, [location.pathname])
   useEffect(() => { if (menu.current) menu.current.open = false; setError('') }, [location.pathname, location.search])
   useEffect(() => {
@@ -62,7 +62,7 @@ export function PublicLayout() {
             <summary aria-label="서비스 메뉴"><DiscoveryIcon name="menu"/></summary>
             <nav className="discovery-menu-panel" aria-label="서비스 메뉴">
               <div className={`discovery-menu-account is-${status}`}>
-                <span className="discovery-menu-avatar" aria-hidden="true">{loading ? '…' : accountInitial}</span>
+                <ProfileAvatar className="discovery-menu-avatar" name={loading ? '…' : user?.displayName || '내'} imageUrl={user?.profileImageUrl} />
                 <div>
                   <small>{loading ? '계정 확인 중' : user ? `${accountRole} 계정` : status === 'error' ? '계정 확인 필요' : '게스트 이용 중'}</small>
                   <strong>{loading ? '잠시만 기다려 주세요' : user ? `${user.displayName}님` : status === 'error' ? '로그인 상태를 확인하지 못했어요' : '로그인하지 않았어요'}</strong>

@@ -6,6 +6,7 @@ import com.boothhana.api.ApiModels.EventBoothInput;
 import com.boothhana.api.ApiModels.LineInput;
 import com.boothhana.api.ApiModels.NoticeInput;
 import com.boothhana.api.ApiModels.PosInput;
+import com.boothhana.api.ApiModels.ProfileInput;
 import com.boothhana.api.ApiModels.ProductInput;
 import com.boothhana.api.ApiModels.ReservationInput;
 import com.boothhana.domain.Booth;
@@ -21,6 +22,7 @@ import com.boothhana.domain.DomainEnums.ApplicationStatus;
 import com.boothhana.domain.DomainEnums.EventStatus;
 import com.boothhana.domain.DomainEnums.PaymentMethod;
 import com.boothhana.domain.DomainEnums.StockMode;
+import com.boothhana.domain.DomainEnums.Permission;
 import com.boothhana.repository.BoothNoticeRepository;
 import com.boothhana.repository.BoothRepository;
 import com.boothhana.repository.EventBoothRepository;
@@ -68,6 +70,32 @@ class PlatformServiceTests {
         service = new PlatformService(users, events, booths, eventBooths, products, eventProducts,
             notices, reservations, reservationItems, posSales, posItems, "");
         service.configureTradeRequests(org.mockito.Mockito.mock(TradeRequestService.class));
+    }
+
+    @Test
+    void profileNicknameAndImageArePersistedAndReturned() {
+        UserAccount owner = user();
+        owner.displayName = "카카오 이름";
+        var uploads = mock(com.boothhana.upload.R2UploadService.class);
+        service.configureImageUploads(uploads);
+        when(users.save(any(UserAccount.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        String key = "verified/profile/" + owner.id + "/12345678-1234-1234-1234-123456789abc.png";
+        var view = service.updateProfile(owner, List.of(Permission.FAN), new ProfileInput("  새 이름  ", key, false));
+        assertThat(view.displayName()).isEqualTo("새 이름");
+        assertThat(owner.customDisplayName).isTrue();
+        assertThat(owner.profileImageKey).isEqualTo(key);
+        verify(uploads).requireVerified(owner.id, "profile", key);
+    }
+
+    @Test
+    void profileRejectsInvalidNameAndCanRemoveImage() {
+        UserAccount owner = user();
+        owner.profileImageKey = "old";
+        when(users.save(any(UserAccount.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        assertThatThrownBy(() -> service.updateProfile(owner, List.of(), new ProfileInput(" ", null, false)))
+            .isInstanceOf(ApiException.class);
+        service.updateProfile(owner, List.of(), new ProfileInput("두 글", null, true));
+        assertThat(owner.profileImageKey).isNull();
     }
 
     @Test

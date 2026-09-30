@@ -3,7 +3,7 @@ package com.boothhana.health;
 import java.util.List;
 import java.util.Map;
 
-/** Explicit application-owned relations through SQL 017. No Supabase system tables. */
+/** Explicit application-owned relations. No Supabase system tables. */
 public final class SchemaContract {
     private SchemaContract() {}
     public static final Map<String,List<String>> TABLES=Map.ofEntries(
@@ -12,7 +12,7 @@ public final class SchemaContract {
         Map.entry("event_series",List.of("id","name","official_url","created_by","created_at")),
         Map.entry("event_series_member",List.of("event_id","series_id","edition","revision","evidence_url","checked_by","checked_at")),
         Map.entry("event_comment",List.of("id","event_id","user_id","body","deleted","created_at")),
-        Map.entry("app_user",List.of("id","kakao_subject","display_name","created_at")),
+        Map.entry("app_user",List.of("id","kakao_subject","display_name","custom_display_name","profile_image_key","created_at")),
         Map.entry("event",List.of("id","name","start_at","end_at","venue","description","image_key","reservation_start_at","reservation_end_at","status")),
         Map.entry("booth",List.of("id","owner_user_id","name","description","image_key","sns_url")),
         Map.entry("event_booth",List.of("id","event_id","booth_id","booth_number","intro","status","is_public","rejection_reason","version")),
@@ -71,7 +71,7 @@ public final class SchemaContract {
         event_series=id:int8:0:1,name:varchar:160:1,official_url:varchar:2048:1,created_by:int8:0:1,created_at:timestamptz:0:1
         event_series_member=event_id:int8:0:1,series_id:int8:0:0,edition:varchar:160:1,revision:int8:0:1,evidence_url:varchar:2048:1,checked_by:int8:0:1,checked_at:timestamptz:0:1
         event_comment=id:uuid:0:1,event_id:int8:0:1,user_id:int8:0:1,body:text:0:1,deleted:bool:0:1,created_at:timestamptz:0:1
-        app_user=id:int8:0:1,kakao_subject:varchar:255:1,display_name:varchar:255:1,created_at:timestamptz:0:1
+        app_user=id:int8:0:1,kakao_subject:varchar:255:1,display_name:varchar:255:1,custom_display_name:bool:0:1,profile_image_key:varchar:512:0,created_at:timestamptz:0:1
         application_action=id:int8:0:1,application_id:int8:0:0,application_ref:int8:0:1,actor_id:int8:0:0,action:varchar:24:1,before_state:varchar:32:1,after_state:varchar:32:1,reason:text:0:1,revision:int8:0:1,created_at:timestamptz:0:1
         booth=id:int8:0:1,owner_user_id:int8:0:1,name:varchar:255:1,description:text:0:1,image_key:varchar:512:0,sns_url:varchar:512:0
         booth_notice=id:int8:0:1,event_booth_id:int8:0:1,title:varchar:255:1,body:text:0:1,is_pinned:bool:0:1,created_at:timestamptz:0:1

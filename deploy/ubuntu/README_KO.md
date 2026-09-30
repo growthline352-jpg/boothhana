@@ -46,6 +46,8 @@ openssl rand -hex 32
 
 API·수집기 이미지를 함께 빌드하고 API·Caddy만 상시 실행한다.
 
+프로필 변경 기능을 포함한 버전부터는 배포 전에 운영 DB에 `database/019_user_profile.sql`을 적용한다. 이 SQL은 닉네임·프로필 이미지 컬럼과 업로드 대상 제약을 함께 변경한다. `deploy.sh`는 DB 마이그레이션을 자동 실행하지 않으므로, 적용 여부를 확인하지 않은 채 API를 먼저 교체하면 기동 준비 상태가 실패한다.
+
 ```bash
 chmod +x deploy.sh run-collector.sh login-collector.sh install-timers.sh
 ./deploy.sh api.example.com

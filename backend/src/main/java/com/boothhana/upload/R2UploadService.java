@@ -58,7 +58,11 @@ public class R2UploadService {
         return view(uploads.saveAndFlush(value));
     }
     public void upload(Long owner, UUID id, String contentType, long declaredLength, InputStream input) {
+        upload(owner, id, contentType, declaredLength, input, null);
+    }
+    public void upload(Long owner, UUID id, String contentType, long declaredLength, InputStream input, String requiredTarget) {
         var value = owned(owner, id);
+        requireTarget(value, requiredTarget);
         if (value.state == ImageUpload.State.COMPLETE || value.state == ImageUpload.State.STORED) return;
         if (!Instant.now().isBefore(value.expiresAt)) throw ApiException.conflict("업로드 시간이 만료되었습니다. 파일을 다시 선택해 주세요.");
         if (!value.contentType.equals(contentType) || (declaredLength >= 0 && declaredLength != value.fileSize))
@@ -71,8 +75,10 @@ public class R2UploadService {
         storage.put(value.objectKey, value.contentType, bytes, value.sha256);
         value.state = ImageUpload.State.STORED; uploads.saveAndFlush(value);
     }
-    public UploadCompleteView complete(Long owner, UUID id) {
+    public UploadCompleteView complete(Long owner, UUID id) { return complete(owner, id, null); }
+    public UploadCompleteView complete(Long owner, UUID id, String requiredTarget) {
         var value = owned(owner, id);
+        requireTarget(value, requiredTarget);
         if (value.state == ImageUpload.State.COMPLETE) return new UploadCompleteView(value.objectKey);
         // Also recovers a successful object write followed by a lost database commit/HTTP response.
         storage.verify(value.objectKey, value.contentType, value.fileSize, value.sha256);
@@ -90,6 +96,9 @@ public class R2UploadService {
     }
     private ImageUpload owned(Long owner, UUID id) {
         return uploads.findOwnedForUpdate(id, owner).orElseThrow(() -> ApiException.notFound("업로드 요청을 찾을 수 없습니다."));
+    }
+    private void requireTarget(ImageUpload value, String target) {
+        if (target != null && !target.equals(value.target)) throw ApiException.forbidden("이미지 업로드 대상이 일치하지 않습니다.");
     }
     private UploadTicketView view(ImageUpload value) { return new UploadTicketView(value.id, value.state.name()); }
 }
