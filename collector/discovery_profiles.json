@@ -3,6 +3,32 @@
   "festival": {
     "officialIndexes": [
       {
+        "name": "서울·경기 라이브 음악 공연",
+        "type": "MUSIC_EVENT_INDEX",
+        "priority": -1,
+        "cadenceDays": 7,
+        "seeds": [],
+        "allowedSubcategories": ["MUSIC"],
+        "queryTemplates": [
+          "{year} {month} 서울 경기 라이브 음악 콘서트 공연 일정 예매",
+          "{year} {month} 서울 경기 인디밴드 라이브 공연 공식 일정",
+          "{start_date} {end_date} 서울 경기 음악 공연 주최 공연장 예매"
+        ]
+      },
+      {
+        "name": "서울·경기 DJ 공연·파티",
+        "type": "MUSIC_EVENT_INDEX",
+        "priority": -1,
+        "cadenceDays": 7,
+        "seeds": [],
+        "allowedSubcategories": ["MUSIC", "ONLY_EVENT"],
+        "queryTemplates": [
+          "{year} {month} 서울 경기 DJ 공연 파티 티켓 공식 일정",
+          "{year} {month} 서울 경기 디제이 레이브 클럽 이벤트 예매",
+          "{start_date} {end_date} 서울 경기 DJ line up 공연장 주최"
+        ]
+      },
+      {
         "name": "서울시 FUN SEOUL",
         "type": "OFFICIAL_INDEX",
         "cadenceDays": 7,
@@ -92,6 +118,13 @@
         "name": "행사 / 전시 / 굿즈전",
         "xQuery": "(행사 OR 전시 OR 굿즈전) (서울 OR 경기 OR 수원 OR 일산) -is:retweet lang:ko",
         "queryTemplates": ["site:x.com (행사 OR 전시 OR 굿즈전) (서울 OR 경기 OR 수원 OR 일산) after:{published_since}", "(행사 OR 전시 OR 굿즈전) (서브컬처 OR 캐릭터 OR 굿즈) 서울 경기 after:{published_since}"]
+      },
+      {
+        "name": "서브컬처 음악 / DJ",
+        "priority": -1,
+        "allowedSubcategories": ["ONLY_EVENT", "MUSIC"],
+        "xQuery": "(애니송 OR 보카로 OR 게임음악 OR 동인음악 OR DJ파티 OR 디제이) -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com (애니송 OR 보카로 OR 게임음악 OR 동인음악 OR DJ파티) (서울 OR 경기) after:{published_since}", "(애니송 OR 보카로 OR 게임음악 OR 동인음악 OR DJ파티) 서울 경기 after:{published_since}"]
       }
     ]
   }

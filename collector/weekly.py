@@ -21,7 +21,7 @@ DISCOVERY_CHANNELS=('VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY','TICKE
 AUTHORITATIVE_CHANNELS={'VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY'}
 EXTRA={'maxEvents':50,'maxParticipantPages':10,'maxSales':100,'maxSalesPagesPerParticipant':5,'maxCliCalls':240,'maxRuntimeMinutes':240,
        'maxImages':100,'maxEventEnrichments':50,'maxEventNameJobs':50,'eventNameMaxAttempts':8,'eventNameRetryHours':24,'eventNameNotFoundRetryHours':168,'eventNameFailureRetryHours':6,
-       'maxFestivalDiscoveryJobs':12,'maxSubcultureDiscoveryJobs':6,'discoveryWorkRetryHours':24,
+       'maxFestivalDiscoveryJobs':12,'maxSubcultureDiscoveryJobs':7,'discoveryWorkRetryHours':24,
        'xBearerTokenEnv':'X_BEARER_TOKEN','maxXRecentPages':2,
        'priorityEventKeywords':[],'discoveryEventNames':[],'discoveryLeadUrls':[],'discoverySourceSeeds':{},'imageAllowedHosts':[],'blockedSourceHosts':['witchform.com'],'downloadApprovedImages':True,'floorplanMaxEvents':30,'floorplanMaxSources':10,'floorplanMaxTiles':40,'floorplanMaxCliCalls':100,'floorplanMaxMinutes':180}
 class BudgetExceeded(RunError): pass
@@ -383,7 +383,7 @@ class Pipeline:
                 self.discovery_work_queue.finish(item['key'],'FAILED',retry_hours=self.cfg['discoveryWorkRetryHours'],issues=[result.get('summary','search failed')]);return 0
             from rules import parse_date
             accepted,rejected=validate_discovery(result,parse_date(self.scope['startDate']),parse_date(self.scope['endDate']),self.cfg['blockedSourceHosts'])
-            allowed=set(GROUPS[item['category']]);matched=[event for event in accepted if event.get('subcategory') in allowed]
+            allowed=set((item.get('payload') or {}).get('allowedSubcategories') or GROUPS[item['category']]);matched=[event for event in accepted if event.get('subcategory') in allowed]
             wrong=[event.get('name') for event in accepted if event.get('subcategory') not in allowed]
             queued=self.event_queue.enqueue_discovered(matched,self.scope)
             issues=[*[str(value)[:300] for value in rejected[:10]],*[('wrong category: '+str(value))[:300] for value in wrong[:10]]]

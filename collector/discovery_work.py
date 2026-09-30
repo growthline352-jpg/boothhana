@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 import unicodedata
 
+from taxonomy import CATEGORIES
+
 
 WORK_KINDS = {"FESTIVAL_SOURCE", "SUBCULTURE_RECENT"}
 WORK_STATES = {"PENDING", "COMPLETE", "NO_RESULTS", "PARTIAL", "FAILED"}
@@ -54,6 +56,12 @@ def load_profiles(path: Path) -> dict:
     subculture = value.get("subculture") or {}
     if not isinstance(festival.get("officialIndexes"), list):
         raise ValueError("Festival officialIndexes missing")
+    for row in festival["officialIndexes"]:
+        if not isinstance(row, dict) or not row.get("name") or not row.get("queryTemplates"):
+            raise ValueError("Festival official index invalid")
+        allowed = row.get("allowedSubcategories")
+        if allowed is not None and (not isinstance(allowed, list) or not allowed or any(not isinstance(code, str) or code not in CATEGORIES for code in allowed)):
+            raise ValueError("Festival allowed subcategories invalid")
     for key in ("seoulDistricts", "gyeonggiMunicipalities"):
         rows = festival.get(key)
         if not isinstance(rows, list) or not rows or any(not isinstance(row, str) or not row.strip() for row in rows):
@@ -64,6 +72,10 @@ def load_profiles(path: Path) -> dict:
     required = {"name", "xQuery", "queryTemplates"}
     if any(not isinstance(row, dict) or not required.issubset(row) or not row["queryTemplates"] for row in groups):
         raise ValueError("Subculture search group invalid")
+    for row in groups:
+        allowed = row.get("allowedSubcategories")
+        if allowed is not None and (not isinstance(allowed, list) or not allowed or any(not isinstance(code, str) or code not in CATEGORIES for code in allowed)):
+            raise ValueError("Subculture allowed subcategories invalid")
     return value
 
 
@@ -73,10 +85,10 @@ def festival_jobs(profile: dict, scope: dict) -> list[dict]:
     for row in value["officialIndexes"]:
         jobs.append({
             "kind": "FESTIVAL_SOURCE", "category": "FESTIVAL", "subject": row["name"],
-            "priority": 0, "cadenceDays": int(row.get("cadenceDays", 7)), "scope": dict(scope),
+            "priority": int(row.get("priority", 0)), "cadenceDays": int(row.get("cadenceDays", 7)), "scope": dict(scope),
             "payload": {"sourceType": row["type"], "authority": row["name"], "seeds": row.get("seeds", []),
-                        "queryTemplates": row.get("queryTemplates", [])},
-            "origin": "FESTIVAL_OFFICIAL_INDEX",
+                        "queryTemplates": row.get("queryTemplates", []), "allowedSubcategories": row.get("allowedSubcategories")},
+            "origin": "MUSIC_EVENT_INDEX" if row["type"] == "MUSIC_EVENT_INDEX" else "FESTIVAL_OFFICIAL_INDEX",
         })
     for region, key in (("서울", "seoulDistricts"), ("경기", "gyeonggiMunicipalities")):
         for authority in value[key]:
@@ -99,7 +111,8 @@ def subculture_recent_jobs(profile: dict, scope: dict) -> list[dict]:
             "priority": int(row.get("priority", 0)), "cadenceDays": int(row.get("cadenceDays", 1)),
             "scope": dict(scope),
             "payload": {"searchGroup": name, "xQuery": row["xQuery"], "recentDays": 7,
-                        "queryTemplates": row["queryTemplates"], "seeds": row.get("seeds", [])},
+                        "queryTemplates": row["queryTemplates"], "seeds": row.get("seeds", []),
+                        "allowedSubcategories": row.get("allowedSubcategories")},
             "origin": "SUBCULTURE_RECENT_SEARCH",
         })
     return jobs
