@@ -26,8 +26,10 @@ const writeLines = (items: ReservationItem[]) => items.map(x=>({eventProductId:x
 
 export const authApi = {
   me: () => api<User>('/api/me', { cache: 'no-store', signal: AbortSignal.timeout(COLD_START_API_TIMEOUT_MS) }),
-  updateProfile: (body: { displayName: string; profileImageKey?: string; removeImage?: boolean }) =>
-    api<User>('/api/me/profile', { method: 'PATCH', body: JSON.stringify(body) }),
+  updateProfile: (body: { displayName: string; profileImageKey?: string; removeImage: boolean }) =>
+    api<User>('/api/me/profile', { method: 'PATCH', body: JSON.stringify({
+      displayName: body.displayName, profileImageKey: body.profileImageKey ?? null, removeImage: body.removeImage,
+    }) }),
   adminLogin: (username: string, password: string) => api<void>('/api/auth/admin/login', {
     method: 'POST', body: JSON.stringify({ username, password }),
   }),

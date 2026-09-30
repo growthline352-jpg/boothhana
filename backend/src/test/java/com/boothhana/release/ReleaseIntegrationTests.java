@@ -93,8 +93,9 @@ class ReleaseIntegrationTests {
   assertThat(definition).contains("profile");
   http.perform(patch("/api/me/profile").with(user(subject).roles("FAN")).contentType("application/json").content("{\"displayName\":\"새 닉네임\"}"))
     .andExpect(status().isForbidden());
-  http.perform(patch("/api/me/profile").with(user(subject).roles("FAN")).with(csrf()).contentType("application/json").content("{\"displayName\":\"새 닉네임\"}"))
-    .andExpect(status().isOk()).andExpect(jsonPath("$.displayName").value("새 닉네임"));
+  http.perform(patch("/api/me/profile").with(user(subject).roles("FAN")).with(csrf()).contentType("application/json").content("{\"displayName\":\"새 닉네임\",\"profileImageKey\":null,\"removeImage\":false}"))
+    .andExpect(result -> assertThat(result.getResponse().getStatus()).as(result.getResponse().getContentAsString()).isEqualTo(200))
+    .andExpect(jsonPath("$.displayName").value("새 닉네임"));
   assertThat(db.queryForObject("select custom_display_name from app_user where id=?",Boolean.class,owner.id)).isTrue();
   http.perform(get("/api/me").with(user(subject).roles("FAN")))
     .andExpect(status().isOk()).andExpect(jsonPath("$.displayName").value("새 닉네임"));
