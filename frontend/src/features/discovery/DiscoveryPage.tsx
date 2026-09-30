@@ -8,7 +8,7 @@ import { useRemote } from '../../app/useRemote'
 import { publicCatalogApi, type PublicEventSummary } from '../catalog/api'
 import { SafeLink, StoredImage, labels } from '../catalog/Shared'
 import { categoryHref } from './categories'
-import { browseApiParams, cardOccurrences, dateLabel, homeBrowseApiParams, homeEventSections, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
+import { browseApiParams, cardOccurrences, dateLabel, homeBrowseApiParams, homeEventSections, homeRecentApiParams, isDiscoveryResults, latestFeaturedEvents, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import { currentSiteCategory } from './site'
@@ -29,6 +29,9 @@ export function DiscoveryPage() {
   const query = (isHome ? homeBrowseApiParams(state, today) : browseApiParams(state, today)).toString()
   const data = useRemote(() => category.enabled && !state.dateError ? publicCatalogApi.browse(query)
     : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError])
+  const recentQuery = homeRecentApiParams(state, today).toString()
+  const recent = useRemote(() => isHome && category.enabled ? publicCatalogApi.browse(recentQuery)
+    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 0, total: 0 }), [isHome, category.enabled, recentQuery])
   usePageScroll(!data.loading)
   const [draft, setDraft] = useState(state.q)
   useEffect(() => { setDraft(state.q) }, [state.q, category.key])
@@ -46,6 +49,7 @@ export function DiscoveryPage() {
   }
   const reset = () => { setDraft(''); setParams(currentSiteCategory() ? { period: 'all', view: 'results' } : { category: category.key, period: 'all', view: 'results' }) }
   const rows = data.data?.items ?? []
+  const featuredRows = latestFeaturedEvents(recent.data?.items ?? [], today)
   const total = data.data?.total ?? 0
   const pages = Math.max(1, Math.ceil(total / 20))
   const range = periodRange(state.period, today, state.from, state.to)
@@ -84,10 +88,10 @@ export function DiscoveryPage() {
             <Link className="daily-note-more" to={allEventsHref}>전체 일정 보기 <DiscoveryIcon name="arrow" size={15}/></Link>
           </aside>
 
-          <div className="featured-stage" aria-label="추천 행사">
-            {data.loading ? <div className="featured-loading" aria-label="추천 행사 로딩 중"/>
-              : data.error ? <div className="featured-empty" role="alert"><DiscoveryIcon name="info" size={38}/><strong>행사를 불러오지 못했어요</strong><button type="button" onClick={() => void data.reload()}>다시 불러오기</button></div>
-              : rows.length ? <><FeaturedEvent row={rows[0]} today={today} returnTo={returnTo}/>{rows[1] && <FeaturedEvent row={rows[1]} today={today} returnTo={returnTo} preview/>}</>
+          <div className="featured-stage" aria-label="최근 공개된 행사">
+            {recent.loading ? <div className="featured-loading" aria-label="최근 공개된 행사 로딩 중"/>
+              : recent.error ? <div className="featured-empty" role="alert"><DiscoveryIcon name="info" size={38}/><strong>행사를 불러오지 못했어요</strong><button type="button" onClick={() => void recent.reload()}>다시 불러오기</button></div>
+              : featuredRows.length ? <FeaturedCarousel key={`${category.key}:${state.region}`} rows={featuredRows} today={today} returnTo={returnTo}/>
               : <div className="featured-empty"><DiscoveryIcon name="calendar" size={38}/><strong>공개 행사를 준비하고 있어요</strong><span>검토가 끝난 행사부터 소개합니다.</span></div>}
           </div>
 
@@ -164,10 +168,33 @@ function MiniEventRow({ row, today, returnTo }: { row: PublicEventSummary; today
   return <Link className="daily-note-item" to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><span className="daily-note-thumb">{row.banner ? <StoredImage url={row.banner.url} alt=""/> : <DiscoveryIcon name="ticket" size={18}/>}</span><span className="daily-note-copy"><small>{labels[row.event.subcategory] || '행사'} <b>{schedule.label}</b></small><strong>{row.event.name}</strong><span>{occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span></span></Link>
 }
 
-function FeaturedEvent({ row, today, returnTo, preview = false }: { row: PublicEventSummary; today: string; returnTo: string; preview?: boolean }) {
+function FeaturedCarousel({ rows, today, returnTo }: { rows: PublicEventSummary[]; today: string; returnTo: string }) {
+  const [selected, setSelected] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const index = Math.min(selected, rows.length - 1)
+  useEffect(() => {
+    if (rows.length < 2 || paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setInterval(() => { if (!document.hidden) setSelected(current => (current + 1) % rows.length) }, 6_000)
+    return () => window.clearInterval(timer)
+  }, [rows.length, paused])
+  const move = (step: number) => setSelected(current => (current + step + rows.length) % rows.length)
+  return <div className="featured-carousel" role="region" aria-roledescription="carousel" aria-label="최근 공개된 행사"
+    onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
+    onFocusCapture={() => setPaused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false) }}>
+    <FeaturedEvent key={rows[index].id} row={rows[index]} today={today} returnTo={returnTo}/>
+    <span className="featured-carousel-label">최근 공개</span>
+    {rows.length > 1 && <div className="featured-carousel-controls" aria-label="행사 사진 넘기기">
+      <button type="button" onClick={() => move(-1)} aria-label="이전 행사"><DiscoveryIcon name="chevron" size={17}/></button>
+      <span aria-live="off">{index + 1} / {rows.length}</span>
+      <button type="button" onClick={() => move(1)} aria-label="다음 행사"><DiscoveryIcon name="chevron" size={17}/></button>
+    </div>}
+  </div>
+}
+
+function FeaturedEvent({ row, today, returnTo }: { row: PublicEventSummary; today: string; returnTo: string }) {
   const schedule = eventStatus(row.event, today)
   const occurrence = cardOccurrences(row.event.occurrences, today, 'upcoming', 1).shown[0]
-  return <Link className={`featured-event${preview ? ' is-preview' : ''}`} to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}>{row.banner ? <StoredImage url={row.banner.url} alt={`${row.event.name} 대표 이미지`} loading={preview ? 'lazy' : 'eager'} fetchPriority={preview ? 'auto' : 'high'}/> : <div className="featured-placeholder"><DiscoveryIcon name="sparkles" size={42}/></div>}<span className="featured-scrim"/><span className="featured-copy"><small>{occurrence ? occurrenceLabel(occurrence) : schedule.label} / {row.event.region === 'GYEONGGI' ? '경기' : '서울'}</small><strong>{row.event.name}</strong><span>{row.event.venueName || '장소 확인 필요'}</span></span></Link>
+  return <Link className="featured-event" to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}>{row.banner ? <StoredImage url={row.banner.url} alt={`${row.event.name} 대표 이미지`} loading="eager" fetchPriority="high"/> : <div className="featured-placeholder"><DiscoveryIcon name="sparkles" size={42}/></div>}<span className="featured-scrim"/><span className="featured-copy"><small>{occurrence ? occurrenceLabel(occurrence) : schedule.label} / {row.event.region === 'GYEONGGI' ? '경기' : '서울'}</small><strong>{row.event.name}</strong><span>{row.event.venueName || '장소 확인 필요'}</span></span></Link>
 }
 
 function RankingEvent({ row, rank, today, returnTo, closing = false }: { row: PublicEventSummary; rank: number; today: string; returnTo: string; closing?: boolean }) {
