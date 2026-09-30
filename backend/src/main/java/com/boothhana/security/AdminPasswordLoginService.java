@@ -44,7 +44,7 @@ public class AdminPasswordLoginService {
         String subject = SUBJECT_PREFIX + username;
         UserAccount admin = users.findByKakaoSubject(subject).orElseGet(UserAccount::new);
         admin.kakaoSubject = subject;
-        admin.displayName = "관리자";
+        if (!admin.customDisplayName) admin.displayName = "관리자";
         return users.save(admin);
     }
 }

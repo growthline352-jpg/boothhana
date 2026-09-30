@@ -19,7 +19,7 @@ public final class ImageUploadRules {
             throw new IllegalArgumentException("이미지 크기는 1바이트 이상 10MiB 이하여야 합니다.");
     }
     public static void validateOwnerAndTarget(Long owner, String target) {
-        if (owner == null || owner < 1 || !("booth".equals(target) || "product".equals(target)))
+        if (owner == null || owner < 1 || !("booth".equals(target) || "product".equals(target) || "profile".equals(target)))
             throw new IllegalArgumentException("이미지 업로드 대상을 확인해 주세요.");
     }
     public static void validateFinalKey(Long owner, String target, String key) {
@@ -30,7 +30,7 @@ public final class ImageUploadRules {
     }
     public static String pendingTarget(Long owner, String key) {
         if (owner == null || owner < 1 || key == null) throw new IllegalArgumentException("올바르지 않은 업로드 경로입니다.");
-        Pattern pattern = Pattern.compile("^pending/(booth|product)/" + owner + "/[0-9a-f-]{36}\\.(jpg|png|webp|gif)$");
+        Pattern pattern = Pattern.compile("^pending/(booth|product|profile)/" + owner + "/[0-9a-f-]{36}\\.(jpg|png|webp|gif)$");
         var match = pattern.matcher(key);
         if (!match.matches()) throw new IllegalArgumentException("자신이 업로드한 임시 이미지만 확정할 수 있습니다.");
         return match.group(1);

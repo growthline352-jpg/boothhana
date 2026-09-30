@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../../app/useAuth'
 import { AuthStatusNotice } from '../../app/AuthStatusNotice'
 import { DiscoveryIcon, type IconName } from '../../features/discovery/DiscoveryIcon'
+import { ProfileAvatar } from '../ui/ProfileAvatar'
 
 interface ConsoleLink { to: string; label: string; icon: IconName }
 const creatorLinks: ConsoleLink[] = [
@@ -60,7 +61,7 @@ function ConsoleContent({ role }: { role: 'CREATOR' | 'ADMIN' }) {
       {links.map(({ to, label, icon }) => <NavLink key={to} to={to} end={to === '/creator'}><DiscoveryIcon name={icon} size={18}/><span>{label}</span></NavLink>)}
     </nav>
     <aside className="sidebar">
-      <div className="console-user"><span className="console-avatar" aria-hidden="true">{user.displayName.slice(0, 1)}</span><div><strong className="sidebar-user">{user.displayName}님</strong><span>{title} 계정</span></div></div>
+      <div className="console-user"><ProfileAvatar className="console-avatar" name={user.displayName} imageUrl={user.profileImageUrl} /><div><strong className="sidebar-user">{user.displayName}님</strong><span>{title} 계정</span></div></div>
       <p className="console-nav-caption">작업 메뉴</p>
       <nav className="side-nav" aria-label={`${title} 메뉴`}>{links.map(({ to, label, icon }) => <NavLink key={to} className="side-link" to={to} end={to === '/creator'}><DiscoveryIcon name={icon} size={19}/><span>{label}</span></NavLink>)}</nav>
       <div className="console-sidebar-footer"><p>방문자 화면에서<br/>공개된 안내를 확인하세요.</p><NavLink className="side-link" to="/">행사 둘러보기 <DiscoveryIcon name="arrow" size={17}/></NavLink></div>

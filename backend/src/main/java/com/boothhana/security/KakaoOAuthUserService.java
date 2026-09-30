@@ -25,7 +25,7 @@ public class KakaoOAuthUserService extends DefaultOAuth2UserService {
         String subject = kakaoSubject(kakao.getAttribute("id"));
         UserAccount user = users.findByKakaoSubject(subject).orElseGet(UserAccount::new);
         user.kakaoSubject = subject;
-        user.displayName = nickname(kakao.getAttributes());
+        if (!user.customDisplayName) user.displayName = nickname(kakao.getAttributes());
         users.save(user);
         return new DefaultOAuth2User(authorities(), kakao.getAttributes(), "id");
     }

@@ -11,7 +11,8 @@ import java.util.UUID;
 public final class ApiModels {
     private ApiModels() {}
 
-    public record UserView(Long id, String displayName, List<Permission> permissions) {}
+    public record UserView(Long id, String displayName, String profileImageUrl, List<Permission> permissions) {}
+    public record ProfileInput(@NotBlank String displayName, @Size(max = 512) String profileImageKey, boolean removeImage) {}
     public record EventView(Long id, String name, Instant startAt, Instant endAt, String venue, String description, String imageUrl, Instant reservationStartAt, Instant reservationEndAt, EventStatus status, long boothCount, ApplicationStatus applicationStatus, String imageKey) {}
     public record EventInput(@NotBlank @Size(max = 255) String name, @NotNull Instant startAt, @NotNull Instant endAt,
         @NotBlank @Size(max = 255) String venue, String description, String imageKey,
@@ -61,14 +62,14 @@ public final class ApiModels {
     }
     public record PosView(Long id, String saleNo, Long eventBoothId, PaymentMethod paymentMethod, PosStatus status, Instant soldAt, long totalAmount, List<ReservationItemView> items) {}
     public record UploadInput(@NotBlank @Size(max = 255) String fileName, @NotBlank String contentType,
-            @NotBlank @Pattern(regexp = "booth|product") String target,
+            @NotBlank @Pattern(regexp = "booth|product|profile") String target,
             @NotNull @Min(1) @Max(10_485_760) Long fileSize) {
         public UploadInput(String fileName, String contentType, String target) { this(fileName, contentType, target, null); }
     }
     public record UploadCompleteInput(@NotBlank @Size(max = 512) String objectKey) {}
     public record UploadCompleteView(String objectKey) {}
     public record UploadTicketInput(@NotNull UUID uploadId,
-        @NotBlank @Pattern(regexp = "booth|product") String target,
+        @NotBlank @Pattern(regexp = "booth|product|profile") String target,
         @NotBlank String contentType, @Min(1) @Max(10_485_760) long fileSize,
         @NotBlank @Pattern(regexp = "[0-9a-f]{64}") String sha256) {}
     public record UploadTicketView(java.util.UUID uploadId, String state) {}
