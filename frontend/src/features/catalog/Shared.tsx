@@ -4,6 +4,7 @@ import { ReportLink } from '../support/ReportLink'
 import type { Target } from '../support/api'
 import type { ProductCheck } from './api'
 import type { ReactNode } from 'react'
+import { ContentImage } from '../../components/ui/ContentImage'
 import type { Location, Product, EvidenceScope, PublicAsset } from './api'
 export const labels:Record<string,string>={WINE:'주류·와인',WEDDING:'웨딩',LIFESTYLE:'생활·취미',DESIGN:'디자인·아트',BUSINESS:'창업·산업',WALK:'걷기·거리',LIGHT:'불꽃·빛',MUSIC:'음악·공연',FOOD:'먹거리',CULTURE:'지역·문화',COMIC_DOUJIN:'코믹·동인',DOLL:'인형',ONLY_EVENT:'온리전',BIRTHDAY_CAFE:'생일카페',STATIONERY_GOODS:'문구·일러스트·굿즈',PENDING:'검토 대기',REVIEWED:'검토 완료',EXCLUDED:'제외',ASSIGNED:'배정 확인',UNASSIGNED:'미배정',UNKNOWN:'미확인',NOT_APPLICABLE:'해당 없음',PARTIAL:'일부 수집',COMPLETE:'전체 확인 보고',UNPUBLISHED:'미공개',SUCCESS:'정상 종료',RUNNING:'실행 중',FAILED:'실패',STORED:'파일 저장 완료',CANDIDATE:'링크 확보',APPROVED:'사용 승인',REJECTED:'사용 거절',BANNER:'행사 배너',FLOOR_PLAN:'배치도',BOOTH_CUT:'부스컷',SALES_SHEET:'판매표',PRODUCT:'상품 사진',LOGO:'로고',PARTICIPANTS:'참가 부스',SALES:'판매정보',ACTIVE:'이어 수집 대기',BLOCKED:'재확인 필요',REJECTED_ALL:'전체 거절',NO_RESULTS:'확인 결과 없음',REGISTERED_BOOTHS:'등록 부스',BOOTH_CUTS:'부스컷',PRODUCTS:'상품'}
 export const scopes:Record<EvidenceScope,string>={EVENT_LISTED:'이번 행사 등록 품목',EVENT_SALE_CONFIRMED:'이번 행사 판매 공지 확인',PROFILE:'취급 분야 · 개별 판매품 미확인',GENERAL_CATALOG:'상시 상품 · 이번 행사 판매 미확인',PAST_REFERENCE:'과거 판매 참고',UNKNOWN:'판매정보 확인 필요'}
@@ -23,8 +24,8 @@ function productPrice(product:Product){
 }
 export function ProductCard({product,images=[],verification,reportTarget,memoryTarget,day='',hall=''}:{memoryTarget?:MemoryTarget;day?:string;hall?:string;reportTarget?:Target;product:Product;images?:PublicAsset[];verification?:ProductCheck}){
  const inactive=['SOLD_OUT','CANCELED'].includes(product.saleState),stale=verification?.state==='NOT_RECONFIRMED'
- return <article data-product-id={memoryTarget?.id} tabIndex={-1} className={`catalog-product${images.length?'':' is-compact'}`}>
-  {images.length>0&&<div className="catalog-product-media"><StoredImage url={images[0].url} alt={product.name}/></div>}
+ return <article data-product-id={memoryTarget?.id} tabIndex={-1} className="catalog-product">
+  <div className="catalog-product-media"><ContentImage url={images[0]?.url} kind="product" alt={product.name}/></div>
   <div className="catalog-product-body"><h3>{product.name}</h3>{memoryTarget&&<SaveButton target={memoryTarget} day={day} hall={hall} compact/>}
    <p className="visit-product-price">{productPrice(product)}</p>
    <div className="visit-product-badges"><span className="chip muted">{scopes[product.evidenceScope]}</span><span className={`chip ${inactive?'warning':'muted'}`}>{saleStates[product.saleState]||saleStates.UNKNOWN}</span></div>

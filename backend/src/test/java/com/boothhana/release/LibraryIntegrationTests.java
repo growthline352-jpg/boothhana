@@ -122,6 +122,19 @@ class LibraryIntegrationTests {
   assertThatThrownBy(()->media.rights(id,new com.boothhana.collection.CatalogModels.RightsInput(approved.revision(),"APPROVED","old proof","credit",true))).isInstanceOf(ApiException.class);
  }
  @Test void v18ReadinessIncludesOfflinePermissionColumn(){assertThat(com.boothhana.health.SchemaContract.TABLES.get("subculture_catalog_asset")).contains("offline_allowed");assertThat(db.queryForObject("select count(*) from information_schema.columns where table_schema='public' and table_name='subculture_catalog_asset' and column_name='offline_allowed'",Integer.class)).isEqualTo(1);}
+ @Test @SuppressWarnings("unchecked") void popularCatalogCountsOnlyMemberEventSavesAndHidesWithdrawnEvents(){
+  var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));String future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(2).toString();
+  e.put("region","SEOUL");e.put("subcategory","ONLY_EVENT");e.put("occurrences",List.of(Map.of("startDate",future,"endDate",future)));snapshot.put("event",e);publish();
+  for(long owner:List.of(user,other))db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,?,'EVENT',?,'{}'::jsonb)",UUID.randomUUID(),owner,event,event);
+  db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,participant_id,saved_json) values(?,?,?,'PARTICIPANT',?,?,'{}'::jsonb)",UUID.randomUUID(),user,event,participant,participant);
+  var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
+  var shown=publications.popular(12).stream().filter(row->((Number)row.get("id")).longValue()==event).findFirst().orElseThrow();
+  assertThat(((Number)shown.get("saveCount")).longValue()).isEqualTo(2);assertThat(shown).doesNotContainKeys("user_id","saved_json","note");
+  assertThat(publications.popular(12,"SUBCULTURE")).anyMatch(row->((Number)row.get("id")).longValue()==event);
+  assertThat(publications.popular(12,"EXHIBITION")).noneMatch(row->((Number)row.get("id")).longValue()==event);
+  db.update("update subculture_event_candidate set review_state='EXCLUDED' where id=?",event);
+  assertThat(publications.popular(12)).noneMatch(row->((Number)row.get("id")).longValue()==event);
+ }
  // v21: actual JDBC joins + saved projection. Not executed without the isolated test DB.
  @Test void v21HiddenSalesRedactsSavedBoothHistoryAndSearch(){
   var booth=new Target("PARTICIPANT",event,participant,participant);
