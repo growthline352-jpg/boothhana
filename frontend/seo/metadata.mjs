@@ -143,7 +143,7 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 
-export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', catalog = null, participant = null, listing = [], unavailable = false, splitSites = false } = {}) {
+export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', naverVerification = '', catalog = null, participant = null, listing = [], unavailable = false, splitSites = false } = {}) {
   path = normalizePath(path)
   let origin = siteOrigin(siteUrl)
   const split = splitSitesEnabled(origin, splitSites)
@@ -213,7 +213,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   const canonical = origin ? origin + canonicalPath + (!split && browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
   const robots = indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
   const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null, listing, path, category }) : null
-  return { title, description, canonical, robots, image, schema, siteName: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', verification: verificationToken(verification) }
+  return { title, description, canonical, robots, image, schema, siteName: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', verification: verificationToken(verification), naverVerification: verificationToken(naverVerification) }
 }
 
 export function renderMetadata(meta) {
@@ -227,6 +227,7 @@ export function renderMetadata(meta) {
   if (meta.canonical) tags.push(`<link data-booth-meta rel="canonical" href="${esc(meta.canonical)}" />`, tag('og:url', meta.canonical, true))
   if (meta.image) tags.push(tag('og:image', meta.image, true), tag('og:image:alt', meta.title, true), tag('twitter:image', meta.image), tag('twitter:image:alt', meta.title))
   if (meta.verification) tags.push(tag('google-site-verification', meta.verification))
+  if (meta.naverVerification) tags.push(tag('naver-site-verification', meta.naverVerification))
   if (meta.schema) tags.push(`<script data-booth-meta type="application/ld+json">${JSON.stringify(meta.schema).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')}</script>`)
   return tags.join('\n    ')
 }

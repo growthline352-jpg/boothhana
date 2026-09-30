@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { pageMetadata, renderCrawlableContent, renderMetadata } from './metadata.mjs'
 import { renderPage } from '../api/page.mjs'
+import { naverVerificationFor } from './naver-verification.mjs'
 
 const siteUrl = 'https://boothhana.example'
 const participant = {
@@ -85,6 +86,16 @@ test('Google ownership verification accepts only the issued token format', () =>
   assert.match(valid, new RegExp(`name="google-site-verification" content="${token}"`))
   const invalid = renderMetadata(pageMetadata({ path: '/', siteUrl, verification: '<script>alert(1)</script>' }))
   assert.doesNotMatch(invalid, /google-site-verification/)
+})
+
+test('Naver ownership verification is unique to each registered host', () => {
+  const origins = ['https://boothana.kr', 'https://subculture.boothana.kr', 'https://expo.boothana.kr', 'https://festival.boothana.kr']
+  const tags = origins.map(origin => renderMetadata(pageMetadata({ path: '/', siteUrl: origin, naverVerification: naverVerificationFor(origin) })))
+  assert.equal(new Set(tags.map(tag => tag.match(/name="naver-site-verification" content="([^"]+)"/)?.[1])).size, 4)
+  assert.ok(tags.every(tag => tag.includes('name="naver-site-verification"')))
+  assert.equal(naverVerificationFor('https://boothhana.vercel.app'), '')
+  const invalid = renderMetadata(pageMetadata({ path: '/', siteUrl, naverVerification: '<script>alert(1)</script>' }))
+  assert.doesNotMatch(invalid, /naver-site-verification/)
 })
 
 test('server renderer resolves a public booth and returns 404 for an unknown booth', async () => {
