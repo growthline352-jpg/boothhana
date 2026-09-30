@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { cardOccurrences, eventDateLabel, eventTimeLabels, isDiscoveryResults, parseBrowse, periodRange, searchResultsHref } from './browse'
+import { cardOccurrences, eventDateLabel, eventTimeLabels, homeBrowseApiParams, homeEventSections, isDiscoveryResults, parseBrowse, periodRange, searchResultsHref } from './browse'
+import type { PublicEventSummary } from '../catalog/api'
 
 describe('searchResultsHref', () => {
   it('routes a home search to the results page and resets pagination', () => {
@@ -31,6 +32,38 @@ describe('discovery page mode', () => {
     expect(isDiscoveryResults('/discover', new URLSearchParams('category=exhibitions&view=results'))).toBe(true)
     expect(isDiscoveryResults('/discover', new URLSearchParams('category=exhibitions&q=와인'))).toBe(true)
     expect(isDiscoveryResults('/discover', new URLSearchParams('category=festivals&type=MUSIC&period=month'))).toBe(true)
+  })
+
+  it('opens the full list only after the full-view link or search', () => {
+    const home = new URLSearchParams('category=subculture&region=SEOUL')
+    expect(isDiscoveryResults('/discover', home)).toBe(false)
+    const all = new URL(searchResultsHref(home, 'subculture', ''), 'https://boothana.kr')
+    expect(isDiscoveryResults(all.pathname, all.searchParams)).toBe(true)
+    expect(all.searchParams.get('region')).toBe('SEOUL')
+  })
+})
+
+describe('home event sections', () => {
+  const row = (id: number, startDate: string, endDate: string, state = 'SCHEDULED') => ({
+    id, event: { occurrences: [{ startDate, endDate, startTime: null, endTime: null }],
+      operationStatus: { state } },
+  }) as PublicEventSummary
+
+  it('keeps opening and closing events distinct and sorts closing by final day', () => {
+    const rows = [row(1, '2026-09-22', '2026-10-02'), row(2, '2026-10-02', '2026-10-03'),
+      row(3, '2026-09-20', '2026-09-30'), row(4, '2026-09-15', '2026-10-09'),
+      row(5, '2026-09-10', '2026-09-29'), row(6, '2026-09-20', '2026-10-01', 'CANCELED')]
+    const sections = homeEventSections(rows, '2026-09-30')
+    expect(sections.upcoming.map(event => event.id)).toEqual([2])
+    expect(sections.closing.map(event => event.id)).toEqual([3, 1])
+  })
+
+  it('loads enough upcoming records for the two home sections without changing result-page size', () => {
+    const state = parseBrowse(new URLSearchParams('category=subculture&region=GYEONGGI'))
+    const home = homeBrowseApiParams(state, '2026-09-30')
+    expect(home.get('size')).toBe('100')
+    expect(home.get('from')).toBe('2026-09-30')
+    expect(home.get('region')).toBe('GYEONGGI')
   })
 })
 
