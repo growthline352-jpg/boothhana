@@ -1,5 +1,6 @@
 import { api, publicRead } from '../../api/client'
 import type { EventData, EventSource, Page, ReviewState } from '../collection/api'
+import { combineDfestaSummaries } from './eventGroup'
 export type { EventData, Page, ReviewState }
 export type EvidenceScope = 'EVENT_LISTED' | 'EVENT_SALE_CONFIRMED' | 'PROFILE' | 'GENERAL_CATALOG' | 'PAST_REFERENCE' | 'UNKNOWN'
 export interface Location {code: string | null; status: string; hall: string | null; zone: string | null; startDate: string | null; endDate: string | null; floorPlanUrl: string | null}
@@ -63,8 +64,8 @@ export function presentPublicParticipant(row: PublicParticipant): PublicParticip
 }
 
 export const publicCatalogApi={
- browse:(query:string)=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`),
- events:(page=0)=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`),
+ browse:async(query:string)=>{const page=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`);return {...page,items:combineDfestaSummaries(page.items)}},
+ events:async(page=0)=>{const result=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`);return {...result,items:combineDfestaSummaries(result.items)}},
  event:async(id:string)=>{
   const value=await publicRead<PublicEvent>(`/api/public/catalog/events/${id}`)
   return {...value,participants:value.participants.map(presentPublicParticipant)}

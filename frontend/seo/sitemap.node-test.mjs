@@ -11,6 +11,14 @@ test('sitemap contains canonical category and event URLs with valid escaping', (
   assert.match(renderRobots('https://boothhana.example'), /Sitemap: https:\/\/boothhana\.example\/sitemap\.xml/)
 })
 
+test('the Sunday D.Festa event landing page is not a second indexed URL', () => {
+  const output = renderSitemap('https://subculture.boothana.kr', [
+    { id: 1, publishedAt: '2026-09-30' }, { id: 7, publishedAt: '2026-09-30' },
+  ])
+  assert.match(output, /\/discover\/1<\/loc>/)
+  assert.doesNotMatch(output, /\/discover\/7<\/loc>/)
+})
+
 test('published event discovery combines all public categories and removes duplicates', async () => {
   const seen = []
   const fetcher = async url => {
