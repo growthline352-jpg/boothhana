@@ -1,4 +1,5 @@
 import type { Occurrence } from '../collection/api'
+import type { PublicEventSummary } from '../catalog/api'
 import { getCategory, type DiscoveryCategory } from './categories'
 import { currentSiteCategory } from './site'
 export type Period = 'upcoming' | 'week' | 'month' | 'all' | 'weekend' | 'nextmonth' | 'custom'
@@ -67,6 +68,29 @@ export function browseApiParams(state: BrowseState, today: string): URLSearchPar
   if (range.from) params.set('from', range.from)
   if (range.to) params.set('to', range.to)
   return params
+}
+
+/** Home needs enough upcoming records to form two distinct, five-card sections. */
+export function homeBrowseApiParams(state: BrowseState, today: string): URLSearchParams {
+  const params = browseApiParams({ ...state, page: 0, period: 'upcoming', sort: 'date', q: '', subcategory: '' }, today)
+  params.set('size', '100')
+  return params
+}
+
+/** Closing soon means the event has already opened and its final operating day is within seven days. */
+export function homeEventSections(rows: PublicEventSummary[], today: string) {
+  const closingThrough = new Date(`${today}T00:00:00Z`)
+  closingThrough.setUTCDate(closingThrough.getUTCDate() + 6)
+  const lastDay = closingThrough.toISOString().slice(0, 10)
+  const eligible = rows.filter(row => !['CANCELED', 'POSTPONED', 'RESCHEDULED'].includes(row.event.operationStatus?.state || ''))
+    .map(row => ({ row, first: row.event.occurrences.reduce((value, o) => !value || o.startDate < value ? o.startDate : value, ''),
+      last: row.event.occurrences.reduce((value, o) => o.endDate > value ? o.endDate : value, '') }))
+  return {
+    upcoming: eligible.filter(item => item.first >= today && item.last >= today)
+      .sort((a, b) => a.first.localeCompare(b.first) || a.row.id - b.row.id).slice(0, 5).map(item => item.row),
+    closing: eligible.filter(item => item.first < today && item.last >= today && item.last <= lastDay)
+      .sort((a, b) => a.last.localeCompare(b.last) || a.row.id - b.row.id).slice(0, 5).map(item => item.row),
+  }
 }
 export function eventSchedule(occurrences: Occurrence[], today: string): { label: string; state: 'upcoming' | 'today' | 'past' | 'unknown' } {
   if (!occurrences.length) return { label: '일정 확인 필요', state: 'unknown' }

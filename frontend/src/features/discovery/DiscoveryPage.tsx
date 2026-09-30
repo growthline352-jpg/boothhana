@@ -8,7 +8,7 @@ import { useRemote } from '../../app/useRemote'
 import { publicCatalogApi, type PublicEventSummary } from '../catalog/api'
 import { SafeLink, StoredImage, labels } from '../catalog/Shared'
 import { categoryHref } from './categories'
-import { browseApiParams, cardOccurrences, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
+import { browseApiParams, cardOccurrences, dateLabel, homeBrowseApiParams, homeEventSections, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import { currentSiteCategory } from './site'
@@ -26,7 +26,7 @@ export function DiscoveryPage() {
   const { category } = state
   const [today, setToday] = useState(() => seoulToday())
   useEffect(() => { const id = window.setInterval(() => setToday(seoulToday()), 60_000); return () => window.clearInterval(id) }, [])
-  const query = browseApiParams(state, today).toString()
+  const query = (isHome ? homeBrowseApiParams(state, today) : browseApiParams(state, today)).toString()
   const data = useRemote(() => category.enabled && !state.dateError ? publicCatalogApi.browse(query)
     : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError])
   usePageScroll(!data.loading)
@@ -50,6 +50,8 @@ export function DiscoveryPage() {
   const pages = Math.max(1, Math.ceil(total / 20))
   const range = periodRange(state.period, today, state.from, state.to)
   const returnTo = location.pathname + location.search
+  const allEventsHref = searchResultsHref(params, category.key, '')
+  const homeSections = homeEventSections(rows, today)
   const hasFilter = Boolean(state.q || state.region || state.subcategory || state.period !== 'all')
   const dateLabel = dateFormatter.format(new Date(`${today}T12:00:00Z`)).replaceAll('.', '')
   const quickLinks = homeQuickLinks(category.key)
@@ -79,7 +81,7 @@ export function DiscoveryPage() {
                 : rows.slice(0, 3).map(row => <MiniEventRow key={row.id} row={row} today={today} returnTo={returnTo}/>) }
               {!data.loading && !data.error && !rows.length && <p className="daily-note-empty">현재 조건에 맞는 공개 행사가 없습니다.</p>}
             </div>
-            <a className="daily-note-more" href="#discovery-results">전체 일정 보기 <DiscoveryIcon name="arrow" size={15}/></a>
+            <Link className="daily-note-more" to={allEventsHref}>전체 일정 보기 <DiscoveryIcon name="arrow" size={15}/></Link>
           </aside>
 
           <div className="featured-stage" aria-label="추천 행사">
@@ -104,20 +106,16 @@ export function DiscoveryPage() {
       </div>
     </section>
 
-    {isHome && <section className="discovery-container home-ranking" aria-labelledby="ranking-heading">
-      <div className="home-section-title"><div><h2 id="ranking-heading">곧 열리는 행사</h2><p>현재 선택한 조건의 공개 행사를 가까운 일정부터 보여드려요.</p></div><a href="#discovery-results">전체보기 <DiscoveryIcon name="arrow" size={16}/></a></div>
-      <div className="home-ranking-tabs" role="group" aria-label="다가오는 행사 지역">
-        <button className={!state.region ? 'is-current' : ''} aria-pressed={!state.region} type="button" onClick={() => update({ region: '' })}>전체</button>
-        <button className={state.region === 'SEOUL' ? 'is-current' : ''} aria-pressed={state.region === 'SEOUL'} type="button" onClick={() => update({ region: 'SEOUL' })}>서울</button>
-        <button className={state.region === 'GYEONGGI' ? 'is-current' : ''} aria-pressed={state.region === 'GYEONGGI'} type="button" onClick={() => update({ region: 'GYEONGGI' })}>경기</button>
-      </div>
-      {data.loading ? <div className="home-ranking-grid" aria-busy="true">{[0,1,2,3,4].map(i => <div className="ranking-skeleton" key={i}/>)}</div>
-        : data.error ? <div className="ranking-empty" role="alert">행사 정보를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.</div>
-        : rows.length ? <div className="home-ranking-grid">{rows.slice(0, 5).map((row, index) => <RankingEvent key={row.id} row={row} rank={index + 1} today={today} returnTo={returnTo}/>)}</div>
-        : <div className="ranking-empty">표시할 행사가 없습니다. 조건을 바꿔 다시 확인해 주세요.</div>}
-    </section>}
+    {isHome && <>
+      <HomeRankingSection id="ranking-heading" title="곧 열리는 행사" description="아직 시작하지 않은 공개 행사를 가까운 일정부터 보여드려요."
+        empty="곧 열리는 행사가 없습니다." rows={homeSections.upcoming} loading={data.loading} error={!!data.error}
+        today={today} returnTo={returnTo} region={state.region} changeRegion={region => update({ region })} allEventsHref={allEventsHref}/>
+      <HomeRankingSection id="closing-heading" title="마감 임박한 행사" description="이미 시작했고, 운영 종료일까지 7일 이내인 행사예요. 예매 마감일과는 다를 수 있어요."
+        empty="지금 마감 임박한 행사가 없습니다." rows={homeSections.closing} loading={data.loading} error={!!data.error}
+        today={today} returnTo={returnTo} region={state.region} changeRegion={region => update({ region })} allEventsHref={allEventsHref} closing/>
+    </>}
 
-    <section className="discovery-container discovery-feed" aria-labelledby="discovery-heading" id="discovery-results">
+    {!isHome && <section className="discovery-container discovery-feed" aria-labelledby="discovery-heading" id="discovery-results">
       <div className="discovery-feed-head"><div><h2 id="discovery-heading">{category.label} 전체보기</h2><p>날짜와 지역, 관심 분야로 원하는 행사를 좁혀보세요.</p></div></div>
       <div className="discovery-subcategories" role="group" aria-label={`${category.label} 세부 분류`}>
         {category.filters.map(filter => <button key={filter.value} type="button" disabled={!category.enabled} className={`discovery-filter-chip${state.subcategory === filter.value ? ' is-selected' : ''}`} aria-pressed={state.subcategory === filter.value} onClick={() => update({ type: filter.value })}>{filter.value === '' && <DiscoveryIcon name="grid" size={15}/>} {filter.label}</button>)}
@@ -137,9 +135,27 @@ export function DiscoveryPage() {
         {!state.dateError && !data.loading && !data.error && total > 0 && pages > 1 && state.page < pages && <nav className="discovery-pagination" aria-label="행사 목록 페이지"><button type="button" disabled={state.page === 0} onClick={() => update({ page: String(Math.max(0, state.page - 1)) })}>이전</button><span><strong>{state.page + 1}</strong> / {pages}</span><button type="button" disabled={(state.page + 1) * 20 >= total} onClick={() => update({ page: String(state.page + 1) })}>다음</button></nav>}
       </> : <div className="discovery-coming"><div className="discovery-coming-icon"><DiscoveryIcon name={category.icon} size={42}/></div><h3>{category.label} 정보를 준비하고 있어요</h3><p>검토와 공개가 끝난 정보부터 이곳에서 확인할 수 있습니다.</p><Link className="discovery-primary" to={categoryHref('subculture')}>서브컬처 먼저 둘러보기 <DiscoveryIcon name="arrow" size={17}/></Link></div>}
       <div className="discovery-guide-strip"><div className="discovery-guide-label"><DiscoveryIcon name="info"/><strong>방문 전 확인하세요</strong></div><p>일정과 입장 조건은 바뀔 수 있으니 주최 측 최신 공지를 확인해 주세요.</p><Link to="/events">예약 가능한 행사 <DiscoveryIcon name="arrow" size={16}/></Link></div>
-    </section>
+    </section>}
     {category.enabled && <BestsellerSection category={category.code}/>}
   </div>
+}
+
+function HomeRankingSection({ id, title, description, empty, rows, loading, error, today, returnTo, region, changeRegion, allEventsHref, closing = false }: {
+  id: string; title: string; description: string; empty: string; rows: PublicEventSummary[]; loading: boolean; error: boolean
+  today: string; returnTo: string; region: string; changeRegion: (region: string) => void; allEventsHref: string; closing?: boolean
+}) {
+  return <section className="discovery-container home-ranking" aria-labelledby={id}>
+    <div className="home-section-title"><div><h2 id={id}>{title}</h2><p>{description}</p></div><Link to={allEventsHref}>전체보기 <DiscoveryIcon name="arrow" size={16}/></Link></div>
+    <div className="home-ranking-tabs" role="group" aria-label={`${title} 지역`}>
+      <button className={!region ? 'is-current' : ''} aria-pressed={!region} type="button" onClick={() => changeRegion('')}>전체</button>
+      <button className={region === 'SEOUL' ? 'is-current' : ''} aria-pressed={region === 'SEOUL'} type="button" onClick={() => changeRegion('SEOUL')}>서울</button>
+      <button className={region === 'GYEONGGI' ? 'is-current' : ''} aria-pressed={region === 'GYEONGGI'} type="button" onClick={() => changeRegion('GYEONGGI')}>경기</button>
+    </div>
+    {loading ? <div className="home-ranking-grid" aria-busy="true">{[0,1,2,3,4].map(i => <div className="ranking-skeleton" key={i}/>)}</div>
+      : error ? <div className="ranking-empty" role="alert">행사 정보를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.</div>
+      : rows.length ? <div className="home-ranking-grid">{rows.map((row, index) => <RankingEvent key={row.id} row={row} rank={index + 1} today={today} returnTo={returnTo} closing={closing}/>)}</div>
+      : <div className="ranking-empty">{empty}</div>}
+  </section>
 }
 
 function MiniEventRow({ row, today, returnTo }: { row: PublicEventSummary; today: string; returnTo: string }) {
@@ -154,9 +170,10 @@ function FeaturedEvent({ row, today, returnTo, preview = false }: { row: PublicE
   return <Link className={`featured-event${preview ? ' is-preview' : ''}`} to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}>{row.banner ? <StoredImage url={row.banner.url} alt={`${row.event.name} 대표 이미지`} loading={preview ? 'lazy' : 'eager'} fetchPriority={preview ? 'auto' : 'high'}/> : <div className="featured-placeholder"><DiscoveryIcon name="sparkles" size={42}/></div>}<span className="featured-scrim"/><span className="featured-copy"><small>{occurrence ? occurrenceLabel(occurrence) : schedule.label} / {row.event.region === 'GYEONGGI' ? '경기' : '서울'}</small><strong>{row.event.name}</strong><span>{row.event.venueName || '장소 확인 필요'}</span></span></Link>
 }
 
-function RankingEvent({ row, rank, today, returnTo }: { row: PublicEventSummary; rank: number; today: string; returnTo: string }) {
+function RankingEvent({ row, rank, today, returnTo, closing = false }: { row: PublicEventSummary; rank: number; today: string; returnTo: string; closing?: boolean }) {
   const occurrence = cardOccurrences(row.event.occurrences, today, 'upcoming', 1).shown[0]
-  return <article className="ranking-event"><span className="ranking-number" aria-label={`일정 순서 ${rank}`}>{String(rank).padStart(2, '0')}</span><Link to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><div className="ranking-image">{row.banner ? <StoredImage url={row.banner.url} alt={`${row.event.name} 대표 이미지`}/> : <div className="ranking-placeholder"><DiscoveryIcon name="ticket" size={28}/></div>}</div><div className="ranking-copy"><strong>{row.event.name}</strong><span>{occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span><small>{row.event.venueName || '장소 확인 필요'}</small></div></Link><SaveButton target={{type:'EVENT',eventId:row.id,id:row.id,participantId:null}} compact/></article>
+  const finalDay = row.event.occurrences.reduce((latest, day) => day.endDate > latest ? day.endDate : latest, '')
+  return <article className="ranking-event"><span className="ranking-number" aria-label={`${closing ? '마감' : '일정'} 순서 ${rank}`}>{String(rank).padStart(2, '0')}</span><Link to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><div className="ranking-image">{row.banner ? <StoredImage url={row.banner.url} alt={`${row.event.name} 대표 이미지`}/> : <div className="ranking-placeholder"><DiscoveryIcon name="ticket" size={28}/></div>}</div><div className="ranking-copy"><strong>{row.event.name}</strong><span>{closing && finalDay ? `${dateLabel(finalDay)} 운영 종료` : occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span><small>{row.event.venueName || '장소 확인 필요'}</small></div></Link><SaveButton target={{type:'EVENT',eventId:row.id,id:row.id,participantId:null}} compact/></article>
 }
 
 export function DiscoveryEventCard({ row, today, returnTo, period = 'all', from='', to='' }: { row: PublicEventSummary; today: string; returnTo: string; period?: Period; from?:string; to?:string }) {

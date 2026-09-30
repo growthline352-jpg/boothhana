@@ -12,9 +12,7 @@ export function BestsellerSection({ category = 'SUBCULTURE' }: { category?: stri
     if (!isGoodsFeed(response)) throw new Error('판매량 집계 응답을 확인하지 못했어요.')
     return response
   }, [category])
-  if (state.loading) return <section className="discovery-container goods-section" aria-label="판매량 굿즈 확인 중" aria-busy="true"><h2>많이 판매된 굿즈</h2><p role="status">판매 기록을 확인하고 있어요.</p></section>
-  if (state.error) return <section className="discovery-container goods-section goods-empty"><h2>많이 판매된 굿즈</h2><p>판매 기록을 불러오지 못했어요. 아래 행사 목록은 계속 이용할 수 있어요.</p><button className="btn secondary" onClick={() => void state.reload()}>판매 목록 다시 확인</button></section>
-  if (!state.data || !isGoodsFeed(state.data) || !state.data.items.length) return <section className="discovery-container goods-section goods-empty"><h2>많이 판매된 굿즈</h2><p>아직 집계된 판매 굿즈가 없어요.</p><small>판매 기록과 메인 노출 승인이 있는 상품부터 소개합니다. 외부 상품의 인기도를 추정해 순위를 만들지 않아요.</small></section>
+  if (state.loading || state.error || !state.data?.items.length) return null
   return <GoodsCarousel key={category} feed={state.data}/>
 }
 
