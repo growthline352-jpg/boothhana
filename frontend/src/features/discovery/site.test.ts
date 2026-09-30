@@ -1,10 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { categoryHref, activeCategory, safeEventReturnTo } from './categories'
 import { parseBrowse, browseApiParams } from './browse'
-import { categorySitesActive } from './site'
+import { categorySitesActive, isLocalPreview } from './site'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('category site routing', () => {
+  it('keeps local category homes on the local preview while production links stay split', () => {
+    vi.stubGlobal('window', { location: { host: '127.0.0.1:4184' } })
+    vi.stubEnv('VITE_PUBLIC_SITE_URL', 'https://boothana.kr')
+    vi.stubEnv('VITE_CATEGORY_SITES_ENABLED', 'true')
+    expect(isLocalPreview()).toBe(true)
+    expect(categoryHref('subculture')).toBe('/?category=subculture')
+    expect(categoryHref('exhibitions')).toBe('/?category=exhibitions')
+    expect(categoryHref('festivals')).toBe('/?category=festivals')
+    vi.stubGlobal('window', { location: { host: 'boothana.kr' } })
+    expect(isLocalPreview()).toBe(false)
+    expect(categoryHref('exhibitions')).toBe('https://expo.boothana.kr/')
+  })
   it('returns a booth to its own event without losing map and visit context', () => {
     const fallback = '/discover/1?day=2026-10-03'
     const previous = '/discover/1?day=2026-10-03&view=map&focus=43'
