@@ -77,6 +77,24 @@ export function homeBrowseApiParams(state: BrowseState, today: string): URLSearc
   return params
 }
 
+/** The hero is the five most recently published, still-current events in this category/region. */
+export function homeRecentApiParams(state: BrowseState, today: string): URLSearchParams {
+  const params = browseApiParams({ ...state, page: 0, period: 'upcoming', sort: 'recent', q: '', subcategory: '' }, today)
+  params.set('size', '30') // Leave room for duplicate-day consolidation and withdrawn dates.
+  return params
+}
+
+export function latestFeaturedEvents(rows: PublicEventSummary[], today: string): PublicEventSummary[] {
+  const unique = new Map<number, PublicEventSummary>()
+  for (const row of rows) {
+    if (['CANCELED', 'POSTPONED', 'RESCHEDULED'].includes(row.event.operationStatus?.state || '')) continue
+    if (!row.event.occurrences.some(day => day.endDate >= today)) continue
+    const existing = unique.get(row.id)
+    if (!existing || (row.publishedAt || '') > (existing.publishedAt || '')) unique.set(row.id, row)
+  }
+  return [...unique.values()].sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || '') || b.id - a.id).slice(0, 5)
+}
+
 /** Closing soon means the event has already opened and its final operating day is within seven days. */
 export function homeEventSections(rows: PublicEventSummary[], today: string) {
   const closingThrough = new Date(`${today}T00:00:00Z`)

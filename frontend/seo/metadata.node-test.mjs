@@ -48,6 +48,17 @@ test('filtered browse views are noindex and point at the stable category URL', (
   assert.equal(meta.canonical, `${siteUrl}/discover?category=exhibitions`)
 })
 
+test('unreviewed legal drafts have distinct metadata and stay out of search results', () => {
+  const privacy = pageMetadata({ path: '/privacy', siteUrl })
+  const terms = pageMetadata({ path: '/terms', siteUrl })
+  assert.equal(privacy.title, '개인정보처리방침 | 부스하나')
+  assert.equal(terms.title, '이용약관 | 부스하나')
+  assert.equal(privacy.robots, 'noindex,follow')
+  assert.equal(terms.robots, 'noindex,follow')
+  assert.equal(privacy.canonical, `${siteUrl}/privacy`)
+  assert.equal(terms.canonical, `${siteUrl}/terms`)
+})
+
 test('event pages expose Event and BreadcrumbList structured data from public fields', () => {
   const meta = pageMetadata({ path: '/discover/13', siteUrl, catalog })
   assert.match(meta.robots, /^index,follow/)
