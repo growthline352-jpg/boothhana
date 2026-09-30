@@ -3,11 +3,12 @@ import { Link,useSearchParams } from 'react-router'
 import { useAuth } from '../../app/useAuth'
 import { useRemote } from '../../app/useRemote'
 import { ErrorState,LoadingState } from '../../components/ui/States'
+import { ContentImage } from '../../components/ui/ContentImage'
 import { useDirty } from '../visit/UnsavedChanges'
 import { relevantLocations,validDay,visitDays } from '../visit/visit'
 import { seoulToday } from '../discovery/browse'
 import { openCatalogDialog } from '../catalog/dialogLifecycle'
-import { LocationText,SafeLink,StoredImage,scopes,saleStates } from '../catalog/Shared'
+import { LocationText,SafeLink,scopes,saleStates } from '../catalog/Shared'
 import type { EventData,EvidenceScope } from '../catalog/api'
 import { libraryApi } from './api'
 import { useLibrary } from './LibraryProvider'
@@ -90,8 +91,8 @@ export function LibraryPage(){
 }
 export function MemoryCard({entry:e,guest,open}:{entry:MemoryEntry;guest:boolean;open:(entry:MemoryEntry,button:HTMLElement)=>void}){
  const title=e.current?.memory.title||'현재 공개되지 않는 정보',context=e.current?.memory,locations=e.current?relevantLocations(e.current.locations,e.day,e.hall):[]
- return <article className={`memory-card${e.image?' has-image':''}${!e.available?' is-unavailable':''}`}>
-  {e.image&&e.available&&<figure><StoredImage url={e.image.url} alt={title}/><figcaption>{e.image.credit} · <SafeLink url={e.image.sourceUrl}>출처</SafeLink></figcaption></figure>}
+ return <article className={`memory-card${e.available?' has-image':''}${!e.available?' is-unavailable':''}`}>
+  {e.available&&<figure><ContentImage url={e.image?.url} kind={e.target.type==='EVENT'?'event':e.target.type==='PRODUCT'?'product':'booth'} alt={title}/>{e.image&&<figcaption>{e.image.credit} · <SafeLink url={e.image.sourceUrl}>출처</SafeLink></figcaption>}</figure>}
   <div className="memory-card-content"><div className="memory-card-meta"><span>{kindNames[e.target.type]}</span><span>{guest?'기기 임시 저장':'계정 저장'} · {e.savedAt.slice(0,10)}</span></div>
    <p className="memory-event-name">{context?.eventName||'공개 안내 중지 · 내 메모는 유지'}</p><h3>{title}</h3>{context?.participantName&&e.target.type==='PRODUCT'&&<p className="item-meta">{context.participantName}</p>}
    {e.current&&['CANCELED','POSTPONED','RESCHEDULED'].includes(e.current.operationState)&&<p className="visit-important-note">{({CANCELED:'행사 취소 안내',POSTPONED:'행사 연기 안내',RESCHEDULED:'일정 변경 안내'} as Record<string,string>)[e.current.operationState]} · 현재 공지를 확인하세요.</p>}

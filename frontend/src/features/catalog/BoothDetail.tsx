@@ -123,7 +123,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
         {images.length > 0 ? images.map((asset, index) => <figure key={asset.id} className={index === 0 ? 'is-main' : ''}>
           <ContentImage url={asset.url} kind="booth" alt={asset.caption || `${row.participant.registrationName} 홍보 이미지 ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'}/>
           <figcaption>{asset.credit} · <SafeLink url={asset.attribution}>출처</SafeLink></figcaption>
-        </figure>) : <figure className="booth-detail-fallback"><ContentImage url={null} kind="booth" alt="" loading="eager"/><figcaption>기본 이미지 · 부스 이미지 준비 중</figcaption></figure>}
+        </figure>) : <figure className="booth-detail-fallback"><ContentImage url={null} kind="booth" alt="" loading="eager"/></figure>}
       </div>
     </div>
     <section className="booth-detail-products" aria-labelledby={`booth-products-${row.id}`}>

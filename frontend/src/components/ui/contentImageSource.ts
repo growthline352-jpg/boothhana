@@ -1,9 +1,9 @@
 export type ContentImageKind = 'event' | 'booth' | 'product'
 
 export const fallbackImages: Record<ContentImageKind, string> = {
-  event: '/assets/fallback/event.jpg',
-  booth: '/assets/fallback/booth.jpg',
-  product: '/assets/fallback/product.jpg',
+  event: '/assets/fallback/event.svg',
+  booth: '/assets/fallback/booth.svg',
+  product: '/assets/fallback/product.svg',
 }
 
 export function contentImageUrl(url: string | null | undefined): string | null {

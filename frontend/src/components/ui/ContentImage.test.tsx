@@ -9,6 +9,8 @@ describe('ContentImage', () => {
       const html = renderToStaticMarkup(<ContentImage url={null} kind={kind} alt="" />)
       expect(html).toContain(`src="${fallbackImages[kind]}"`)
       expect(html).toContain(`data-fallback="${kind}"`)
+      expect(html).toContain(`${{event:'행사',booth:'부스',product:'상품'}[kind]} 이미지가 없습니다`)
+      expect(fallbackImages[kind]).toMatch(/\.svg$/)
     }
   })
 
