@@ -1,7 +1,11 @@
 import { useAuth } from './useAuth'
+import { useLocation } from 'react-router'
 /** Unknown identity never prompts the visitor to silently start a new local collection. */
 export function AuthStatusNotice() {
   const auth = useAuth()
+  const location = useLocation()
+  // The account page already shows the same error and retry action in its profile area.
+  if (location.pathname === '/account') return null
   if (auth.status !== 'error') return null
   return <div className="notice-banner auth-status-notice" role="alert">
     <p>{auth.error || '계정 확인에 실패했어요. 개인 기록과 저장 위치는 변경하지 않았습니다.'}</p>
