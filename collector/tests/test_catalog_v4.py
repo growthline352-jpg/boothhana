@@ -20,6 +20,13 @@ class CatalogRulesTests(unittest.TestCase):
  def test_both_stage_schemas(self):
   for n in ['participants','sales']:parse_schema((FIX/(n+'.json')).read_bytes(),'stage-result-v5.schema.json')
  def test_joint_booth_preserved(self):validate_stage(self.p,'PARTICIPANTS',self.event,[]);self.assertEqual(len(self.p['participants']),1);self.assertEqual(len(self.p['participants'][0]['members']),2)
+ def test_prior_year_application_copy_not_current_introduction(self):
+  participant=self.p['participants'][0]
+  participant['description']='브랜드 소개 및 2025 카페쇼 참가 제안서'
+  with self.assertRaisesRegex(ValueError,'Prior-edition application'):
+   check_participant(participant,self.event,[])
+  participant['description']='2025년 브랜드 대상을 수상한 업체입니다.'
+  check_participant(participant,self.event,[])
  def test_assigned_requires_code(self):
   self.p['participants'][0]['locations'][0]['code']=None
   with self.assertRaises(ValueError):validate_stage(self.p,'PARTICIPANTS',self.event,[])

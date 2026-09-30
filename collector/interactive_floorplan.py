@@ -16,6 +16,9 @@ from PIL import Image,PngImagePlugin
 
 CODE=re.compile(r'^\s*([A-Z]{1,4})(\s*-\s*|\s*)(\d{1,4})([A-Z]?)(?=\s|$)',re.I)
 IMAGE_PATH=re.compile(r'\.(?:png|jpe?g|webp|gif)(?:$|[?#])',re.I)
+COMICW_MAP_PATH=re.compile(r'^/map/(\d+)(?:/|$)',re.I)
+COMICW_MAP_IMAGE=re.compile(r'(?:^|/)fare_(\d+)(?:_|\.)',re.I)
+COMICW_MAP_SCRIPT=re.compile(r'\b(?:const|var)\s+MAP_IMG_URL\s*=\s*["\']([^"\']+)["\']',re.I)
 FACILITY_KINDS={
     '화장실':'RESTROOM','입구':'ENTRANCE','입구/재입장':'ENTRANCE','출구':'EXIT',
     '운영본부':'INFORMATION','안내데스크':'INFORMATION','엘리베이터':'ELEVATOR',
@@ -113,6 +116,22 @@ def build_schematic(html:str):
 def is_interactive_source(asset:dict):
     image=asset.get('imageUrl') or '';page=asset.get('pageUrl') or ''
     return bool(page and image==page and not IMAGE_PATH.search(urlsplit(page).path))
+
+def validate_comicw_map_edition(asset:dict,html:str|None=None):
+    """An event-specific map URL can still serve the previous fare's image."""
+    page=urlsplit(asset.get('pageUrl') or '')
+    if page.hostname not in ('comicw.net','www.comicw.net'):return
+    match=COMICW_MAP_PATH.match(page.path)
+    if not match:return
+    expected=match.group(1)
+    candidates=[asset.get('imageUrl') or '']
+    if html is not None:
+        scripted=COMICW_MAP_SCRIPT.search(html)
+        if scripted:candidates.append(scripted.group(1).replace('\\/','/'))
+    for candidate in candidates:
+        image=COMICW_MAP_IMAGE.search(urlsplit(candidate).path)
+        if image and image.group(1)!=expected:
+            raise ValueError(f'ComicWorld map fare mismatch: requested {expected}, image is {image.group(1)}')
 
 def _event_days(event:dict):
     days=[]

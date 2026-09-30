@@ -13,7 +13,7 @@ from catalog_transport import Api
 from media_fetch import fetch_image,fetch_html
 from floorplan_geometry import tiles,merge_tiles,EXTRACTOR
 from floorplan_contract import validate_payload,input_fingerprint,result_fingerprint
-from interactive_floorplan import build_schematic,is_interactive_source,merge_interactive_candidates
+from interactive_floorplan import build_schematic,is_interactive_source,merge_interactive_candidates,validate_comicw_map_edition
 from rules import public_url
 from event_queue import EventNameQueue
 BASE='/api/internal/subculture/v4/floorplans'
@@ -94,8 +94,10 @@ class FloorplanBatch:
         geometry=None
         if is_interactive_source(asset):
             html,_=fetch_html(asset['pageUrl'],self.cfg['imageAllowedHosts'],min(30,self.cfg['httpTimeoutSeconds']))
+            validate_comicw_map_edition(asset,html)
             data,mime,digest,width,height,geometry=build_schematic(html)
         else:
+            validate_comicw_map_edition(asset)
             data,mime,digest=fetch_image(asset['imageUrl'],self.cfg['imageAllowedHosts'],min(30,self.cfg['httpTimeoutSeconds']))
             from PIL import Image
             import io

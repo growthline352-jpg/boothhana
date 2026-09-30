@@ -3,7 +3,8 @@
 Default schedule: Sunday 03:00 Asia/Seoul; actual scheduling is installed separately.
 """
 from __future__ import annotations
-import argparse,hashlib,json,os,re,sys,time,uuid
+import argparse,hashlib,json,os,re,sys,time,uuid,unicodedata
+from urllib.parse import urlsplit,urlunsplit
 from datetime import datetime,timedelta
 from pathlib import Path
 from run import ROOT,SEOUL,RunError,run_lock,utcnow,write_json,date_window,execute_search,audit_opened_urls,canonical_audit_url,config as base_config
@@ -190,6 +191,11 @@ class Pipeline:
         if self.api: self.request('POST',f'/pipelines/{self.id}/heartbeat',{})
     def job_dir(self,key):
         path=self.folder/'jobs'/key;path.mkdir(parents=True,exist_ok=True);return path
+    def progress(self,key,phase):
+        # No prompts, credentials, source bodies or exception messages in progress logs.
+        value={'runId':self.id,'updatedAt':utcnow(),'job':key,'phase':phase,'cliCalls':self.calls,'savedReceipts':len(self.receipts)}
+        write_json(self.folder/'progress.json',value)
+        print(json.dumps({'collectorProgress':value},ensure_ascii=False),flush=True)
     def job(self,key,prompt,schema):
         path=self.job_dir(key);file=path/'validated-result.json'
         if file.exists():
@@ -198,9 +204,11 @@ class Pipeline:
                 result,missing_opened=enforce_opened_url_coverage(result,audit.get('openedUrls') or [])
                 if missing_opened:
                     self.issues.append(key+f': {len(missing_opened)} checked URLs lack completed open records');write_json(file,result)
+            self.progress(key,'CACHED')
             return result,audit['webSearchObserved']
         self.check_budget(cli=True)
         self.heartbeat();self.calls+=1;self.stats['cliCalls']+=1
+        self.progress(key,'RESEARCHING')
         attempts=path/'cli-attempts.json'
         history=json.loads(attempts.read_text(encoding='utf-8')) if attempts.exists() else []
         history.append({'startedAt':utcnow(),'fixture':bool(self.fixtures)});write_json(attempts,history)
@@ -222,6 +230,7 @@ class Pipeline:
         if missing_opened:self.issues.append(key+f': {len(missing_opened)} checked URLs lack completed open records')
         write_json(path/'audit.json',{'webSearchObserved':observed,'usage':usage,'openedUrls':opened,'openedUrlAuditAvailable':opened_audit_available})
         if result['searchStatus']!='FAILED': write_json(file,result)
+        self.progress(key,'RESEARCHED')
         return result,observed
     def deliver(self,key,body,legacy=False):
         folder=self.job_dir(key);payload=folder/'payload.json';receipt=folder/'receipt.json'
@@ -235,11 +244,12 @@ class Pipeline:
         elif legacy: value=self.api.request('POST','/api/internal/subculture/batches',body)
         else: value=self.request('POST','/stages',body)
         if value.get('runId')!=body['runId']: raise RunError('Receipt ID mismatch')
-        self.record_receipt(key,value);write_json(receipt,value);return value
+        self.record_receipt(key,value);write_json(receipt,value);self.progress(key,'SAVED');return value
     def issue(self,key,exc):
         # Do not copy prompts, bearer tokens or arbitrary upstream response bodies into public/server error logs.
         note=key+': '+type(exc).__name__+': '+str(exc)[:180]
-        self.issues.append(note);write_json(self.folder/'errors.json',{'issues':self.issues});print(note,file=sys.stderr)
+        self.issues.append(note);write_json(self.folder/'errors.json',{'issues':self.issues});print(note,file=sys.stderr,flush=True)
+        self.progress(key,'FAILED_OR_DEFERRED')
     def check_budget(self,cli=False):
         if time.monotonic()-self.started>=self.cfg['maxRuntimeMinutes']*60:
             raise TimeBudgetExceeded('Overall runtime reached; unfinished research/images remain queued')
@@ -298,6 +308,7 @@ class Pipeline:
         if result.get('searchStatus')=='FAILED':return result,list(state.get('productKeys') or []),state.get('reportedTotal')
         sales=result.get('sales');keys=set(state.get('productKeys') or [])
         if sales:
+            self.normalize_shared_product_urls(sales.get('products') or [])
             for product in sales.get('products') or []:
                 price=product.get('price')
                 if price:price['amount']=self.normalize_price_amount(price.get('amount'),price.get('currency'))
@@ -310,6 +321,39 @@ class Pipeline:
             coverage={**coverage,'completeness':'PARTIAL','warnings':(coverage.get('warnings',[])+[warning])[:30]}
             result={**result,'searchStatus':'PARTIAL','coverage':coverage}
         return result,sorted(keys),known
+    @staticmethod
+    def normalize_shared_product_urls(products):
+        """A shared order form is evidence, not a product's unique detail URL."""
+        def canonical(url):
+            u=urlsplit(url);port=u.port
+            host=u.hostname.lower() if u.hostname else ''
+            if port and not (u.scheme=='https' and port==443 or u.scheme=='http' and port==80):host+=':'+str(port)
+            query='&'.join(sorted(q for q in u.query.split('&') if q and not re.match(r'(utm_[^=]*|fbclid|gclid)=',q,re.I)))
+            return urlunsplit((u.scheme.lower(),host,u.path or '/',query,''))
+        groups={}
+        for index,p in enumerate(products):
+            for url in (p.get('productUrl'),(p.get('identity') or {}).get('detailUrl')):
+                if url:groups.setdefault(canonical(url),set()).add(index)
+        shared=set()
+        for url,indices in groups.items():
+            names={re.sub(r'\s+','',unicodedata.normalize('NFKC',products[i]['name'])).lower() for i in indices}
+            if len(names)<2:continue
+            identified=[bool(products[i].get('sourceEntryId') or (products[i].get('identity') or {}).get('entryId')) for i in indices]
+            if all(identified):continue
+            if any(identified):raise RunError('Shared product URL mixes known and unknown IDs; manual identity review required')
+            for i in indices:
+                if not any(s.get('access')!='INACCESSIBLE' and s.get('evidence','').strip() and canonical(s['url'])==url for s in products[i].get('sources',[])):
+                    raise RunError('Shared product URL lacks source evidence; do not invent option identity')
+            shared.add(url)
+        for p in products:
+            changed=False
+            if p.get('productUrl') and canonical(p['productUrl']) in shared:p['productUrl']=None;changed=True
+            identity=p.get('identity')
+            if identity and identity.get('detailUrl') and canonical(identity['detailUrl']) in shared:
+                p['identity']=None;changed=True
+            if changed:
+                warning='공통 판매폼 주소는 상품 고유 주소가 아니므로 출처에 보존하고 옵션명으로 구분합니다.'
+                p['warnings']=list(dict.fromkeys([warning]+p.get('warnings',[])))[:30]
     def advance_sales_cursor(self,target,state,result,keys,reported):
         coverage=result['coverage'];next_url=coverage.get('nextPageUrl')
         visited=list(dict.fromkeys((state.get('visitedPages') or [])+coverage.get('visitedPages',[])))[:100]
