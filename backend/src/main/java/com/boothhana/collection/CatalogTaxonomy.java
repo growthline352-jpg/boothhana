@@ -4,7 +4,7 @@ import java.util.*;
 public final class CatalogTaxonomy {
  private CatalogTaxonomy() {}
  public static final Map<String,List<String>> GROUPS=Map.of(
-  "SUBCULTURE",List.of("COMIC_DOUJIN","DOLL","ONLY_EVENT","BIRTHDAY_CAFE","STATIONERY_GOODS"),
+  "SUBCULTURE",List.of("COMIC_DOUJIN","DOLL","ONLY_EVENT","BIRTHDAY_CAFE","STATIONERY_GOODS","SUBCULTURE_MUSIC"),
   "EXHIBITION",List.of("WINE","WEDDING","LIFESTYLE","DESIGN","BUSINESS"),
   "FESTIVAL",List.of("WALK","LIGHT","MUSIC","FOOD","CULTURE"));
  public static final Set<String> TYPES=Set.copyOf(GROUPS.values().stream().flatMap(Collection::stream).toList());

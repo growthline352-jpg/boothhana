@@ -47,6 +47,11 @@ describe('parseBrowse', () => {
   it('defaults missing periods to upcoming events', () => {
     expect(parseBrowse(new URLSearchParams('category=festivals')).period).toBe('upcoming')
   })
+
+  it('keeps subculture performances out of the festival filter', () => {
+    expect(parseBrowse(new URLSearchParams('category=subculture&type=SUBCULTURE_MUSIC')).subcategory).toBe('SUBCULTURE_MUSIC')
+    expect(parseBrowse(new URLSearchParams('category=festivals&type=SUBCULTURE_MUSIC')).subcategory).toBe('')
+  })
 })
 
 describe('periodRange', () => {

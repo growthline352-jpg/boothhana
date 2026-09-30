@@ -8,7 +8,7 @@ import './collection.css'
 
 const categories: Record<Subcategory, string> = {
   COMIC_DOUJIN: '코믹·동인', DOLL: '인형 행사', ONLY_EVENT: '온리전',
-  BIRTHDAY_CAFE: '생일카페', STATIONERY_GOODS: '문구·일러스트·굿즈',
+  BIRTHDAY_CAFE: '생일카페', STATIONERY_GOODS: '문구·일러스트·굿즈', SUBCULTURE_MUSIC: '서브컬처 라이브·DJ',
   WINE: '주류·와인', WEDDING: '웨딩', LIFESTYLE: '생활·취미', DESIGN: '디자인·아트', BUSINESS: '창업·산업',
   WALK: '걷기·거리', LIGHT: '불꽃·빛', MUSIC: '음악·공연', FOOD: '먹거리', CULTURE: '지역·문화',
 }

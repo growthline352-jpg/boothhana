@@ -69,7 +69,7 @@ class MemoryServer:
 
 class ReviewV5PipelineTests(unittest.TestCase):
  def setUp(self):
-  self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.server=MemoryServer();self.cfg=weekly.load_config(None);self.cfg.update(maxEventEnrichments=0,stateDirectory=str(self.root/'state'),maxFestivalDiscoveryJobs=0,maxSubcultureDiscoveryJobs=0)
+  self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.server=MemoryServer();self.cfg=weekly.load_config(None);self.cfg.update(maxEventEnrichments=0,stateDirectory=str(self.root/'state'),maxFestivalDiscoveryJobs=0,maxSubcultureSourceJobs=0,maxSubcultureDiscoveryJobs=0)
   self.env=patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':'t'*40});self.env.start()
  def tearDown(self):self.env.stop();self.temp.cleanup()
  def runner(self,name='run',resume=False):

@@ -12,7 +12,7 @@ import unicodedata
 from taxonomy import CATEGORIES
 
 
-WORK_KINDS = {"FESTIVAL_SOURCE", "SUBCULTURE_RECENT"}
+WORK_KINDS = {"FESTIVAL_SOURCE", "SUBCULTURE_SOURCE", "SUBCULTURE_RECENT"}
 WORK_STATES = {"PENDING", "COMPLETE", "NO_RESULTS", "PARTIAL", "FAILED"}
 
 
@@ -66,6 +66,13 @@ def load_profiles(path: Path) -> dict:
         rows = festival.get(key)
         if not isinstance(rows, list) or not rows or any(not isinstance(row, str) or not row.strip() for row in rows):
             raise ValueError("Festival authority list invalid: " + key)
+    music_indexes = subculture.get("musicIndexes")
+    if not isinstance(music_indexes, list) or not music_indexes or any(
+        not isinstance(row, dict) or not isinstance(row.get("name"), str) or not row["name"].strip()
+        or not isinstance(row.get("queryTemplates"), list) or not row["queryTemplates"]
+        for row in music_indexes
+    ):
+        raise ValueError("Subculture music indexes missing or invalid")
     groups = subculture.get("searchGroups")
     if not isinstance(groups, list) or not groups:
         raise ValueError("Subculture search groups missing")
@@ -88,7 +95,7 @@ def festival_jobs(profile: dict, scope: dict) -> list[dict]:
             "priority": int(row.get("priority", 0)), "cadenceDays": int(row.get("cadenceDays", 7)), "scope": dict(scope),
             "payload": {"sourceType": row["type"], "authority": row["name"], "seeds": row.get("seeds", []),
                         "queryTemplates": row.get("queryTemplates", []), "allowedSubcategories": row.get("allowedSubcategories")},
-            "origin": "MUSIC_EVENT_INDEX" if row["type"] == "MUSIC_EVENT_INDEX" else "FESTIVAL_OFFICIAL_INDEX",
+            "origin": "FESTIVAL_OFFICIAL_INDEX",
         })
     for region, key in (("서울", "seoulDistricts"), ("경기", "gyeonggiMunicipalities")):
         for authority in value[key]:
@@ -99,6 +106,20 @@ def festival_jobs(profile: dict, scope: dict) -> list[dict]:
                             "seeds": [], "queryTemplates": value["localAuthorityQueryTemplates"]},
                 "origin": "FESTIVAL_LOCAL_AUTHORITY",
             })
+    return jobs
+
+
+def subculture_source_jobs(profile: dict, scope: dict) -> list[dict]:
+    jobs = []
+    for row in profile["subculture"]["musicIndexes"]:
+        jobs.append({
+            "kind": "SUBCULTURE_SOURCE", "category": "SUBCULTURE", "subject": row["name"],
+            "priority": -1, "cadenceDays": int(row.get("cadenceDays", 7)), "scope": dict(scope),
+            "payload": {"sourceType": "SUBCULTURE_MUSIC_INDEX", "authority": row["name"],
+                        "seeds": row.get("seeds", []), "queryTemplates": row["queryTemplates"],
+                        "allowedSubcategories": ["SUBCULTURE_MUSIC"]},
+            "origin": "SUBCULTURE_MUSIC_INDEX",
+        })
     return jobs
 
 

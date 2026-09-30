@@ -8,7 +8,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import weekly
-from discovery_work import DiscoveryWorkQueue, festival_jobs, load_profiles, subculture_recent_jobs
+from discovery_work import DiscoveryWorkQueue, festival_jobs, load_profiles, subculture_recent_jobs, subculture_source_jobs
+from taxonomy import category_for
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,37 +42,54 @@ class DiscoveryWorkTests(unittest.TestCase):
         self.assertTrue(all(row["payload"]["recentDays"] == 7 for row in rows))
         self.assertTrue(all(row["cadenceDays"] == 1 for row in rows))
 
-    def test_music_and_dj_sources_run_before_general_festival_cycle(self):
+    def test_subculture_music_sources_have_narrow_queries_and_category(self):
         queue = DiscoveryWorkQueue(self.root / "work.json")
-        queue.enqueue(festival_jobs(self.profile, SCOPE))
-        due = queue.due("FESTIVAL_SOURCE", 2)
-        self.assertEqual([row["subject"] for row in due], ["서울·경기 라이브 음악 공연", "서울·경기 DJ 공연·파티"])
-        self.assertEqual(due[0]["payload"]["allowedSubcategories"], ["MUSIC"])
-        self.assertEqual(due[1]["payload"]["allowedSubcategories"], ["MUSIC", "ONLY_EVENT"])
+        queue.enqueue(subculture_source_jobs(self.profile, SCOPE))
+        due = queue.due("SUBCULTURE_SOURCE", 2)
+        self.assertEqual({row["subject"] for row in due}, {"서브컬처 라이브·아이돌 공연", "서브컬처 애니송 DJ 행사"})
+        self.assertTrue(all(row["category"] == "SUBCULTURE" for row in due))
+        self.assertTrue(all(row["payload"]["allowedSubcategories"] == ["SUBCULTURE_MUSIC"] for row in due))
+        self.assertEqual(category_for("SUBCULTURE_MUSIC"), "SUBCULTURE")
+        self.assertEqual(category_for("MUSIC"), "FESTIVAL")
+        self.assertFalse(any(row["payload"]["sourceType"] == "MUSIC_EVENT_INDEX" for row in festival_jobs(self.profile, SCOPE)))
         cfg = weekly.load_config(None)
-        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureDiscoveryJobs=0)
+        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureSourceJobs=0, maxSubcultureDiscoveryJobs=0)
         with patch.dict(os.environ, {"BOOTH_COLLECTOR_TOKEN": "t" * 40}):
             pipeline = weekly.Pipeline(cfg, self.root / "run", SCOPE, dry_run=True)
-        context = pipeline.discovery_work_context(due[1])
+        context = pipeline.discovery_work_context(next(row for row in due if "DJ" in row["subject"]))
         self.assertTrue(any("DJ" in query for query in context["queries"]))
-        self.assertEqual(context["source"]["sourceType"], "MUSIC_EVENT_INDEX")
+        self.assertEqual(context["source"]["sourceType"], "SUBCULTURE_MUSIC_INDEX")
 
-    def test_subculture_dj_search_can_queue_music_event_once(self):
+    def test_subculture_dj_search_can_queue_subculture_music_once(self):
         cfg = weekly.load_config(None)
-        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureDiscoveryJobs=0)
+        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureSourceJobs=0, maxSubcultureDiscoveryJobs=0)
         with patch.dict(os.environ, {"BOOTH_COLLECTOR_TOKEN": "t" * 40}):
             pipeline = weekly.Pipeline(cfg, self.root / "run", SCOPE, dry_run=True)
         item = next(row for row in pipeline.discovery_work_queue.jobs.values() if row["subject"] == "서브컬처 음악 / DJ")
         fixture = json.loads((ROOT / "examples/v5/events.json").read_text(encoding="utf-8"))
         fixture = copy.deepcopy(fixture)
-        fixture["events"][0]["subcategory"] = "MUSIC"
+        fixture["events"][0]["subcategory"] = "SUBCULTURE_MUSIC"
         fixture["events"][0]["occurrences"] = [{"startDate": "2026-11-10", "endDate": "2026-11-10", "startTime": "18:00", "endTime": "21:00"}]
         with patch.object(weekly, "search_recent", return_value={"status": "COMPLETE", "posts": [], "issues": []}), \
              patch.object(weekly, "execute_search", return_value=(json.dumps(fixture).encode(), True, {})):
             self.assertEqual(pipeline.discovery_work_item(item), 1)
-            music_item = next(row for row in pipeline.discovery_work_queue.jobs.values() if row["subject"] == "서울·경기 DJ 공연·파티")
+            music_item = next(row for row in pipeline.discovery_work_queue.jobs.values() if row["subject"] == "서브컬처 애니송 DJ 행사")
             pipeline.discovery_work_item(music_item)
         self.assertEqual(len(pipeline.event_queue.candidates), 1)
+
+    def test_subculture_music_search_rejects_festival_music(self):
+        cfg = weekly.load_config(None)
+        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureSourceJobs=0, maxSubcultureDiscoveryJobs=0)
+        with patch.dict(os.environ, {"BOOTH_COLLECTOR_TOKEN": "t" * 40}):
+            pipeline = weekly.Pipeline(cfg, self.root / "run", SCOPE, dry_run=True)
+        item = next(row for row in pipeline.discovery_work_queue.jobs.values() if row["subject"] == "서브컬처 애니송 DJ 행사")
+        fixture = json.loads((ROOT / "examples/v5/events.json").read_text(encoding="utf-8"))
+        fixture = copy.deepcopy(fixture)
+        fixture["events"][0]["subcategory"] = "MUSIC"
+        fixture["events"][0]["occurrences"] = [{"startDate": "2026-11-10", "endDate": "2026-11-10", "startTime": "18:00", "endTime": "21:00"}]
+        with patch.object(weekly, "execute_search", return_value=(json.dumps(fixture).encode(), True, {})):
+            self.assertEqual(pipeline.discovery_work_item(item), 0)
+        self.assertFalse(pipeline.event_queue.candidates)
 
     def test_never_attempted_work_rotates_before_recent_work(self):
         queue = DiscoveryWorkQueue(self.root / "work.json")
@@ -84,7 +102,7 @@ class DiscoveryWorkTests(unittest.TestCase):
 
     def test_festival_source_job_only_enqueues_festival_event(self):
         cfg = weekly.load_config(None)
-        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureDiscoveryJobs=0)
+        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureSourceJobs=0, maxSubcultureDiscoveryJobs=0)
         with patch.dict(os.environ, {"BOOTH_COLLECTOR_TOKEN": "t" * 40}):
             pipeline = weekly.Pipeline(cfg, self.root / "run", SCOPE, dry_run=True)
         item = next(row for row in pipeline.discovery_work_queue.jobs.values() if row["subject"] == "서울시 FUN SEOUL")
@@ -98,7 +116,7 @@ class DiscoveryWorkTests(unittest.TestCase):
 
     def test_subculture_context_uses_exact_seven_day_window_and_x_result(self):
         cfg = weekly.load_config(None)
-        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureDiscoveryJobs=0)
+        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureSourceJobs=0, maxSubcultureDiscoveryJobs=0)
         with patch.dict(os.environ, {"BOOTH_COLLECTOR_TOKEN": "t" * 40}):
             pipeline = weekly.Pipeline(cfg, self.root / "run", SCOPE, dry_run=True)
         item = pipeline.discovery_work_queue.due("SUBCULTURE_RECENT", 1)[0]
@@ -112,7 +130,7 @@ class DiscoveryWorkTests(unittest.TestCase):
 
     def test_cached_cli_without_open_url_details_does_not_false_reject_sources(self):
         cfg = weekly.load_config(None)
-        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureDiscoveryJobs=0)
+        cfg.update(stateDirectory=str(self.root / "state"), maxFestivalDiscoveryJobs=0, maxSubcultureSourceJobs=0, maxSubcultureDiscoveryJobs=0)
         with patch.dict(os.environ, {"BOOTH_COLLECTOR_TOKEN": "t" * 40}):
             pipeline = weekly.Pipeline(cfg, self.root / "run", SCOPE, dry_run=True)
         job = pipeline.job_dir("cached-current-cli")

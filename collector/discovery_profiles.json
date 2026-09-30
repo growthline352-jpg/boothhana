@@ -3,32 +3,6 @@
   "festival": {
     "officialIndexes": [
       {
-        "name": "서울·경기 라이브 음악 공연",
-        "type": "MUSIC_EVENT_INDEX",
-        "priority": -1,
-        "cadenceDays": 7,
-        "seeds": [],
-        "allowedSubcategories": ["MUSIC"],
-        "queryTemplates": [
-          "{year} {month} 서울 경기 라이브 음악 콘서트 공연 일정 예매",
-          "{year} {month} 서울 경기 인디밴드 라이브 공연 공식 일정",
-          "{start_date} {end_date} 서울 경기 음악 공연 주최 공연장 예매"
-        ]
-      },
-      {
-        "name": "서울·경기 DJ 공연·파티",
-        "type": "MUSIC_EVENT_INDEX",
-        "priority": -1,
-        "cadenceDays": 7,
-        "seeds": [],
-        "allowedSubcategories": ["MUSIC", "ONLY_EVENT"],
-        "queryTemplates": [
-          "{year} {month} 서울 경기 DJ 공연 파티 티켓 공식 일정",
-          "{year} {month} 서울 경기 디제이 레이브 클럽 이벤트 예매",
-          "{start_date} {end_date} 서울 경기 DJ line up 공연장 주최"
-        ]
-      },
-      {
         "name": "서울시 FUN SEOUL",
         "type": "OFFICIAL_INDEX",
         "cadenceDays": 7,
@@ -88,6 +62,26 @@
     ]
   },
   "subculture": {
+    "musicIndexes": [
+      {
+        "name": "서브컬처 라이브·아이돌 공연",
+        "cadenceDays": 7,
+        "queryTemplates": [
+          "{year} {month} 서울 경기 라이브 아이돌 지하 아이돌 공연 일정 예매",
+          "{year} {month} 서울 경기 애니송 게임 OST 버추얼 아티스트 콘서트 공연",
+          "{start_date} {end_date} 서울 경기 애니송 보카로 동인음악 라이브 주최 예매"
+        ]
+      },
+      {
+        "name": "서브컬처 애니송 DJ 행사",
+        "cadenceDays": 7,
+        "queryTemplates": [
+          "{year} {month} 서울 경기 애니송 DJ 파티 공연 일정",
+          "{year} {month} 서울 경기 게임음악 보카로 버추얼 DJ 이벤트 예매",
+          "{start_date} {end_date} 서울 경기 애니송 DJ 주최 공연장 공지"
+        ]
+      }
+    ],
     "searchGroups": [
       {
         "name": "온리전",
@@ -122,9 +116,9 @@
       {
         "name": "서브컬처 음악 / DJ",
         "priority": -1,
-        "allowedSubcategories": ["ONLY_EVENT", "MUSIC"],
-        "xQuery": "(애니송 OR 보카로 OR 게임음악 OR 동인음악 OR DJ파티 OR 디제이) -is:retweet lang:ko",
-        "queryTemplates": ["site:x.com (애니송 OR 보카로 OR 게임음악 OR 동인음악 OR DJ파티) (서울 OR 경기) after:{published_since}", "(애니송 OR 보카로 OR 게임음악 OR 동인음악 OR DJ파티) 서울 경기 after:{published_since}"]
+        "allowedSubcategories": ["SUBCULTURE_MUSIC"],
+        "xQuery": "(애니송 OR 보카로 OR 게임OST OR 버추얼공연 OR 라이브아이돌 OR 지하아이돌 OR 애니송DJ) -is:retweet lang:ko",
+        "queryTemplates": ["site:x.com (애니송DJ OR 라이브아이돌 OR 지하아이돌 OR 버추얼공연) (서울 OR 경기) after:{published_since}", "(애니송 OR 게임 OST OR 버추얼 OR 동인음악) (라이브 OR DJ OR 콘서트) 서울 경기 after:{published_since}"]
       }
     ]
   }

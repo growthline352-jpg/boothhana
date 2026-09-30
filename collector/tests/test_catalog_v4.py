@@ -175,7 +175,7 @@ class PipelineTests(unittest.TestCase):
      return self.reply(receipt)
     return self.reply({})
   self.server=ThreadingHTTPServer(('127.0.0.1',0),Handler);self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
-  self.cfg=weekly.load_config(None);self.cfg.update(apiBaseUrl=f'http://127.0.0.1:{self.server.server_port}',stateDirectory=str(self.root),maxFestivalDiscoveryJobs=0,maxSubcultureDiscoveryJobs=0)
+  self.cfg=weekly.load_config(None);self.cfg.update(apiBaseUrl=f'http://127.0.0.1:{self.server.server_port}',stateDirectory=str(self.root),maxFestivalDiscoveryJobs=0,maxSubcultureSourceJobs=0,maxSubcultureDiscoveryJobs=0)
   self.scope={'region':'SEOUL','timezone':'Asia/Seoul','startDate':'2026-10-01','endDate':'2026-10-31'}
   self.env=patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':'t'*40});self.env.start()
  def tearDown(self):self.env.stop();self.server.shutdown();self.server.server_close();self.tmp.cleanup()
