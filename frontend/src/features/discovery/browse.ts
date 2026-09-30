@@ -86,9 +86,9 @@ export function homeEventSections(rows: PublicEventSummary[], today: string) {
     .map(row => ({ row, first: row.event.occurrences.reduce((value, o) => !value || o.startDate < value ? o.startDate : value, ''),
       last: row.event.occurrences.reduce((value, o) => o.endDate > value ? o.endDate : value, '') }))
   return {
-    upcoming: eligible.filter(item => item.first >= today && item.last >= today)
+    upcoming: eligible.filter(item => item.first > today && item.last >= today)
       .sort((a, b) => a.first.localeCompare(b.first) || a.row.id - b.row.id).slice(0, 5).map(item => item.row),
-    closing: eligible.filter(item => item.first < today && item.last >= today && item.last <= lastDay)
+    closing: eligible.filter(item => item.first <= today && item.last >= today && item.last <= lastDay)
       .sort((a, b) => a.last.localeCompare(b.last) || a.row.id - b.row.id).slice(0, 5).map(item => item.row),
   }
 }

@@ -52,10 +52,11 @@ describe('home event sections', () => {
   it('keeps opening and closing events distinct and sorts closing by final day', () => {
     const rows = [row(1, '2026-09-22', '2026-10-02'), row(2, '2026-10-02', '2026-10-03'),
       row(3, '2026-09-20', '2026-09-30'), row(4, '2026-09-15', '2026-10-09'),
-      row(5, '2026-09-10', '2026-09-29'), row(6, '2026-09-20', '2026-10-01', 'CANCELED')]
+      row(5, '2026-09-10', '2026-09-29'), row(6, '2026-09-20', '2026-10-01', 'CANCELED'),
+      row(7, '2026-09-30', '2026-10-01')]
     const sections = homeEventSections(rows, '2026-09-30')
     expect(sections.upcoming.map(event => event.id)).toEqual([2])
-    expect(sections.closing.map(event => event.id)).toEqual([3, 1])
+    expect(sections.closing.map(event => event.id)).toEqual([3, 7, 1])
   })
 
   it('loads enough upcoming records for the two home sections without changing result-page size', () => {
