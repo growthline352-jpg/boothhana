@@ -5,6 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import static com.boothhana.collection.CollectionModels.*;
 import static com.boothhana.collection.CatalogModels.*;
@@ -74,12 +76,45 @@ public class CatalogPublicationService {
             (select count(*) from jsonb_array_elements(p.snapshot_json->'participants') x
              join subculture_participant q on q.id=(x->>'id')::bigint where q.review_state<>'EXCLUDED') participant_count
             """+fromSql+" order by "+query.orderSql()+" limit ? offset ?",query.listArgs().toArray());
+        var items=summaries(rows);
+        long total=Objects.requireNonNull(db.queryForObject("select count(*)"+fromSql,Long.class,query.whereArgs().toArray()));
+        return new PageData<>(items,query.page(),query.size(),total);
+    }
+    /** Only actual member EVENT saves count. Never infer popularity from views or local guest storage. */
+    public List<Map<String,Object>> popular(int limit) {return popular(limit,"");}
+    public List<Map<String,Object>> popular(int limit,String category) {
+        if(limit<1||limit>12)throw ApiException.badRequest("인기 행사 조회 개수를 확인해 주세요.");
+        if(category==null)category="";
+        if(!category.isEmpty()&&!CatalogTaxonomy.GROUPS.containsKey(category))throw ApiException.badRequest("행사 분야를 확인해 주세요.");
+        Collection<String> selected=category.isEmpty()?CatalogTaxonomy.TYPES:CatalogTaxonomy.GROUPS.get(category);
+        String types=String.join(",",Collections.nCopies(selected.size(),"?"));
+        List<Object> args=new ArrayList<>(selected);
+        args.add(LocalDate.now(ZoneId.of("Asia/Seoul")).toString());args.add(limit);
+        var rows=db.queryForList("""
+            select p.event_id,p.snapshot_json->'event' event_json,p.published_at,s.save_count,
+            (select count(*) from jsonb_array_elements(p.snapshot_json->'participants') x
+             join subculture_participant q on q.id=(x->>'id')::bigint where q.review_state<>'EXCLUDED') participant_count
+            from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
+            join (select event_id,count(*) save_count from memory_item
+                  where target_type='EVENT' and target_id=event_id group by event_id) s on s.event_id=p.event_id
+            where e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')
+              and p.snapshot_json->'event'->>'subcategory' in (%s)
+              and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED')
+              and exists(select 1 from jsonb_array_elements(coalesce(p.snapshot_json->'event'->'occurrences','[]'::jsonb)) d
+                         where d->>'endDate'>=?)
+            order by s.save_count desc,p.published_at desc,p.event_id
+            limit ?
+            """.formatted(types),args.toArray());
+        return summaries(rows);
+    }
+    private List<Map<String,Object>> summaries(List<Map<String,Object>> rows) {
         List<Long> ids=rows.stream().map(r->((Number)r.get("event_id")).longValue()).toList();
         Map<Long,AssetView> banners=media.publicBanners(ids);
         var items=rows.stream().map(r->{
             long id=((Number)r.get("event_id")).longValue(); Map<String,Object> item=new LinkedHashMap<>();
             item.put("id",id);item.put("event",json.readValue(r.get("event_json").toString(),EventData.class));
             item.put("participantCount",r.get("participant_count"));
+            if(r.containsKey("save_count"))item.put("saveCount",r.get("save_count"));
             Object stamp=r.get("published_at");item.put("publishedAt",stamp instanceof java.sql.Timestamp t?t.toInstant().toString():String.valueOf(stamp));
             AssetView banner=banners.get(id);
             if(banner!=null){Map<String,Object> asset=new LinkedHashMap<>();asset.put("id",banner.id());asset.put("participantId",null);asset.put("productId",null);
@@ -87,8 +122,7 @@ public class CatalogPublicationService {
             else item.put("banner",null);
             return item;
         }).toList();
-        long total=Objects.requireNonNull(db.queryForObject("select count(*)"+fromSql,Long.class,query.whereArgs().toArray()));
-        return new PageData<>(items,query.page(),query.size(),total);
+        return items;
     }
     public Map<String,Object> detail(long id) {
         return findPublicDetail(id).orElseThrow(() -> ApiException.notFound("공개된 안내를 찾을 수 없습니다."));
