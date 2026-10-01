@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { categoryHref, activeCategory, safeEventReturnTo } from './categories'
+import { categoryHref, categoryEventHref, activeCategory, safeEventReturnTo } from './categories'
 import { parseBrowse, browseApiParams } from './browse'
 import { categorySitesActive, isLocalPreview } from './site'
 
@@ -13,9 +13,11 @@ describe('category site routing', () => {
     expect(categoryHref('subculture')).toBe('/?category=subculture')
     expect(categoryHref('exhibitions')).toBe('/?category=exhibitions')
     expect(categoryHref('festivals')).toBe('/?category=festivals')
+    expect(categoryEventHref('festivals', 42)).toBe('/discover/42')
     vi.stubGlobal('window', { location: { host: 'boothana.kr' } })
     expect(isLocalPreview()).toBe(false)
     expect(categoryHref('exhibitions')).toBe('https://expo.boothana.kr/')
+    expect(categoryEventHref('exhibitions', 42)).toBe('https://expo.boothana.kr/discover/42')
   })
   it('returns a booth to its own event without losing map and visit context', () => {
     const fallback = '/discover/1?day=2026-10-03'
@@ -46,6 +48,7 @@ describe('category site routing', () => {
     vi.stubGlobal('window', { location: { host: 'boothana.kr' } })
     vi.stubEnv('VITE_CATEGORY_SITES_ENABLED', 'false')
     expect(categoryHref('festivals')).toBe('/discover?category=festivals')
+    expect(categoryEventHref('festivals', 42)).toBe('/discover/42')
     vi.stubEnv('VITE_CATEGORY_SITES_ENABLED', 'true')
     expect(categoryHref('festivals')).toBe('https://festival.boothana.kr/')
     expect(activeCategory('/', '')).toBeNull()

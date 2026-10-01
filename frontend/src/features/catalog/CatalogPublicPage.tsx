@@ -106,7 +106,7 @@ export function CatalogEventDetail({eventId,value,alternate=null}:{eventId:strin
   const currentValue=alternate&&state.day===DFESTA_SUNDAY?alternate:value
   const currentEventId=currentValue.id
   const e=alternate?{...currentValue.event,name:value.event.name,occurrences:value.event.occurrences}:value.event
-  const section=params.get('section')==='reviews'?'reviews':params.get('section')==='booths'||(!params.has('section')&&params.get('view')==='booths')?'booths':'home'
+  const section=params.get('section')==='reviews'||params.get('view')==='reviews'?'reviews':params.get('section')==='booths'||(!params.has('section')&&params.get('view')==='booths')?'booths':'home'
   const memoryMode=params.get('my')==='saved'?'saved':params.get('my')==='visited'?'visited':'all'
   const savedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null).map(x=>x.target.participantId!)),[library?.index,currentEventId])
   const visitedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null&&x.visitedDays.includes(state.day)).map(x=>x.target.participantId!)),[library?.index,currentEventId,state.day])

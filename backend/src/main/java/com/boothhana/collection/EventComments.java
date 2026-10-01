@@ -11,7 +11,7 @@ import java.util.*;
 
 @RestController
 public class EventComments {
-    private static final long DFESTA_SATURDAY_ID=1L, DFESTA_SUNDAY_ID=7L;
+    private static final long DFESTA_MAIN_ID=1L, DFESTA_SUNDAY_ID=7L;
     private final JdbcTemplate db;
     private final CatalogPublicationService publications;
     private final CurrentUser current;
@@ -39,9 +39,11 @@ public class EventComments {
         if(publications.findPublicDetail(eventId).isEmpty()) throw ApiException.notFound("공개된 행사를 찾을 수 없습니다.");
     }
     private long secondReviewEventId(long eventId) {
-        if(eventId!=DFESTA_SATURDAY_ID) return eventId;
-        var names=db.queryForList("select p.snapshot_json->'event'->>'name' from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where p.event_id in (?,?) and e.review_state<>'EXCLUDED'",String.class,DFESTA_SATURDAY_ID,DFESTA_SUNDAY_ID);
-        return names.size()==2 && names.contains("제35회 디. 페스타 (토요일)") && names.contains("제35회 디. 페스타 (일요일)") ? DFESTA_SUNDAY_ID : eventId;
+        if(eventId!=DFESTA_MAIN_ID) return eventId;
+        // This edition was collected as two day-specific events. Merge reviews only while both
+        // original publications are public and still identify the same edition.
+        var names=db.queryForList("select p.snapshot_json->'event'->>'name' from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where p.event_id in (?,?) and e.review_state<>'EXCLUDED'",String.class,DFESTA_MAIN_ID,DFESTA_SUNDAY_ID);
+        return names.size()==2 && names.stream().allMatch(name->name!=null && name.matches("^제35회 디\\.\\s*페스타.*")) ? DFESTA_SUNDAY_ID : eventId;
     }
     @GetMapping("/api/public/catalog/events/{eventId}/comments")
     public Map<String,Object> list(@PathVariable long eventId, @RequestParam(defaultValue="0") int page) {

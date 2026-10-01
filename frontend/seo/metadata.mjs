@@ -198,8 +198,8 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
     indexable = true
   } else if (!browse) {
-    title = path === '/privacy' ? '개인정보처리방침 | 부스하나' : path === '/terms' ? '이용약관 | 부스하나' : path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
-    description = path === '/privacy' ? '부스하나의 개인정보 처리 현황과 정보주체의 권리를 안내하는 검토용 초안입니다.' : path === '/terms' ? '부스하나 서비스 이용 조건을 안내하는 검토용 초안입니다.' : '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'
+    title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
+    description = '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'
   }
 
   if (split && validCatalog && categoryFor(catalog.event)) origin = categoryOrigin(categoryFor(catalog.event))

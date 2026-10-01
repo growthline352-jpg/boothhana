@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:local-preview": "node scripts/build-local-preview.mjs",
+    "preview:public": "node scripts/preview-public.mjs",
     "test": "vitest run",
     "test:seo": "node --test seo/metadata.node-test.mjs seo/sitemap.node-test.mjs seo/category-sites.node-test.mjs",
     "lint": "oxlint",

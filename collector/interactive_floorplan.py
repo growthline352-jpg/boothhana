@@ -118,7 +118,12 @@ def is_interactive_source(asset:dict):
     return bool(page and image==page and not IMAGE_PATH.search(urlsplit(page).path))
 
 def validate_comicw_map_edition(asset:dict,html:str|None=None):
-    """An event-specific map URL can still serve the previous fare's image."""
+    """Reject a ComicWorld map endpoint if it serves a different fare's image.
+
+    The organizer can leave the prior event's map at the next event's URL while
+    the new map is being prepared. An HTTP 200 or URL containing the new fare ID
+    therefore does not prove the map belongs to that event.
+    """
     page=urlsplit(asset.get('pageUrl') or '')
     if page.hostname not in ('comicw.net','www.comicw.net'):return
     match=COMICW_MAP_PATH.match(page.path)

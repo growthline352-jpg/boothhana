@@ -37,6 +37,8 @@ def images(values,blocked):
 
 def check_participant(p: dict,event: dict,blocked: list[str]):
     if not p['registrationName'].strip(): raise InvalidResult('No registration name')
+    # Organizer directories can roll application copy from an older edition
+    # forward while correctly showing the company in the current map.
     event_years={int(row['startDate'][:4]) for row in event.get('occurrences') or [] if row.get('startDate')}
     if event_years and p.get('description'):
         if any(int(match.group(1))<min(event_years) for match in PRIOR_APPLICATION.finditer(p['description'])):

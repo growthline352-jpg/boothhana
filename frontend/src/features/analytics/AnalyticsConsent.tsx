@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { useLocation } from 'react-router'
 import { CONSENT_KEY, publicPage, setMeasurement, pauseMeasurement, type Consent } from './measurement'
 import './analytics.css'
 
@@ -35,7 +35,6 @@ export function AnalyticsConsent() {
     {(consent === null || open) && <div className="analytics-notice" role="region" aria-label="선택적 방문 통계">
       <strong>서비스 개선을 위한 방문 통계</strong>
       <p>동의하면 Google Analytics가 쿠키를 사용해 기기·브라우저 정보와 공개 페이지 방문을 측정합니다. 검색어, 문의 내용, 계정 정보는 보내지 않습니다. 광고 추적은 사용하지 않으며 거절해도 서비스 이용에 영향이 없습니다. 이 설정에서 언제든 철회할 수 있습니다.</p>
-      <p><Link to="/privacy">개인정보처리방침 초안 보기</Link></p>
       <div><button type="button" className="btn secondary" onClick={() => choose('denied')}>거절</button><button type="button" className="btn primary" onClick={() => choose('granted')}>분석 허용</button></div>
     </div>}
   </aside>

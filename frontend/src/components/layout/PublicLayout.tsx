@@ -107,7 +107,7 @@ export function PublicLayout() {
       <div><Link to="/" className="discovery-footer-brand">부스하나<span>취향을 따라, 오프라인으로.</span></Link>
         <p>서울·경기의 서브컬처·박람회·축제와 참가 부스·상품을 찾아보세요.</p>
         <small>방문 전 주최 측의 최신 일정과 이용 조건을 확인해 주세요.</small></div>
-      <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link><Link to="/privacy">개인정보처리방침</Link><Link to="/terms">이용약관</Link></nav>
+      <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link></nav>
     </div></footer>
     <AnalyticsConsent />
   </div>

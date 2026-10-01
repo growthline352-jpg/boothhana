@@ -192,7 +192,7 @@ class Pipeline:
     def job_dir(self,key):
         path=self.folder/'jobs'/key;path.mkdir(parents=True,exist_ok=True);return path
     def progress(self,key,phase):
-        # No prompts, credentials, source bodies or exception messages in progress logs.
+        # Never include prompts, credentials, source bodies or exception messages.
         value={'runId':self.id,'updatedAt':utcnow(),'job':key,'phase':phase,'cliCalls':self.calls,'savedReceipts':len(self.receipts)}
         write_json(self.folder/'progress.json',value)
         print(json.dumps({'collectorProgress':value},ensure_ascii=False),flush=True)
@@ -323,7 +323,11 @@ class Pipeline:
         return result,sorted(keys),known
     @staticmethod
     def normalize_shared_product_urls(products):
-        """A shared order form is evidence, not a product's unique detail URL."""
+        """A shared order form is evidence, not a unique option identifier.
+
+        Only repair demonstrated within-page sharing with usable source evidence.
+        Never invent external IDs, change scope/price, or rewrite saved requests.
+        """
         def canonical(url):
             u=urlsplit(url);port=u.port
             host=u.hostname.lower() if u.hostname else ''
@@ -345,6 +349,7 @@ class Pipeline:
                 if not any(s.get('access')!='INACCESSIBLE' and s.get('evidence','').strip() and canonical(s['url'])==url for s in products[i].get('sources',[])):
                     raise RunError('Shared product URL lacks source evidence; do not invent option identity')
             shared.add(url)
+        # Validate all groups before mutating any product.
         for p in products:
             changed=False
             if p.get('productUrl') and canonical(p['productUrl']) in shared:p['productUrl']=None;changed=True
