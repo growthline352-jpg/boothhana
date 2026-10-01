@@ -50,6 +50,7 @@ class ReleaseIntegrationTests {
   p.add("spring.datasource.hikari.maximum-pool-size",()->2);
   p.add("spring.datasource.hikari.connection-timeout",()->5000);
   p.add("app.support.guest-enabled",()->false);p.add("app.support.attachments-enabled",()->false);
+  p.add("app.support.rate-secret",()->"isolated-feedback-release-test-secret");
   p.add("app.gcs.project-id",()->"");p.add("app.gcs.public-bucket",()->"");p.add("app.support.private-bucket",()->"");
  }
  @Autowired JdbcTemplate db;
@@ -57,6 +58,8 @@ class ReleaseIntegrationTests {
  @Autowired PlatformTransactionManager transactionManager;
  @Autowired WebApplicationContext context;
  @Autowired SupportOperations support;
+ @Autowired SupportService supportService;
+ @Autowired SupportRateLimiter supportLimiter;
  @Autowired OwnershipCatalogService ownership;
  @Autowired com.boothhana.collection.CatalogService catalog;
  @Autowired com.boothhana.collection.CatalogPublicationService publications;
@@ -76,6 +79,35 @@ class ReleaseIntegrationTests {
   http=MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
  }
  UserAccount createUser(String subject){UserAccount u=new UserAccount();u.id=db.queryForObject("insert into app_user(kakao_subject,display_name) values(?,'[TEST]') returning id",Long.class,subject);u.kakaoSubject=subject;u.displayName="[TEST]";return u;}
+ @Test void anonymousFeedbackIsPrivateIdempotentAndRequiresCsrf() throws Exception {
+  var id=UUID.randomUUID();var input=new GuestCreate(new Create(id,"INQUIRY","FEATURE_REQUEST","캘린더 제안","일정 보기 기능이 필요합니다.",List.of(),null,Map.of("pagePath","/discover"),null),"a".repeat(43),"");
+  String body=json.writeValueAsString(input);
+  http.perform(post("/api/public/support/feedback").contentType("application/json").content(body)).andExpect(status().isForbidden());
+  for(int i=0;i<2;i++)http.perform(post("/api/public/support/feedback").with(csrf()).with(request->{request.setRemoteAddr("2001:db8::"+id.toString().substring(0,4)+":"+id.toString().substring(4,8));return request;}).contentType("application/json").content(body))
+   .andExpect(status().isCreated()).andExpect(jsonPath("$.id").value(id.toString())).andExpect(jsonPath("$.number").exists())
+   .andExpect(jsonPath("$.messages").doesNotExist()).andExpect(jsonPath("$.clientContext").doesNotExist()).andExpect(jsonPath("$.accessKey").doesNotExist());
+  assertThat(db.queryForObject("select count(*) from support_ticket where id=? and requester_id is null and category='FEATURE_REQUEST'",Long.class,id)).isEqualTo(1);
+  assertThat(db.queryForObject("select count(*) from support_message where ticket_id=?",Long.class,id)).isEqualTo(1);
+  http.perform(get("/api/me/support/tickets/"+id)).andExpect(status().isUnauthorized());
+  // Even if legacy guest account support is enabled later, feedback has no read/reply channel.
+  var guestEnabledService=new SupportService(db,json,supportService.targetResolver(),supportLimiter,true,"isolated-feedback-release-test-secret");
+  var feedbackAccess=new GuestAccess(id,input.accessKey());
+  assertThatThrownBy(()->guestEnabledService.guestRead(feedbackAccess,"127.0.0.1")).isInstanceOf(ApiException.class);
+  assertThatThrownBy(()->guestEnabledService.guestReply(new GuestMessage(feedbackAccess,new Message(UUID.randomUUID(),0,"추가 의견입니다.",List.of(),false)),"127.0.0.1")).isInstanceOf(ApiException.class);
+  var accountId=UUID.randomUUID();var account=new GuestCreate(new Create(accountId,"INQUIRY","ACCOUNT","로그인 문의","로그인에 문제가 있습니다.",List.of(),null,Map.of(),null),"b".repeat(43),"");
+  new TransactionTemplate(transactionManager).execute(status->guestEnabledService.guestCreate(account,"127.0.0.1"));
+  assertThat(guestEnabledService.guestRead(new GuestAccess(accountId,account.accessKey()),"127.0.0.1")).containsEntry("category","ACCOUNT");
+  assertThat(db.queryForObject("select count(*) from support_message where ticket_id=?",Long.class,id)).isEqualTo(1);
+  http.perform(get("/api/admin/support/tickets?kind=INQUIRY&category=FEATURE_REQUEST").with(user(subject).roles("ADMIN")))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.items[?(@.id == '"+id+"')]").isNotEmpty());
+ }
+ @Test void memberFeatureRequestUsesExistingReplyHistory() throws Exception {
+  var id=UUID.randomUUID();support.create(new Create(id,"INQUIRY","FEATURE_REQUEST","회원 개선 의견","선택한 날짜의 일정이 필요합니다.",List.of(),null,Map.of("pagePath","/discover"),null),new Principal(owner.id,false,false));
+  support.message(id,new Message(UUID.randomUUID(),0,"개선 계획에 반영했습니다.",List.of(),false),new Principal(other.id,true,false));
+  http.perform(get("/api/me/support/tickets/"+id).with(user(subject).roles("FAN")))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ANSWERED")).andExpect(jsonPath("$.messages.length()").value(2));
+  http.perform(get("/api/me/support/tickets/"+id).with(user(other.kakaoSubject).roles("FAN"))).andExpect(status().isNotFound());
+ }
  List<LineInput> lines(){return List.of(new LineInput(productId,2));}
  int stock(){return db.queryForObject("select stock_quantity from event_product where id=?",Integer.class,productId);}
  long count(String table){if(!Set.of("reservation","pos_sale").contains(table))throw new IllegalArgumentException();return db.queryForObject("select count(*) from "+table+" where event_booth_id=?",Long.class,boothId);}

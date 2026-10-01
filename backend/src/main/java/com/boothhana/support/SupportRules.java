@@ -12,7 +12,18 @@ import static com.boothhana.support.SupportModels.*;
 public final class SupportRules {
  private SupportRules() {}
  public static final Set<String> REPORT_REASONS=Set.of("SCHEDULE_PLACE","PARTICIPATION_LOCATION","PRODUCT_PRICE","IMAGE_RIGHTS","OTHER");
- public static final Set<String> INQUIRY_REASONS=Set.of("ACCOUNT","SERVICE","RESERVATION","BUSINESS","EVENT_REQUEST","OTHER");
+ public static final Set<String> INQUIRY_REASONS=Set.of("ACCOUNT","SERVICE","RESERVATION","BUSINESS","EVENT_REQUEST","FEATURE_REQUEST","OTHER");
+ /** Anonymous improvement intake has no linked target, attachments or reply credentials in its response. */
+ public static void feedback(GuestCreate g) {
+  if(g==null||g.ticket()==null)throw new IllegalArgumentException("개선 의견을 입력해 주세요.");
+  Create c=g.ticket();create(c);guestHash(g.accessKey());
+  if(g.website()!=null&&!g.website().isBlank())throw new IllegalArgumentException("접수할 수 없습니다.");
+  if(!"INQUIRY".equals(c.kind())||!"FEATURE_REQUEST".equals(c.category())||c.target()!=null||c.exhibitorId()!=null||c.evidence()!=null&&!c.evidence().isEmpty())throw new IllegalArgumentException("개선 의견 접수 형식을 확인해 주세요.");
+  if(c.context()!=null)for(var entry:c.context().entrySet()) {
+   String path=entry.getValue();
+   if(!"pagePath".equals(entry.getKey())||path==null||!path.startsWith("/")||path.startsWith("//")||path.contains("?")||path.contains("#")||path.contains("\\")||path.codePoints().anyMatch(Character::isISOControl))throw new IllegalArgumentException("접수 화면 경로를 확인해 주세요.");
+  }
+ }
  public static String text(String value,int max,boolean required) {
   String s=value==null?"":value.strip();
   if((required&&s.isEmpty())||s.length()>max||s.codePoints().anyMatch(c->c==0))throw new IllegalArgumentException("입력 길이와 필수 항목을 확인해 주세요.");

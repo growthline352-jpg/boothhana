@@ -34,6 +34,7 @@ public class SupportOperations {
     public Map<String,Object> decide(UUID id,ClaimDecision c,Principal p) {admin(p);return claims.decide(id,c,p);}
     public void revoke(long exhibitor,long user,Revoke r,Principal p) {admin(p);claims.revoke(exhibitor,user,r,p);}
     public Map<String,Object> guestCreate(GuestCreate c,String remote) {limit("guest-create:"+secret+":"+remote,5);return service.guestCreate(c,remote);}
+    public Map<String,Object> feedbackCreate(GuestCreate c,String remote) {limit("guest-create:"+secret+":"+remote,5);return service.feedbackCreate(c,remote);}
     public Map<String,Object> guestRead(GuestAccess c,String remote) {limit("guest-read:"+secret+":"+remote,60);return service.guestRead(c,remote);}
     public Map<String,Object> guestReply(GuestMessage c,String remote) {limit("guest-read:"+secret+":"+remote,60);limit("guest-message:"+secret+":"+remote,30);return service.guestReply(c,remote);}
 }

@@ -34,7 +34,7 @@ public class SupportService {
  void version(Map<String,Object> t,long revision){if(n(t,"revision")!=revision)throw ApiException.conflict("새 답변이나 처리 결과가 있습니다. 새로고침 후 다시 확인해 주세요.");}
  void audit(UUID id,Long actor,String action,Object details){db.update("insert into support_action(ticket_id,actor_id,action,details_json) values(?,?,?,cast(? as jsonb))",id,actor,action,enc(details));}
  private void rules(Runnable validation){try{validation.run();}catch(IllegalArgumentException e){throw ApiException.badRequest(e.getMessage());}}
- public Map<String,Object> capabilities(){return Map.of("guestEnabled",guests&&rateSecret.length()>=32,"guestExpiryDays",30,"guestAttachments",false);}
+ public Map<String,Object> capabilities(){return Map.of("guestEnabled",guests&&rateSecret.length()>=32,"feedbackEnabled",rateSecret.length()>=32,"guestExpiryDays",30,"guestAttachments",false);}
  private void guestEnabled(){if(!guests||rateSecret.length()<32)throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,"GUEST_DISABLED","비회원 문의 준비 중입니다. 로그인 문의를 이용해 주세요.");}
  public Map<String,Object> detail(UUID id,Principal actor){var r=row(id,false);access(r,actor);return view(r,actor);}
  Map<String,Object> view(Map<String,Object> r,Principal actor){
@@ -170,13 +170,19 @@ public class SupportService {
   if(resolved||"WAIT".equals(a.action()))insertSystemMessage(id,actor,a.note());
   audit(id,actor.userId(),a.action(),Map.of("note",a.note(),"proof",proof));return view(row(id,false),actor);
  }
+ @Transactional public Map<String,Object> feedbackCreate(GuestCreate g,String remote){
+  if(rateSecret.length()<32)throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE,"FEEDBACK_DISABLED","개선 의견 접수를 준비하고 있습니다. 잠시 후 다시 시도해 주세요.");
+  rules(()->SupportRules.feedback(g));
+  var saved=createInternal(g.ticket(),new Principal(null,false,true),SupportRules.guestHash(g.accessKey()),remote);
+  return Map.of("id",saved.get("id"),"number",saved.get("number"));
+ }
  @Transactional public Map<String,Object> guestCreate(GuestCreate g,String remote){guestEnabled();if(g==null||g.ticket()==null)throw ApiException.badRequest("입력 오류");String hash;try{hash=SupportRules.guestHash(g.accessKey());}catch(IllegalArgumentException e){throw ApiException.badRequest("조회키 형식 오류");}
   if(g.website()!=null&&!g.website().isBlank())throw ApiException.badRequest("접수할 수 없습니다.");if(!"INQUIRY".equals(g.ticket().kind())||!"ACCOUNT".equals(g.ticket().category())||g.ticket().target()!=null)throw ApiException.badRequest("비회원은 로그인·계정 문의만 접수할 수 있습니다.");
   return createInternal(g.ticket(),new Principal(null,false,true),hash,remote);
  }
  private Principal guest(GuestAccess g,String remote){guestEnabled();String hash;
   try{hash=SupportRules.guestHash(g==null?null:g.accessKey());}catch(RuntimeException e){throw ApiException.notFound("접수번호·조회키 또는 유효기간을 확인해 주세요.");}
-  if(g.ticketId()==null)throw ApiException.notFound("접수번호·조회키를 확인해 주세요.");var t=row(g.ticketId(),false);if(t.get("requester_id")!=null||!SupportRules.constantEquals(hash,st(t.get("guest_secret_hash")))||((java.sql.Timestamp)t.get("guest_expires_at")).toInstant().isBefore(Instant.now()))throw ApiException.notFound("접수번호·조회키 또는 유효기간을 확인해 주세요.");return new Principal(null,false,true);
+  if(g.ticketId()==null)throw ApiException.notFound("접수번호·조회키를 확인해 주세요.");var t=row(g.ticketId(),false);if(t.get("requester_id")!=null||!"ACCOUNT".equals(t.get("category"))||!SupportRules.constantEquals(hash,st(t.get("guest_secret_hash")))||((java.sql.Timestamp)t.get("guest_expires_at")).toInstant().isBefore(Instant.now()))throw ApiException.notFound("접수번호·조회키 또는 유효기간을 확인해 주세요.");return new Principal(null,false,true);
  }
  @Transactional public Map<String,Object> guestRead(GuestAccess g,String remote){Principal p=guest(g,remote);return detail(g.ticketId(),p);}
  @Transactional public Map<String,Object> guestReply(GuestMessage g,String remote){if(g==null)throw ApiException.badRequest("입력값을 확인해 주세요.");Principal p=guest(g.access(),remote);return message(g.access().ticketId(),g.message(),p);}
