@@ -62,7 +62,7 @@ public class PlatformService {
     public Optional<ProductView> findPublicProduct(Long id) { return publicOptional(() -> publicProduct(id)); }
     public Optional<ReservationView> findUserReservation(UserAccount owner, Long id) { return publicOptional(() -> userReservation(owner, id)); }
 
-    public UserView user(UserAccount user, List<Permission> permissions) { return new UserView(user.id, user.displayName, image(user.profileImageKey), permissions); }
+    public UserView user(UserAccount user, List<Permission> permissions) { return new UserView(user.id, user.displayName, image(user.profileImageKey), permissions, "PENDING".equals(user.onboardingStatus)); }
 
     @Transactional
     public UserView updateProfile(UserAccount user, List<Permission> permissions, ProfileInput input) {

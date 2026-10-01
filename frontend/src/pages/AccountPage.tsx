@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link } from 'react-router'
+import { InterestSettings } from '../features/interests/InterestSettings'
 import { authApi } from '../api'
 import { createImageUploadTask, validateImageFile, type ImageUploadTask } from '../api/image-upload'
 import { useAuth } from '../app/useAuth'
@@ -107,6 +108,8 @@ export function AccountPage() {
         <div className="account-profile-footer"><button type="submit" disabled={profileBusy}>{profileBusy ? '저장 중…' : '변경사항 저장'}</button>{profileMessage && <p role={profileMessage === '프로필을 저장했습니다.' ? 'status' : 'alert'}>{profileMessage}</p>}</div>
       </form>
     </section>}
+
+    {user && <InterestSettings key={user.id}/>}
 
     <section className="account-quick-section" aria-labelledby="account-quick-title">
       <h2 id="account-quick-title">자주 찾는 메뉴</h2>

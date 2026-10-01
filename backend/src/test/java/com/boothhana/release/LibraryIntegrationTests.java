@@ -186,4 +186,61 @@ class LibraryIntegrationTests {
   assertThat(db.queryForObject("select saved_json::text from memory_item where user_id=? and id=?",String.class,user,saved.id())).isEqualTo(raw);
  }
 
+
+ @Test void memberInterestsArePrivateVersionedAndCategoryScoped()throws Exception{
+  var interests=web.getBean(com.boothhana.interests.InterestService.class);
+  var current=web.getBean(com.boothhana.repository.UserAccountRepository.class).findById(user).orElseThrow();
+  assertThat(current.onboardingStatus).isEqualTo("LEGACY");
+  var fields=Map.of("SUBCULTURE",new com.boothhana.interests.InterestTaxonomy.Selection(List.of("BIRTHDAY_CAFE"),List.of("VOCALOID")),
+      "FESTIVAL",new com.boothhana.interests.InterestTaxonomy.Selection(List.of("LIVE"),List.of("JAZZ")));
+  db.update("update app_user set onboarding_status='PENDING' where id=?",user);
+  http.perform(get("/api/me").with(user(subject).roles("FAN"))).andExpect(status().isOk()).andExpect(jsonPath("$.onboardingRequired").value(true));
+  var input=new com.boothhana.interests.InterestService.Input(user,0,"DONE",fields);
+  http.perform(get("/api/me/interests")).andExpect(status().isUnauthorized());
+  http.perform(put("/api/me/interests").with(user(subject).roles("FAN")).contentType("application/json").content(json.writeValueAsString(input))).andExpect(status().isForbidden());
+  http.perform(put("/api/me/interests").with(user(subject).roles("FAN")).with(csrf()).contentType("application/json").content(json.writeValueAsString(input))).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));
+  assertThat(interests.get(current).fields()).isEqualTo(fields);
+  http.perform(get("/api/me").with(user(subject).roles("FAN"))).andExpect(status().isOk()).andExpect(jsonPath("$.onboardingRequired").value(false));
+  http.perform(put("/api/me/interests").with(user(subject).roles("FAN")).with(csrf()).contentType("application/json").content(json.writeValueAsString(input))).andExpect(status().isConflict());
+  http.perform(put("/api/me/interests").with(user(otherSubject).roles("FAN")).with(csrf()).contentType("application/json").content(json.writeValueAsString(input))).andExpect(status().isConflict());
+  http.perform(get("/api/me/interests").with(user(otherSubject).roles("FAN"))).andExpect(status().isOk()).andExpect(jsonPath("$.fields.SUBCULTURE").doesNotExist());
+  assertThat(db.queryForObject("select relrowsecurity from pg_class where oid='member_interest_preferences'::regclass",Boolean.class)).isTrue();
+  assertThat(db.queryForObject("select has_table_privilege('anon','member_interest_preferences','SELECT') or has_table_privilege('authenticated','member_interest_preferences','SELECT')",Boolean.class)).isFalse();
+  http.perform(get("/api/public/interests")).andExpect(status().isOk()).andExpect(jsonPath("$[0].code").value("SUBCULTURE"));
+ }
+ @Test @SuppressWarnings("unchecked") void interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback(){
+  var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
+  var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
+  String future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(100).toString();
+  e.put("region","SEOUL");e.put("subcategory","ONLY_EVENT");e.put("occurrences",List.of(Map.of("startDate",future,"endDate",future)));
+  e.put("subjects",List.of("vocaloid"));snapshot.put("event",e);publish();
+  var selected=new com.boothhana.interests.InterestTaxonomy.Selection(List.of(),List.of("VOCALOID"));
+  assertThat(publications.featured("SUBCULTURE","SEOUL",selected).get("mode")).isEqualTo("RECENT");
+  var saved=service.save(user,new Save(new Target("EVENT",event,event,null),null,"")).item();
+  service.save(user,new Save(new Target("EVENT",event,event,null),null,""));
+  service.save(other,new Save(new Target("PRODUCT",event,product,participant),null,""));
+  // Six more popular unrelated events must not push the matching one past LIMIT.
+  for(int i=0;i<6;i++){
+   String key=UUID.randomUUID().toString().replace("-","").repeat(2);
+   long id=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state) values(?,?,'[TEST] unrelated popular','ONLY_EVENT',cast(? as date),cast(? as date),'{}',?,'[]','REVIEWED') returning id",Long.class,key,key,future,future,key);
+   var copy=new LinkedHashMap<>(e);copy.put("name","[TEST] unrelated popular");copy.put("subjects",List.of("other"));
+   db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1)",id,json.writeValueAsString(Map.of("event",copy,"participants",List.of())));
+   service.save(user,new Save(new Target("EVENT",id,id,null),null,""));service.save(other,new Save(new Target("EVENT",id,id,null),null,""));
+  }
+  var featured=publications.featured("SUBCULTURE","SEOUL",selected);
+  assertThat(featured.get("mode")).isEqualTo("POPULAR");
+  var rows=(List<Map<String,Object>>)featured.get("items");assertThat(rows).hasSize(1);assertThat(rows.getFirst().get("id")).isEqualTo(event);assertThat(((Number)rows.getFirst().get("saveCount")).longValue()).isEqualTo(1);
+  assertThat((List<?>)publications.featured("SUBCULTURE","GYEONGGI",selected).get("items")).isEmpty();
+  service.delete(user,saved.id(),0);assertThat(publications.featured("SUBCULTURE","SEOUL",selected).get("mode")).isEqualTo("RECENT");
+  e.put("operationStatus",Map.of("state","CANCELED"));publish();assertThat((List<?>)publications.featured("SUBCULTURE","SEOUL",selected).get("items")).isEmpty();
+ }
+
+ @Test void detachedProfileSaveCannotRevertCompletedOnboarding(){
+  var users=web.getBean(com.boothhana.repository.UserAccountRepository.class);
+  db.update("update app_user set onboarding_status='PENDING' where id=?",user);
+  var stale=users.findById(user).orElseThrow();
+  web.getBean(com.boothhana.interests.InterestService.class).save(users.findById(user).orElseThrow(),new com.boothhana.interests.InterestService.Input(user,0,"DONE",Map.of()));
+  stale.displayName="[TEST] Changed profile";users.saveAndFlush(stale);
+  assertThat(db.queryForObject("select onboarding_status from app_user where id=?",String.class,user)).isEqualTo("DONE");
+ }
 }

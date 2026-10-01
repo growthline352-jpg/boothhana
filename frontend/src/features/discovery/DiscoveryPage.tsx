@@ -4,12 +4,15 @@ import { eventStatus } from '../visit/eventStatus'
 import { usePageScroll } from '../visit/ScrollMemory'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { useAuth } from '../../app/useAuth'
+import { interestApi } from '../interests/api'
+import '../interests/interests.css'
 import { useRemote } from '../../app/useRemote'
 import { publicCatalogApi, type PublicEventSummary } from '../catalog/api'
 import { SafeLink, labels } from '../catalog/Shared'
 import { ContentImage } from '../../components/ui/ContentImage'
 import { categoryHref } from './categories'
-import { browseApiParams, cardOccurrences, dateLabel, homeBrowseApiParams, homeEventSections, homeRecentApiParams, isDiscoveryResults, latestFeaturedEvents, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
+import { browseApiParams, cardOccurrences, dateLabel, homeBrowseApiParams, homeEventSections, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import { currentSiteCategory } from './site'
@@ -31,9 +34,12 @@ export function DiscoveryPage() {
   const query = (isHome ? homeBrowseApiParams(state, today) : browseApiParams(state, today)).toString()
   const data = useRemote(() => category.enabled && !state.dateError ? publicCatalogApi.browse(query)
     : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError])
-  const recentQuery = homeRecentApiParams(state, today).toString()
-  const recent = useRemote(() => isHome && category.enabled ? publicCatalogApi.browse(recentQuery)
-    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 0, total: 0 }), [isHome, category.enabled, recentQuery])
+  const auth = useAuth()
+  const [wholePopularity, setWholePopularity] = useState(false)
+  const personal = auth.status === 'authenticated' && !wholePopularity
+  const featured = useRemote(() => isHome && category.enabled ? interestApi.featured(category.code, state.region, personal)
+    : Promise.resolve({ items: [], mode: 'RECENT' as const, personalized: false }),
+    [isHome, category.enabled, category.code, state.region, personal, auth.user?.id, auth.generation, today])
   usePageScroll(!data.loading)
   const [draft, setDraft] = useState(state.q)
   useEffect(() => { setDraft(state.q) }, [state.q, category.key])
@@ -51,7 +57,8 @@ export function DiscoveryPage() {
   }
   const reset = () => { setDraft(''); setParams(currentSiteCategory() ? { period: 'all', view: 'results' } : { category: category.key, period: 'all', view: 'results' }) }
   const rows = data.data?.items ?? []
-  const featuredRows = latestFeaturedEvents(recent.data?.items ?? [], today)
+  const featuredRows = featured.data?.items ?? []
+  const featuredLabel = featured.data?.mode === 'POPULAR' ? '저장 인원순 인기 행사' : '새로 공개된 행사'
   const total = data.data?.total ?? 0
   const pages = Math.max(1, Math.ceil(total / 20))
   const range = periodRange(state.period, today, state.from, state.to)
@@ -90,12 +97,16 @@ export function DiscoveryPage() {
             <Link className="daily-note-more" to={allEventsHref}>전체 일정 보기 <DiscoveryIcon name="arrow" size={15}/></Link>
           </aside>
 
-          <div className="featured-stage" aria-label="최근 공개된 행사">
-            {recent.loading ? <div className="featured-loading" aria-label="최근 공개된 행사 로딩 중"/>
-              : recent.error ? <div className="featured-empty" role="alert"><DiscoveryIcon name="info" size={38}/><strong>행사를 불러오지 못했어요</strong><button type="button" onClick={() => void recent.reload()}>다시 불러오기</button></div>
-              : featuredRows.length ? <FeaturedCarousel key={`${category.key}:${state.region}`} rows={featuredRows} today={today} returnTo={returnTo}/>
-              : <div className="featured-empty"><DiscoveryIcon name="calendar" size={38}/><strong>공개 행사를 준비하고 있어요</strong><span>검토가 끝난 행사부터 소개합니다.</span></div>}
-          </div>
+          <div className="featured-panel"><div className="featured-scope" aria-label="캐러셀 추천 범위">
+            {auth.user && <><button type="button" aria-pressed={!wholePopularity} onClick={() => setWholePopularity(false)}>내 관심분야</button><button type="button" aria-pressed={wholePopularity} onClick={() => setWholePopularity(true)}>전체 인기</button></>}
+            <Link to="/account">관심분야 설정</Link>
+            <p>{featured.data?.personalized ? '선택한 관심분야' : '이 분야 전체'} · {featuredLabel}</p>
+          </div><div className="featured-stage" aria-label={featuredLabel}>
+            {featured.loading ? <div className="featured-loading" aria-label="추천 행사 로딩 중"/>
+              : featured.error ? <div className="featured-empty" role="alert"><DiscoveryIcon name="info" size={38}/><strong>행사를 불러오지 못했어요</strong><button type="button" onClick={() => void featured.reload()}>다시 불러오기</button></div>
+              : featuredRows.length ? <FeaturedCarousel key={`${category.key}:${state.region}:${personal}:${auth.user?.id}:${featuredRows.map(row => row.id).join()}`} rows={featuredRows} today={today} returnTo={returnTo} label={featuredLabel} popular={featured.data?.mode === 'POPULAR'}/>
+              : <div className="featured-empty"><DiscoveryIcon name="calendar" size={38}/><strong>조건에 맞는 공개 행사가 없어요</strong><span>관심분야나 지역을 바꿔보세요.</span></div>}
+          </div></div>
 
           <aside className="home-plan-card" aria-label="부스하나 이용 안내">
             <span className="home-plan-kicker">내 일정 만들기</span><div className="home-plan-icon"><DiscoveryIcon name="bookmark" size={25}/></div>
@@ -172,7 +183,7 @@ function MiniEventRow({ row, today, returnTo }: { row: PublicEventSummary; today
   return <Link className="daily-note-item" to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><span className="daily-note-thumb"><ContentImage url={row.banner?.url} kind="event" alt=""/></span><span className="daily-note-copy"><small>{labels[row.event.subcategory] || '행사'} <b>{schedule.label}</b></small><strong>{row.event.name}</strong><span>{occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span></span></Link>
 }
 
-function FeaturedCarousel({ rows, today, returnTo }: { rows: PublicEventSummary[]; today: string; returnTo: string }) {
+function FeaturedCarousel({ rows, today, returnTo, label, popular }: { rows: PublicEventSummary[]; today: string; returnTo: string; label: string; popular: boolean }) {
   const [selected, setSelected] = useState(0)
   const [paused, setPaused] = useState(false)
   const index = Math.min(selected, rows.length - 1)
@@ -182,11 +193,11 @@ function FeaturedCarousel({ rows, today, returnTo }: { rows: PublicEventSummary[
     return () => window.clearInterval(timer)
   }, [rows.length, paused])
   const move = (step: number) => setSelected(current => (current + step + rows.length) % rows.length)
-  return <div className="featured-carousel" role="region" aria-roledescription="carousel" aria-label="최근 공개된 행사"
+  return <div className="featured-carousel" role="region" aria-roledescription="carousel" aria-label={label}
     onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
     onFocusCapture={() => setPaused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false) }}>
     <FeaturedEvent key={rows[index].id} row={rows[index]} today={today} returnTo={returnTo}/>
-    <span className="featured-carousel-label">최근 공개</span>
+    <span className="featured-carousel-label">{popular ? `${index + 1}위 · ${(rows[index] as { saveCount?: number }).saveCount ?? 0}명 저장` : label}</span>
     {rows.length > 1 && <div className="featured-carousel-controls" aria-label="행사 사진 넘기기">
       <button type="button" onClick={() => move(-1)} aria-label="이전 행사"><DiscoveryIcon name="chevron" size={17}/></button>
       <span aria-live="off">{index + 1} / {rows.length}</span>
