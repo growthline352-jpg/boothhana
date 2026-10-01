@@ -6,7 +6,7 @@ from run import codex_command,execute_search,RunError
 from weekly import load_config
 from floorplans import FloorplanBatch
 from floorplan_geometry import tiles,merge_tiles,EXTRACTOR,simple
-from interactive_floorplan import build_schematic,merge_interactive_candidates,parse_accessible_booths,parse_accessible_layout
+from interactive_floorplan import build_schematic,merge_interactive_candidates,parse_accessible_booths,parse_accessible_layout,validate_comicw_map_edition
 from run_scheduled import run as scheduled
 ROOT=Path(__file__).resolve().parents[1];FIX=ROOT/'examples/floorplan-v8'
 def png(w=1000,h=700):
@@ -172,4 +172,23 @@ class WorkerTests(unittest.TestCase):
   with patch('floorplans.fetch_html',return_value=(html,'0'*64)),patch('floorplans.fetch_image') as image,patch.object(b,'vision') as vision:
    value=b.process_source(1,source)
   image.assert_not_called();vision.assert_not_called();self.assertEqual(len(api.analysis['geometry']['shapes']),8);self.assertEqual(value['mapped'],1)
+ def test_comicworld_map_rejects_prior_event_image(self):
+  asset={'pageUrl':'https://comicw.net/map/338/','imageUrl':'https://comicw.net/data/booth_map/fare_337_1789693061.jpg'}
+  with self.assertRaisesRegex(ValueError,'requested 338, image is 337'):
+   validate_comicw_map_edition(asset)
+  asset['imageUrl']='https://comicw.net/map/338/'
+  html='const MAP_IMG_URL = "https:\\/\\/comicw.net\\/data\\/booth_map\\/fare_337_1789693061.jpg";'
+  with self.assertRaisesRegex(ValueError,'requested 338, image is 337'):
+   validate_comicw_map_edition(asset,html)
+  validate_comicw_map_edition(asset,html.replace('fare_337','fare_338'))
+  validate_comicw_map_edition({'pageUrl':'https://example.com/map/338/','imageUrl':'https://example.com/fare_337_map.jpg'})
+ def test_comicworld_mismatch_stops_before_download(self):
+  b=FloorplanBatch(self.cfg,self.path/'comicworld-guard',dry=True)
+  source={'asset':{'id':1,'rightsState':'APPROVED','pageUrl':'https://comicw.net/map/338/',
+                   'imageUrl':'https://comicw.net/data/booth_map/fare_337_1789693061.jpg'},
+          'canTransform':True,'sourceRevision':1}
+  with patch('floorplans.fetch_image') as fetch:
+   with self.assertRaisesRegex(ValueError,'requested 338, image is 337'):
+    b.process_source(6,source)
+  fetch.assert_not_called()
 if __name__=='__main__':unittest.main()

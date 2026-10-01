@@ -17,7 +17,8 @@ import { combineDfesta, isDfestaDay, DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID, DFEST
 import { BoothDetail } from './BoothDetail'
 import { InteractiveFloorPlans } from '../floorplan/InteractiveFloorPlans'
 import { matchesPublicParticipant } from './publicSearch'
-import { labels, scopes, SafeLink, LocationText, StoredImage } from './Shared'
+import { labels, scopes, SafeLink, LocationText } from './Shared'
+import { ContentImage } from '../../components/ui/ContentImage'
 import { attendance, relevantLocations, parseVisit, visitParams, resetVisitFilters, visitDays, publicLink, sourceLabel, usableAddress, normalizePlace, catalogBoothPath, catalogEventPath, type VisitQuery } from '../visit/visit'
 import { eventStatus } from '../visit/eventStatus'
 import { usePageScroll } from '../visit/ScrollMemory'
@@ -105,7 +106,7 @@ export function CatalogEventDetail({eventId,value,alternate=null}:{eventId:strin
   const currentValue=alternate&&state.day===DFESTA_SUNDAY?alternate:value
   const currentEventId=currentValue.id
   const e=alternate?{...currentValue.event,name:value.event.name,occurrences:value.event.occurrences}:value.event
-  const section=params.get('section')==='reviews'?'reviews':params.get('section')==='booths'||(!params.has('section')&&params.get('view')==='booths')?'booths':'home'
+  const section=params.get('section')==='reviews'||params.get('view')==='reviews'?'reviews':params.get('section')==='booths'||(!params.has('section')&&params.get('view')==='booths')?'booths':'home'
   const memoryMode=params.get('my')==='saved'?'saved':params.get('my')==='visited'?'visited':'all'
   const savedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null).map(x=>x.target.participantId!)),[library?.index,currentEventId])
   const visitedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null&&x.visitedDays.includes(state.day)).map(x=>x.target.participantId!)),[library?.index,currentEventId,state.day])
@@ -159,7 +160,7 @@ export function CatalogEventDetail({eventId,value,alternate=null}:{eventId:strin
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page event-detail-redesign">
     <Link className="discovery-back-link" to={back} state={{catalogRestore:true}}>← {categoryForType(e.subcategory).label} 목록</Link>
-    <header className="visit-summary">{banner?<figure className="visit-poster"><StoredImage url={banner.url} alt={e.name}/><figcaption>{banner.credit} · <SafeLink url={banner.attribution}>이미지 출처</SafeLink><ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:currentEventId,id:banner.id}} label="이미지 문제 신고"/></figcaption></figure>:<div className="visit-poster visit-poster-empty" role="img" aria-label="행사 이미지가 아직 공개되지 않았습니다"><span>{labels[e.subcategory]}</span><strong>행사 이미지를 준비하고 있어요</strong></div>}<div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1>
+    <header className="visit-summary"><figure className="visit-poster"><ContentImage url={banner?.url} kind="event" alt={`${e.name} 대표 이미지`}/>{banner&&<figcaption>{banner.credit} · <SafeLink url={banner.attribution}>이미지 출처</SafeLink><ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:currentEventId,id:banner.id}} label="이미지 문제 신고"/></figcaption>}</figure><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1>
       {status.notice&&<p className="visit-important-note" role="status">{status.notice} {status.operation.sourceUrl&&<SafeLink url={status.operation.sourceUrl}>상태 안내 원문</SafeLink>}{status.operation.checkedOn&&<small> · {status.operation.checkedOn} 확인</small>}</p>}
       <dl className="visit-facts"><div><dt>행사일</dt><dd>{eventDateLabel(e.occurrences)}</dd></div>
         <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
@@ -204,8 +205,8 @@ export function CatalogEventDetail({eventId,value,alternate=null}:{eventId:strin
 function ParticipantCard({eventId,row,day,hall,assets,showMap}:{eventId:number;row:PublicParticipant;day:string;hall:string;assets:PublicEvent['assets'];showMap?:(id:number)=>void}) {
   const thumb=assets.find(a=>a.participantId===row.id&&['BOOTH_CUT','PRODUCT','LOGO'].includes(a.type))
   const locations=relevantLocations(row.participant.locations,day,hall),known=attendance(row,day,hall)
-  return <article className={`panel catalog-booth-card visit-booth-card${thumb?' has-image':''}`}>
-    {thumb&&<figure><StoredImage url={thumb.url} alt={thumb.caption||row.participant.registrationName}/><figcaption>{thumb.credit} · <SafeLink url={thumb.attribution}>출처</SafeLink></figcaption></figure>}
+  return <article className="panel catalog-booth-card visit-booth-card has-image">
+    <figure><ContentImage url={thumb?.url} kind="booth" alt={thumb?.caption||row.participant.registrationName}/>{thumb&&<figcaption>{thumb.credit} · <SafeLink url={thumb.attribution}>출처</SafeLink></figcaption>}</figure>
     <div className="visit-booth-body"><LocationText locations={locations}/><h3>{row.participant.registrationName}</h3><p className="visit-booth-summary">{row.sales?.summary||'판매정보를 확인하고 있어요.'}</p>
       {known==='unknown'&&<small className="visit-warning">선택 날짜·전시관 참가 여부 미확인</small>}
       {row.sales&&<small>{scopes[row.sales.evidenceScope]}</small>}<p className="item-meta">{row.participant.subjects.join(' · ')}</p>

@@ -5,6 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import static com.boothhana.collection.CollectionModels.*;
 import static com.boothhana.collection.CatalogModels.*;
@@ -74,12 +76,62 @@ public class CatalogPublicationService {
             (select count(*) from jsonb_array_elements(p.snapshot_json->'participants') x
              join subculture_participant q on q.id=(x->>'id')::bigint where q.review_state<>'EXCLUDED') participant_count
             """+fromSql+" order by "+query.orderSql()+" limit ? offset ?",query.listArgs().toArray());
+        var items=summaries(rows);
+        long total=Objects.requireNonNull(db.queryForObject("select count(*)"+fromSql,Long.class,query.whereArgs().toArray()));
+        return new PageData<>(items,query.page(),query.size(),total);
+    }
+    /** Only actual member EVENT saves count. Never infer popularity from views or local guest storage. */
+    public List<Map<String,Object>> popular(int limit) {return popular(limit,"");}
+    public List<Map<String,Object>> popular(int limit,String category) {
+        if(limit<1||limit>12)throw ApiException.badRequest("인기 행사 조회 개수를 확인해 주세요.");
+        if(category==null)category="";
+        if(!category.isEmpty()&&!CatalogTaxonomy.GROUPS.containsKey(category))throw ApiException.badRequest("행사 분야를 확인해 주세요.");
+        Collection<String> selected=category.isEmpty()?CatalogTaxonomy.TYPES:CatalogTaxonomy.GROUPS.get(category);
+        String types=String.join(",",Collections.nCopies(selected.size(),"?"));
+        List<Object> args=new ArrayList<>(selected);
+        args.add(LocalDate.now(ZoneId.of("Asia/Seoul")).toString());args.add(limit);
+        var rows=db.queryForList("""
+            with visible as (
+              select p.* from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
+              where e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')
+                and p.snapshot_json->'event'->>'subcategory' in (%s)
+                and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED')
+            ), editions as (
+              select p.*,case when p.event_id in (1,7)
+                and exists(select 1 from visible where event_id=1 and snapshot_json->'event'->>'name'='제35회 디. 페스타 (토요일)')
+                and exists(select 1 from visible where event_id=7 and snapshot_json->'event'->>'name'='제35회 디. 페스타 (일요일)')
+                then 1 else p.event_id end edition_id from visible p
+            ), saves as (
+              select p.edition_id,count(distinct m.user_id) save_count from editions p join memory_item m on m.event_id=p.event_id
+              where m.target_type='EVENT' and m.target_id=m.event_id group by p.edition_id
+            )
+            select p.event_id,
+              case when exists(select 1 from editions sibling where sibling.edition_id=p.event_id and sibling.event_id<>p.event_id)
+                then jsonb_set(jsonb_set(p.snapshot_json->'event','{name}',to_jsonb('제35회 디. 페스타'::text)), '{occurrences}',
+                  (select jsonb_agg(d.value order by sibling.event_id,d.ordinality) from editions sibling
+                   cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) with ordinality d(value,ordinality)
+                   where sibling.edition_id=p.event_id))
+                else p.snapshot_json->'event' end event_json,p.published_at,s.save_count,
+              (select count(*) from editions sibling cross join lateral jsonb_array_elements(sibling.snapshot_json->'participants') x
+               join subculture_participant q on q.id=(x->>'id')::bigint
+               where sibling.edition_id=p.event_id and q.review_state<>'EXCLUDED') participant_count
+            from editions p join saves s on s.edition_id=p.event_id
+            where p.event_id=p.edition_id and exists(
+              select 1 from editions sibling cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) d
+              where sibling.edition_id=p.event_id and d->>'endDate'>=?)
+            order by s.save_count desc,p.published_at desc,p.event_id
+            limit ?
+            """.formatted(types),args.toArray());
+        return summaries(rows);
+    }
+    private List<Map<String,Object>> summaries(List<Map<String,Object>> rows) {
         List<Long> ids=rows.stream().map(r->((Number)r.get("event_id")).longValue()).toList();
         Map<Long,AssetView> banners=media.publicBanners(ids);
         var items=rows.stream().map(r->{
             long id=((Number)r.get("event_id")).longValue(); Map<String,Object> item=new LinkedHashMap<>();
             item.put("id",id);item.put("event",json.readValue(r.get("event_json").toString(),EventData.class));
             item.put("participantCount",r.get("participant_count"));
+            if(r.containsKey("save_count"))item.put("saveCount",r.get("save_count"));
             Object stamp=r.get("published_at");item.put("publishedAt",stamp instanceof java.sql.Timestamp t?t.toInstant().toString():String.valueOf(stamp));
             AssetView banner=banners.get(id);
             if(banner!=null){Map<String,Object> asset=new LinkedHashMap<>();asset.put("id",banner.id());asset.put("participantId",null);asset.put("productId",null);
@@ -87,8 +139,7 @@ public class CatalogPublicationService {
             else item.put("banner",null);
             return item;
         }).toList();
-        long total=Objects.requireNonNull(db.queryForObject("select count(*)"+fromSql,Long.class,query.whereArgs().toArray()));
-        return new PageData<>(items,query.page(),query.size(),total);
+        return items;
     }
     public Map<String,Object> detail(long id) {
         return findPublicDetail(id).orElseThrow(() -> ApiException.notFound("공개된 안내를 찾을 수 없습니다."));

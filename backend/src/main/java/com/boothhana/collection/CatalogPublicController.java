@@ -1,5 +1,6 @@
 package com.boothhana.collection;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 import java.util.Map;
 import static com.boothhana.collection.CollectionModels.*;
 @RestController
@@ -18,5 +19,6 @@ public class CatalogPublicController {
         catch (IllegalArgumentException e) { throw com.boothhana.api.ApiException.badRequest(e.getMessage()); }
         return publications.list(query);
     }
+    @GetMapping("/events/popular") public List<Map<String,Object>> popular(@RequestParam(defaultValue="") String category){return publications.popular(12,category);}
     @GetMapping("/events/{id}") public Map<String,Object> detail(@PathVariable long id){return publications.detail(id);}
 }

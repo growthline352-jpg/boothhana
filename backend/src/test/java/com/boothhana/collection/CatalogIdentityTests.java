@@ -7,6 +7,30 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class CatalogIdentityTests {
+    private ProductData product(String name,String url,String id) {
+        return new ProductData(id,name,null,null,List.of(),List.of(),"GENERAL_CATALOG",null,"UNKNOWN",url,
+            List.of(new Source(url,"OFFICIAL","ORIGINAL","판매 옵션")),List.of(),List.of());
+    }
+    @Test void separatePagesOfSharedFormCannotOverwriteDifferentlyNamedOption() {
+        var prior=product("Option A","https://example.com/form",null);
+        var next=product("Option B","https://example.com/form?utm_source=page2",null);
+        assertThat(CatalogIdentity.intersects(CatalogIdentity.productKeys(prior),CatalogIdentity.productKeys(next))).isTrue();
+        assertThat(CatalogIdentity.ambiguousProductMatch(prior,next)).isTrue();
+        assertThat(CatalogIdentity.ambiguousProductMatch(prior,product("Option A","https://example.com/form",null))).isFalse();
+        assertThat(CatalogIdentity.ambiguousProductMatch(product("Old name","https://example.com/form","real-id"),product("New name","https://example.com/form","real-id"))).isFalse();
+        assertThat(CatalogIdentity.ambiguousProductMatch(product("Option A","https://example.com/form","real-id"),next)).isTrue();
+    }
+    @Test void historicalSharedFormAliasCannotOverwriteAnOptionAfterUrlCorrection() {
+        var mapper=tools.jackson.databind.json.JsonMapper.builder().build();
+        var original=product("Option A","https://example.com/form",null);
+        var corrected=product("Option A","https://example.com/product/A",null);
+        var next=product("Option C","https://example.com/form",null);
+        var row=java.util.Map.<String,Object>of("id",51L,"identity_key",CatalogIdentity.productKeys(original).getFirst(),
+            "identity_aliases",mapper.writeValueAsString(CatalogIdentity.productKeys(original)),"payload_json",mapper.writeValueAsString(corrected));
+        var found=new CatalogIdentityIndex(mapper).match(List.of(row),CatalogIdentity.productKeys(next),null,true);
+        assertThat(found).isSameAs(row);
+        assertThat(CatalogIdentity.ambiguousProductMatch(mapper.readValue(found.get("payload_json").toString(),ProductData.class),next)).isTrue();
+    }
     private Participant participant(String name,String source,String entry) {
         var sources=List.of(new Source(source,"ORGANIZER_SOCIAL","ORIGINAL","참가 공지"));
         return new Participant(entry,name,"CIRCLE",List.of(),List.of(),List.of(),null,List.of(source),sources,List.of(),List.of(),null);

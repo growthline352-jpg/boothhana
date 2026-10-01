@@ -24,6 +24,11 @@ pnpm preview
 - `pnpm lint`: Oxlint 정적 검사
 - `pnpm build`: TypeScript project build 후 Vite production build
 - `pnpm preview`: 생성된 production build 로컬 확인
+- `pnpm build:hosting`: production build와 호스팅용 SEO 파일 생성·검사
+- `pnpm build:local-preview`: 동일 출처 API 요청을 사용하는 로컬 미리보기 빌드
+- `pnpm preview:public`: 공개 API만 중계하는 읽기 전용 로컬 프록시 실행
+
+공개 운영 데이터로 로컬 화면을 확인하려면 `pnpm build:local-preview` 후 별도 터미널에서 `pnpm preview --host 127.0.0.1 --port 4185`와 `pnpm preview:public`을 실행하고 `http://127.0.0.1:4186`을 엽니다. 프록시는 `/api/public/`의 GET·HEAD만 운영 API로 전달하며 로그인·저장·수정 요청은 허용하지 않습니다. 포트와 대상은 `LOCAL_PREVIEW_PORT`, `LOCAL_PREVIEW_SITE_ORIGIN`, `LOCAL_PREVIEW_PUBLIC_API_ORIGIN`으로 설정합니다.
 
 ## Application structure
 
@@ -52,6 +57,7 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 - 상태 변경 요청 전 `/api/auth/csrf`에서 토큰을 받아 `X-XSRF-TOKEN` 헤더에 전달합니다.
 - 프런트엔드에는 Supabase 접속 정보나 GCS 자격증명을 넣지 않습니다.
 - 업로드 파일은 백엔드가 크기·형식·SHA-256을 검증한 뒤 GCS에 저장합니다.
+- 인기 행사는 `/api/public/catalog/events/popular`의 실제 회원 행사 저장 수를 사용합니다. 디페스타 양일은 한 회차로 집계하며 같은 회원의 중복 저장을 제거한 뒤 순위를 정합니다. 서울·경기 공개 행사 중 종료·취소·연기된 행사는 제외하며 분야별로 조회할 수 있습니다.
 
 ## Styling and state
 
@@ -59,5 +65,6 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 - 폼은 controlled input과 HTML 기본 제약을 사용합니다.
 - 스타일은 외부 UI 프레임워크 없이 `tokens.css`, `global.css`에 작성합니다.
 - API 화면은 로딩, 빈 결과, 오류 상태를 공통 컴포넌트로 표시합니다.
+- 행사·부스·상품 이미지가 없거나 로드되지 않으면 `ContentImage`가 종류별 기본 SVG를 표시합니다.
 
 현재 확인된 기능 제한은 [루트 README의 Known limitations](../README.md#known-limitations)에 기록합니다.

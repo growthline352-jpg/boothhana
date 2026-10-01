@@ -1,11 +1,11 @@
-> **운영 배포 작업본 · GitHub/Vercel/Render/GCS**
+> **현재 코드와 운영 배포 · GitHub/Vercel/Ubuntu/GCS**
 >
-> 공개 이미지와 비공개 첨부의 저장 코드를 Google Cloud Storage로 전환했습니다. 실제 GitHub 원격 저장소, Vercel·Render·Supabase·GCS 리소스 생성과 실환경 수락검사는 아직 남아 있습니다.
+> 현재 운영은 GitHub `main` 기반 Vercel 프런트와 Ubuntu의 BoothHana 전용 API·Cloudflare Tunnel을 사용합니다. 공개 이미지와 비공개 첨부는 Google Cloud Storage를 사용합니다. 변경 배포는 해당 커밋의 CI와 실제 운영 수락검사 결과를 기준으로 확인합니다.
 >
-> 배포 순서는 [운영 라이브 배포 가이드](docs/deployment/LIVE_GITHUB_VERCEL_GCS_KO.md)를 따르세요. 기존 v24 패키지 기록은 기준 이력이며 현재 작업본의 배포 승인 근거가 아닙니다.
-> 현재 ZIP: `BoothHana2-full-v24-gcp-credit-notes-20260921.zip`. 문서 패키지 정보는 `PACKAGE_GCP_CREDIT_NOTES.json`, 이번 변경은 `CHANGE_MANIFEST_GCP_CREDIT_NOTES.json`, 현재 전체 무결성은 `SHA256SUMS.txt`를 기준으로 합니다. 아래 v24 코드 변경·검사 기록은 기존 릴리스 이력입니다.
+> 현재 API·수집기 운영 방식은 [Ubuntu 터널 배포 가이드](deploy/ubuntu/TUNNEL_KO.md), 프런트 빌드·미리보기는 [프런트 README](frontend/README.md)를 확인하세요. 기존 v24 패키지 기록은 기준 이력이며 현재 Git 배포의 승인 근거가 아닙니다.
+> 아래 ZIP·manifest·해시는 `BoothHana2-full-v24-gcp-credit-notes-20260921.zip` 패키지에 관한 과거 기록입니다. 현재 Git 작업본의 파일 목록이나 무결성을 나타내지 않습니다.
 
-# BoothHana2 · v24
+# BoothHana2 · v24 패키지 이력
 
 2026-09-21. 서울·경기(인천 제외)의 서브컬처·박람회·축제 행사·부스·상품 서비스입니다. v24는 API·스키마·계약·해시 코드리뷰 수정본입니다.
 

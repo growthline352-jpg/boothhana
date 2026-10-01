@@ -67,6 +67,13 @@ public final class CatalogIdentity {
     }
     public static List<String> participantKeys(Participant p) { return keys("participant",p.identity(),p.sourceEntryId(),p.registrationName(),null,p.sources()); }
     public static List<String> productKeys(ProductData p) { return keys("product",p.identity(),p.sourceEntryId(),p.name(),p.productUrl(),p.sources()); }
+    /** Called after alias matching, including historical URLs. A name change requires a shared stable ID. */
+    public static boolean ambiguousProductMatch(ProductData prior,ProductData incoming) {
+        if(normalize(prior.name()).equals(normalize(incoming.name()))) return false;
+        Identity a=known(prior.identity(),prior.sourceEntryId(),prior.sources()),b=known(incoming.identity(),incoming.sourceEntryId(),incoming.sources());
+        if(a!=null&&b!=null&&a.entryId()!=null&&b.entryId()!=null&&a.sourceSystem().equals(b.sourceSystem())&&a.entryId().equals(b.entryId())) return false;
+        return true;
+    }
     public static Identity known(Identity explicit,String legacy,List<Source> sources) {
         if(explicit!=null) return explicit;
         if(legacy==null||legacy.isBlank()) return null;

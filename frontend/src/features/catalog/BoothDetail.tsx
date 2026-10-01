@@ -6,7 +6,8 @@ import { attendance, relevantLocations } from '../visit/visit'
 import type { EventData } from '../collection/api'
 import type { ProductRow, PublicAsset, PublicParticipant } from './api'
 import { hasMappableLocation } from './BoothDetail.utils'
-import { labels, ProductCard, SafeLink, StoredImage } from './Shared'
+import { labels, ProductCard, SafeLink } from './Shared'
+import { ContentImage } from '../../components/ui/ContentImage'
 import { useMemo, useState, type RefObject } from 'react'
 
 function unique(values: (string | null | undefined)[]) {
@@ -120,9 +121,9 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
       </div>
       <div className={`booth-detail-gallery count-${images.length}`}>
         {images.length > 0 ? images.map((asset, index) => <figure key={asset.id} className={index === 0 ? 'is-main' : ''}>
-          <StoredImage url={asset.url} alt={asset.caption || `${row.participant.registrationName} 홍보 이미지 ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'}/>
+          <ContentImage url={asset.url} kind="booth" alt={asset.caption || `${row.participant.registrationName} 홍보 이미지 ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'}/>
           <figcaption>{asset.credit} · <SafeLink url={asset.attribution}>출처</SafeLink></figcaption>
-        </figure>) : <div className="booth-detail-placeholder"><span>{place.code}</span><strong>{row.participant.registrationName}</strong><small>대표 이미지를 준비하고 있어요</small></div>}
+        </figure>) : <figure className="booth-detail-fallback"><ContentImage url={null} kind="booth" alt="" loading="eager"/></figure>}
       </div>
     </div>
     <section className="booth-detail-products" aria-labelledby={`booth-products-${row.id}`}>

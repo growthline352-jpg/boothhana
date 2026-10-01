@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { useRemote } from '../../app/useRemote'
+import { ContentImage } from '../../components/ui/ContentImage'
 import type { GoodsFeed, RankedGood } from './api'
 import { carouselEdges, goodsState, isGoodsFeed, rankingDate } from './rankingView'
 import './goods.css'
@@ -62,12 +63,9 @@ export function GoodsCarousel({ feed }: { feed: GoodsFeed }) {
 }
 
 export function GoodsCard({ item }: { item: RankedGood }) {
-  const [failed, setFailed] = useState(false)
-  useEffect(() => setFailed(false),[item.imageUrl])
   return <Link className="goods-card" to={`/products/${item.eventProductId}`} aria-label={`${item.rank}위 ${item.name}, ${item.boothName}, ${goodsState(item)}. 상품 안내 보기`}>
     <div className="goods-picture"><span className="goods-rank" aria-hidden="true">{String(item.rank).padStart(2,'0')}</span>
-      {item.imageUrl && !failed ? <img src={item.imageUrl} alt={item.name} loading="lazy" decoding="async" onError={() => setFailed(true)}/>
-        : <div className="goods-image-empty" aria-label="상품 이미지 미확보"><span aria-hidden="true">◇</span><small>상품 이미지 준비 중</small></div>}
+      <ContentImage url={item.imageUrl} kind="product" alt={item.name}/>
       {item.soldOut && <span className="goods-stock">품절 표기</span>}
     </div>
     <div className="goods-copy"><p className="goods-maker">{item.boothName}</p><h3>{item.name}</h3><p className="goods-price">{item.price.toLocaleString('ko-KR')}<span>원</span></p>
