@@ -20,8 +20,8 @@ public final class InterestTaxonomy {
             type("COMIC_DOUJIN","코믹·동인","COMIC_DOUJIN"),type("ONLY_EVENT","온리전","ONLY_EVENT"),
             type("BIRTHDAY_CAFE","생일카페","BIRTHDAY_CAFE"),type("DOLL","인형 행사","DOLL"),
             type("STATIONERY_GOODS","문구·굿즈 행사","STATIONERY_GOODS")),List.of(
-            subject("VOCALOID","보컬로이드","보컬로이드","vocaloid","하츠네 미쿠","초음미쿠"),
-            subject("VTUBER","버튜버","버튜버","버츄얼 유튜버","버추얼 유튜버","vtuber","버추얼","버츄얼"),
+            subject("VOCALOID","보컬로이드","보컬로이드","vocaloid","하츠네 미쿠","하츠네미쿠","초음미쿠"),
+            subject("VTUBER","버튜버","버튜버","버츄얼 유튜버","버추얼 유튜버","vtuber","버추얼","버츄얼","버추얼 콘텐츠","버츄얼 콘텐츠"),
             subject("ANIME_MANGA","애니·만화","애니","애니메이션","만화","애니·만화","주술회전","하이큐","명탐정 코난","가비지타임"),
             subject("GAME","게임","게임","리듬게임","원신","붕괴: 스타레일","붕괴 스타레일","젠레스 존 제로","블루 아카이브","블루아카이브","페르소나"),
             subject("NOVEL","소설·웹소설","소설","웹소설","괴담출근","괴담에 떨어져도 출근을 해야 하는구나","데못죽","데뷔 못 하면 죽는 병 걸림"),
@@ -34,8 +34,8 @@ public final class InterestTaxonomy {
         new Field("FESTIVAL","축제",List.of(
             type("LIVE","공연·음악 축제","MUSIC"),type("STREET","거리·걷기 행사","WALK"),type("LIGHT_SHOW","불꽃·빛 축제","LIGHT"),
             type("FOOD_FEST","먹거리 축제","FOOD"),type("CULTURE_FEST","지역·문화 축제","CULTURE")),List.of(
-            type("MUSIC","음악","MUSIC"),subject("JAZZ","재즈","재즈","jazz"),subject("ROCK","록·밴드","록","락","rock","밴드"),
-            subject("KPOP","K-POP","k-pop","kpop","케이팝"),type("FOOD","먹거리","FOOD"),type("LIGHT","불꽃·빛","LIGHT"),type("LOCAL_CULTURE","지역·전통문화","CULTURE")))
+            type("MUSIC","음악","MUSIC"),subject("JAZZ","재즈","재즈","jazz","jazz_hiphop"),subject("ROCK","록·밴드","록","락","rock","밴드"),
+            subject("KPOP","K-POP","k-pop","kpop","kpop_idol","케이팝"),type("FOOD","먹거리","FOOD"),type("LIGHT","불꽃·빛","LIGHT"),type("LOCAL_CULTURE","지역·전통문화","CULTURE")))
     );
     public static Field field(String category){return FIELDS.stream().filter(f->f.code().equals(category)).findFirst().orElseThrow(()->ApiException.badRequest("행사 분야를 확인해 주세요."));}
     public static Map<String,Selection> validate(Map<String,Selection> fields){
@@ -61,8 +61,10 @@ public final class InterestTaxonomy {
         for(Option option:chosen){
             if(!option.types().isEmpty()){clauses.add(alias+".snapshot_json->'event'->>'subcategory' in ("+marks(option.types().size())+")");args.addAll(option.types());}
             if(!option.subjects().isEmpty()){
-                clauses.add("exists(select 1 from jsonb_array_elements_text(coalesce("+alias+".snapshot_json->'event'->'subjects','[]'::jsonb)) topic(value) where lower(trim(topic.value)) in ("+marks(option.subjects().size())+"))");
-                option.subjects().forEach(value->args.add(value.toLowerCase(Locale.ROOT)));
+                var aliases=new LinkedHashSet<String>();aliases.add(option.code().toLowerCase(Locale.ROOT));
+                option.subjects().forEach(value->aliases.add(value.toLowerCase(Locale.ROOT)));
+                clauses.add("exists(select 1 from jsonb_array_elements_text(coalesce("+alias+".snapshot_json->'event'->'subjects','[]'::jsonb)) topic(value) where lower(trim(topic.value)) in ("+marks(aliases.size())+"))");
+                args.addAll(aliases);
             }
         }return "("+String.join(" or ",clauses)+")";
     }
