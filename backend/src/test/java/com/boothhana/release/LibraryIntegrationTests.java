@@ -23,7 +23,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** Actual Spring/HTTP/PostgreSQL contract. SQL001..016 must be applied to an EMPTY dedicated
+/** Actual Spring/HTTP/PostgreSQL contract. SQL001..020 must be applied to an EMPTY dedicated
  * localhost boothhana_release_test cluster by prepare_test_db.py. No DROP/TRUNCATE here.
  * Skips without opt-in; the v16 gate treats a skipped/missing suite as FAILURE. */
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
