@@ -139,7 +139,7 @@ class LibraryIntegrationTests {
  void popularEditionDeduplicatesMembersBeforeLimitAndKeepsRemainingDay(){
   var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
   String past=LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1).toString(),future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(1).toString();
-  db.queryForObject("select setval(pg_get_serial_sequence('subculture_event_candidate','id'),greatest(7,nextval(pg_get_serial_sequence('subculture_event_candidate','id')),(select max(id) from subculture_event_candidate)),true)",Long.class);
+  while(db.queryForObject("select nextval(pg_get_serial_sequence('subculture_event_candidate','id'))",Long.class)<=7) { /* Reserve the two fixed edition IDs without sequence administration privileges. */ }
   String ownKey=UUID.randomUUID().toString().replace("-","").repeat(2);
   event=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state) values(?,?,'[TEST] popularity competitor','ONLY_EVENT',cast(? as date),cast(? as date),'{}',?,'[]','REVIEWED') returning id",Long.class,ownKey,ownKey,future,future,ownKey);
   e.put("region","SEOUL");e.put("subcategory","ONLY_EVENT");snapshot.put("participants",List.of());
