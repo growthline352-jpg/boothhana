@@ -48,6 +48,8 @@ API·수집기 이미지를 함께 빌드하고 API·Caddy만 상시 실행한�
 
 프로필 변경 기능을 포함한 버전부터는 배포 전에 운영 DB에 `database/019_user_profile.sql`을 적용한다. 이 SQL은 닉네임·프로필 이미지 컬럼과 업로드 대상 제약을 함께 변경한다. `deploy.sh`는 DB 마이그레이션을 자동 실행하지 않으므로, 적용 여부를 확인하지 않은 채 API를 먼저 교체하면 기동 준비 상태가 실패한다.
 
+관심 설정에는 `database/020_category_interests.sql`, v0.2.2.0의 서브컬처 행사 유형 확장에는 그 뒤의 `database/021_subculture_event_types.sql`을 새 API보다 먼저 적용한다. 이미 적용한 마이그레이션은 다시 실행하지 않는다. 해당 커밋의 전체 CI, DB 백업, API·프런트·수집기 배포와 공개 재검토 순서는 [관심분야 검증 및 배포 계획](../../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 따른다. 현재 공유 서버의 터널 운영은 [Cloudflare Tunnel 배포 안내](TUNNEL_KO.md)를 확인한다.
+
 ```bash
 chmod +x deploy.sh run-collector.sh login-collector.sh install-timers.sh
 ./deploy.sh api.example.com
