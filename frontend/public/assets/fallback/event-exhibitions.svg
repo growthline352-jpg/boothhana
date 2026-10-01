@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" role="img" aria-labelledby="title">
+ <title id="title">박람회 행사 이미지 없음</title><rect width="800" height="500" fill="#f1f2f4"/>
+ <g fill="none" stroke="#98a1ab" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M285 325V179h230v146M270 179h260M315 179v-29h170v29M315 211h170v57H315z"/>
+  <rect x="330" y="290" width="140" height="45" rx="6" fill="#e0e4e8"/><path d="M270 335h260"/>
+ </g>
+ <g transform="translate(510 312)" stroke="#98a1ab" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="35" fill="#f1f2f4"/><rect x="-19" y="-14" width="38" height="28" rx="4" fill="none"/><path d="m-19 9 12-12 12 9 7-6M-25 25l50-50" fill="none"/></g>
+</svg>

@@ -4,6 +4,15 @@ import { ContentImage } from './ContentImage'
 import { contentImageUrl, fallbackImages } from './contentImageSource'
 
 describe('ContentImage', () => {
+  it('uses category-specific gray event icons and keeps real posters first', () => {
+    for (const [eventType, category] of [['COMIC_DOUJIN', 'subculture'], ['WINE', 'exhibitions'], ['FOOD', 'festivals']] as const) {
+      const fallback = renderToStaticMarkup(<ContentImage url={null} kind="event" eventType={eventType} alt=""/>)
+      expect(fallback).toContain(`src="/assets/fallback/event-${category}.svg"`)
+      const original = renderToStaticMarkup(<ContentImage url="https://example.com/poster.jpg" kind="event" eventType={eventType} alt="포스터"/>)
+      expect(original).toContain('src="https://example.com/poster.jpg"')
+      expect(original).not.toContain('data-fallback')
+    }
+  })
   it('uses separate local fallback images for missing event, booth and product media', () => {
     for (const kind of ['event', 'booth', 'product'] as const) {
       const html = renderToStaticMarkup(<ContentImage url={null} kind={kind} alt="" />)

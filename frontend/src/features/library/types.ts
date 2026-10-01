@@ -5,7 +5,7 @@ export interface SaveInput {target:MemoryTarget;day:string;hall:string}
 export interface SavedMemory {title:string;eventName:string;participantName:string;summary:string;tags:string[]}
 export interface MemoryImage {id:number;url:string;credit:string;sourceUrl:string|null}
 export interface MemoryVerification {state:'CONFIRMED_CURRENT'|'NOT_RECONFIRMED'|'LEGACY';lastSeenAt:string|null}
-export interface MemoryCurrent {verification?:MemoryVerification|null;memory:SavedMemory;operationState:string;notice:string;venue:string;occurrences:EventData['occurrences'];locations:Location[];evidenceScope:string;price:{amount:string;currency:string;checkedOn?:string;note?:string}|null;saleState:string;links:{label:string;url:string}[];publishedAt:string;warnings?:string[]}
+export interface MemoryCurrent {eventSubcategory?:string|null;verification?:MemoryVerification|null;memory:SavedMemory;operationState:string;notice:string;venue:string;occurrences:EventData['occurrences'];locations:Location[];evidenceScope:string;price:{amount:string;currency:string;checkedOn?:string;note?:string}|null;saleState:string;links:{label:string;url:string}[];publishedAt:string;warnings?:string[]}
 export interface ResolvedMemory {target:MemoryTarget;available:boolean;current:MemoryCurrent|null;image:MemoryImage|null}
 export interface MemoryEntry extends ResolvedMemory {id:string;revision:number;savedAt:string;updatedAt:string;day:string;hall:string;note:string;visitedDays:string[];saved:SavedMemory|null;changed:boolean;lastOpenedAt:string|null}
 export interface MemoryIndex {id:string;target:MemoryTarget;revision:number;day:string;hall:string;visitedDays:string[]}

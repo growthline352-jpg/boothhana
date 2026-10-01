@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" role="img" aria-labelledby="title">
+ <title id="title">서브컬처 행사 이미지 없음</title><rect width="800" height="500" fill="#f1f2f4"/>
+ <g fill="none" stroke="#98a1ab" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M400 193c-40-26-89-26-130-12v130c42-13 90-13 130 13 40-26 89-26 130-13V181c-42-14-90-14-130 12Zm0 0v131M296 210c27-4 52-2 76 8M296 244c27-4 52-2 76 8"/>
+  <path d="m475 214 10 21 24 3-17 17 4 24-21-11-22 11 4-24-17-17 24-3Z" fill="#e0e4e8"/>
+ </g>
+ <g transform="translate(505 304)" stroke="#98a1ab" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="35" fill="#f1f2f4"/><rect x="-19" y="-14" width="38" height="28" rx="4" fill="none"/><path d="m-19 9 12-12 12 9 7-6M-25 25l50-50" fill="none"/></g>
+</svg>

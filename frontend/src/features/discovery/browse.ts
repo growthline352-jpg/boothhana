@@ -8,7 +8,7 @@ const RESULT_MODE_KEYS = ['q', 'type', 'period', 'sort', 'page', 'from', 'to'] a
 
 /** Category-only discovery URLs are landing pages. Search/filter intent opens the result view. */
 export function isDiscoveryResults(pathname: string, params: URLSearchParams): boolean {
-  return pathname === '/discover' && (params.get('view') === 'results' || RESULT_MODE_KEYS.some(key => params.has(key)))
+  return pathname === '/discover' && (['results', 'calendar'].includes(params.get('view') || '') || RESULT_MODE_KEYS.some(key => params.has(key)))
 }
 export function searchResultsHref(current: URLSearchParams, category: string, rawQuery: string): string {
   const next = new URLSearchParams(current)
