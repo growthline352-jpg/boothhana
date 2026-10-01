@@ -22,6 +22,9 @@ Render 내보내기에는 일부 값에 따옴표가 붙는다. `normalize-rende
 
 관심분야 기능을 배포할 때는 운영 DB를 백업하고 아카이브 목록을 확인한 뒤, 실제 백엔드 역할을 `boothhana.backend_role`로 지정한 동일 DB 세션에서 `database/020_category_interests.sql`을 먼저 적용한다. 새 API 준비 상태와 개인 API 접근·CORS를 확인한 뒤 프런트를 배포한다. 이전 API 이미지와 런타임 환경 파일을 보존하며, 상세 게이트는 [관심분야 검증 및 배포 계획](../../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 따른다.
 
+캘린더·개선 의견·분야 이미지(v0.2.0.0)에는 추가 DB 마이그레이션이 없다. `api.env`의 `SUPPORT_RATE_SECRET`을 32자 이상의 무작위 값으로 설정한 뒤 새 API를 먼저 배포한다. 기존 `SUPPORT_GUEST_ENABLED=false`를 유지해도 개선 의견은 독립적으로 활성화된다.
+API readiness와 `/api/public/support/options`의 `feedbackEnabled=true`를 확인한 뒤 프런트를 배포하고 세 분야의 캘린더, 의견 창, WebP·회색 SVG 응답을 확인한다. 운영 사용자 접수를 시험 데이터로 만들지 말고 익명 CSRF·중복 재전송·회원 답변 이력은 격리 PostgreSQL 통합 검사에서 확인한다. 기능 범위는 [프런트 안내](../../frontend/README.md), [고객지원 안내](../../docs/support/SUPPORT_AND_ROLES_V12_KO.md)를 따른다.
+
 ```sh
 docker compose config --quiet
 docker compose up -d boothhana-api cloudflared
