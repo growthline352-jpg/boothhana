@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500" role="img" aria-labelledby="title">
+ <title id="title">축제 행사 이미지 없음</title><rect width="800" height="500" fill="#f1f2f4"/>
+ <g fill="none" stroke="#98a1ab" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M286 319V241a114 114 0 0 1 228 0v78M270 332h260M304 199h192M318 199l17 26 17-26 17 26 17-26 17 26 17-26 17 26 17-26 17 26 17-26"/>
+  <rect x="316" y="270" width="36" height="49" rx="6" fill="#e0e4e8"/><rect x="448" y="270" width="36" height="49" rx="6" fill="#e0e4e8"/><path d="M400 284v35m-14 0h28M531 164l15-21m-6 42 25-6M267 159l-16-21m6 43-26-5"/>
+ </g>
+ <g transform="translate(509 311)" stroke="#98a1ab" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="35" fill="#f1f2f4"/><rect x="-19" y="-14" width="38" height="28" rx="4" fill="none"/><path d="m-19 9 12-12 12 9 7-6M-25 25l50-50" fill="none"/></g>
+</svg>

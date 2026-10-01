@@ -23,7 +23,8 @@ public final class LibraryModels {
     public record Current(Memory memory,String operationState,String notice,String venue,
                           List<Map<String,Object>> occurrences,List<Map<String,Object>> locations,
                           String evidenceScope,Map<String,Object> price,String saleState,
-                          List<Link> links,String publishedAt,List<String> warnings,ProductVerification verification) {
+                          List<Link> links,String publishedAt,List<String> warnings,ProductVerification verification,String eventSubcategory) {
+        public Current(Memory memory,String operationState,String notice,String venue,List<Map<String,Object>> occurrences,List<Map<String,Object>> locations,String evidenceScope,Map<String,Object> price,String saleState,List<Link> links,String publishedAt,List<String> warnings,ProductVerification verification){this(memory,operationState,notice,venue,occurrences,locations,evidenceScope,price,saleState,links,publishedAt,warnings,verification,null);}
         public Current(Memory memory,String operationState,String notice,String venue,List<Map<String,Object>> occurrences,List<Map<String,Object>> locations,String evidenceScope,Map<String,Object> price,String saleState,List<Link> links,String publishedAt,List<String> warnings){this(memory,operationState,notice,venue,occurrences,locations,evidenceScope,price,saleState,links,publishedAt,warnings,null);}
         public Current(Memory memory,String operationState,String notice,String venue,List<Map<String,Object>> occurrences,List<Map<String,Object>> locations,String evidenceScope,Map<String,Object> price,String saleState,List<Link> links,String publishedAt){this(memory,operationState,notice,venue,occurrences,locations,evidenceScope,price,saleState,links,publishedAt,List.of(),null);}
     }

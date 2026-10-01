@@ -8,6 +8,7 @@ import { AuthStatusNotice } from '../../app/AuthStatusNotice'
 import { activeCategory, categories, categoryHref } from '../../features/discovery/categories'
 import { DiscoveryIcon } from '../../features/discovery/DiscoveryIcon'
 import { ProfileAvatar } from '../ui/ProfileAvatar'
+import { FeedbackWidget } from '../../features/support/FeedbackWidget'
 import '../../features/discovery/discovery.css'
 
 export function PublicLayout() {
@@ -18,6 +19,8 @@ export function PublicLayout() {
   const lock = useRef(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const openFeedback = () => { if (menu.current) menu.current.open = false; setFeedbackOpen(true) }
   const accountRole = user?.permissions.includes('ADMIN')
     ? '관리자'
     : user?.permissions.includes('CREATOR') ? '크리에이터' : '일반 사용자'
@@ -80,6 +83,7 @@ export function PublicLayout() {
                 <Link to="/reservations"><span>내 예약</span><small>예약·수령 확인</small></Link>
                 <Link to="/support/management"><span>내 행사·부스 관리</span><small>주최자·운영자 인증</small></Link>
                 <Link to="/support"><span>고객센터</span><small>문의·신고 내역</small></Link>
+                <button type="button" className="feedback-menu-button" onClick={openFeedback}>개선 의견 보내기</button>
               </div>
               <div className="discovery-menu-group">
                 <span className="discovery-menu-caption">행사 이용</span>
@@ -109,8 +113,9 @@ export function PublicLayout() {
       <div><Link to="/" className="discovery-footer-brand">부스하나<span>취향을 따라, 오프라인으로.</span></Link>
         <p>서울·경기의 서브컬처·박람회·축제와 참가 부스·상품을 찾아보세요.</p>
         <small>방문 전 주최 측의 최신 일정과 이용 조건을 확인해 주세요.</small></div>
-      <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link></nav>
+      <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link><button type="button" className="feedback-footer-button" onClick={openFeedback}>이런 개선이 필요해요</button></nav>
     </div></footer>
     <AnalyticsConsent />
+    <FeedbackWidget open={feedbackOpen} setOpen={setFeedbackOpen}/>
   </div>
 }

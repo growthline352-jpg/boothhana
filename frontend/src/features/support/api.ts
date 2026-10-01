@@ -15,7 +15,7 @@ export interface TicketInput { requestId:string;kind:TicketKind;category:string;
 export interface ReplyInput {requestId:string;revision:number;body:string;evidence:string[];internal:boolean}
 export interface ActionInput {revision:number;action:string;note:string;duplicateOf?:string|null;expectedFingerprint?:string|null}
 export interface Page<T>{items:T[];page:number;size:number;total:number}
-export interface Options{guestEnabled:boolean;guestExpiryDays:number;guestAttachments:boolean;attachmentsEnabled:boolean;maxAttachmentBytes:number;maxAttachments:number}
+export interface Options{guestEnabled:boolean;feedbackEnabled:boolean;guestExpiryDays:number;guestAttachments:boolean;attachmentsEnabled:boolean;maxAttachmentBytes:number;maxAttachments:number}
 export interface GuestAccess{ticketId:string;accessKey:string}
 export interface Manager{exhibitorId:number;name:string;state:string;permission:string;revision:number;claimId:string;participants:{id:number;eventId:number;name:string;route:string}[]}
 const prefix=(admin=false)=>admin?'/api/admin/support':'/api/me/support'
@@ -36,6 +36,7 @@ export const supportApi={
  revoke:(exhibitor:number,user:number,revision:number,reason:string)=>post<void>(`${prefix(true)}/managers/${exhibitor}/${user}/revoke`,{revision,reason}),
  managed:()=>api<Manager[]>(`${prefix()}/managed-exhibitors`,{cache:'no-store'}),
  guestCreate:(ticket:TicketInput,accessKey:string,website='')=>post<Ticket>('/api/public/support/guest/tickets',{ticket,accessKey,website}),
+ feedback:(ticket:TicketInput,accessKey:string,website='')=>post<{id:string;number:string}>('/api/public/support/feedback',{ticket,accessKey,website}),
  guestRead:(access:GuestAccess)=>post<Ticket>('/api/public/support/guest/read',access),
  guestReply:(access:GuestAccess,message:ReplyInput)=>post<Ticket>('/api/public/support/guest/messages',{access,message}),
  upload:async(id:string,uploadId:string,file:File)=>{

@@ -30,6 +30,8 @@ class GateReportingTests(unittest.TestCase):
                     'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback'],
                 'TEST-com.boothhana.floorplan.FloorplanHttpContractTests.xml':['withdrawalHasNoContentSuccess'],
                 'TEST-com.boothhana.release.ReleaseIntegrationTests.xml':[
+                    'anonymousFeedbackIsPrivateIdempotentAndRequiresCsrf',
+                    'memberFeatureRequestUsesExistingReplyHistory',
                     'v24TypedColumnContractMatchesRealPostgres',
                     'verifiedOrganizerLifecyclePreservesOverridesAndRevokesAccess',
                     'seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership',

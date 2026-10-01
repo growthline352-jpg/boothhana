@@ -107,7 +107,7 @@ public class LibraryTargets {
             add(links,"OFFICIAL".equals(text(source,"kind"))?"공식 안내":"정보 출처",text(source,"url"));
         var op=object(e.get("operationStatus"));Set<String> warnings=new LinkedHashSet<>(strings(e.get("warnings")));warnings.addAll(strings(p.get("warnings")));warnings.addAll(strings(s.get("warnings")));warnings.addAll(strings(product.get("warnings")));
         return new Resolved(t,true,new Current(memory,text(op,"state"),text(op,"note"),text(e,"venueName"),objects(e.get("occurrences")),objects(p.get("locations")),
-            text(product.isEmpty()?s:product,"evidenceScope"),product.get("price")==null?null:object(product.get("price")),text(product,"saleState"),links.values().stream().limit(12).toList(),stamp(row.get("live_published")),warnings.stream().limit(10).toList(),verification(t,row)));
+            text(product.isEmpty()?s:product,"evidenceScope"),product.get("price")==null?null:object(product.get("price")),text(product,"saleState"),links.values().stream().limit(12).toList(),stamp(row.get("live_published")),warnings.stream().limit(10).toList(),verification(t,row),text(e,"subcategory")));
     }
     private static void add(Map<String,Link> out,String label,String raw){String url=LibraryRules.url(raw);if(url!=null)out.putIfAbsent(url,new Link(label,url));}
     public static String stamp(Object o){return o instanceof java.sql.Timestamp ts?ts.toInstant().toString():o==null?null:o.toString();}

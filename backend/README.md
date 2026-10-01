@@ -26,6 +26,8 @@ cd backend
 
 서버는 기본적으로 `http://localhost:8080`에서 실행됩니다. 카카오 Redirect URI는 `http://localhost:8080/login/oauth2/code/kakao`입니다.
 
+비회원 개선 의견을 받으려면 `SUPPORT_RATE_SECRET`을 32자 이상의 무작위 값으로 설정합니다. `SUPPORT_GUEST_ENABLED=false`인 운영 설정에서도 개선 의견 접수는 독립적으로 활성화됩니다. 비밀값이 없거나 짧으면 `feedbackEnabled=false`이고 접수는 `FEEDBACK_DISABLED`(503)로 거절합니다. 이 기능은 기존 고객지원 테이블을 사용하며 추가 SQL 마이그레이션이 없습니다.
+
 ## Tests
 
 환경 변수를 불러온 뒤 전체 Gradle 테스트를 실행합니다.
@@ -44,12 +46,15 @@ cd backend
 - `GET /api/public/catalog/events/featured`, `GET /api/me/interests/featured`: 분야·지역의 전체 또는 개인 관심 조건으로 회원 저장 수 상위 5개와 `POPULAR / RECENT` 상태 조회
 - `/api/creator/**`: 기본·행사별 부스, 참가 신청, 상품, 공지, 예약 수령, POS 목록·단건 상세·취소
 - `/api/admin/**`: 지정 관리자 계정의 행사와 참가 신청 관리
+- `POST /api/public/support/feedback`: CSRF가 필요한 비회원 개선 의견 접수. `GuestCreate` 형식의 `ticket`, 난수 `accessKey`, 빈 `website`를 받으며 `INQUIRY / FEATURE_REQUEST`만 허용합니다. 대상·업체·증거 링크는 받지 않고 문맥은 검색어·해시 없는 내부 `pagePath`만 받습니다. 201 응답은 `id`·`number`만 포함하고 `no-store`입니다.
+- `/api/me/support/tickets`: 회원의 `FEATURE_REQUEST` 작성·본인 답변 이력 조회. 관리자 `/api/admin/support/tickets?kind=INQUIRY&category=FEATURE_REQUEST`에서 회원·비회원 개선 제안을 함께 확인합니다. 비회원 개선 제안에는 기존 guest 조회·추가 답변 API를 사용할 수 없습니다.
 - `/api/creator/uploads/tickets`: 검증 업로드 티켓 발급
 - `/api/creator/uploads/tickets/{id}/content`: 서버에서 파일 바이트 검증 후 GCS 저장
 - `/api/creator/uploads/tickets/{id}/complete`: 저장 객체 메타데이터 재검증 후 업로드 완료
 
 정확한 엔드포인트와 요청 형식은 `src/main/java/com/boothhana/api`의 Controller와 DTO를 기준으로 합니다.
 관심 설정 계약은 `src/main/java/com/boothhana/interests`의 Controller·Service·Taxonomy를 기준으로 합니다. 신규 카카오 계정은 `PENDING`, 기존 계정은 `LEGACY`이며 설정 저장 또는 건너뛰기 후 `DONE / SKIPPED`로 갱신합니다. 새 API에는 `database/020_category_interests.sql`이 필요하며 적용·검증 순서는 [관심분야 검증 및 배포 계획](../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 확인합니다.
+개선 의견 계약은 `src/main/java/com/boothhana/support`를 기준으로 하며 사용 경로·비회원 접수 제한은 [고객지원 안내](../docs/support/SUPPORT_AND_ROLES_V12_KO.md#5-고객문의답변비회원)를 확인합니다. 비회원 의견과 로그인 장애 문의는 기존 IP별 시간당 작성 시도 5회 한도를 함께 사용하고 같은 요청 ID·내용·조회키의 재전송은 새 접수를 만들지 않습니다.
 
 ## Local troubleshooting
 

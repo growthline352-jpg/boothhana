@@ -1,6 +1,7 @@
 import { api, publicRead } from '../../api/client'
 import type { EventData, EventSource, Page, ReviewState } from '../collection/api'
 import { combineDfestaSummaries } from './eventGroup'
+import { loadAllEvents } from './allEvents'
 export type { EventData, Page, ReviewState }
 export type EvidenceScope = 'EVENT_LISTED' | 'EVENT_SALE_CONFIRMED' | 'PROFILE' | 'GENERAL_CATALOG' | 'PAST_REFERENCE' | 'UNKNOWN'
 export interface Location {code: string | null; status: string; hall: string | null; zone: string | null; startDate: string | null; endDate: string | null; floorPlanUrl: string | null}
@@ -65,6 +66,7 @@ export function presentPublicParticipant(row: PublicParticipant): PublicParticip
 }
 
 export const publicCatalogApi={
+ calendar:(query:string)=>loadAllEvents(new URLSearchParams(query), params=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${params}`)),
  popular:(category?:string)=>publicRead<PopularEventSummary[]>(`/api/public/catalog/events/popular${category?`?category=${encodeURIComponent(category)}`:''}`),
  browse:async(query:string)=>{const page=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`);return {...page,items:combineDfestaSummaries(page.items)}},
  events:async(page=0)=>{const result=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`);return {...result,items:combineDfestaSummaries(result.items)}},
