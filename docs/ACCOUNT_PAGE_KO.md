@@ -23,8 +23,10 @@
 - 사진은 로그인 사용자의 `profile` 업로드 대상으로 서버 검증을 거친다. JPG·PNG·WebP·GIF, 최대 10MB이며 다른 사용자의 이미지 키를 사용할 수 없다. 사용자 지정 닉네임은 재로그인 후에도 유지한다.
 - 프로필 기능에는 `database/019_user_profile.sql`이 필요하다. 회원 탈퇴를 추가하려면 예약·보관함·소유권 처리 정책을 먼저 정의해야 한다.
 - 관심 설정은 `GET /api/me/interests`와 CSRF가 적용된 `PUT /api/me/interests`를 사용한다. 현재 계정 ID·수정 revision을 함께 보내며 다른 화면에서 설정이 바뀌면 최신 설정을 다시 불러온 뒤 저장한다. 신규 관심 기능에는 `database/020_category_interests.sql`이 필요하다.
+- 같은 창에서 작성 중인 관심 선택과 저장 중 상태는 계정별 메모리에 보관한다. 창 이동에 따른 인증 재확인이나 화면 재생성 동안 유지하고, 확인 중에는 숨긴다. 로그아웃·계정/권한 변경 시 폐기하며 전체 새로고침에는 복구되지 않는다. 초안의 원래 revision을 유지해 다른 화면의 저장을 자동으로 덮어쓰지 않는다.
 
 ## 검증
 
 초기 내 정보 화면은 회원/비회원/인증 오류/권한별 SSR 테스트로 확인했다. 프로필 화면 검사는 `frontend/src/pages/AccountPage.test.tsx`, 서버 저장·이미지 권한 검사는 `PlatformServiceTests`·`R2UploadServiceTests`, HTTP·DB 검사는 `ReleaseIntegrationTests`에 있다. 이번 배포의 실제 실행 결과는 CI와 배포 수락 결과를 기준으로 확인한다.
 관심 항목 분리·안전한 복귀 경로는 프런트 관심 설정 테스트, 옵션 검증은 `InterestTaxonomyTests`, 계정·CSRF·revision·실DB 저장은 `LibraryIntegrationTests`로 검사한다. 전체 검증과 브라우저 수락 범위는 [관심분야 검증 및 배포 계획](CATEGORY_INTERESTS_TEST_PLAN.md)에 있다.
+`InterestSettings.test.tsx`는 실제 계정 초안 저장소와 폼 핸들러를 사용해 동일 계정 재확인, 계정 변경·로그아웃, 재생성 중 중복 저장, 늦은 응답, revision 충돌을 검증한다.
