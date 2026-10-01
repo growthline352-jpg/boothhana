@@ -20,6 +20,8 @@ Render 내보내기에는 일부 값에 따옴표가 붙는다. `normalize-rende
 
 ## 실행과 점검
 
+관심분야 기능을 배포할 때는 운영 DB를 백업하고 아카이브 목록을 확인한 뒤, 실제 백엔드 역할을 `boothhana.backend_role`로 지정한 동일 DB 세션에서 `database/020_category_interests.sql`을 먼저 적용한다. 새 API 준비 상태와 개인 API 접근·CORS를 확인한 뒤 프런트를 배포한다. 이전 API 이미지와 런타임 환경 파일을 보존하며, 상세 게이트는 [관심분야 검증 및 배포 계획](../../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 따른다.
+
 ```sh
 docker compose config --quiet
 docker compose up -d boothhana-api cloudflared
@@ -54,4 +56,4 @@ Vercel `VITE_API_BASE_URL`, `SEO_API_BASE_URL`은 `https://api.boothana.kr`로 �
 카카오 콜백에 `https://api.boothana.kr/login/oauth2/code/kakao`를 추가한다.
 이전 Render 서비스는 삭제하지 않고 일시중지했다. GitHub 변수 `RENDER_KEEPALIVE_ENABLED=false`.
 복구 시 Render를 재개하고 준비 상태를 확인한 뒤 Vercel 두 API 변수를 기존 주소로 복원하고 재배포한다.
-DB와 GCS는 동일한 서비스를 계속 사용하므로 이번 이관에는 DB 이전/마이그레이션이 없다.
+DB와 GCS는 동일한 서비스를 계속 사용하므로 Render에서 Ubuntu로의 인프라 이관 자체에는 DB 이전이 없다. 이후 새 기능에 필요한 SQL 마이그레이션은 별도로 적용한다.

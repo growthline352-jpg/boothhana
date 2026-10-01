@@ -44,11 +44,13 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 
 ## Routes
 
-- 공개·팬: `/`, `/login`, `/events`, `/events/:eventId`, `/booths/:boothId`, `/products/:productId`, `/booths/:boothId/reserve`, `/reservations`, `/reservations/:reservationId`
+- 공개·팬: `/`, `/login`, `/onboarding`, `/account`, `/events`, `/events/:eventId`, `/booths/:boothId`, `/products/:productId`, `/booths/:boothId/reserve`, `/reservations`, `/reservations/:reservationId`
 - 크리에이터: `/creator/events`, `/creator/booths`, `/creator/event-booths/:eventBoothId`, `/creator/event-booths/:eventBoothId/products`, `/creator/reservations`, `/creator/pos`, `/creator/notices`
 - 관리자: `/admin/events`, `/admin/events/:eventId`, `/admin/applications`
 
 모든 로그인 사용자는 팬·크리에이터 화면을 함께 사용할 수 있습니다. 관리자 화면은 백엔드가 `/api/me`에 `ADMIN` 권한을 반환하는 지정 카카오 계정만 접근할 수 있습니다.
+
+신규 카카오 회원은 `/onboarding`에서 분야별 관심 항목을 선택하거나 나중에 선택하기를 누른 뒤 원래 내부 경로로 돌아갑니다. 기존 회원은 `/account`에서 선택적으로 설정합니다. 분야별 홈의 캐러셀에서 `내 관심분야`와 `전체 인기`를 전환할 수 있으며 비회원은 분야 전체 목록을 봅니다.
 
 ## API behavior
 
@@ -57,7 +59,9 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 - 상태 변경 요청 전 `/api/auth/csrf`에서 토큰을 받아 `X-XSRF-TOKEN` 헤더에 전달합니다.
 - 프런트엔드에는 Supabase 접속 정보나 GCS 자격증명을 넣지 않습니다.
 - 업로드 파일은 백엔드가 크기·형식·SHA-256을 검증한 뒤 GCS에 저장합니다.
-- 인기 행사는 `/api/public/catalog/events/popular`의 실제 회원 행사 저장 수를 사용합니다. 디페스타 양일은 한 회차로 집계하며 같은 회원의 중복 저장을 제거한 뒤 순위를 정합니다. 서울·경기 공개 행사 중 종료·취소·연기된 행사는 제외하며 분야별로 조회할 수 있습니다.
+- 인기 행사는 `/api/public/catalog/events/popular`의 실제 회원 행사 저장 수를 사용합니다. 디페스타 양일은 한 회차로 집계하며 같은 회원의 중복 저장을 제거한 뒤 순위를 정합니다. 서울·경기 공개 행사 중 종료·취소·연기·일정 변경된 행사는 제외하며 분야별로 조회할 수 있습니다.
+- 홈 캐러셀은 공개 `/api/public/catalog/events/featured` 또는 개인 `/api/me/interests/featured`에서 분야·지역·관심 조건을 먼저 적용한 상위 5개를 받습니다. 저장 인원이 같으면 가까운 일정순, 행사 ID순이며 저장된 행사가 없으면 같은 조건의 최근 공개 목록(`RECENT`)을 표시합니다. 조건에 맞는 행사 자체가 없으면 빈 결과를 유지합니다.
+- 관심 항목은 `/api/public/interests`의 서버 옵션을 사용하고 `GET /api/me/interests`·`PUT /api/me/interests`로 계정에 저장합니다. 분야별 행사 유형과 취향 주제는 독립적으로 선택하며 선택한 항목 중 하나에 해당하면 포함됩니다.
 
 ## Styling and state
 
