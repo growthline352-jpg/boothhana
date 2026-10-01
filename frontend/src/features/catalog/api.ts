@@ -66,7 +66,7 @@ export function presentPublicParticipant(row: PublicParticipant): PublicParticip
 }
 
 export const publicCatalogApi={
- calendar:(query:string)=>loadAllEvents(new URLSearchParams(query), params=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${params}`)),
+ calendar:(query:string,combineEditions=true)=>loadAllEvents(new URLSearchParams(query), params=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${params}`),combineEditions),
  popular:(category?:string)=>publicRead<PopularEventSummary[]>(`/api/public/catalog/events/popular${category?`?category=${encodeURIComponent(category)}`:''}`),
  browse:async(query:string)=>{const page=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`);return {...page,items:combineDfestaSummaries(page.items)}},
  events:async(page=0)=>{const result=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`);return {...result,items:combineDfestaSummaries(result.items)}},
