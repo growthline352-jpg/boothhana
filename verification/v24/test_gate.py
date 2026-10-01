@@ -17,13 +17,17 @@ def load_gate():
     return module
 
 class GateReportingTests(unittest.TestCase):
-    def run_gate(self, inherited, new_checks):
+    def run_gate(self, inherited, new_checks, mutate_reports=None):
         gate = load_gate()
         with tempfile.TemporaryDirectory() as temp:
             gate.OUT = Path(temp) / 'result.json'
             gate.ROOT = Path(temp)
             reports=gate.ROOT/'backend/build/test-results/test';reports.mkdir(parents=True)
             suites={
+                'TEST-com.boothhana.release.LibraryIntegrationTests.xml':[
+                    'detachedProfileSaveCannotRevertCompletedOnboarding',
+                    'memberInterestsArePrivateVersionedAndCategoryScoped',
+                    'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback'],
                 'TEST-com.boothhana.floorplan.FloorplanHttpContractTests.xml':['withdrawalHasNoContentSuccess'],
                 'TEST-com.boothhana.release.ReleaseIntegrationTests.xml':[
                     'v24TypedColumnContractMatchesRealPostgres',
@@ -33,6 +37,8 @@ class GateReportingTests(unittest.TestCase):
             }
             for filename,names in suites.items():
                 (reports/filename).write_text('<testsuite>'+''.join(f'<testcase name="{name}()"/>' for name in names)+'</testsuite>')
+            if mutate_reports:
+                mutate_reports(reports)
             gate.OUT.write_text('{"state":"AUTOMATED_CHECKS_PASSED"}')
             parent = SimpleNamespace()
             parent.main = lambda: inherited(parent, gate.OUT)
@@ -73,6 +79,26 @@ class GateReportingTests(unittest.TestCase):
         self.assertEqual(report['state'], 'AUTOMATED_CHECKS_PASSED')
         self.assertFalse(report['productionApproval'])
         self.assertTrue(report['remaining'])
+
+    def test_missing_interest_sql_report_blocks_success(self):
+        code, report = self.run_gate(lambda parent, out: None, lambda out: None,
+            lambda reports: (reports/'TEST-com.boothhana.release.LibraryIntegrationTests.xml').unlink())
+        self.assertEqual(code, 2)
+        self.assertEqual(report['state'], 'NOT_READY')
+        self.assertFalse(report['productionApproval'])
+        self.assertIn('Fresh v24 HTTP/SQL report required', report['reason'])
+
+    def test_skipped_interest_sql_test_blocks_success(self):
+        def skip_case(reports):
+            file=reports/'TEST-com.boothhana.release.LibraryIntegrationTests.xml'
+            file.write_text(file.read_text().replace(
+                '<testcase name="memberInterestsArePrivateVersionedAndCategoryScoped()"/>',
+                '<testcase name="memberInterestsArePrivateVersionedAndCategoryScoped()"><skipped/></testcase>'))
+        code, report = self.run_gate(lambda parent, out: None, lambda out: None, skip_case)
+        self.assertEqual(code, 2)
+        self.assertEqual(report['state'], 'NOT_READY')
+        self.assertFalse(report['productionApproval'])
+        self.assertIn('Required v24 test missing/failed/skipped', report['reason'])
 
 if __name__ == '__main__':
     unittest.main()
