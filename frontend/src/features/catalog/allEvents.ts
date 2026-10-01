@@ -2,7 +2,7 @@ import type { Page, PublicEventSummary } from './api'
 import { combineDfestaSummaries } from './eventGroup'
 
 /** Calendar data must be complete. Combine editions after pagination, never within each page. */
-export async function loadAllEvents(query: URLSearchParams, read: (query: string) => Promise<Page<PublicEventSummary>>): Promise<PublicEventSummary[]> {
+export async function loadAllEvents(query: URLSearchParams, read: (query: string) => Promise<Page<PublicEventSummary>>, combineEditions = true): Promise<PublicEventSummary[]> {
   const params = new URLSearchParams(query)
   params.set('size', '100')
   const rows: PublicEventSummary[] = []
@@ -16,5 +16,5 @@ export async function loadAllEvents(query: URLSearchParams, read: (query: string
     rows.push(...result.items)
     if (result.items.length < 100 && rows.length < total) throw new Error('일부 일정을 불러오지 못했습니다. 다시 확인해 주세요.')
   }
-  return combineDfestaSummaries(rows)
+  return combineEditions ? combineDfestaSummaries(rows) : rows
 }
