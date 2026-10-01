@@ -6,6 +6,7 @@ import { supportApi, type TicketInput } from './api'
 import { secureGuestKey } from './rules'
 import { TicketSubmission } from './submission'
 import './feedback.css'
+import { acquireBodyScrollLock } from '../../components/ui/bodyScrollLock'
 
 export function FeedbackWidget({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
   const auth = useAuth()
@@ -34,10 +35,9 @@ export function FeedbackDialog({ open, setOpen }: { open: boolean; setOpen: (ope
   useEffect(() => {
     if (!open) return
     const element = dialog.current, focus = document.activeElement as HTMLElement | null
-    const overflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const releaseScroll = acquireBodyScrollLock()
     if (element && !element.open) element.showModal()
-    return () => { element?.close(); document.body.style.overflow = overflow; focus?.focus() }
+    return () => { element?.close(); releaseScroll(); focus?.focus() }
   }, [open])
   const close = () => { if (!guard.current) { if (receipt) setReceipt(null); setOpen(false) } }
   const send = async (event: FormEvent) => {

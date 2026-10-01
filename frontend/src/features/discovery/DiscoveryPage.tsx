@@ -60,8 +60,8 @@ export function DiscoveryPage() {
   }
   const reset = () => { setDraft(''); const next = new URLSearchParams({ period: 'all', view: isCalendar ? 'calendar' : 'results' }); if (!currentSiteCategory()) next.set('category', category.key); if (isCalendar && params.get('month')) next.set('month', params.get('month')!); setParams(next) }
   const toggleView = (calendar: boolean) => calendar
-    ? update({ view: 'calendar', period: 'all', from: '', to: '', month: periodRange(state.period, today, state.from, state.to).from.slice(0, 7) || today.slice(0, 7), day: '' })
-    : update({ view: 'results', period: 'custom', ...monthRange(calendarMonth(params.get('month'), today)), month: '', day: '' })
+    ? update({ view: 'calendar', period: 'all', from: '', to: '', month: periodRange(state.period, today, state.from, state.to).from.slice(0, 7) || today.slice(0, 7), day: '', calendarEvent: '' })
+    : update({ view: 'results', period: 'custom', ...monthRange(calendarMonth(params.get('month'), today)), month: '', day: '', calendarEvent: '' })
   const rows = data.data?.items ?? []
   const featuredRows = featured.data?.items ?? []
   const featuredLabel = featured.data?.mode === 'POPULAR' ? '저장 인원순 인기 행사' : '새로 공개된 행사'
