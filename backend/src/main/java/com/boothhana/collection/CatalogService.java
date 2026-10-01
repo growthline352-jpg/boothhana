@@ -232,7 +232,7 @@ public class CatalogService {
                     var keys=CatalogIdentity.productKeys(p);Map<String,Object> existing;
                     try {existing=identities.match(productRows,keys,CatalogIdentity.known(p.identity(),p.sourceEntryId(),p.sources()),true);}
                     catch(ApiException ambiguous) {rejected++;issues.add("상품 식별 검토 필요: "+p.name());continue;}
-                    if(existing!=null&&CatalogIdentity.ambiguousProductUrlMatch(decode(existing.get("payload_json"),ProductData.class),p)) {
+                    if(existing!=null&&CatalogIdentity.ambiguousProductMatch(decode(existing.get("payload_json"),ProductData.class),p)) {
                         rejected++;issues.add("공통 판매 주소의 서로 다른 상품명: 식별 검토 필요: "+p.name());continue;
                     }
                     Long product;
