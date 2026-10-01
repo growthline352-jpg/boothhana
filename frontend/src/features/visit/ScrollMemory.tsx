@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation, useNavigationType } from 'react-router'
+import { pageScrollKey } from './scrollKey'
 
 const positions=new Map<string,number>()
-const keyFor=(path:string,search:string)=>/^\/discover\/\d+\/?$/.test(path)?path:path+search
 /** Explicit catalogue return links and browser POP restore after data and layout are ready. */
 export function usePageScroll(ready:boolean) {
   const location=useLocation(), navigation=useNavigationType()
-  const key=keyFor(location.pathname,location.search)
+  const key=pageScrollKey(location.pathname,location.search)
   const last=useRef(''), restored=useRef(false)
   const wanted=useRef(0)
   useLayoutEffect(()=>{

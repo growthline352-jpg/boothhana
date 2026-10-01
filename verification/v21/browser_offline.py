@@ -74,6 +74,12 @@ def main():
    cache=page.evaluate("async()=>{const out=[];for(const n of await caches.keys())for(const r of await (await caches.open(n)).keys())out.push(r.url);return out}")
    ok('service worker caches ONLY isolated static /offline/ shell',len(cache)==7 and all('/offline/' in u for u in cache))
    page.goto(BASE+'/offline/index.html#101');expect(page.get_by_role('heading',name='서울·경기 테스트 행사 101',exact=True)).to_be_visible()
+   # The reader initially paints the cached pack, then revalidates permissions.
+   # Disconnecting between event JSON and floorplan JSON intentionally removes
+   # an unverified plan. Finish that online check before testing a cold offline read.
+   page.wait_for_function("""async()=>{const pack=await (await import('/offline/store.mjs')).getPack(101);return !!pack?.checkedAt && pack.media.some(m=>m.type==='FLOOR_PLAN' && pack.blobs.some(b=>b.key===m.key))}""")
+   expect(page.get_by_role('button',name='확대',exact=True)).to_be_visible()
+   ok('online permission check retains verified floorplan before disconnection')
    context.set_offline(True);page.reload();expect(page.get_by_role('heading',name='서울·경기 테스트 행사 101',exact=True)).to_be_visible()
    expect(page.get_by_text('인터넷 연결 없음 · 저장된 자료를 보고 있습니다.',exact=True)).to_be_visible()
    ok('offline reload: cached HTML/JS + IndexedDB data without network')
