@@ -19,7 +19,11 @@ public final class InterestTaxonomy {
         new Field("SUBCULTURE","서브컬처",List.of(
             type("COMIC_DOUJIN","코믹·동인","COMIC_DOUJIN"),type("ONLY_EVENT","온리전","ONLY_EVENT"),
             type("BIRTHDAY_CAFE","생일카페","BIRTHDAY_CAFE"),type("DOLL","인형 행사","DOLL"),
-            type("STATIONERY_GOODS","문구·굿즈 행사","STATIONERY_GOODS")),List.of(
+            type("STATIONERY_GOODS","문구·굿즈 행사","STATIONERY_GOODS"),
+            type("SUBCULTURE_MUSIC","애니·게임·버추얼 공연","SUBCULTURE_MUSIC"),
+            type("ANIME_GAME_FESTIVAL","애니·게임 행사","ANIME_GAME_FESTIVAL"),
+            type("ART_BOOK","아트북·독립출판","ART_BOOK"),type("BOARD_GAME","보드게임","BOARD_GAME"),
+            type("CHARACTER_ART","캐릭터·아트","CHARACTER_ART"),type("ILLUSTRATION","일러스트 행사","ILLUSTRATION")),List.of(
             subject("VOCALOID","보컬로이드","보컬로이드","vocaloid","하츠네 미쿠","하츠네미쿠","초음미쿠"),
             subject("VTUBER","버튜버","버튜버","버츄얼 유튜버","버추얼 유튜버","vtuber","버추얼","버츄얼","버추얼 콘텐츠","버츄얼 콘텐츠"),
             subject("ANIME_MANGA","애니·만화","애니","애니메이션","만화","애니·만화","주술회전","하이큐","명탐정 코난","가비지타임"),

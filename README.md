@@ -2,8 +2,8 @@
 >
 > 현재 운영은 GitHub `main` 기반 Vercel 프런트와 Ubuntu의 BoothHana 전용 API·Cloudflare Tunnel을 사용합니다. 공개 이미지와 비공개 첨부는 Google Cloud Storage를 사용합니다. 변경 배포는 해당 커밋의 CI와 실제 운영 수락검사 결과를 기준으로 확인합니다.
 >
-> 현재 API·수집기 운영 방식은 [Ubuntu 터널 배포 가이드](deploy/ubuntu/TUNNEL_KO.md), API 계약·개발 설정은 [백엔드 README](backend/README.md), 프런트 빌드·미리보기는 [프런트 README](frontend/README.md)를 확인하세요. 기존 v24 패키지 기록은 기준 이력이며 현재 Git 배포의 승인 근거가 아닙니다.
-> 분야별 관심 설정과 저장 인원순 추천의 사용 방법은 [내 정보 안내](docs/ACCOUNT_PAGE_KO.md), API·회귀·SQL020 적용 순서는 [관심분야 검증 및 배포 계획](docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 확인하세요. 이 기능의 운영 적용 완료 여부는 해당 커밋의 CI와 배포 수락 결과로 확인합니다.
+> 현재 API·수집기 운영 방식은 [Ubuntu 터널 배포 가이드](deploy/ubuntu/TUNNEL_KO.md), 수집·분류 규격은 [수집기 안내](collector/README_KO.md), API 계약·개발 설정은 [백엔드 README](backend/README.md), 프런트 빌드·미리보기는 [프런트 README](frontend/README.md)를 확인하세요. 분야별 주소와 상세 페이지 연결은 [분야별 사이트 안내](docs/CATEGORY_SITES_KO.md)를 확인하세요. 기존 v24 패키지 기록은 기준 이력이며 현재 Git 배포의 승인 근거가 아닙니다.
+> 분야별 관심 설정과 저장 인원순 추천의 사용 방법은 [내 정보 안내](docs/ACCOUNT_PAGE_KO.md), API·회귀·SQL020~021 적용 순서는 [관심분야 검증 및 배포 계획](docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 확인하세요. v0.2.2.0은 애니·게임·버추얼 공연, 애니·게임 행사, 아트북·독립출판, 보드게임, 캐릭터·아트, 일러스트 행사를 서브컬처 유형으로 지원합니다. 이 기능의 운영 적용 완료 여부는 해당 커밋의 CI와 배포 수락 결과로 확인합니다.
 > 분야별 월별 캘린더와 대표 이미지의 동작은 [프런트 안내](frontend/README.md#routes), 개선 의견 접수와 회원 답변 이력은 [고객지원 안내](docs/support/SUPPORT_AND_ROLES_V12_KO.md#5-고객문의답변비회원)를 확인하세요. 비회원 개선 의견은 접수번호만 제공하며 개별 답변 조회는 지원하지 않습니다.
 > 아래 ZIP·manifest·해시는 `BoothHana2-full-v24-gcp-credit-notes-20260921.zip` 패키지에 관한 과거 기록입니다. 현재 Git 작업본의 파일 목록이나 무결성을 나타내지 않습니다.
 

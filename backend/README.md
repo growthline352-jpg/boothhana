@@ -53,7 +53,8 @@ cd backend
 - `/api/creator/uploads/tickets/{id}/complete`: 저장 객체 메타데이터 재검증 후 업로드 완료
 
 정확한 엔드포인트와 요청 형식은 `src/main/java/com/boothhana/api`의 Controller와 DTO를 기준으로 합니다.
-관심 설정 계약은 `src/main/java/com/boothhana/interests`의 Controller·Service·Taxonomy를 기준으로 합니다. 신규 카카오 계정은 `PENDING`, 기존 계정은 `LEGACY`이며 설정 저장 또는 건너뛰기 후 `DONE / SKIPPED`로 갱신합니다. 새 API에는 `database/020_category_interests.sql`이 필요하며 적용·검증 순서는 [관심분야 검증 및 배포 계획](../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 확인합니다.
+관심 설정 계약은 `src/main/java/com/boothhana/interests`의 Controller·Service·Taxonomy를 기준으로 합니다. 신규 카카오 계정은 `PENDING`, 기존 계정은 `LEGACY`이며 설정 저장 또는 건너뛰기 후 `DONE / SKIPPED`로 갱신합니다. 관심 설정에는 `database/020_category_interests.sql`, 확장된 서브컬처 행사 유형에는 그 뒤의 `database/021_subculture_event_types.sql`이 필요하며 적용·검증 순서는 [관심분야 검증 및 배포 계획](../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 확인합니다.
+서브컬처 목록·공개·관심 유형은 기존 5종과 함께 `SUBCULTURE_MUSIC`(애니·게임·버추얼 공연), `ANIME_GAME_FESTIVAL`(애니·게임 행사), `ART_BOOK`(아트북·독립출판), `BOARD_GAME`(보드게임), `CHARACTER_ART`(캐릭터·아트), `ILLUSTRATION`(일러스트 행사)을 지원합니다. 일반 공연 `MUSIC`은 축제, 일반 디자인 박람회 `DESIGN`은 박람회 유형입니다. SQL021은 허용 분류 제약만 확장하며 기존 행사의 재분류는 관리자 검토와 공개가 필요합니다.
 개선 의견 계약은 `src/main/java/com/boothhana/support`를 기준으로 하며 사용 경로·비회원 접수 제한은 [고객지원 안내](../docs/support/SUPPORT_AND_ROLES_V12_KO.md#5-고객문의답변비회원)를 확인합니다. 비회원 의견과 로그인 장애 문의는 기존 IP별 시간당 작성 시도 5회 한도를 함께 사용하고 같은 요청 ID·내용·조회키의 재전송은 새 접수를 만들지 않습니다.
 
 ## Local troubleshooting
