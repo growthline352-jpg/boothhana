@@ -15,4 +15,4 @@ for (const [tool, args] of [
   if (result.status !== 0) process.exit(result.status ?? 1)
 }
 
-console.log('Local preview built with same-origin API requests. Use the read-only preview proxy on port 4182.')
+console.log(`Local preview built with same-origin API requests. Use the read-only preview proxy on port ${process.env.LOCAL_PREVIEW_PORT || 4186}.`)

@@ -1,12 +1,13 @@
-import { expect, test } from 'vitest'
+import { test } from 'node:test'
+import { strict as assert } from 'node:assert'
 import { previewRoute } from './preview-public.mjs'
 
 test('local preview serves public reads but blocks operating data writes', () => {
-  expect(previewRoute('GET', '/api/public/catalog/events/1')).toBe('public')
-  expect(previewRoute('HEAD', '/api/public/catalog/events/1')).toBe('public')
-  expect(previewRoute('GET', '/api/me')).toBe('guest')
-  expect(previewRoute('POST', '/api/public/catalog/events/1')).toBe('blocked')
-  expect(previewRoute('DELETE', '/api/me/catalog/events/1/comments/123')).toBe('blocked')
-  expect(previewRoute('GET', '/api/admin/events')).toBe('blocked')
-  expect(previewRoute('GET', '/discover/1')).toBe('site')
+  assert.equal(previewRoute('GET', '/api/public/catalog/events/1'), 'public')
+  assert.equal(previewRoute('HEAD', '/api/public/catalog/events/1'), 'public')
+  assert.equal(previewRoute('GET', '/api/me'), 'guest')
+  assert.equal(previewRoute('POST', '/api/public/catalog/events/1'), 'blocked')
+  assert.equal(previewRoute('DELETE', '/api/me/catalog/events/1/comments/123'), 'blocked')
+  assert.equal(previewRoute('GET', '/api/admin/events'), 'blocked')
+  assert.equal(previewRoute('GET', '/discover/1'), 'site')
 })

@@ -67,6 +67,17 @@ public final class CatalogIdentity {
     }
     public static List<String> participantKeys(Participant p) { return keys("participant",p.identity(),p.sourceEntryId(),p.registrationName(),null,p.sources()); }
     public static List<String> productKeys(ProductData p) { return keys("product",p.identity(),p.sourceEntryId(),p.name(),p.productUrl(),p.sources()); }
+    /** A shared URL cannot prove that differently named options are the same product. */
+    public static boolean ambiguousProductUrlMatch(ProductData prior,ProductData incoming) {
+        if(normalize(prior.name()).equals(normalize(incoming.name()))) return false;
+        Identity a=known(prior.identity(),prior.sourceEntryId(),prior.sources()),b=known(incoming.identity(),incoming.sourceEntryId(),incoming.sources());
+        if(a!=null&&b!=null&&a.entryId()!=null&&b.entryId()!=null&&a.sourceSystem().equals(b.sourceSystem())&&a.entryId().equals(b.entryId())) return false;
+        Set<String> urls=new HashSet<>();
+        if(prior.productUrl()!=null)urls.add(canonical(prior.productUrl()));
+        if(prior.identity()!=null&&prior.identity().detailUrl()!=null)urls.add(canonical(prior.identity().detailUrl()));
+        return incoming.productUrl()!=null&&urls.contains(canonical(incoming.productUrl()))
+            || incoming.identity()!=null&&incoming.identity().detailUrl()!=null&&urls.contains(canonical(incoming.identity().detailUrl()));
+    }
     public static Identity known(Identity explicit,String legacy,List<Source> sources) {
         if(explicit!=null) return explicit;
         if(legacy==null||legacy.isBlank()) return null;

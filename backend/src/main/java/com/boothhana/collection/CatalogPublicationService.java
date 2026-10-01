@@ -91,17 +91,34 @@ public class CatalogPublicationService {
         List<Object> args=new ArrayList<>(selected);
         args.add(LocalDate.now(ZoneId.of("Asia/Seoul")).toString());args.add(limit);
         var rows=db.queryForList("""
-            select p.event_id,p.snapshot_json->'event' event_json,p.published_at,s.save_count,
-            (select count(*) from jsonb_array_elements(p.snapshot_json->'participants') x
-             join subculture_participant q on q.id=(x->>'id')::bigint where q.review_state<>'EXCLUDED') participant_count
-            from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
-            join (select event_id,count(*) save_count from memory_item
-                  where target_type='EVENT' and target_id=event_id group by event_id) s on s.event_id=p.event_id
-            where e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')
-              and p.snapshot_json->'event'->>'subcategory' in (%s)
-              and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED')
-              and exists(select 1 from jsonb_array_elements(coalesce(p.snapshot_json->'event'->'occurrences','[]'::jsonb)) d
-                         where d->>'endDate'>=?)
+            with visible as (
+              select p.* from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
+              where e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')
+                and p.snapshot_json->'event'->>'subcategory' in (%s)
+                and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED')
+            ), editions as (
+              select p.*,case when p.event_id in (1,7)
+                and exists(select 1 from visible where event_id=1 and snapshot_json->'event'->>'name'='제35회 디. 페스타 (토요일)')
+                and exists(select 1 from visible where event_id=7 and snapshot_json->'event'->>'name'='제35회 디. 페스타 (일요일)')
+                then 1 else p.event_id end edition_id from visible p
+            ), saves as (
+              select p.edition_id,count(distinct m.user_id) save_count from editions p join memory_item m on m.event_id=p.event_id
+              where m.target_type='EVENT' and m.target_id=m.event_id group by p.edition_id
+            )
+            select p.event_id,
+              case when exists(select 1 from editions sibling where sibling.edition_id=p.event_id and sibling.event_id<>p.event_id)
+                then jsonb_set(jsonb_set(p.snapshot_json->'event','{name}',to_jsonb('제35회 디. 페스타'::text)), '{occurrences}',
+                  (select jsonb_agg(d.value order by sibling.event_id,d.ordinality) from editions sibling
+                   cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) with ordinality d(value,ordinality)
+                   where sibling.edition_id=p.event_id))
+                else p.snapshot_json->'event' end event_json,p.published_at,s.save_count,
+              (select count(*) from editions sibling cross join lateral jsonb_array_elements(sibling.snapshot_json->'participants') x
+               join subculture_participant q on q.id=(x->>'id')::bigint
+               where sibling.edition_id=p.event_id and q.review_state<>'EXCLUDED') participant_count
+            from editions p join saves s on s.edition_id=p.event_id
+            where p.event_id=p.edition_id and exists(
+              select 1 from editions sibling cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) d
+              where sibling.edition_id=p.event_id and d->>'endDate'>=?)
             order by s.save_count desc,p.published_at desc,p.event_id
             limit ?
             """.formatted(types),args.toArray());

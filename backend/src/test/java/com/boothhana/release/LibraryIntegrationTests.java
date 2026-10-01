@@ -135,6 +135,39 @@ class LibraryIntegrationTests {
   db.update("update subculture_event_candidate set review_state='EXCLUDED' where id=?",event);
   assertThat(publications.popular(12)).noneMatch(row->((Number)row.get("id")).longValue()==event);
  }
+ @Test @org.springframework.transaction.annotation.Transactional @SuppressWarnings("unchecked")
+ void popularEditionDeduplicatesMembersBeforeLimitAndKeepsRemainingDay(){
+  var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
+  String past=LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1).toString(),future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(1).toString();
+  db.queryForObject("select setval(pg_get_serial_sequence('subculture_event_candidate','id'),greatest(7,nextval(pg_get_serial_sequence('subculture_event_candidate','id')),(select max(id) from subculture_event_candidate)),true)",Long.class);
+  String ownKey=UUID.randomUUID().toString().replace("-","").repeat(2);
+  event=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state) values(?,?,'[TEST] popularity competitor','ONLY_EVENT',cast(? as date),cast(? as date),'{}',?,'[]','REVIEWED') returning id",Long.class,ownKey,ownKey,future,future,ownKey);
+  e.put("region","SEOUL");e.put("subcategory","ONLY_EVENT");snapshot.put("participants",List.of());
+  for(long id:List.of(1L,7L)){
+   String name=id==1?"제35회 디. 페스타 (토요일)":"제35회 디. 페스타 (일요일)",date=id==1?past:future,key=UUID.randomUUID().toString().replace("-","").repeat(2);
+   db.update("insert into subculture_event_candidate(id,identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state) values(?,?,?,?,'ONLY_EVENT',cast(? as date),cast(? as date),'{}',?,'[]','REVIEWED') on conflict(id) do update set name=excluded.name,review_state='REVIEWED'",id,key,key,name,date,date,key);
+   e.put("name",name);e.put("occurrences",List.of(Map.of("startDate",date,"endDate",date)));snapshot.put("event",new LinkedHashMap<>(e));
+   db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",id,json.writeValueAsString(snapshot));
+   db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,?,'EVENT',?,'{}'::jsonb)",UUID.randomUUID(),user,id,id);
+  }
+  db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,7,'EVENT',7,'{}'::jsonb)",UUID.randomUUID(),other);
+  var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
+  var grouped=publications.popular(12,"SUBCULTURE");
+  var edition=grouped.stream().filter(row->((Number)row.get("id")).longValue()==1).findFirst().orElseThrow();
+  assertThat(((Number)edition.get("saveCount")).longValue()).isEqualTo(2);
+  var data=(com.boothhana.collection.CollectionModels.EventData)edition.get("event");
+  assertThat(data.name()).isEqualTo("제35회 디. 페스타");assertThat(data.occurrences()).hasSize(2);
+  assertThat(grouped).noneMatch(row->((Number)row.get("id")).longValue()==7);
+  e.put("name","[TEST] three members");e.put("occurrences",List.of(Map.of("startDate",future,"endDate",future)));snapshot.put("event",e);publish();
+  long third=db.queryForObject("insert into app_user(kakao_subject,display_name) values(?,'[TEST] Memory C') returning id",Long.class,"popular-"+UUID.randomUUID());
+  for(long owner:List.of(user,other,third))db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,?,'EVENT',?,'{}'::jsonb)",UUID.randomUUID(),owner,event,event);
+  assertThat(((Number)publications.popular(1,"SUBCULTURE").getFirst().get("id")).longValue()).isEqualTo(event);
+  db.update("update subculture_catalog_publication set snapshot_json=jsonb_set(snapshot_json,'{event,name}',to_jsonb('Different edition'::text)) where event_id=7");
+  assertThat(publications.popular(12)).noneMatch(row->((Number)row.get("id")).longValue()==1);
+  assertThat(publications.popular(12)).anyMatch(row->((Number)row.get("id")).longValue()==7);
+  db.update("update subculture_event_candidate set review_state='EXCLUDED' where id=7");
+  assertThat(publications.popular(12)).noneMatch(row->Set.of(1L,7L).contains(((Number)row.get("id")).longValue()));
+ }
  // v21: actual JDBC joins + saved projection. Not executed without the isolated test DB.
  @Test void v21HiddenSalesRedactsSavedBoothHistoryAndSearch(){
   var booth=new Target("PARTICIPANT",event,participant,participant);
