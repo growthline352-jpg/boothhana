@@ -3,6 +3,6 @@ import type { PopularEventSummary } from '../catalog/api'
 export function rankedPopularEvents(rows: PopularEventSummary[], limit = 6): PopularEventSummary[] {
   return [...rows]
     .sort((a, b) => b.saveCount - a.saveCount
-      || (b.publishedAt || '').localeCompare(a.publishedAt || '') || a.id - b.id)
+      || rows.indexOf(a) - rows.indexOf(b))
     .slice(0, limit)
 }

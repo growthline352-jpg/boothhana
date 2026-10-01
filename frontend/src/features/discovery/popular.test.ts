@@ -9,9 +9,9 @@ const row = (id: number, name: string, saveCount: number, publishedAt = '2026-09
 })
 
 describe('인기 행사 순위', () => {
-  it('orders by actual save count, then publication time', () => {
+  it('orders by actual save count and preserves server date order for ties', () => {
     const ranked = rankedPopularEvents([row(8, '행사 A', 2), row(9, '행사 B', 4), row(10, '행사 C', 2, '2026-09-30T00:00:00Z')])
-    expect(ranked.map(item => item.id)).toEqual([9, 10, 8])
+    expect(ranked.map(item => item.id)).toEqual([9, 8, 10])
   })
   it('preserves the API distinct-member count for a combined edition', () => {
     const ranked = rankedPopularEvents([row(1, '제35회 디. 페스타', 5), row(8, '다른 행사', 6)])

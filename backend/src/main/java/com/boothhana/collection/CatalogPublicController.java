@@ -20,5 +20,6 @@ public class CatalogPublicController {
         return publications.list(query);
     }
     @GetMapping("/events/popular") public List<Map<String,Object>> popular(@RequestParam(defaultValue="") String category){return publications.popular(12,category);}
+    @GetMapping("/events/featured") public Map<String,Object> featured(@RequestParam String category,@RequestParam(defaultValue="") String region){return publications.featured(category,region,null);}
     @GetMapping("/events/{id}") public Map<String,Object> detail(@PathVariable long id){return publications.detail(id);}
 }

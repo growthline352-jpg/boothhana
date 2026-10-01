@@ -7,6 +7,7 @@ export interface User {
   id: number
   displayName: string
   profileImageUrl?: string | null
+  onboardingRequired?: boolean
   permissions: Permission[]
 }
 

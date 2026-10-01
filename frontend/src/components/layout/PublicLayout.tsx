@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { OnboardingGate } from '../../features/interests/OnboardingPage'
 import { RouteMetadata } from '../../app/PageMetadata'
 import { AnalyticsConsent } from '../../features/analytics/AnalyticsConsent'
 import { useAuth } from '../../app/useAuth'
@@ -41,6 +42,7 @@ export function PublicLayout() {
   }
   return <div className="page-shell public-shell" data-category={current ?? 'subculture'}>
     <RouteMetadata />
+    <OnboardingGate />
     <a className="discovery-skip" href="#public-main">본문으로 바로가기</a>
     <header className="discovery-header">
       <div className="discovery-header-inner">

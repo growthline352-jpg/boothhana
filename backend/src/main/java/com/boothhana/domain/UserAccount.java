@@ -11,5 +11,7 @@ public class UserAccount {
     @Column(name = "display_name", nullable = false) public String displayName;
     @Column(name = "custom_display_name", nullable = false) public boolean customDisplayName;
     @Column(name = "profile_image_key", length = 512) public String profileImageKey;
+    // Status updates belong to InterestService; detached profile/OAuth saves must not revert them.
+    @Column(name = "onboarding_status", nullable = false, length = 12, updatable = false) public String onboardingStatus = "LEGACY";
     @Column(name = "created_at", nullable = false) public Instant createdAt = Instant.now();
 }

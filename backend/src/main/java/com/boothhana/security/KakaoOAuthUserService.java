@@ -23,7 +23,9 @@ public class KakaoOAuthUserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
         OAuth2User kakao = super.loadUser(request);
         String subject = kakaoSubject(kakao.getAttribute("id"));
-        UserAccount user = users.findByKakaoSubject(subject).orElseGet(UserAccount::new);
+        UserAccount user = users.findByKakaoSubject(subject).orElseGet(() -> {
+            UserAccount created = new UserAccount(); created.onboardingStatus = "PENDING"; return created;
+        });
         user.kakaoSubject = subject;
         if (!user.customDisplayName) user.displayName = nickname(kakao.getAttributes());
         users.save(user);

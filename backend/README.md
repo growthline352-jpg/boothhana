@@ -39,6 +39,9 @@ cd backend
 
 - `/api/public/**`: 공개 행사·부스·상품 조회
 - `/api/me`, `/api/me/reservations/**`: 로그인 사용자와 자신의 예약
+- `GET /api/public/interests`: `InterestTaxonomy`가 정의한 분야별 행사 유형·취향 주제 옵션
+- `GET /api/me/interests`, `PUT /api/me/interests`: 현재 회원의 관심 설정 조회·저장. 저장에는 `expectedUserId`, `revision`, `onboardingStatus`, `fields`가 필요하며 다른 계정·과거 revision은 충돌로 거절합니다.
+- `GET /api/public/catalog/events/featured`, `GET /api/me/interests/featured`: 분야·지역의 전체 또는 개인 관심 조건으로 회원 저장 수 상위 5개와 `POPULAR / RECENT` 상태 조회
 - `/api/creator/**`: 기본·행사별 부스, 참가 신청, 상품, 공지, 예약 수령, POS 목록·단건 상세·취소
 - `/api/admin/**`: 지정 관리자 계정의 행사와 참가 신청 관리
 - `/api/creator/uploads/tickets`: 검증 업로드 티켓 발급
@@ -46,6 +49,7 @@ cd backend
 - `/api/creator/uploads/tickets/{id}/complete`: 저장 객체 메타데이터 재검증 후 업로드 완료
 
 정확한 엔드포인트와 요청 형식은 `src/main/java/com/boothhana/api`의 Controller와 DTO를 기준으로 합니다.
+관심 설정 계약은 `src/main/java/com/boothhana/interests`의 Controller·Service·Taxonomy를 기준으로 합니다. 신규 카카오 계정은 `PENDING`, 기존 계정은 `LEGACY`이며 설정 저장 또는 건너뛰기 후 `DONE / SKIPPED`로 갱신합니다. 새 API에는 `database/020_category_interests.sql`이 필요하며 적용·검증 순서는 [관심분야 검증 및 배포 계획](../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 확인합니다.
 
 ## Local troubleshooting
 

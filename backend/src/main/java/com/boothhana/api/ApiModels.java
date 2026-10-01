@@ -11,7 +11,9 @@ import java.util.UUID;
 public final class ApiModels {
     private ApiModels() {}
 
-    public record UserView(Long id, String displayName, String profileImageUrl, List<Permission> permissions) {}
+    public record UserView(Long id, String displayName, String profileImageUrl, List<Permission> permissions, boolean onboardingRequired) {
+        public UserView(Long id,String displayName,String profileImageUrl,List<Permission> permissions){this(id,displayName,profileImageUrl,permissions,false);}
+    }
     public record ProfileInput(@NotBlank String displayName, @Size(max = 512) String profileImageKey, boolean removeImage) {}
     public record EventView(Long id, String name, Instant startAt, Instant endAt, String venue, String description, String imageUrl, Instant reservationStartAt, Instant reservationEndAt, EventStatus status, long boothCount, ApplicationStatus applicationStatus, String imageKey) {}
     public record EventInput(@NotBlank @Size(max = 255) String name, @NotNull Instant startAt, @NotNull Instant endAt,

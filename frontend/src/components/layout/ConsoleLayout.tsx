@@ -1,4 +1,5 @@
 import { PageMetadata } from '../../app/PageMetadata'
+import { OnboardingGate } from '../../features/interests/OnboardingPage'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../../app/useAuth'
 import { AuthStatusNotice } from '../../app/AuthStatusNotice'
@@ -45,6 +46,7 @@ function ConsoleContent({ role }: { role: 'CREATOR' | 'ADMIN' }) {
     return <div className="state-panel"><h2>관리자 로그인이 필요합니다</h2><p>운영자 전용 아이디와 비밀번호로 로그인해 주세요.</p><NavLink className="btn primary" to={`/admin/login?returnTo=${encodeURIComponent(returnTo)}`}>관리자 로그인</NavLink></div>
   }
   if (!user) return <div className="state-panel"><h2>로그인이 필요합니다</h2><p>카카오 계정으로 로그인한 뒤 다시 확인해 주세요.</p><a className="btn primary" href={loginUrl}>카카오 로그인</a></div>
+  if (user.onboardingRequired) return <OnboardingGate />
   if (!user.permissions.includes(role) && role === 'ADMIN') {
     const returnTo = location.pathname + location.search
     return <div className="state-panel error-state" role="alert"><h2>관리자 계정이 아닙니다</h2><p>현재 카카오 계정 대신 운영자 전용 계정으로 로그인해 주세요.</p><NavLink className="btn primary" to={`/admin/login?returnTo=${encodeURIComponent(returnTo)}`}>관리자 로그인</NavLink></div>

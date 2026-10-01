@@ -1,6 +1,7 @@
 package com.boothhana.collection;
 
 import com.boothhana.api.ApiException;
+import com.boothhana.interests.InterestTaxonomy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,19 +84,38 @@ public class CatalogPublicationService {
     /** Only actual member EVENT saves count. Never infer popularity from views or local guest storage. */
     public List<Map<String,Object>> popular(int limit) {return popular(limit,"");}
     public List<Map<String,Object>> popular(int limit,String category) {
+        return ranked(limit,category,"",null,false);
+    }
+    public Map<String,Object> featured(String category,String region,InterestTaxonomy.Selection selection) {
+        InterestTaxonomy.field(category);
+        var items=ranked(5,category,region,selection,false);
+        boolean recent=items.isEmpty();
+        if(recent)items=ranked(5,category,region,selection,true);
+        return Map.of("mode",recent?"RECENT":"POPULAR","personalized",selection!=null,"items",items);
+    }
+    private List<Map<String,Object>> ranked(int limit,String category,String region,InterestTaxonomy.Selection selection,boolean recent) {
         if(limit<1||limit>12)throw ApiException.badRequest("인기 행사 조회 개수를 확인해 주세요.");
         if(category==null)category="";
         if(!category.isEmpty()&&!CatalogTaxonomy.GROUPS.containsKey(category))throw ApiException.badRequest("행사 분야를 확인해 주세요.");
         Collection<String> selected=category.isEmpty()?CatalogTaxonomy.TYPES:CatalogTaxonomy.GROUPS.get(category);
+        if(region==null)region="";
+        if(!Set.of("","SEOUL","GYEONGGI").contains(region))throw ApiException.badRequest("지역을 확인해 주세요.");
         String types=String.join(",",Collections.nCopies(selected.size(),"?"));
         List<Object> args=new ArrayList<>(selected);
-        args.add(LocalDate.now(ZoneId.of("Asia/Seoul")).toString());args.add(limit);
+        String regionSql=region.isEmpty()?"true":"p.snapshot_json->'event'->>'region'=?";
+        if(!region.isEmpty())args.add(region);
+        String today=LocalDate.now(ZoneId.of("Asia/Seoul")).toString();
+        args.add(today);args.add(today);
+        String interests=InterestTaxonomy.predicate(category,selection,"sibling",args);
+        args.add(today);args.add(limit);
+        String saveJoin=recent?"left join":"join";
+        String order=recent?"p.published_at desc,p.event_id":"coalesce(s.save_count,0) desc,next_date,p.event_id";
         var rows=db.queryForList("""
             with visible as (
               select p.* from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
               where e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')
                 and p.snapshot_json->'event'->>'subcategory' in (%s)
-                and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED')
+                and (%s) and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED','RESCHEDULED')
             ), editions as (
               select p.*,case when p.event_id in (1,7)
                 and exists(select 1 from visible where event_id=1 and snapshot_json->'event'->>'name'='제35회 디. 페스타 (토요일)')
@@ -111,17 +131,20 @@ public class CatalogPublicationService {
                   (select jsonb_agg(d.value order by sibling.event_id,d.ordinality) from editions sibling
                    cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) with ordinality d(value,ordinality)
                    where sibling.edition_id=p.event_id))
-                else p.snapshot_json->'event' end event_json,p.published_at,s.save_count,
+                else p.snapshot_json->'event' end event_json,p.published_at,coalesce(s.save_count,0) save_count,
+              (select min(greatest(d->>'startDate',?)) from editions sibling
+               cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) d
+               where sibling.edition_id=p.event_id and d->>'endDate'>=?) next_date,
               (select count(*) from editions sibling cross join lateral jsonb_array_elements(sibling.snapshot_json->'participants') x
                join subculture_participant q on q.id=(x->>'id')::bigint
                where sibling.edition_id=p.event_id and q.review_state<>'EXCLUDED') participant_count
-            from editions p join saves s on s.edition_id=p.event_id
-            where p.event_id=p.edition_id and exists(
+            from editions p %s saves s on s.edition_id=p.event_id
+            where p.event_id=p.edition_id and exists(select 1 from editions sibling where sibling.edition_id=p.event_id and (%s)) and exists(
               select 1 from editions sibling cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) d
               where sibling.edition_id=p.event_id and d->>'endDate'>=?)
-            order by s.save_count desc,p.published_at desc,p.event_id
+            order by %s
             limit ?
-            """.formatted(types),args.toArray());
+            """.formatted(types,regionSql,saveJoin,interests,order),args.toArray());
         return summaries(rows);
     }
     private List<Map<String,Object>> summaries(List<Map<String,Object>> rows) {

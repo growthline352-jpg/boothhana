@@ -1,0 +1,18 @@
+import { describe, expect, it } from 'vitest'
+import { onboardingReturn, toggleInterest } from './api'
+
+describe('category interests', () => {
+  it('keeps format and topic changes inside their own category', () => {
+    const input = { SUBCULTURE: { formats: ['BIRTHDAY_CAFE'], topics: ['VOCALOID'] }, FESTIVAL: { formats: ['LIVE'], topics: ['JAZZ'] } }
+    const changed = toggleInterest(input, 'FESTIVAL', 'topics', 'ROCK')
+    expect(changed.SUBCULTURE).toEqual(input.SUBCULTURE)
+    expect(changed.FESTIVAL).toEqual({ formats: ['LIVE'], topics: ['JAZZ', 'ROCK'] })
+    expect(input.FESTIVAL.topics).toEqual(['JAZZ'])
+    expect(toggleInterest(changed, 'FESTIVAL', 'topics', 'JAZZ').FESTIVAL.topics).toEqual(['ROCK'])
+  })
+  it('returns to the interrupted public route and rejects external destinations', () => {
+    expect(onboardingReturn('/discover/224?from=home')).toBe('/discover/224?from=home')
+    expect(onboardingReturn('/account')).toBe('/account')
+    for (const path of ['https://bad.test', '//bad.test', '/\\bad.test', '/onboarding', '/discover/2\n']) expect(onboardingReturn(path)).toBe('/')
+  })
+})
