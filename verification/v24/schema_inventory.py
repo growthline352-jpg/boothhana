@@ -42,7 +42,7 @@ def column(part):
 
 def inventory(root=ROOT):
     tables={};files=sorted((root/'database').glob('[0-9][0-9][0-9]_*.sql'))
-    if [p.name[:3] for p in files]!=[f'{i:03d}' for i in range(1,21)]:raise ValueError('Expected migration sequence 001..020')
+    if [p.name[:3] for p in files]!=[f'{i:03d}' for i in range(1,22)]:raise ValueError('Expected migration sequence 001..021')
     for path in files:
         text=re.sub(r'/\*.*?\*/','',path.read_text(),flags=re.S);text=re.sub(r'--[^\n]*','',text)
         # This extractor intentionally supports only CREATE and single ADD/DROP COLUMN.

@@ -8,6 +8,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/
 const TIME = /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/
 const CATEGORY_BY_TYPE = {
   COMIC_DOUJIN: 'subculture', DOLL: 'subculture', ONLY_EVENT: 'subculture', BIRTHDAY_CAFE: 'subculture', STATIONERY_GOODS: 'subculture',
+  SUBCULTURE_MUSIC: 'subculture', ANIME_GAME_FESTIVAL: 'subculture', ART_BOOK: 'subculture', BOARD_GAME: 'subculture', CHARACTER_ART: 'subculture', ILLUSTRATION: 'subculture',
   WINE: 'exhibitions', WEDDING: 'exhibitions', LIFESTYLE: 'exhibitions', DESIGN: 'exhibitions', BUSINESS: 'exhibitions',
   WALK: 'festivals', LIGHT: 'festivals', MUSIC: 'festivals', FOOD: 'festivals', CULTURE: 'festivals',
 }

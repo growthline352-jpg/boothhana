@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static com.boothhana.collection.CatalogModels.*;
 import static com.boothhana.collection.CollectionModels.*;
 
-/** REAL entire app + actual SQL001..020 already applied by prepare_test_db.py.
+/** REAL entire app + actual SQL001..021 already applied by prepare_test_db.py.
  * NEVER use production, SSH tunnels or a database containing real data.
  * OAuth provider/R2/real browsers/CLI are separate staging acceptance, not simulated success.
  * Class is skipped without opt-in; release_gate.py rejects a missing/skipped report. */
@@ -154,6 +154,27 @@ class ReleaseIntegrationTests {
   String encoded=json.writeValueAsString(data),key=SupportRules.digest(UUID.randomUUID().toString());
   long id=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,venue_name,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state,reviewed_payload_json) values(?,?,?,'ONLY_EVENT','서울 전시장','2026-10-03','2026-10-03',cast(? as jsonb),?,'[]','REVIEWED',cast(? as jsonb)) returning id",Long.class,key,key,label,encoded,key,encoded);
   publications.publish(id,new com.boothhana.collection.CatalogModels.PublishInput(1));return id;
+ }
+ @Test void correctedSubcultureTypesAreReviewedAndPublishedInTheirOwnField() throws Exception {
+  String label="[TEST] Q4 classification "+UUID.randomUUID();
+  for(String type:List.of("SUBCULTURE_MUSIC","ANIME_GAME_FESTIVAL","ART_BOOK","BOARD_GAME","CHARACTER_ART","ILLUSTRATION")) {
+   long id=catalogEvent(label+" "+type);
+   catalog.editEvent(id,new EditInput(1,"REVIEWED","Official Q4 classification",Map.of("subcategory",type)));
+   // An edit alone must not change the published point-in-time view.
+   http.perform(get("/api/public/catalog/events").param("category","SUBCULTURE").param("subcategory",type).param("q",label))
+    .andExpect(status().isOk()).andExpect(jsonPath("$.items.length()").value(0));
+   publications.publish(id,new PublishInput(2));
+   http.perform(get("/api/public/catalog/events").param("category","SUBCULTURE").param("subcategory",type).param("q",label))
+    .andExpect(status().isOk()).andExpect(jsonPath("$.items[0].id").value(id)).andExpect(jsonPath("$.items[0].event.subcategory").value(type));
+   assertThat(json.writeValueAsString(publications.detail(id))).contains("원래 소개");
+  }
+  long music=catalogEvent(label+" general music");
+  catalog.editEvent(music,new EditInput(1,"REVIEWED","General music remains a festival",Map.of("subcategory","MUSIC")));
+  publications.publish(music,new PublishInput(2));
+  http.perform(get("/api/public/catalog/events").param("category","FESTIVAL").param("q",label))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].id").value(music));
+  http.perform(get("/api/public/catalog/events").param("category","EXHIBITION").param("q",label))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(0));
  }
  UUID claimOrganizer(long event) {
   UUID id=UUID.randomUUID();support.create(new Create(id,"CLAIM","ORGANIZER","테스트 주최 단체","공식 계정 소유 확인 요청",List.of("https://example.com/official"),new Target("CATALOG","EVENT",event,event,null,null,null,null),Map.of(),null),new Principal(owner.id,false,false));return id;

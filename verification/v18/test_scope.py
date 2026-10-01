@@ -13,7 +13,7 @@ SAMPLE=json.loads((ROOT/'collector/examples/v5/events.json').read_text())
 class ScopeTests(unittest.TestCase):
  def event(self):return deepcopy(SAMPLE['events'][0])
  def check(self,e):return check_event(e,date(2026,10,1),date(2026,10,31))[0]
- def test_all_fifteen_types_in_both_regions(self):
+ def test_all_catalog_types_in_both_regions(self):
   for category,types in GROUPS.items():
    for type_ in types:
     for region in REGIONS:
@@ -51,6 +51,7 @@ class ScopeTests(unittest.TestCase):
  def test_sql_is_additive_and_permission_defaults_false(self):
   sql=(ROOT/'database/016_catalog_scope_offline.sql').read_text()
   self.assertIn('offline_allowed boolean not null default false',sql)
+  sql+=(ROOT/'database/021_subculture_event_types.sql').read_text()
   for types in GROUPS.values():
    for type_ in types:self.assertIn("'"+type_+"'",sql)
   self.assertNotIn('delete from',sql.lower());self.assertNotIn('update subculture',sql.lower())

@@ -1,6 +1,6 @@
 import { api } from '../../api/client'
 export type ReviewState = 'PENDING' | 'REVIEWED' | 'EXCLUDED'
-export type Subcategory = 'COMIC_DOUJIN' | 'DOLL' | 'ONLY_EVENT' | 'BIRTHDAY_CAFE' | 'STATIONERY_GOODS' | 'WINE' | 'WEDDING' | 'LIFESTYLE' | 'DESIGN' | 'BUSINESS' | 'WALK' | 'LIGHT' | 'MUSIC' | 'FOOD' | 'CULTURE'
+export type Subcategory = 'COMIC_DOUJIN' | 'DOLL' | 'ONLY_EVENT' | 'BIRTHDAY_CAFE' | 'STATIONERY_GOODS' | 'SUBCULTURE_MUSIC' | 'ANIME_GAME_FESTIVAL' | 'ART_BOOK' | 'BOARD_GAME' | 'CHARACTER_ART' | 'ILLUSTRATION' | 'WINE' | 'WEDDING' | 'LIFESTYLE' | 'DESIGN' | 'BUSINESS' | 'WALK' | 'LIGHT' | 'MUSIC' | 'FOOD' | 'CULTURE'
 export interface Occurrence { startDate: string; endDate: string; startTime: string | null; endTime: string | null }
 export interface EventSource { url: string; kind: string; access: string; evidence: string }
 export interface SourceCoverage { channel: string; status: string; queries: string[]; checkedUrls: string[]; notes: string }

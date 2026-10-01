@@ -6,7 +6,8 @@
 비공개 장소는 추적하지 않는다. 공식 근거로 시·도조차 확인하지 못하면 UNKNOWN으로 반환하여 검토 대상에서 제외되게 한다.
 
 다음 세 분야를 각각 검색한다. 하위 분류는 아래 코드 중 하나이며 중복 등록하지 않는다.
-서브컬처: COMIC_DOUJIN(코믹·동인), DOLL(인형), ONLY_EVENT(온리전), BIRTHDAY_CAFE(생일카페), STATIONERY_GOODS(문구·굿즈).
+서브컬처: COMIC_DOUJIN(코믹·동인), DOLL(인형), ONLY_EVENT(온리전), BIRTHDAY_CAFE(생일카페), STATIONERY_GOODS(문구·굿즈), SUBCULTURE_MUSIC(애니·게임·버추얼 공연), ANIME_GAME_FESTIVAL(애니·게임 행사), ART_BOOK(아트북·독립출판), BOARD_GAME(보드게임), CHARACTER_ART(캐릭터·아트), ILLUSTRATION(일러스트 행사).
+공연·전시 형식만으로 축제·박람회로 이동하지 말고, 공식 출처의 서브컬처 주제와 행사 성격을 확인해 위 유형으로 분류한다. 일반 음악 공연은 축제 MUSIC, 일반 디자인 박람회는 박람회 DESIGN을 유지한다.
 박람회: WINE(주류·와인), WEDDING(웨딩), LIFESTYLE(생활·취미), DESIGN(디자인·아트), BUSINESS(창업·산업).
 축제: WALK(걷기·거리), LIGHT(불꽃·빛), MUSIC(음악·공연), FOOD(먹거리), CULTURE(지역·문화).
 여러 분야가 겹치면 주최 측의 주된 행사 목적과 참가 구성으로 하나를 선택하고 warnings에 분류 근거를 남긴다.

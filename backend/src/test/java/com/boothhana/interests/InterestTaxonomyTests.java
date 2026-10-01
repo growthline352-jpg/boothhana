@@ -18,4 +18,10 @@ class InterestTaxonomyTests {
         assertThat(sql).contains(" or ","topic.value").doesNotContain("VOCALOID","BIRTHDAY_CAFE");
         assertThat(args).contains("BIRTHDAY_CAFE","vocaloid");
     }
+    @Test void subcultureLiveFormatDoesNotUseGeneralFestivalMusic() {
+        var args=new ArrayList<Object>();
+        InterestTaxonomy.predicate("SUBCULTURE",new InterestTaxonomy.Selection(List.of("SUBCULTURE_MUSIC"),List.of()),"p",args);
+        assertThat(args).containsExactly("SUBCULTURE_MUSIC");
+        assertThatThrownBy(()->InterestTaxonomy.validate(Map.of("FESTIVAL",new InterestTaxonomy.Selection(List.of("SUBCULTURE_MUSIC"),List.of())))).isInstanceOf(ApiException.class);
+    }
 }

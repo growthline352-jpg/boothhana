@@ -1,10 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { categoryHref, categoryEventHref, activeCategory, safeEventReturnTo } from './categories'
+import { categoryHref, categoryEventHref, activeCategory, safeEventReturnTo, categoryForType } from './categories'
 import { parseBrowse, browseApiParams } from './browse'
 import { categorySitesActive, isLocalPreview } from './site'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('category site routing', () => {
+  it('retains the corrected subculture format in browse filters and event routing', () => {
+    for (const type of ['SUBCULTURE_MUSIC', 'ANIME_GAME_FESTIVAL', 'ART_BOOK', 'BOARD_GAME', 'CHARACTER_ART', 'ILLUSTRATION']) {
+      const state = parseBrowse(new URLSearchParams(`category=subculture&type=${type}`))
+      expect(browseApiParams(state, '2026-10-02').get('subcategory')).toBe(type)
+      expect(categoryForType(type).key).toBe('subculture')
+    }
+    expect(categoryForType('MUSIC').key).toBe('festivals')
+  })
   it('keeps local category homes on the local preview while production links stay split', () => {
     vi.stubGlobal('window', { location: { host: '127.0.0.1:4184' } })
     vi.stubEnv('VITE_PUBLIC_SITE_URL', 'https://boothana.kr')
