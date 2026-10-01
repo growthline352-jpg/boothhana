@@ -49,8 +49,9 @@ export function CalendarDetailPanel({ day, rows, event, today, returnTo, loading
     .map(value => value.startTime ? `${value.startTime}${value.endTime ? ` ~ ${value.endTime}` : '부터'}` : '시간 확인 필요'))]
   return <dialog ref={dialog} className="calendar-detail-panel" aria-labelledby="calendar-panel-heading"
     onCancel={value => { value.preventDefault(); onClose() }} onKeyDown={value => {
-      if (value.key !== 'Tab' || !value.currentTarget.matches(':modal')) return
-      const controls = [...value.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]')]
+      const element = dialog.current
+      if (value.key !== 'Tab' || !element?.matches(':modal')) return
+      const controls = [...element.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]')]
       const first = controls[0], last = controls.at(-1)
       if (value.shiftKey && document.activeElement === first) { value.preventDefault(); last?.focus() }
       else if (!value.shiftKey && document.activeElement === last) { value.preventDefault(); first?.focus() }
