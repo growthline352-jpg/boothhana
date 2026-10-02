@@ -60,7 +60,7 @@ export const router = createBrowserRouter([
     { path: 'notices', element: <CreatorNoticesPage /> },
   ] },
   { path: '/admin', element: <ConsoleLayout role="ADMIN" />, children: [
-    { index: true, element: <Navigate to="events" replace /> },
+    { index: true, element: <Navigate to="subculture" replace /> },
     { path: 'events', element: <AdminEventsPage /> },
     { path: 'events/:eventId', element: <AdminEventFormPage /> },
     { path: 'applications', element: <AdminApplicationsPage /> },

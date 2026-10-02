@@ -1,5 +1,7 @@
 > **현재 코드와 운영 배포 · GitHub/Vercel/Ubuntu/GCS**
 >
+> v0.2.4.0 관리자·업체 화면의 공개 행사 관리, 방문 안내 편집, 운영일 묶음과 SQL022 적용 순서는 [운영 화면 안내](docs/OPERATIONS_CONSOLE_SYNC_KO.md)를 확인하세요.
+>
 > 현재 운영은 GitHub `main` 기반 Vercel 프런트와 Ubuntu의 BoothHana 전용 API·Cloudflare Tunnel을 사용합니다. 공개 이미지와 비공개 첨부는 Google Cloud Storage를 사용합니다. 변경 배포는 해당 커밋의 CI와 실제 운영 수락검사 결과를 기준으로 확인합니다.
 >
 > 현재 API·수집기 운영 방식은 [Ubuntu 터널 배포 가이드](deploy/ubuntu/TUNNEL_KO.md), 수집·분류 규격은 [수집기 안내](collector/README_KO.md), API 계약·개발 설정은 [백엔드 README](backend/README.md), 프런트 빌드·미리보기는 [프런트 README](frontend/README.md)를 확인하세요. 분야별 주소와 상세 페이지 연결은 [분야별 사이트 안내](docs/CATEGORY_SITES_KO.md)를 확인하세요. 기존 v24 패키지 기록은 기준 이력이며 현재 Git 배포의 승인 근거가 아닙니다.

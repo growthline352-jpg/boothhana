@@ -37,6 +37,8 @@ public final class SchemaContract {
         Map.entry("subculture_stage_run",List.of("id","pipeline_id","event_id","participant_id","stage","request_hash","request_json","coverage_json","receipt_json","status","started_at","finished_at","received_at")),
         Map.entry("subculture_catalog_asset",List.of("id","event_id","participant_id","product_id","identity_key","type","image_url","page_url","caption","reported_rights","rights_state","rights_note","credit","last_attempt_at","storage_state","object_key","sha256","byte_size","content_type","error","revision","created_at","stored_at","offline_allowed")),
         Map.entry("subculture_catalog_review_history",List.of("id","target_type","target_id","before_json","after_json","created_at","actor_id")),
+        Map.entry("catalog_operating_group",List.of("root_event_id","name","source_url","checked_on","revision","fixed_members","updated_by","updated_at")),
+        Map.entry("catalog_operating_group_member",List.of("event_id","root_event_id","position")),
         Map.entry("subculture_catalog_publication",List.of("event_id","snapshot_json","event_revision","published_at")),
         Map.entry("subculture_participant_progress",List.of("event_id","source_key","root_url","next_page_url","pass_no","page_index","revision","state","visited_json","last_pipeline_id","updated_at")),
         Map.entry("subculture_catalog_presentation",List.of("event_id","banner_asset_id","revision","updated_at")),
@@ -63,10 +65,12 @@ public final class SchemaContract {
             .collect(java.util.stream.Collectors.joining(" union all "));
     }
 
-    /** Derived from SQL001..016; verification/v24 compares every entry to the DDL.
+    /** Derived from SQL001..022; verification/v24 compares every entry to the DDL.
      * This guards same-named but incompatible columns, not just missing columns. */
     public record ColumnShape(String udt,Integer length,boolean notNull) {}
     private static final String COLUMN_SPEC = """
+        catalog_operating_group=root_event_id:int8:0:1,name:varchar:255:1,source_url:varchar:2048:1,checked_on:date:0:1,revision:int8:0:1,fixed_members:bool:0:1,updated_by:int8:0:0,updated_at:timestamptz:0:1
+        catalog_operating_group_member=event_id:int8:0:1,root_event_id:int8:0:1,position:int4:0:1
         organizer_identity=id:int8:0:1,name:varchar:160:1,official_url:varchar:2048:1,created_by:int8:0:1,created_at:timestamptz:0:1
         event_manager=event_id:int8:0:1,user_id:int8:0:1,organizer_id:int8:0:1,claim_ticket_id:uuid:0:1,state:varchar:12:1,granted_by:int8:0:1,granted_at:timestamptz:0:1,revoked_by:int8:0:0,revoked_at:timestamptz:0:0,reason:text:0:1,revision:int8:0:1
         event_series=id:int8:0:1,name:varchar:160:1,official_url:varchar:2048:1,created_by:int8:0:1,created_at:timestamptz:0:1

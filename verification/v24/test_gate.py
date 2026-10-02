@@ -27,7 +27,8 @@ class GateReportingTests(unittest.TestCase):
                 'TEST-com.boothhana.release.LibraryIntegrationTests.xml':[
                     'detachedProfileSaveCannotRevertCompletedOnboarding',
                     'memberInterestsArePrivateVersionedAndCategoryScoped',
-                    'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback'],
+                    'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback',
+                    'popularEditionDeduplicatesMembersBeforeLimitAndKeepsRemainingDay'],
                 'TEST-com.boothhana.floorplan.FloorplanHttpContractTests.xml':['withdrawalHasNoContentSuccess'],
                 'TEST-com.boothhana.release.ReleaseIntegrationTests.xml':[
                     'anonymousFeedbackIsPrivateIdempotentAndRequiresCsrf',
@@ -36,6 +37,16 @@ class GateReportingTests(unittest.TestCase):
                     'verifiedOrganizerLifecyclePreservesOverridesAndRevokesAccess',
                     'seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership',
                     'verifiedBoothProductEditPreservesPendingCollectionAndIdentityThroughRepublication'],
+                'TEST-com.boothhana.release.OperationsIntegrationTests.xml':[
+                    'operatingGroupPreservesSourceIdsSavesCommentsAndOwnership',
+                    'operatingGroupRejectsStaleChangesDuplicateMembershipAndCrossCategory',
+                    'operatingGroupPaginationCountsEditionsAndScopesMatchingDays',
+                    'operatingGroupWithdrawnMembersAreAbsentAndFixedLegacyLinksCannotChange',
+                    'groupedEventCannotRepublishIntoAnotherCategory',
+                    'editorialSalesProvenanceRemainsInPublishedSnapshotDuringPendingEdits',
+                    'legacySalesProvenanceMigrationFreezesOnlySupportedEditorialValues',
+                    'adminFiltersUseEffectiveTitlesLiteralSearchAndPendingPublicChanges',
+                    'operatingGroupAdminRoutesRequireAdminCsrfAndTablesStayPrivate'],
             }
             for filename,names in suites.items():
                 (reports/filename).write_text('<testsuite>'+''.join(f'<testcase name="{name}()"/>' for name in names)+'</testsuite>')

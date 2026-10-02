@@ -35,6 +35,24 @@ describe('category site routing', () => {
       expect(safeEventReturnTo(invalid, '1', fallback)).toBe(fallback)
     }
   })
+  it('preserves the group route and selected venue when returning from a member booth',()=>{
+    const fallback='/discover/102?day=2026-10-03'
+    const previous='/discover/101?day=2026-10-03&operatingEvent=102&view=map&q=B1&my=saved&subject=GAME'
+    expect(safeEventReturnTo(previous,'102',fallback,[101,102])).toBe(previous)
+    expect(safeEventReturnTo(previous,'102',fallback)).toBe(fallback)
+    expect(safeEventReturnTo(previous,'102',fallback,[101,103])).toBe(fallback)
+  })
+  it('does not expand the group return allowlist from URL parameters or external origins',()=>{
+    const fallback='/discover/102?day=2026-10-03'
+    for(const invalid of [
+      '/discover/103?operatingEvent=102',
+      '/discover/101/booths/43?operatingEvent=102',
+      '//evil.test/discover/101',
+      'https://evil.test/discover/101?operatingEvent=102',
+      '/discover/0',
+      '/discover/-1',
+    ])expect(safeEventReturnTo(invalid,'102',fallback,[101,102,0,-1,NaN])).toBe(fallback)
+  })
   it.each([
     ['subculture.boothana.kr', 'subculture', 'SUBCULTURE'],
     ['expo.boothana.kr', 'exhibitions', 'EXHIBITION'],

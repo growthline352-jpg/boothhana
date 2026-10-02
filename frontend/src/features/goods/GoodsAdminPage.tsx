@@ -9,7 +9,7 @@ export function GoodsAdminPage() {
   const [query,setQuery]=useState(''),[draft,setDraft]=useState(''),[page,setPage]=useState(0)
   const state=useRemote(()=>goodsApi.candidates(query,page),[query,page])
   const submit=(event:FormEvent)=>{event.preventDefault();setPage(0);setQuery(draft.trim())}
-  return <div className="goods-admin-page"><PageHeader eyebrow="관리자 · 메인 굿즈" title="메인 굿즈 노출" description="노출할 상품만 선택하면 최근 30일 POS 판매수량순으로 자동 정렬됩니다."/>
+  return <div className="goods-admin-page"><PageHeader eyebrow="관리자 · POS 인기 굿즈" title="분야 화면의 인기 굿즈 노출" description="분야별 ‘많이 판매된 굿즈’를 관리합니다. 최근 30일 POS 판매수량순이며, 저장순 인기행사와는 별도입니다."/>
     <div className="goods-admin-note">판매량 숫자나 순위를 직접 입력하지 않습니다. 예약·취소·외부 추정 판매량은 제외하며, 정상 판매기록이 0건이면 허용해도 메인에 나오지 않습니다. 공개 상품에 한해 분류와 노출 여부를 설정합니다. 분류를 바꾸거나 노출을 해제하면 다음 조회에 반영됩니다.</div>
     <form className="search-panel" onSubmit={submit}><input className="input" value={draft} maxLength={100} onChange={e=>setDraft(e.target.value)} placeholder="상품명·부스명" aria-label="노출 상품 검색"/><button className="btn primary">검색</button></form>
     {state.loading?<LoadingState/>:state.error?<ErrorState error={state.error} retry={()=>void state.reload()}/>:!state.data?.items.length?<EmptyState title="공개된 운영 상품이 없습니다" description="크리에이터의 공개 상품을 먼저 등록하세요. 외부 수집 상품은 실제 판매기록 연결 전까지 이 순위에 포함하지 않습니다."/>:

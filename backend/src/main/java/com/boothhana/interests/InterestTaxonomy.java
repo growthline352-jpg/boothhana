@@ -64,7 +64,7 @@ public final class InterestTaxonomy {
         List<String> clauses=new ArrayList<>();
         for(Option option:chosen){
             if(!option.types().isEmpty()){clauses.add(alias+".snapshot_json->'event'->>'subcategory' in ("+marks(option.types().size())+")");args.addAll(option.types());}
-            if(!option.subjects().isEmpty()){
+            {
                 var aliases=new LinkedHashSet<String>();aliases.add(option.code().toLowerCase(Locale.ROOT));
                 option.subjects().forEach(value->aliases.add(value.toLowerCase(Locale.ROOT)));
                 clauses.add("exists(select 1 from jsonb_array_elements_text(coalesce("+alias+".snapshot_json->'event'->'subjects','[]'::jsonb)) topic(value) where lower(trim(topic.value)) in ("+marks(aliases.size())+"))");

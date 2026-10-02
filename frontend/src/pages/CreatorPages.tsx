@@ -30,8 +30,8 @@ export function CreatorHomePage() {
     { to: '/creator/reservations', step: '03', title: '예약 수령 확인하기', description: '예약번호를 찾아 상품 전달 후 수령 완료로 기록하세요.', icon: 'ticket' as const },
     { to: '/creator/pos', step: '04', title: '현장 판매 기록하기', description: '실제 결제는 별도로 진행하고 판매 내역을 기록하세요.', icon: 'check' as const },
   ]
-  return <><PageHeader eyebrow="Creator · Dashboard" title="크리에이터 홈" description="행사 준비와 현장 운영, 필요한 작업부터 시작하세요." />
-    <div className="creator-welcome"><div><span className="eyebrow">내 부스를 위한 작업 공간</span><h2>준비부터 현장까지,<br/>하나씩 차근차근.</h2><p>처음이라면 기본 부스를 만든 뒤 행사에 참가해 보세요.</p></div><Link className="btn primary" to="/creator/booths">내 부스 관리 <DiscoveryIcon name="arrow" size={18}/></Link></div>
+  return <><PageHeader eyebrow="Creator · Dashboard" title="예약·판매 운영" description="참가신청을 받는 행사에서 부스·예약·POS를 운영합니다." />
+    <div className="creator-welcome"><div><span className="eyebrow">내 부스를 위한 작업 공간</span><h2>준비부터 현장까지,<br/>하나씩 차근차근.</h2><p>공개된 행사·부스 소개를 수정하려면 ‘내 공개 행사·부스’에서 인증 대상을 선택하세요.</p></div><Link className="btn primary" to="/support/management">내 공개 행사·부스 <DiscoveryIcon name="arrow" size={18}/></Link></div>
     <div className="creator-task-grid">{tasks.map(task=><Link key={task.to} className="creator-task-card" to={task.to}><div className="creator-task-top"><span className="creator-task-icon"><DiscoveryIcon name={task.icon} size={24}/></span><span>{task.step}</span></div><h2>{task.title}</h2><p>{task.description}</p><span className="creator-task-link">이동하기 <DiscoveryIcon name="arrow" size={18}/></span></Link>)}</div></>
 }
 

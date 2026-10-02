@@ -21,7 +21,7 @@ class InterestTaxonomyTests {
     @Test void subcultureLiveFormatDoesNotUseGeneralFestivalMusic() {
         var args=new ArrayList<Object>();
         InterestTaxonomy.predicate("SUBCULTURE",new InterestTaxonomy.Selection(List.of("SUBCULTURE_MUSIC"),List.of()),"p",args);
-        assertThat(args).containsExactly("SUBCULTURE_MUSIC");
+        assertThat(args).containsExactly("SUBCULTURE_MUSIC","subculture_music");
         assertThatThrownBy(()->InterestTaxonomy.validate(Map.of("FESTIVAL",new InterestTaxonomy.Selection(List.of("SUBCULTURE_MUSIC"),List.of())))).isInstanceOf(ApiException.class);
     }
 }

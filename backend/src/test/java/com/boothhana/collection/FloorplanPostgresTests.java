@@ -25,6 +25,8 @@ class FloorplanPostgresTests {
   String user=System.getenv("BOOTH_FLOORPLAN_TEST_USER"),password=System.getenv("BOOTH_FLOORPLAN_TEST_PASSWORD");root=new JdbcTemplate(new DriverManagerDataSource(url,user,password));schema="floorplan_test_"+UUID.randomUUID().toString().replace("-","");root.execute("create schema "+schema);
   var ds=new DriverManagerDataSource(url+"?currentSchema="+schema,user,password);db=new JdbcTemplate(ds);tx=new TransactionTemplate(new DataSourceTransactionManager(ds));json=JsonMapper.builder().build();
   for(String sql:List.of("005_subculture_collection.sql","006_subculture_catalog.sql","007_catalog_review_fixes.sql","008_catalog_presentation.sql","009_floorplan_automation.sql"))db.execute(Files.readString(Path.of("../database/"+sql)));
+  db.execute("create table catalog_operating_group(root_event_id bigint primary key,name text)");
+  db.execute("create table catalog_operating_group_member(event_id bigint primary key,root_event_id bigint,position integer)");
   var data=json.readValue(Files.readString(Path.of("../collector/examples/v4/events.json")),SearchResult.class);
   var discovery=new CollectionService(db,json);tx.execute(s->discovery.ingest(new Batch("1",UUID.randomUUID().toString(),"2026-09-16T00:00:00Z","2026-09-16T00:01:00Z","MANUAL_IMPORT",false,new Scope("SEOUL","Asia/Seoul","2026-10-01","2026-10-31"),data)));
   event=db.queryForObject("select id from subculture_event_candidate",Long.class);day=data.events().getFirst().occurrences().getFirst().startDate();lease=UUID.randomUUID().toString();

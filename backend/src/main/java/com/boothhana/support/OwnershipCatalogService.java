@@ -181,7 +181,9 @@ public class OwnershipCatalogService {
   var edit=new EditInput(input.revision(),"PENDING","확인된 운영자 수정: "+input.note(),input.fields(),List.of());
   // Keep any unrelated newly collected fields pending; publish ONLY these submitted fields.
   if("EVENT".equals(type))catalog.editEvent(event,edit);else if("PARTICIPANT".equals(type))catalog.editParticipant(participant,edit);else catalog.editSales(participant,edit);
-  selected.putAll(input.fields());snapshot.put("publishedAt",java.time.Instant.now().toString());
+  selected.putAll(input.fields());
+  if("SALES".equals(type)&&input.fields().containsKey("summary"))participants(snapshot).stream().filter(x->SupportService.n(x,"id")==participant).findFirst().orElseThrow().put("salesSummaryOrigin","EDITORIAL");
+  snapshot.put("publishedAt",java.time.Instant.now().toString());
   db().update("update subculture_catalog_publication set snapshot_json=cast(? as jsonb),published_at=now() where event_id=?",support.enc(snapshot),event);
   return editable(type,event,participant,user);
  }

@@ -13,11 +13,11 @@ public class CatalogPublicController {
             @RequestParam(defaultValue="SUBCULTURE") String category, @RequestParam(defaultValue="") String q,
             @RequestParam(defaultValue="") String subcategory, @RequestParam(defaultValue="") String from,
             @RequestParam(defaultValue="") String to, @RequestParam(defaultValue="RECENT") String sort,
-            @RequestParam(defaultValue="") String region) {
+            @RequestParam(defaultValue="") String region,@RequestParam(defaultValue="false") boolean grouped) {
         final CatalogBrowseQuery query;
         try { query = new CatalogBrowseQuery(page,size,category,q,subcategory,from,to,sort,region); }
         catch (IllegalArgumentException e) { throw com.boothhana.api.ApiException.badRequest(e.getMessage()); }
-        return publications.list(query);
+        return grouped?publications.groupedList(query):publications.list(query);
     }
     @GetMapping("/events/popular") public List<Map<String,Object>> popular(@RequestParam(defaultValue="") String category){return publications.popular(12,category);}
     @GetMapping("/events/featured") public Map<String,Object> featured(@RequestParam String category,@RequestParam(defaultValue="") String region){return publications.featured(category,region,null);}

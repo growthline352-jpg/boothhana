@@ -47,14 +47,14 @@ export function confirmedLocationDates(location: Location) {
   return ['ASSIGNED','NOT_APPLICABLE'].includes(location.status)
 }
 export type VisitTab = 'booths' | 'map' | 'info'
-export interface VisitQuery {day: string; hall: string; q: string; tab: VisitTab; booth: number | null; focus: number | null; product?: number | null}
+export interface VisitQuery {day: string; hall: string; q: string; tab: VisitTab; booth: number | null; focus: number | null; product?: number | null; operatingEvent?: number | null}
 export interface VisitContext {day?: string; hall?: string}
 const positiveId = (v: string | null) => v && /^\d+$/.test(v) && Number.isSafeInteger(Number(v)) && Number(v) > 0 ? Number(v) : null
 export function parseVisit(params: URLSearchParams, event: EventData): VisitQuery {
   const tab = params.get('view')
   return { day: defaultDay(event, params.get('day')), hall: (params.get('hall') || '').trim().slice(0, 150),
     q: (params.get('q') || '').slice(0, 100), tab: tab === 'map' || tab === 'info' ? tab : 'booths',
-    booth: positiveId(params.get('booth')), focus: positiveId(params.get('focus')),product:positiveId(params.get('product')) }
+    booth: positiveId(params.get('booth')), focus: positiveId(params.get('focus')),product:positiveId(params.get('product')),operatingEvent:positiveId(params.get('operatingEvent')) }
 }
 /** Allowlisted public context only. Never propagate arbitrary query strings or administrator notes. */
 export function visitParams(query: VisitQuery): URLSearchParams {
@@ -66,6 +66,7 @@ export function visitParams(query: VisitQuery): URLSearchParams {
   if (query.booth) p.set('booth', String(query.booth))
   if (query.focus) p.set('focus', String(query.focus))
   if(query.product)p.set('product',String(query.product))
+  if(query.operatingEvent)p.set('operatingEvent',String(query.operatingEvent))
   return p
 }
 function pathWithContext(path: string, context: VisitContext, view: VisitTab = 'booths', focus?: number | null) {

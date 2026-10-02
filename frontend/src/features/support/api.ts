@@ -17,7 +17,8 @@ export interface ActionInput {revision:number;action:string;note:string;duplicat
 export interface Page<T>{items:T[];page:number;size:number;total:number}
 export interface Options{guestEnabled:boolean;feedbackEnabled:boolean;guestExpiryDays:number;guestAttachments:boolean;attachmentsEnabled:boolean;maxAttachmentBytes:number;maxAttachments:number}
 export interface GuestAccess{ticketId:string;accessKey:string}
-export interface Manager{exhibitorId:number;name:string;state:string;permission:string;revision:number;claimId:string;participants:{id:number;eventId:number;name:string;route:string}[]}
+export interface EditCapabilities {participant:boolean;sales:boolean;products:boolean;reason:string;salesReason:string}
+export interface Manager{exhibitorId:number;name:string;state:string;permission:string;revision:number;claimId:string;participants:{id:number;eventId:number;name:string;route:string;editCapabilities?:EditCapabilities}[]}
 const prefix=(admin=false)=>admin?'/api/admin/support':'/api/me/support'
 const post=<T>(url:string,body:unknown)=>api<T>(url,{method:'POST',body:JSON.stringify(body),cache:'no-store'})
 export const supportApi={

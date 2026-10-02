@@ -8,18 +8,19 @@ import { ProfileAvatar } from '../ui/ProfileAvatar'
 
 interface ConsoleLink { to: string; label: string; icon: IconName }
 const creatorLinks: ConsoleLink[] = [
-  { to: '/creator', label: '홈', icon: 'grid' },
-  { to: '/creator/events', label: '행사', icon: 'calendar' },
-  { to: '/creator/booths', label: '부스', icon: 'building' },
+  { to: '/support/management', label: '내 공개 행사·부스', icon: 'building' },
+  { to: '/creator', label: '예약·판매 홈', icon: 'grid' },
+  { to: '/creator/events', label: '참가신청 행사', icon: 'calendar' },
+  { to: '/creator/booths', label: '예약·판매 부스', icon: 'building' },
   { to: '/creator/reservations', label: '예약', icon: 'ticket' },
   { to: '/creator/pos', label: 'POS', icon: 'check' },
-  { to: '/creator/managed-exhibitors', label: '연결된 업체', icon: 'building' },
   { to: '/support', label: '고객센터', icon: 'info' },
   { to: '/creator/notices', label: '공지', icon: 'info' },
 ]
 const adminLinks: ConsoleLink[] = [
-  { to: '/admin/events', label: '행사', icon: 'calendar' },
-  { to: '/admin/goods-showcase', label: '메인 굿즈', icon: 'sparkles' },
+  { to: '/admin/subculture', label: '공개 행사 관리', icon: 'calendar' },
+  { to: '/admin/events', label: '예약·참가신청 행사', icon: 'calendar' },
+  { to: '/admin/goods-showcase', label: 'POS 인기 굿즈', icon: 'sparkles' },
   { to: '/admin/applications', label: '참가 신청', icon: 'ticket' },
   { to: '/admin/comments', label: '행사 댓글', icon: 'info' },
   { to: '/admin/inquiries?category=EVENT_REQUEST', label: '행사 추가 요청', icon: 'info' },
@@ -27,7 +28,6 @@ const adminLinks: ConsoleLink[] = [
   { to: '/admin/inquiries', label: '문의 내역', icon: 'info' },
   { to: '/admin/ownership', label: '주최자·부스 인증', icon: 'building' },
   { to: '/admin/event-series', label: '행사 회차 연결', icon: 'calendar' },
-  { to: '/admin/subculture', label: '수집 관리', icon: 'grid' },
 ]
 
 export function ConsoleLayout({ role }: { role: 'CREATOR' | 'ADMIN' }) {

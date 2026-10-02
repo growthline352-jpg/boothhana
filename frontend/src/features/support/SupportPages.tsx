@@ -21,7 +21,7 @@ export function SupportNew(){const location=useLocation();return <SupportNewForm
 function SupportNewForm(){
  const [params]=useSearchParams(),location=useLocation(),navigate=useNavigate(),{user,loading,loginUrl}=useAuth();const kind=parseKind(params.get('kind')),target=readTarget(params)
  const key=JSON.stringify(target),resolved=useRemote(()=>target?supportApi.target(target):Promise.resolve(null),[key,user?.id]);const claimables=useRemote(()=>kind==='CLAIM'&&target?.type==='PARTICIPANT'?supportApi.claimables(target):Promise.resolve([]),[kind,key])
- const [title,setTitle]=useState(''),[body,setBody]=useState(''),[category,setCategory]=useState(kind==='CLAIM'?(target?.type==='EVENT'?'ORGANIZER':'OWNERSHIP'):params.get('category')&&categories[kind][params.get('category')!]?params.get('category')!:Object.keys(categories[kind])[0]),[links,setLinks]=useState(''),[exhibitor,setExhibitor]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ const [title,setTitle]=useState(params.get('template')==='VISITOR_GUIDE'?'방문 안내 변경 요청':''),[body,setBody]=useState(params.get('template')==='VISITOR_GUIDE'?'변경할 항목 (입장권 / 프로그램 / FAQ / 개최 상태):\n적용 날짜·시간:\n현재 안내와 바뀐 내용:\n공식 출처와 확인일:':''),[category,setCategory]=useState(kind==='CLAIM'?(target?.type==='EVENT'?'ORGANIZER':'OWNERSHIP'):params.get('category')&&categories[kind][params.get('category')!]?params.get('category')!:Object.keys(categories[kind])[0]),[links,setLinks]=useState(''),[exhibitor,setExhibitor]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('')
  const guard=useRef(false),posted=useRef(false)
  const attemptRef=useRef<{key:string;value:TicketSubmission}|null>(null)
  const storageKey=attemptKey(user?.id,kind,key)

@@ -51,7 +51,7 @@ export function CreatorEventsPage() {
     finally{submitting.current=false;setPending(null)}
   }
   return <>
-    <PageHeader eyebrow="Creator · Events" title="행사 목록" description="참가할 기본 부스를 선택한 다음 행사에 신청합니다." />
+    <PageHeader eyebrow="Creator · Events" title="참가신청 행사" description="부스하나에서 참가신청을 받는 행사입니다. 공개 행사·부스 안내는 내 공개 행사·부스 관리에서 수정하세요." />
     {message && <div className="notice-banner" role="status">{message}</div>}
     {applications.error&&<ErrorState error={applications.error} retry={()=>void applications.reload()}/>}
     {!!selected&&!!applications.data?.filter(a=>a.boothId===Number(selected)).length&&<section className="panel"><h2>선택 부스의 신청 내역</h2>{applications.data.filter(a=>a.boothId===Number(selected)).map(a=><article className="support-ticket-row" key={a.id}><div><h3>{a.eventName}</h3><p>{a.status==='REJECTED'?'반려':a.status==='WITHDRAWN'?'철회':a.status==='APPROVED'?'승인':'대기'}</p>{a.reason&&<p className="form-alert">반려 사유: {a.reason}</p>}</div><div className="row-actions">{['REJECTED','WITHDRAWN'].includes(a.status)&&<button className="btn secondary" disabled={pending!==null||events.data?.find(e=>e.id===a.eventId)?.status!=='PUBLISHED'} onClick={()=>void change(a.id,a.revision,'resubmit')}>보완 후 재신청</button>}{a.status==='PENDING'&&<button className="btn subtle" disabled={pending!==null} onClick={()=>void change(a.id,a.revision,'withdraw')}>신청 철회</button>}</div></article>)}</section>}
@@ -70,7 +70,7 @@ export function CreatorEventsPage() {
         {!selected ? <EmptyState title="참가할 부스를 선택해 주세요" description="선택한 부스를 기준으로 행사별 신청 상태를 표시합니다." />
           : events.loading ? <LoadingState label="행사를 불러오고 있습니다" />
           : events.error ? <ErrorState error={events.error} retry={() => void events.reload()} />
-          : !events.data?.length ? <EmptyState title="표시할 행사가 없습니다" description="관리자가 행사를 등록하면 확인할 수 있습니다." />
+          : !events.data?.length ? <EmptyState title="표시할 행사가 없습니다" description="현재 참가신청을 받는 행사가 없습니다. 공개 행사 정보는 행사 둘러보기에서 확인할 수 있습니다." />
           : <div className="console-list">{events.data.map(event => {
             const state = eventState(event)
             return <article className="list-row" key={event.id}><div>
