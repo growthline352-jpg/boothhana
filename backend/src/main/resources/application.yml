@@ -1,6 +1,12 @@
 spring:
   application:
     name: boothhana-backend
+  session:
+    timeout: 30m
+    jdbc:
+      initialize-schema: never
+      table-name: booth_session
+      cleanup-cron: "0 */10 * * * *"
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/boothhana}
     username: ${DATABASE_USERNAME:boothhana}

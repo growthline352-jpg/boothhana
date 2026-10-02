@@ -32,6 +32,11 @@ def main():
         state('NOT_READY', reason='Inherited full checks passed; v24 checks pending')
         subprocess.run([sys.executable, 'verification/run_checks.py'], cwd=ROOT, check=True)
         required=[
+            ('TEST-com.boothhana.release.PersistentSessionIntegrationTests.xml','storedKakaoSessionSurvivesRepositoryRecreationAndRenewsOnUse'),
+            ('TEST-com.boothhana.release.PersistentSessionIntegrationTests.xml','expiredSessionCannotBeRestoredOrRenewed'),
+            ('TEST-com.boothhana.release.PersistentSessionIntegrationTests.xml','logoutRequiresCsrfAndPermanentlyRevokesStoredSession'),
+            ('TEST-com.boothhana.release.PersistentSessionIntegrationTests.xml','sessionTablesArePrivateAndAnonymousLoginIsShortLived'),
+
             ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','groupedEventLimitSurvivesDifferentBaseAndPreventsConflictingMerge'),
             ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','concurrentDifferentBaseRegistrationsCommitExactlyOne'),
             ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','directRegistrationPublishesOnlyOwnBoothWithoutGrantAndEnforcesAccountLimit'),

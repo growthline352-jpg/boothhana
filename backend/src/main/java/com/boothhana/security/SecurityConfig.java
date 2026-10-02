@@ -11,9 +11,11 @@ import org.springframework.web.cors.*;
 import java.util.*;
 
 @Configuration
+@Import(SessionPersistenceConfig.class)
 public class SecurityConfig {
     @Bean
     SecurityFilterChain security(HttpSecurity http, KakaoOAuthUserService oauthUsers,
+            org.springframework.session.web.http.CookieSerializer sessionCookies,
             @Qualifier("cors") CorsConfigurationSource corsSource,
             @Value("${app.frontend-url}") String frontendUrl,
             @Value("${server.servlet.session.cookie.secure:false}") boolean cookieSecure,
@@ -21,7 +23,8 @@ public class SecurityConfig {
         CookieCsrfTokenRepository csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrf.setCookiePath("/");
         csrf.setCookieCustomizer(cookie -> cookie.secure(cookieSecure).sameSite(cookieSameSite));
-        http.addFilterBefore(new com.boothhana.library.LibraryRequestFilter(),org.springframework.security.web.csrf.CsrfFilter.class).addFilterBefore(new com.boothhana.support.SupportRequestFilter(),org.springframework.security.web.csrf.CsrfFilter.class).cors(cors -> cors.configurationSource(corsSource)).csrf(config -> config.csrfTokenRepository(csrf))
+        http.addFilterAfter(new KakaoSessionRefreshFilter(sessionCookies),org.springframework.security.web.context.SecurityContextHolderFilter.class)
+            .addFilterBefore(new com.boothhana.library.LibraryRequestFilter(),org.springframework.security.web.csrf.CsrfFilter.class).addFilterBefore(new com.boothhana.support.SupportRequestFilter(),org.springframework.security.web.csrf.CsrfFilter.class).cors(cors -> cors.configurationSource(corsSource)).csrf(config -> config.csrfTokenRepository(csrf))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/public/**", "/api/auth/**", "/error").permitAll()
@@ -45,7 +48,8 @@ public class SecurityConfig {
                 }))
             .oauth2Login(oauth -> oauth.userInfoEndpoint(info -> info.userService(oauthUsers))
                 .successHandler((request, response, authentication) -> {
-                    String path="/";var session=request.getSession(false);
+                    String path="/";var session=request.getSession(true);
+                    LoginSessionPolicy.kakao(session);
                     if(session!=null){Object until=session.getAttribute("BOOTH_RETURN_UNTIL"),value=session.getAttribute("BOOTH_RETURN_PATH");
                         if(until instanceof Long expiry&&expiry>=System.currentTimeMillis()&&value instanceof String p)path=LoginReturnPath.safe(p);
                         session.removeAttribute("BOOTH_RETURN_UNTIL");session.removeAttribute("BOOTH_RETURN_PATH");}
