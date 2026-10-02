@@ -6,14 +6,15 @@ import java.util.*;
 public final class TaxonomyRegistry {
     private TaxonomyRegistry() {}
     public record EventType(String code, String label) {}
+    public record Option(String code,String label,List<String> types,List<String> subjects,List<String> works) {}
     public record Field(String key, String code, String label, List<EventType> types,
-                        List<InterestTaxonomy.Option> formats, List<InterestTaxonomy.Option> topics) {}
+                        List<Option> formats, List<Option> topics) {}
     public static final List<Field> FIELDS = TaxonomyRegistryData.fields();
 
     public static Optional<Field> forType(String type) {
         return FIELDS.stream().filter(f -> f.types().stream().anyMatch(t -> t.code().equals(type))).findFirst();
     }
-    public static boolean matches(InterestTaxonomy.Option option, String type, List<String> subjects) {
+    public static boolean matches(Option option, String type, List<String> subjects) {
         if (option.types().contains(type)) return true;
         var aliases = new HashSet<String>();
         aliases.add(option.code().toLowerCase(Locale.ROOT));

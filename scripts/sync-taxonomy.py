@@ -20,7 +20,7 @@ for field in fields:
 
 def java_list(values):return 'List.of('+','.join(values)+')'
 def java_strings(values):return java_list([json.dumps(s,ensure_ascii=False) for s in values])
-def java_option(o):return 'new InterestTaxonomy.Option('+','.join([json.dumps(o['code']),json.dumps(o['label'],ensure_ascii=False),java_strings(o['types']),java_strings(o['subjects']),java_strings(o['works'])])+')'
+def java_option(o):return 'new TaxonomyRegistry.Option('+','.join([json.dumps(o['code']),json.dumps(o['label'],ensure_ascii=False),java_strings(o['types']),java_strings(o['subjects']),java_strings(o['works'])])+')'
 java_fields=[]
 for f in fields:
     types=java_list(['new TaxonomyRegistry.EventType('+json.dumps(t['code'])+','+json.dumps(t['label'],ensure_ascii=False)+')' for t in f['types']])

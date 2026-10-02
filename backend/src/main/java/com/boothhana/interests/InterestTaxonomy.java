@@ -1,13 +1,13 @@
 package com.boothhana.interests;
 
 import com.boothhana.api.ApiException;
+import com.boothhana.interests.TaxonomyRegistry.Option;
 import java.util.*;
 
 /** One registry for onboarding, account settings and published-catalogue matching.
  * Topics use reviewed subject labels only; event names are never classification input. */
 public final class InterestTaxonomy {
     private InterestTaxonomy() {}
-    public record Option(String code,String label,List<String> types,List<String> subjects,List<String> works) {}
     public record Field(String code,String label,List<Option> formats,List<Option> topics) {}
     public record Selection(List<String> formats,List<String> topics) {
         public Selection { formats=formats==null?List.of():Collections.unmodifiableList(new ArrayList<>(formats));topics=topics==null?List.of():Collections.unmodifiableList(new ArrayList<>(topics)); }
