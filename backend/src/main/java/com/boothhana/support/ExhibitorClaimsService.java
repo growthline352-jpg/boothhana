@@ -72,7 +72,13 @@ public class ExhibitorClaimsService {
    if("ACTIVE".equals(r.get("state")))for(var p:support.database().queryForList("select p.id,p.event_id from subculture_participant_member pm join subculture_participant p on p.id=pm.participant_id where pm.exhibitor_id=? order by p.last_seen_at desc limit 100",ex)){
     long pid=SupportService.n(p,"id"),eid=SupportService.n(p,"event_id");
     try{if(support.targetResolver().claimables(eid,pid).stream().anyMatch(x->((Number)x.get("id")).longValue()==ex)){
-     var resolved=support.targetResolver().resolve(new Target("CATALOG","PARTICIPANT",eid,pid,null,null,null,null),user);participants.add(Map.of("id",pid,"eventId",eid,"name",resolved.label(),"route",resolved.route()));}
+     var resolved=support.targetResolver().resolve(new Target("CATALOG","PARTICIPANT",eid,pid,null,null,null,null),user);
+     var data=(Map<?,?>)((Map<?,?>)resolved.snapshot()).get("data");
+     var publishedParticipant=(Map<?,?>)data.get("participant");
+     int publicMembers=((List<?>)publishedParticipant.get("members")).size();
+     int currentMembers=support.database().queryForObject("select count(*) from subculture_participant_member where participant_id=?",Integer.class,pid);
+     boolean sales=data.get("sales")!=null&&!support.database().queryForList("select 1 from subculture_sales where participant_id=? and review_state<>'EXCLUDED'",pid).isEmpty();
+     participants.add(Map.of("id",pid,"eventId",eid,"name",resolved.label(),"route",resolved.route(),"editCapabilities",OwnerEditCapabilities.of(String.valueOf(r.get("permission")),currentMembers,publicMembers,sales)));}
     }catch(ApiException e){if(e.status.value()!=404)throw e;}
    }
    entry.put("participants",participants);out.add(entry);

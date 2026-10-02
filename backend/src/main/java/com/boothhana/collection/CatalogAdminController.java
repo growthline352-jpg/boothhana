@@ -13,7 +13,8 @@ import static com.boothhana.collection.CollectionModels.*;
 public class CatalogAdminController {
     private final CatalogService service;private final CatalogMediaService media;private final CatalogPublicationService publications;
     public CatalogAdminController(CatalogService service,CatalogMediaService media,CatalogPublicationService publications){this.service=service;this.media=media;this.publications=publications;}
-    @GetMapping("/events") public PageData<Map<String,Object>> events(@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size){return service.events(page,size);}
+    @GetMapping("/events") public PageData<Map<String,Object>> events(@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size,
+        @RequestParam(defaultValue="") String q,@RequestParam(defaultValue="") String category,@RequestParam(defaultValue="") String state,@RequestParam(defaultValue="") String publication){return service.events(page,size,new CatalogAdminQuery(q,category,state,publication));}
     @GetMapping("/events/{id}") public Map<String,Object> event(@PathVariable long id){return service.eventDetail(id);}
     @PatchMapping("/events/{id}") public Map<String,Object> editEvent(@PathVariable long id,@RequestBody EditInput input){return service.editEvent(id,input);}
     @GetMapping("/events/{id}/participants") public PageData<ParticipantView> participants(@PathVariable long id,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="20") int size,@RequestParam(defaultValue="") String q){return service.participants(id,page,size,q);}

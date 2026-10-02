@@ -16,19 +16,24 @@ import static com.boothhana.collection.CatalogModels.*;
 @Service
 @Transactional(readOnly=true)
 public class CatalogPublicationService {
-    private final JdbcTemplate db;private final JsonMapper json;private final CatalogMediaService media;
-    public CatalogPublicationService(JdbcTemplate db,JsonMapper json,CatalogMediaService media) {this.db=db;this.json=json;this.media=media;}
+    private final JdbcTemplate db;private final JsonMapper json;private final CatalogMediaService media;private final CatalogOperatingGroups groups;
+    public CatalogPublicationService(JdbcTemplate db,JsonMapper json,CatalogMediaService media) {this.db=db;this.json=json;this.media=media;this.groups=new CatalogOperatingGroups(db,json);}
+    /** Compound correction flows call this before acquiring their event-row lock. */
+    @Transactional(propagation=org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void lockForPublication(){groups.lockPublication();}
     @Transactional public Map<String,Object> publish(long eventId,PublishInput input) {
+        lockForPublication();
         var events=db.queryForList("select * from subculture_event_candidate where id=? for update",eventId);
         if(events.isEmpty()) throw ApiException.notFound("행사 없음");var e=events.getFirst();
         if(input==null||((Number)e.get("revision")).longValue()!=input.eventRevision()) throw ApiException.conflict("행사 검토 버전이 변경되었습니다.");
         if(!"REVIEWED".equals(e.get("review_state"))||e.get("reviewed_payload_json")==null) throw ApiException.conflict("행사 정보를 먼저 검토 완료로 저장하세요.");
         EventData raw=json.readValue(e.get("reviewed_payload_json").toString(),EventData.class);
+        groups.validatePublishedCategory(eventId,raw.subcategory());
         // Never expose unapproved remote image candidates through public snapshots.
         EventData event=PublicEventProjection.fromReviewed(raw);
         List<Map<String,Object>> participants=new ArrayList<>();
         var rows=db.queryForList("""
-            select p.id,p.reviewed_payload_json,s.review_state sales_state,s.reviewed_payload_json sales_json,s.reviewed_product_checks_json checks_json
+            select p.id,p.reviewed_payload_json,s.review_state sales_state,s.reviewed_payload_json sales_json,s.reviewed_product_checks_json checks_json,s.overrides_json sales_overrides
             from subculture_participant p left join subculture_sales s on s.participant_id=p.id
             where p.event_id=? and p.review_state='REVIEWED' and p.reviewed_payload_json is not null order by p.registration_name,p.id
             """,eventId);
@@ -39,6 +44,8 @@ public class CatalogPublicationService {
             Map<String,Object> view=new LinkedHashMap<>();view.put("id",id);view.put("participant",safe);view.put("sales",null);
             if("REVIEWED".equals(row.get("sales_state"))&&row.get("sales_json")!=null) {
                 Sales s=json.readValue(row.get("sales_json").toString(),Sales.class);
+                Map<?,?> overrides=json.readValue(row.get("sales_overrides").toString(),Map.class);
+                view.put("salesSummaryOrigin",overrides.get("summary")!=null && Objects.equals(overrides.get("summary"),s.summary())?"EDITORIAL":"COLLECTED");
                 Map<String,ProductCheck> checks=new LinkedHashMap<>();
                 Map<?,?> rawChecks=json.readValue(row.get("checks_json").toString(),Map.class);
                 rawChecks.forEach((key,value)->checks.put(key.toString(),json.readValue(json.writeValueAsString(value),ProductCheck.class)));
@@ -71,15 +78,62 @@ public class CatalogPublicationService {
     public PageData<Map<String,Object>> list(CatalogBrowseQuery query) {
         // Each enabled category is queried independently; never alias another category.
         if (!query.connected()) return new PageData<>(List.of(),query.page(),query.size(),0);
-        String fromSql=" from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where "+query.whereSql();
+        var filter=browseFilter(query);var args=new ArrayList<>(filter.args());
+        String fromSql=" from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where "+filter.where();
+        if(query.sort().equals("DATE_ASC")&&!query.from().isEmpty())args.add(query.from());args.add(query.size());args.add(query.page()*query.size());
         var rows=db.queryForList("""
             select p.event_id,p.snapshot_json->'event' event_json,p.published_at,
             (select count(*) from jsonb_array_elements(p.snapshot_json->'participants') x
              join subculture_participant q on q.id=(x->>'id')::bigint where q.review_state<>'EXCLUDED') participant_count
-            """+fromSql+" order by "+query.orderSql()+" limit ? offset ?",query.listArgs().toArray());
+            """+fromSql+" order by "+query.orderSql()+" limit ? offset ?",args.toArray());
         var items=summaries(rows);
-        long total=Objects.requireNonNull(db.queryForObject("select count(*)"+fromSql,Long.class,query.whereArgs().toArray()));
+        long total=Objects.requireNonNull(db.queryForObject("select count(*)"+fromSql,Long.class,filter.args().toArray()));
         return new PageData<>(items,query.page(),query.size(),total);
+    }
+    private record BrowseFilter(String where,List<Object> args) {}
+    /** Search the displayed group title for both list cards and raw calendar rows. */
+    private BrowseFilter browseFilter(CatalogBrowseQuery query){
+        var filters=new CatalogBrowseQuery(query.page(),query.size(),query.category(),"",query.subcategory(),query.from(),query.to(),query.sort(),query.region());
+        var args=filters.whereArgs();String where=filters.whereSql();
+        if(!query.q().isEmpty()){
+            where+=" and (strpos(lower(concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')),lower(?))>0 or exists(select 1 from catalog_operating_group_member gm join catalog_operating_group gg on gg.root_event_id=gm.root_event_id where gm.event_id=p.event_id and strpos(lower(gg.name),lower(?))>0))";
+            args.add(query.q());args.add(query.q());
+        }
+        return new BrowseFilter(where,args);
+    }
+    public PageData<Map<String,Object>> groupedList(CatalogBrowseQuery query) {
+        if(!query.connected())return new PageData<>(List.of(),query.page(),query.size(),0);
+        var filter=browseFilter(query);var args=new ArrayList<>(filter.args());
+        String cte="""
+            with visible as (
+              select p.* from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where
+            """+filter.where()+"""
+            ), editions as (
+              select p.*,g.name group_name,first_value(p.event_id) over (
+                partition by coalesce(m.root_event_id,p.event_id)
+                order by case when p.event_id=m.root_event_id then 0 else 1 end,p.event_id) edition_id
+              from visible p left join catalog_operating_group_member m on m.event_id=p.event_id
+              left join catalog_operating_group g on g.root_event_id=m.root_event_id
+            )
+            """;
+        long total=Objects.requireNonNull(db.queryForObject(cte+"select count(distinct edition_id) from editions",Long.class,args.toArray()));
+        String order=query.sort().equals("RECENT")?"published_at desc,event_id":
+            "(select min(d->>'startDate') from jsonb_array_elements(event_json->'occurrences') d"+(query.from().isEmpty()?"":" where d->>'endDate'>=?")+") asc nulls last,event_id";
+        if(query.sort().equals("DATE_ASC")&&!query.from().isEmpty())args.add(query.from());args.add(query.size());args.add(query.page()*query.size());
+        var rows=db.queryForList(cte+"""
+            , summaries as (
+              select p.event_id,
+                case when exists(select 1 from editions s where s.edition_id=p.event_id and s.event_id<>p.event_id)
+                  then jsonb_set(jsonb_set(p.snapshot_json->'event','{name}',to_jsonb(p.group_name)),'{occurrences}',
+                    (select jsonb_agg(distinct d.value) from editions s cross join lateral jsonb_array_elements(s.snapshot_json->'event'->'occurrences') d(value) where s.edition_id=p.event_id))
+                  else p.snapshot_json->'event' end event_json,
+                (select max(s.published_at) from editions s where s.edition_id=p.event_id) published_at,
+                (select count(*) from editions s cross join lateral jsonb_array_elements(s.snapshot_json->'participants') x
+                  join subculture_participant b on b.id=(x->>'id')::bigint where s.edition_id=p.event_id and b.review_state<>'EXCLUDED') participant_count
+              from editions p where p.event_id=p.edition_id
+            ) select * from summaries order by
+            """+order+" limit ? offset ?",args.toArray());
+        return new PageData<>(summaries(rows),query.page(),query.size(),total);
     }
     /** Only actual member EVENT saves count. Never infer popularity from views or local guest storage. */
     public List<Map<String,Object>> popular(int limit) {return popular(limit,"");}
@@ -117,17 +171,18 @@ public class CatalogPublicationService {
                 and p.snapshot_json->'event'->>'subcategory' in (%s)
                 and (%s) and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED','RESCHEDULED')
             ), editions as (
-              select p.*,case when p.event_id in (1,7)
-                and exists(select 1 from visible where event_id=1 and snapshot_json->'event'->>'name'='제35회 디. 페스타 (토요일)')
-                and exists(select 1 from visible where event_id=7 and snapshot_json->'event'->>'name'='제35회 디. 페스타 (일요일)')
-                then 1 else p.event_id end edition_id from visible p
+              select p.*,g.name group_name,first_value(p.event_id) over (
+                partition by coalesce(m.root_event_id,p.event_id)
+                order by case when p.event_id=m.root_event_id then 0 else 1 end,p.event_id) edition_id
+              from visible p left join catalog_operating_group_member m on m.event_id=p.event_id
+              left join catalog_operating_group g on g.root_event_id=m.root_event_id
             ), saves as (
               select p.edition_id,count(distinct m.user_id) save_count from editions p join memory_item m on m.event_id=p.event_id
               where m.target_type='EVENT' and m.target_id=m.event_id group by p.edition_id
             )
             select p.event_id,
               case when exists(select 1 from editions sibling where sibling.edition_id=p.event_id and sibling.event_id<>p.event_id)
-                then jsonb_set(jsonb_set(p.snapshot_json->'event','{name}',to_jsonb('제35회 디. 페스타'::text)), '{occurrences}',
+                then jsonb_set(jsonb_set(p.snapshot_json->'event','{name}',to_jsonb(p.group_name)), '{occurrences}',
                   (select jsonb_agg(d.value order by sibling.event_id,d.ordinality) from editions sibling
                    cross join lateral jsonb_array_elements(coalesce(sibling.snapshot_json->'event'->'occurrences','[]'::jsonb)) with ordinality d(value,ordinality)
                    where sibling.edition_id=p.event_id))
@@ -150,9 +205,11 @@ public class CatalogPublicationService {
     private List<Map<String,Object>> summaries(List<Map<String,Object>> rows) {
         List<Long> ids=rows.stream().map(r->((Number)r.get("event_id")).longValue()).toList();
         Map<Long,AssetView> banners=media.publicBanners(ids);
+        var operatingGroups=groups.publicGroups(ids);
         var items=rows.stream().map(r->{
             long id=((Number)r.get("event_id")).longValue(); Map<String,Object> item=new LinkedHashMap<>();
             item.put("id",id);item.put("event",json.readValue(r.get("event_json").toString(),EventData.class));
+            if(operatingGroups.containsKey(id))item.put("operatingGroup",operatingGroups.get(id));
             item.put("participantCount",r.get("participant_count"));
             if(r.containsKey("save_count"))item.put("saveCount",r.get("save_count"));
             Object stamp=r.get("published_at");item.put("publishedAt",stamp instanceof java.sql.Timestamp t?t.toInstant().toString():String.valueOf(stamp));
@@ -174,6 +231,10 @@ public class CatalogPublicationService {
         Map<String,Object> snapshot=json.readValue(rows.getFirst().get("snapshot_json").toString(),Map.class);
         Set<Long> publishedParticipants=new HashSet<>(),publishedProducts=new HashSet<>(),publishedSales=new HashSet<>();
         List<Map<String,Object>> participants=(List<Map<String,Object>>)snapshot.get("participants");
+        // Migration 022 freezes legacy provenance. Unknown snapshots use collected
+        // presentation; draft overrides must never change the published presentation.
+        for(var p:participants) if(!p.containsKey("salesSummaryOrigin") && p.get("sales") instanceof Map<?,?>)
+            p.put("salesSummaryOrigin","COLLECTED");
         Set<Long> excluded=new HashSet<>(db.query("select id from subculture_participant where event_id=? and review_state='EXCLUDED'",(rs,n)->rs.getLong(1),id));
         participants.removeIf(p->excluded.contains(((Number)p.get("id")).longValue()));
         Set<Long> hiddenSales=new HashSet<>(db.query("select s.participant_id from subculture_sales s join subculture_participant p on p.id=s.participant_id where p.event_id=? and s.review_state='EXCLUDED'",(rs,n)->rs.getLong(1),id));
@@ -187,6 +248,7 @@ public class CatalogPublicationService {
         AssetView banner=media.publicBanners(List.of(id)).get(id);
         // Explicit null matters: the frontend must not pick another banner after rights revocation.
         snapshot.put("banner",banner==null?null:assets.stream().filter(a->Objects.equals(a.get("id"),banner.id())).findFirst().orElse(null));
+        var group=groups.publicGroups(List.of(id)).get(id);if(group!=null)snapshot.put("operatingGroup",group);
         return Optional.of(snapshot);
     }
 }

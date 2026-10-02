@@ -15,7 +15,7 @@ function guideDate(value:string|null) {
 function Evidence({source,checked}:{source:string|null;checked:string|null}) {
   return <p className="guide-evidence">{source&&<SafeLink url={source}>안내 원문 확인 ↗</SafeLink>}{checked&&<small> · {checked} 확인</small>}</p>
 }
-export function VisitorGuide({value,day}:{value:PublicEvent;day:string}) {
+export function VisitorGuide({value,day,preview=false}:{value:PublicEvent;day:string;preview?:boolean}) {
   const guide=value.event.visitorGuide
   const programGroups=[
     {key:'scheduled',label:`${day?dateLabel(day):'날짜별'} 프로그램`,programs:(guide?.programs??[]).filter(p=>p.day===day)},
@@ -41,7 +41,7 @@ export function VisitorGuide({value,day}:{value:PublicEvent;day:string}) {
     </article>)}</div></section>)}
     {!!guide?.sales.length&&<section aria-label="공식 판매 공지"><h3>공식 판매·선입금 공지</h3>{guide.sales.map(s=><article className="guide-card" key={s.id}><h4>{s.title}</h4>{s.salesMethod&&<p>{s.salesMethod}</p>}{s.salesStartsAt&&<p>판매 시작 {guideDate(s.salesStartsAt)}</p>}{s.salesEndsAt&&<p>판매 마감 {guideDate(s.salesEndsAt)}</p>}{s.pickupDay&&<p>수령일 {dateLabel(s.pickupDay)}</p>}{s.note&&<p>{s.note}</p>}<Evidence source={s.sourceUrl} checked={s.checkedOn}/></article>)}</section>}
     {!!guide?.faq.length&&<section aria-label="회차별 이용 안내"><h3>자주 묻는 질문</h3>{guide.faq.map(f=><details key={f.id}><summary>{f.question}</summary><p>{f.status==='CONFIRMED'?f.answer:'이번 회차의 안내를 확인하고 있어요. 과거 회차 규정으로 확정하지 않습니다.'}</p><Evidence source={f.sourceUrl} checked={f.checkedOn}/></details>)}</section>}
-    <section className="guide-coverage" aria-label="정보 수집 상태"><h3>현재 소개하는 정보</h3><p>부스 {value.participants.length}곳 · 상품 항목 {products}개. 소개된 수이며 행사 전체 규모를 뜻하지 않습니다.</p>
+    <section className="guide-coverage" aria-label="정보 수집 상태"><h3>현재 소개하는 정보</h3>{!preview&&<p>부스 {value.participants.length}곳 · 상품 항목 {products}개. 소개된 수이며 행사 전체 규모를 뜻하지 않습니다.</p>}
       {coverage.map((c,i)=><div key={`${c.kind}:${i}`}><strong>{kinds[c.kind]??c.kind}</strong><span className="chip muted">{statusLabels[c.status]??'확인 중'}</span>{c.note&&<p>{c.note}</p>}<Evidence source={c.sourceUrl} checked={c.checkedOn}/></div>)}
       <p>미수집과 미참가는 다릅니다. 상품의 판매 상태는 확인 당시 안내이며 현장 재고·대기시간을 보장하지 않습니다.</p>
     </section>

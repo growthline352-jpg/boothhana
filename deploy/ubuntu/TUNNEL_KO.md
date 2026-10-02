@@ -20,6 +20,8 @@ Render 내보내기에는 일부 값에 따옴표가 붙는다. `normalize-rende
 
 ## 실행과 점검
 
+v0.2.4.0 운영 화면 동기화는 SQL022를 새 API보다 먼저 적용합니다. DB 백업·검증, 런타임 역할 지정, API와 프런트 반영 순서 및 복구 기준은 [운영 화면 안내](../../docs/OPERATIONS_CONSOLE_SYNC_KO.md#배포와-복구)를 따릅니다.
+
 관심분야 기능을 배포할 때는 해당 커밋의 전체 release-verification CI를 확인하고 운영 DB를 백업한 뒤 아카이브 목록을 확인한다. 실제 백엔드 역할을 `boothhana.backend_role`로 지정한 동일 DB 세션에서 `database/020_category_interests.sql`을 적용하고, v0.2.2.0의 서브컬처 유형 확장에는 `database/021_subculture_event_types.sql`을 이어서 새 API보다 먼저 적용한다. 이전 001~019는 적용되어 있어야 하며 이미 적용한 SQL은 다시 실행하지 않는다. 새 API 준비 상태와 개인 API 접근·CORS를 확인한 뒤 프런트와 수집기를 같은 릴리스 커밋으로 배포한다. 이전 API 이미지와 런타임 환경 파일을 보존하며, 상세 게이트는 [관심분야 검증 및 배포 계획](../../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 따른다.
 
 SQL021은 기존 행사·공개 스냅샷을 변경하지 않는다. 기존 행사 재분류는 새 API·프런트 적용 후 관리자 검토와 공개를 거쳐 반영하고 공개 분야 목록·상세 주소를 확인한다. 지역·일정의 공식 근거가 부족한 보류 행사는 근거 확인 후 같은 검토 절차를 따른다.

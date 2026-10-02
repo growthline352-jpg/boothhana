@@ -44,6 +44,8 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 
 ## Routes
 
+관리자 기본 진입은 `/admin/subculture` 공개 행사 관리이며, 업체의 공개 정보 관리는 `/support/management`에서 시작합니다. `/admin/events`와 `/creator/*`의 예약·참가신청·POS 화면은 별도 기능입니다. 방문 안내 편집, 관심분야 연결, 운영일·전시장 묶음의 사용 방법은 [운영 화면 안내](../docs/OPERATIONS_CONSOLE_SYNC_KO.md)를 확인합니다.
+
 - 공개·팬: `/`, `/login`, `/onboarding`, `/account`, `/events`, `/events/:eventId`, `/booths/:boothId`, `/products/:productId`, `/booths/:boothId/reserve`, `/reservations`, `/reservations/:reservationId`
 - 크리에이터: `/creator/events`, `/creator/booths`, `/creator/event-booths/:eventBoothId`, `/creator/event-booths/:eventBoothId/products`, `/creator/reservations`, `/creator/pos`, `/creator/notices`
 - 관리자: `/admin/events`, `/admin/events/:eventId`, `/admin/applications`

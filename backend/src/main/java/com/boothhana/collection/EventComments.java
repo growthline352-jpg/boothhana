@@ -35,8 +35,8 @@ public class EventComments {
         if(CommentLanguageFilter.containsBlockedTerm(body)) throw ApiException.badRequest("댓글을 등록하지 못했습니다.");
         return body;
     }
-    private void visible(long eventId) {
-        if(publications.findPublicDetail(eventId).isEmpty()) throw ApiException.notFound("공개된 행사를 찾을 수 없습니다.");
+    private Map<String,Object> visible(long eventId) {
+        return publications.findPublicDetail(eventId).orElseThrow(()->ApiException.notFound("공개된 행사를 찾을 수 없습니다."));
     }
     private long secondReviewEventId(long eventId) {
         if(eventId!=DFESTA_MAIN_ID) return eventId;
@@ -47,8 +47,14 @@ public class EventComments {
     }
     @GetMapping("/api/public/catalog/events/{eventId}/comments")
     public Map<String,Object> list(@PathVariable long eventId, @RequestParam(defaultValue="0") int page) {
-        visible(eventId);
+        var detail=visible(eventId);
         if(page<0 || page>10000) throw ApiException.badRequest("페이지를 확인해 주세요.");
+        if(detail.get("operatingGroup") instanceof CatalogOperatingGroups.PublicGroup group){
+            var ids=group.members().stream().map(CatalogOperatingGroups.Member::eventId).toList();
+            String marks=String.join(",",Collections.nCopies(ids.size(),"?"));List<Object> args=new ArrayList<>(ids);args.add(page*20);
+            var items=db.queryForList("select c.id,c.event_id as \"eventId\",c.user_id as \"authorId\",u.display_name as \"authorName\",c.body,c.created_at as \"createdAt\" from event_comment c join app_user u on u.id=c.user_id where c.event_id in ("+marks+") and c.deleted=false order by c.created_at desc,c.id desc limit 20 offset ?",args.toArray());
+            return Map.of("items",items,"total",db.queryForObject("select count(*) from event_comment where event_id in ("+marks+") and deleted=false",Long.class,ids.toArray()),"page",page,"size",20);
+        }
         long secondEventId=secondReviewEventId(eventId);
         var items=db.queryForList("select c.id,c.event_id as \"eventId\",c.user_id as \"authorId\",u.display_name as \"authorName\",c.body,c.created_at as \"createdAt\" from event_comment c join app_user u on u.id=c.user_id where c.event_id in (?,?) and c.deleted=false order by c.created_at desc,c.id desc limit 20 offset ?",eventId,secondEventId,page*20);
         return Map.of("items",items,"total",db.queryForObject("select count(*) from event_comment where event_id in (?,?) and deleted=false",Long.class,eventId,secondEventId),"page",page,"size",20);

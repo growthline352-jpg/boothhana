@@ -37,6 +37,8 @@ public final class SchemaContract {
         Map.entry("subculture_stage_run",List.of("id","pipeline_id","event_id","participant_id","stage","request_hash","request_json","coverage_json","receipt_json","status","started_at","finished_at","received_at")),
         Map.entry("subculture_catalog_asset",List.of("id","event_id","participant_id","product_id","identity_key","type","image_url","page_url","caption","reported_rights","rights_state","rights_note","credit","last_attempt_at","storage_state","object_key","sha256","byte_size","content_type","error","revision","created_at","stored_at","offline_allowed")),
         Map.entry("subculture_catalog_review_history",List.of("id","target_type","target_id","before_json","after_json","created_at","actor_id")),
+        Map.entry("catalog_operating_group",List.of("root_event_id","name","source_url","checked_on","revision","fixed_members","updated_by","updated_at")),
+        Map.entry("catalog_operating_group_member",List.of("event_id","root_event_id","position")),
         Map.entry("subculture_catalog_publication",List.of("event_id","snapshot_json","event_revision","published_at")),
         Map.entry("subculture_participant_progress",List.of("event_id","source_key","root_url","next_page_url","pass_no","page_index","revision","state","visited_json","last_pipeline_id","updated_at")),
         Map.entry("subculture_catalog_presentation",List.of("event_id","banner_asset_id","revision","updated_at")),

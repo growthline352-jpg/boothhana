@@ -1,6 +1,6 @@
 import { api, publicRead } from '../../api/client'
 import type { EventData, EventSource, Page, ReviewState } from '../collection/api'
-import { combineDfestaSummaries } from './eventGroup'
+import { combineDfestaSummaries, combineOperatingSummaries } from './eventGroup'
 import { loadAllEvents } from './allEvents'
 export type { EventData, Page, ReviewState }
 export type EvidenceScope = 'EVENT_LISTED' | 'EVENT_SALE_CONFIRMED' | 'PROFILE' | 'GENERAL_CATALOG' | 'PAST_REFERENCE' | 'UNKNOWN'
@@ -15,15 +15,20 @@ export interface Product {identity?: Identity | null; sourceEntryId: string | nu
 export interface Sales {summary: string; evidenceScope: EvidenceScope; categories: string[]; subjects: string[]; salesMethod: string | null; sources: EventSource[]; images: ImageCandidate[]; products: Product[]; warnings: string[]}
 export interface Asset {offlineAllowed?: boolean; id: number; eventId: number; participantId: number | null; productId: number | null; revision: number; type: string; imageUrl: string; pageUrl: string; caption: string | null; rightsEvidence: string | null; rightsState: string; rightsNote: string; storageState: string; storedUrl: string | null; error: string; credit: string}
 export interface ParticipantRow {id: number; eventId: number; revision: number; reviewState: ReviewState; data: Participant; collectedData: Participant; reviewNote: string; lastSeenAt: string; overrides: Record<string,unknown>; sales: {revision: number; reviewState: ReviewState; data: Sales; collectedData: Sales | null; reviewNote: string; collectedAt: string; overrides: Record<string,unknown>; productRows: ProductRow[]} | null; assets: Asset[]}
-export interface EventRow {id: number; name: string; subcategory: string; reviewState: ReviewState; participantCount: number; salesCount: number; storedImageCount: number; published: boolean; startDate: string}
+export interface EventRow {id: number; name: string; subcategory: string; reviewState: ReviewState; participantCount: number; salesCount: number; storedImageCount: number; published: boolean; startDate: string; hasPendingChanges?: boolean }
 export interface Coverage {completeness: string; reportedTotal: number | null; totalUnit: string; visitedPages: string[]; nextPageUrl: string | null; warnings: string[]}
 export interface BannerSelection {assetId: number | null; revision: number}
-export interface EventDetail {bannerSelection: BannerSelection; id: number; revision: number; event: EventData; collectedEvent: EventData; overrides: Record<string, unknown>; reviewState: ReviewState; note: string; possibleDuplicateOf: number | null; assets: Asset[]; recentStages: {stage: string; status: string; coverage: Coverage; receivedAt: string}[]; participantProgress?: {root_url: string | null; next_page_url: string | null; pass_no: number; page_index: number; state: string; updated_at: string}[]; publication: {event_revision: number; published_at: string}[]}
+export interface EventDetail {publishedEvent?: EventData|null;bannerSelection: BannerSelection; id: number; revision: number; event: EventData; collectedEvent: EventData; overrides: Record<string, unknown>; reviewState: ReviewState; note: string; possibleDuplicateOf: number | null; assets: Asset[]; recentStages: {stage: string; status: string; coverage: Coverage; receivedAt: string}[]; participantProgress?: {root_url: string | null; next_page_url: string | null; pass_no: number; page_index: number; state: string; updated_at: string}[]; publication: {event_revision: number; published_at: string}[]}
 export interface PipelineRun {runId: string; state: string; scope: {startDate: string; endDate: string}; startedAt: string; heartbeatAt: string; summary: {counts?: Record<string,number>; issues?: string[]; schedule?: string; receipts?: Record<string,{status:string;inserted:number;changed:number;unchanged:number;rejected:number}>}}
 export interface Edit {revision: number; reviewState: ReviewState; note: string; overrides: Record<string,unknown>; clearOverrides?: string[]}
 const base='/api/admin/subculture/v4'
+export interface OperatingGroupSettings {rootEventId:number;revision:number;name:string;sourceUrl:string;checkedOn:string;fixedMembers:boolean;eventIds:number[]}
+export interface OperatingGroup {rootEventId:number;name:string;members:{eventId:number;name:string;venueName:string|null;occurrences:EventData['occurrences']}[]}
 export const catalogApi={
- events:(page=0)=>api<Page<EventRow>>(`${base}/events?page=${page}&size=20`),
+ operatingGroup:(id:number)=>api<OperatingGroupSettings>(`${base}/events/${id}/operating-group`),
+ saveOperatingGroup:(id:number,input:Pick<OperatingGroupSettings,'revision'|'name'|'sourceUrl'|'checkedOn'|'eventIds'>)=>api<OperatingGroupSettings>(`${base}/events/${id}/operating-group`,{method:'PUT',body:JSON.stringify(input)}),
+ removeOperatingGroup:(id:number,revision:number)=>api<void>(`${base}/events/${id}/operating-group?revision=${revision}`,{method:'DELETE'}),
+ events:(page=0,filters:Record<string,string>={})=>api<Page<EventRow>>(`${base}/events?${new URLSearchParams({...filters,page:String(page),size:"20"})}`),
  event:(id:number)=>api<EventDetail>(`${base}/events/${id}`),
  editEvent:(id:number,input:Edit)=>api<EventDetail>(`${base}/events/${id}`,{method:'PATCH',body:JSON.stringify(input)}),
  participants:(id:number,page=0,q='')=>api<Page<ParticipantRow>>(`${base}/events/${id}/participants?page=${page}&size=20&q=${encodeURIComponent(q)}`),
@@ -37,9 +42,9 @@ export const catalogApi={
  runs:(page=0)=>api<Page<PipelineRun>>(`${base}/runs?page=${page}&size=20`),
 }
 export interface PublicAsset {offlineAllowed?: boolean; id: number; participantId: number | null; productId: number | null; type: string; url: string; caption: string | null; attribution: string; credit: string}
-export interface PublicParticipant {id: number; participant: Participant; sales: Sales | null; productRows?: ProductRow[]}
-export interface PublicEvent {banner?:PublicAsset|null;id:number;mode:'INFO_ONLY';event:EventData;participants:PublicParticipant[];publishedAt:string;assets:PublicAsset[]}
-export interface PublicEventSummary { id: number; event: EventData; participantCount: number; publishedAt?: string; banner?: PublicAsset | null }
+export interface PublicParticipant {id: number; participant: Participant; sales: Sales | null; salesSummaryOrigin?: 'EDITORIAL'|'COLLECTED'; productRows?: ProductRow[]}
+export interface PublicEvent {operatingGroup?:OperatingGroup;banner?:PublicAsset|null;id:number;mode:'INFO_ONLY';event:EventData;participants:PublicParticipant[];publishedAt:string;assets:PublicAsset[]}
+export interface PublicEventSummary { operatingGroup?:OperatingGroup; id: number; event: EventData; participantCount: number; publishedAt?: string; banner?: PublicAsset | null }
 export interface PopularEventSummary extends PublicEventSummary { saveCount: number }
 
 const placeholderRegistrationNames = new Set(['', '.', '-', '—', 'ㆍ'])
@@ -51,7 +56,7 @@ export function presentPublicParticipant(row: PublicParticipant): PublicParticip
  const registrationName=placeholderRegistrationNames.has(collectedName)
   ? (memberNames.join(' · ')||'부스명 미확인')
   : collectedName
- if(!row.sales)return {...row,participant:{...row.participant,registrationName}}
+ if(!row.sales || row.salesSummaryOrigin==='EDITORIAL' && row.sales.summary.trim())return {...row,participant:{...row.participant,registrationName}}
  const products=(row.productRows?.map(product=>product.data)??row.sales.products)
   .filter(product=>['EVENT_LISTED','EVENT_SALE_CONFIRMED'].includes(product.evidenceScope))
  const names=[...new Set(products.map(product=>product.name.trim()).filter(Boolean))]
@@ -68,7 +73,7 @@ export function presentPublicParticipant(row: PublicParticipant): PublicParticip
 export const publicCatalogApi={
  calendar:(query:string,combineEditions=true)=>loadAllEvents(new URLSearchParams(query), params=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${params}`),combineEditions),
  popular:(category?:string)=>publicRead<PopularEventSummary[]>(`/api/public/catalog/events/popular${category?`?category=${encodeURIComponent(category)}`:''}`),
- browse:async(query:string)=>{const page=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`);return {...page,items:combineDfestaSummaries(page.items)}},
+ browse:async(query:string)=>{const params=new URLSearchParams(query);params.set('grouped','true');const page=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${params}`);return {...page,items:combineOperatingSummaries(page.items)}},
  events:async(page=0)=>{const result=await publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`);return {...result,items:combineDfestaSummaries(result.items)}},
  event:async(id:string)=>{
   const value=await publicRead<PublicEvent>(`/api/public/catalog/events/${id}`)

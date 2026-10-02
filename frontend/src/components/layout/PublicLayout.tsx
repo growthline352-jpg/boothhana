@@ -92,7 +92,7 @@ export function PublicLayout() {
               {(user?.permissions.includes('CREATOR') || user?.permissions.includes('ADMIN')) && <div className="discovery-menu-group">
                 <span className="discovery-menu-caption">운영 메뉴</span>
                 {user.permissions.includes('CREATOR') && <Link to="/creator"><span>크리에이터 화면</span><DiscoveryIcon name="arrow" size={16}/></Link>}
-                {user.permissions.includes('ADMIN') && <Link to="/admin/events"><span>관리자 화면</span><DiscoveryIcon name="arrow" size={16}/></Link>}
+                {user.permissions.includes('ADMIN') && <Link to="/admin/subculture"><span>관리자 화면</span><DiscoveryIcon name="arrow" size={16}/></Link>}
                 {user.permissions.includes('ADMIN') && <Link to="/admin/subculture"><span>행사 수집 관리</span><DiscoveryIcon name="arrow" size={16}/></Link>}
               </div>}
               {user && <button className="discovery-logout-action" disabled={busy} onClick={() => void signOut()}>{busy ? '로그아웃 중…' : '로그아웃'}</button>}

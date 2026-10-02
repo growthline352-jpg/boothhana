@@ -23,6 +23,8 @@ public class SupportResolutionService {
   Target t=tickets.mapper().readValue(ticket.get("target_json").toString(),Target.class);
   if(!"CATALOG".equals(t.namespace())||!Set.of("EVENT","PARTICIPANT","PRODUCT").contains(t.type()))throw ApiException.badRequest("이 대상은 해당 편집 화면에서 수정 후 '공개 변경 확인'으로 완료해 주세요.");
   var now=tickets.targetResolver().resolve(t,null);if(!Objects.equals(c.expectedFingerprint(),now.fingerprint()))throw ApiException.conflict("공개 정보가 변경되었습니다. 다시 확인하세요.");
+  // Membership/publication lock precedes event rows in both direct and report-based publishing.
+  publications.lockForPublication();
   // Lock parent first; publication and crawler updates also use it. All changes roll back on failure.
   var event=tickets.database().queryForList("select revision from subculture_event_candidate where id=? for update",t.eventId()).getFirst();
   if(SupportService.n(event,"revision")!=c.eventRevision())throw ApiException.conflict("행사 검토 버전이 변경되었습니다.");

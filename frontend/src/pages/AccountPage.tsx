@@ -125,7 +125,7 @@ export function AccountPage() {
         <div className="account-list">
           <AccountLink to="/support/management" title="내 행사·부스 관리" description="주최자·부스 운영자 인증 신청과 관리" />
           {user?.permissions.includes('CREATOR') && <AccountLink to="/creator" title="크리에이터 작업 공간" description="부스·상품·예약 운영" />}
-          {user?.permissions.includes('ADMIN') && <AccountLink to="/admin/events" title="관리자 작업 공간" description="행사 운영과 관리 업무" />}
+          {user?.permissions.includes('ADMIN') && <AccountLink to="/admin/subculture" title="관리자 작업 공간" description="행사 운영과 관리 업무" />}
         </div>
       </section>
       <section className="account-group" aria-labelledby="account-support-title">

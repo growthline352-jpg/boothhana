@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the ACTUAL SQL001..021 to an EMPTY, ISOLATED localhost test database.
+"""Apply the ACTUAL SQL001..022 to an EMPTY, ISOLATED localhost test database.
 Never modifies/clears a nonempty DB. No production or forwarded databases allowed.
 Requires PostgreSQL16+ client, test admin and a fresh dedicated test cluster.
 """
@@ -21,7 +21,7 @@ def main():
  # Existing cluster-level roles indicate this is not a disposable isolated cluster.
  if run("select count(*) from pg_roles where rolname in ('boothhana_release_runtime','anon','authenticated');",env)!='0':raise ValueError('Test roles already exist; use a fresh dedicated cluster, do not alter shared roles')
  files=sorted((ROOT/'database').glob('[0-9][0-9][0-9]_*.sql'))
- if [x.name[:3] for x in files]!=[f'{i:03d}' for i in range(1,22)]:raise ValueError('Expected exact migration sequence 001..021')
+ if [x.name[:3] for x in files]!=[f'{i:03d}' for i in range(1,23)]:raise ValueError('Expected exact migration sequence 001..022')
  setup=r"""\getenv runtime_password BOOTH_FULL_TEST_PASSWORD
 select format('create role boothhana_release_runtime login nosuperuser nocreatedb nocreaterole nobypassrls password %L', :'runtime_password') \gexec
 create role anon nologin;
@@ -32,7 +32,7 @@ select set_config('boothhana.backend_role','boothhana_release_runtime',false);
  commands=setup+'\n'+'\n'.join(x.read_text() for x in files)
  run(commands,env)
  result={'state':'SCHEMA_APPLIED_TEST_ONLY','database':'boothhana_release_test','migrations':[{'file':x.name,'sha256':hashlib.sha256(x.read_bytes()).hexdigest()} for x in files]}
- out=ROOT/'verification/v18/results/test-db-preparation.json';out.parent.mkdir(exist_ok=True,parents=True);out.write_text(json.dumps(result,indent=2)+'\n');print('Applied actual SQL001..021 to isolated test DB. No runtime/test success implied.')
+ out=ROOT/'verification/v18/results/test-db-preparation.json';out.parent.mkdir(exist_ok=True,parents=True);out.write_text(json.dumps(result,indent=2)+'\n');print('Applied actual SQL001..022 to isolated test DB. No runtime/test success implied.')
  return 0
 if __name__=='__main__':
  try:sys.exit(main())

@@ -304,17 +304,22 @@ public class CatalogService {
             db.update("insert into subculture_participant_member(participant_id,exhibitor_id) values(?,?) on conflict do nothing",id,member);
         }
     }
-    public PageData<Map<String,Object>> events(int page,int size) {
-        paging(page,size);
+    public PageData<Map<String,Object>> events(int page,int size) {return events(page,size,new CatalogAdminQuery("","","",""));}
+    public PageData<Map<String,Object>> events(int page,int size,CatalogAdminQuery query) {
+        paging(page,size);List<Object> args=new ArrayList<>();String where=query.where(args);
+        long total=Objects.requireNonNull(db.queryForObject("select count(*) from subculture_event_candidate e"+where,Long.class,args.toArray()));
+        args.add(size);args.add(page*size);
         var rows=db.queryForList("""
             select e.*,(select count(*) from subculture_participant p where p.event_id=e.id) participant_count,
             (select count(*) from subculture_sales s join subculture_participant p on p.id=s.participant_id where p.event_id=e.id) sales_count,
             (select count(*) from subculture_catalog_asset a where a.event_id=e.id and a.storage_state='STORED' and a.rights_state='APPROVED') image_count,
-            exists(select 1 from subculture_catalog_publication pub where pub.event_id=e.id) published
-            from subculture_event_candidate e order by e.starts_on,e.id limit ? offset ?
-            """,size,page*size);
-        List<Map<String,Object>> items=rows.stream().map(e->{var data=effective(e,EventData.class);return Map.<String,Object>of("id",num(e,"id"),"name",data.name(),"subcategory",data.subcategory(),"reviewState",e.get("review_state"),"participantCount",e.get("participant_count"),"salesCount",e.get("sales_count"),"storedImageCount",e.get("image_count"),"published",e.get("published"),"startDate",e.get("starts_on").toString());}).toList();
-        return new PageData<>(items,page,size,Objects.requireNonNull(db.queryForObject("select count(*) from subculture_event_candidate",Long.class)));
+            exists(select 1 from subculture_catalog_publication pub where pub.event_id=e.id) published,
+            """+CatalogAdminQuery.PENDING+" has_pending_changes from subculture_event_candidate e"+where+" order by e.starts_on,e.id limit ? offset ?",args.toArray());
+        List<Map<String,Object>> items=rows.stream().map(e->{var data=effective(e,EventData.class);Map<String,Object> item=new LinkedHashMap<>();
+            item.put("id",num(e,"id"));item.put("name",data.name());item.put("subcategory",data.subcategory());item.put("reviewState",e.get("review_state"));
+            item.put("participantCount",e.get("participant_count"));item.put("salesCount",e.get("sales_count"));item.put("storedImageCount",e.get("image_count"));
+            item.put("published",e.get("published"));item.put("startDate",e.get("starts_on").toString());item.put("hasPendingChanges",e.get("has_pending_changes"));return item;}).toList();
+        return new PageData<>(items,page,size,total);
     }
     public Map<String,Object> eventDetail(long id) {
         var row=one("select * from subculture_event_candidate where id=?",id);Map<String,Object> detail=new LinkedHashMap<>();
@@ -325,7 +330,9 @@ public class CatalogService {
         detail.put("participantProgress",db.queryForList("select root_url,next_page_url,pass_no,page_index,state,updated_at from subculture_participant_progress where event_id=? order by updated_at",id));
         var stage=db.queryForList("select stage,status,coverage_json,received_at from subculture_stage_run where event_id=? order by received_at desc limit 100",id);
         detail.put("recentStages",stage.stream().map(s->Map.of("stage",s.get("stage"),"status",s.get("status"),"coverage",decode(s.get("coverage_json"),Coverage.class),"receivedAt",instant(s.get("received_at")))).toList());
-        detail.put("publication",db.queryForList("select event_revision,published_at from subculture_catalog_publication where event_id=?",id));return detail;
+        detail.put("publication",db.queryForList("select event_revision,published_at from subculture_catalog_publication where event_id=?",id));
+        var published=db.queryForList("select snapshot_json->'event' event_json from subculture_catalog_publication where event_id=?",id);
+        detail.put("publishedEvent",published.isEmpty()?null:decode(published.getFirst().get("event_json"),EventData.class));return detail;
     }
     public PageData<ParticipantView> participants(long eventId,int page,int size,String query) {
         paging(page,size);if(query==null||query.length()>100) throw ApiException.badRequest("검색어 길이 오류");

@@ -2,7 +2,7 @@ import { publicCatalogApi, type PopularEventSummary, type PublicEventSummary } f
 import { interestApi } from '../interests/api'
 import { categories } from './categories'
 import { calendarEventRanges } from './calendar'
-import { combineDfestaSummaries, DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID, isDfestaDay } from '../catalog/eventGroup'
+import { combineOperatingSummaries, combineDfestaSummaries, DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID, isDfestaDay } from '../catalog/eventGroup'
 /** The API groups editions and counts distinct members before applying its limit. */
 export function rankedPopularEvents(rows: PopularEventSummary[], limit = 6): PopularEventSummary[] {
   return [...rows]
@@ -23,7 +23,7 @@ export function unsavedUpcomingEvents(rows: PublicEventSummary[], today: string)
   // Exclude each source day before combining editions, preserving a remaining day's real ID.
   const eligible = rows.filter(row => !['CANCELED', 'POSTPONED', 'RESCHEDULED'].includes(row.event.operationStatus?.state || '') && nextDate(row, today))
   const paired = [DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID].every(id => eligible.some(row => row.id === id && isDfestaDay(row.id, row.event.name)))
-  return (paired ? combineDfestaSummaries(eligible) : eligible)
+  return (eligible.some(row=>row.operatingGroup)?combineOperatingSummaries(eligible):paired ? combineDfestaSummaries(eligible) : eligible)
     .sort((a, b) => nextDate(a, today).localeCompare(nextDate(b, today)) || a.id - b.id)
     .slice(0, 6).map(row => ({ ...row, saveCount: 0 }))
 }

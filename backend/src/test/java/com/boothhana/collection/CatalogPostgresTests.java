@@ -37,6 +37,8 @@ class CatalogPostgresTests {
         db.execute(Files.readString(Path.of("../database/007_catalog_review_fixes.sql")));
         db.execute(Files.readString(Path.of("../database/008_catalog_presentation.sql")));
         db.execute(Files.readString(Path.of("../database/009_floorplan_automation.sql")));
+        db.execute("create table catalog_operating_group(root_event_id bigint primary key,name text)");
+        db.execute("create table catalog_operating_group_member(event_id bigint primary key,root_event_id bigint,position integer)");
         db.execute("create table event(id bigint primary key,name text);insert into event values(1,'unchanged commerce sentinel')");
         media=new CatalogMediaService(db,mock(VerifiedImageStorage.class),"https://images.example.com");
         service=new CatalogService(db,json,media);publications=new CatalogPublicationService(db,json,media);discovery=new CollectionService(db,json);

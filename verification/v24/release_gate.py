@@ -42,6 +42,16 @@ def main():
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','verifiedOrganizerLifecyclePreservesOverridesAndRevokesAccess'),
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership'),
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','verifiedBoothProductEditPreservesPendingCollectionAndIdentityThroughRepublication'),
+            ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','popularEditionDeduplicatesMembersBeforeLimitAndKeepsRemainingDay'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','operatingGroupPreservesSourceIdsSavesCommentsAndOwnership'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','operatingGroupRejectsStaleChangesDuplicateMembershipAndCrossCategory'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','operatingGroupPaginationCountsEditionsAndScopesMatchingDays'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','operatingGroupWithdrawnMembersAreAbsentAndFixedLegacyLinksCannotChange'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','groupedEventCannotRepublishIntoAnotherCategory'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','editorialSalesProvenanceRemainsInPublishedSnapshotDuringPendingEdits'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','legacySalesProvenanceMigrationFreezesOnlySupportedEditorialValues'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','adminFiltersUseEffectiveTitlesLiteralSearchAndPendingPublicChanges'),
+            ('TEST-com.boothhana.release.OperationsIntegrationTests.xml','operatingGroupAdminRoutesRequireAdminCsrfAndTablesStayPrivate'),
         ]
         for filename,name in required:
             report=ROOT/'backend/build/test-results/test'/filename
