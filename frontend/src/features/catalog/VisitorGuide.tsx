@@ -33,13 +33,13 @@ export function VisitorGuide({value,day}:{value:PublicEvent;day:string}) {
       {t.note&&<p>{t.note}</p>}{t.reservationUrl&&<SafeLink url={t.reservationUrl}>예매 안내 바로가기 ↗</SafeLink>}<Evidence source={t.sourceUrl} checked={t.checkedOn}/>
     </article>)}</div></section>}
     {programGroups.map(group=><section key={group.key} aria-label={group.label}><h3>{group.label}</h3><div className="guide-grid">{group.programs.map(p=><article className="guide-card" key={p.id}>
-      <h4>{p.name}</h4><p>{p.startTime?`${p.startTime}${p.endTime?` ~ ${p.endTime}`:''}`:'시간 확인 중'}{p.venue?` · ${p.venue}`:''}</p>
+      <h4>{p.name}</h4><span className="chip muted">{statusLabels[p.status]??'확인 중'}</span><p>{p.startTime?`${p.startTime}${p.endTime?` ~ ${p.endTime}`:''}`:'시간 확인 중'}{p.venue?` · ${p.venue}`:''}</p>
       <p>{p.ticketRequirement==='SEPARATE'?'별도 티켓 필요':p.ticketRequirement==='INCLUDED'?'행사 입장권에 포함':'입장 조건 확인 중'}</p>
       {!!p.subjects.length&&<p>{p.subjects.join(' · ')}</p>}{p.note&&<p>{p.note}</p>}
       {p.ticketId&&guide?.tickets.find(t=>t.id===p.ticketId)&&<p>연결 예매권: {guide.tickets.find(t=>t.id===p.ticketId)?.name}</p>}
       <Evidence source={p.sourceUrl} checked={p.checkedOn}/>
     </article>)}</div></section>)}
-    {!!guide?.sales.length&&<section aria-label="공식 판매 공지"><h3>공식 판매·선입금 공지</h3>{guide.sales.map(s=><article className="guide-card" key={s.id}><h4>{s.title}</h4>{s.salesMethod&&<p>{s.salesMethod}</p>}{s.salesStartsAt&&<p>판매 시작 {guideDate(s.salesStartsAt)}</p>}{s.salesEndsAt&&<p>판매 마감 {guideDate(s.salesEndsAt)}</p>}{s.note&&<p>{s.note}</p>}<Evidence source={s.sourceUrl} checked={s.checkedOn}/></article>)}</section>}
+    {!!guide?.sales.length&&<section aria-label="공식 판매 공지"><h3>공식 판매·선입금 공지</h3>{guide.sales.map(s=><article className="guide-card" key={s.id}><h4>{s.title}</h4>{s.salesMethod&&<p>{s.salesMethod}</p>}{s.salesStartsAt&&<p>판매 시작 {guideDate(s.salesStartsAt)}</p>}{s.salesEndsAt&&<p>판매 마감 {guideDate(s.salesEndsAt)}</p>}{s.pickupDay&&<p>수령일 {dateLabel(s.pickupDay)}</p>}{s.note&&<p>{s.note}</p>}<Evidence source={s.sourceUrl} checked={s.checkedOn}/></article>)}</section>}
     {!!guide?.faq.length&&<section aria-label="회차별 이용 안내"><h3>자주 묻는 질문</h3>{guide.faq.map(f=><details key={f.id}><summary>{f.question}</summary><p>{f.status==='CONFIRMED'?f.answer:'이번 회차의 안내를 확인하고 있어요. 과거 회차 규정으로 확정하지 않습니다.'}</p><Evidence source={f.sourceUrl} checked={f.checkedOn}/></details>)}</section>}
     <section className="guide-coverage" aria-label="정보 수집 상태"><h3>현재 소개하는 정보</h3><p>부스 {value.participants.length}곳 · 상품 항목 {products}개. 소개된 수이며 행사 전체 규모를 뜻하지 않습니다.</p>
       {coverage.map((c,i)=><div key={`${c.kind}:${i}`}><strong>{kinds[c.kind]??c.kind}</strong><span className="chip muted">{statusLabels[c.status]??'확인 중'}</span>{c.note&&<p>{c.note}</p>}<Evidence source={c.sourceUrl} checked={c.checkedOn}/></div>)}

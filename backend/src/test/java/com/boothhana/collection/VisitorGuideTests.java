@@ -10,6 +10,10 @@ class VisitorGuideTests {
  private final List<Occurrence> dates=List.of(new Occurrence("2026-10-10","2026-10-11",null,null));
  private TicketInfo ticket(String status,String price,String source){return new TicketInfo("general","일반권","2026-10-10",price,"KRW","2026-08-10T19:00:00+09:00","2026-10-10T16:30:00+09:00",null,null,status,null,source,"2026-10-02");}
  private VisitorGuide guide(TicketInfo t){return new VisitorGuide(List.of(t),List.of(),List.of(),List.of(),List.of());}
+ @Test void soldOutProgramNeedsSourceAndCheckDate(){
+  var p=new ProgramInfo("stage","공연","STAGE",List.of(),null,null,null,null,"UNKNOWN",null,"SOLD_OUT",null,null,null);
+  assertThatThrownBy(()->VisitorGuideRules.validate(new VisitorGuide(List.of(),List.of(p),List.of(),List.of(),List.of()),dates)).isInstanceOf(IllegalArgumentException.class);
+ }
  @Test void pricesNeedEditionScopedEvidenceAndUnknownPolicyCannotBecomeAnAnswer(){
   assertThatCode(()->VisitorGuideRules.validate(guide(ticket("PUBLISHED","8000","https://illustar.net/tickets")),dates)).doesNotThrowAnyException();
   assertThatThrownBy(()->VisitorGuideRules.validate(guide(ticket("PUBLISHED","8000",null)),dates)).isInstanceOf(IllegalArgumentException.class);

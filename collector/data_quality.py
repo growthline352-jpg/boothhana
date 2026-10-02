@@ -7,13 +7,41 @@ reviewed facts or changes the fields that define event identity.
 from __future__ import annotations
 from copy import deepcopy
 from taxonomy import GROUPS
-from datetime import date
+from datetime import date, datetime, timezone, timedelta
 import re
 
 IDENTITY_FIELDS = ('name', 'subcategory', 'organizer', 'edition', 'region', 'venueName')
 
 def _blank(value):
     return value is None or isinstance(value, str) and not value.strip()
+
+def _incomplete_guide(guide):
+    if not any(guide.get(kind) for kind in ('tickets','programs','faq','sales','coverage')):return True
+    if any(row.get('status') != 'PUBLISHED' for row in guide.get('coverage') or []):return True
+    if any(row.get('status') in ('UNKNOWN','UNPUBLISHED') or row.get('priceAmount') is None for row in guide.get('tickets') or []):return True
+    if any(row.get('status') in ('UNKNOWN','UNPUBLISHED') or not row.get('day') or not row.get('startTime') for row in guide.get('programs') or []):return True
+    return any(row.get('status') == 'UNKNOWN' for row in guide.get('faq') or [])
+
+def _can_refresh_guide_row(old, incoming):
+    """Accept a newer complete observation only when it preserves every known fact.
+
+    Keeping one whole observation also keeps its source attached to its facts;
+    stitching fields from unrelated sources would lose that provenance.
+    """
+    if not incoming.get('sourceUrl') or not incoming.get('checkedOn'):return False
+    if incoming['checkedOn'] < (old.get('checkedOn') or ''):return False
+    if incoming.get('status') in ('UNKNOWN','UNPUBLISHED','INACCESSIBLE'):return False
+    if old.get('status') in ('PUBLISHED','CONFIRMED','SOLD_OUT') and old['status'] != incoming.get('status'):return False
+    for key,value in old.items():
+        if key in ('sourceUrl','checkedOn','note','status') or _blank(value) or value == []:continue
+        if key == 'ticketRequirement' and value == 'UNKNOWN':continue
+        new=incoming.get(key)
+        if new == value:continue
+        # An announced sale date can gain a time without changing its Korean date.
+        if key in ('salesStartsAt','salesEndsAt') and len(value)==10 and isinstance(new,str) and len(new)>10:
+            if datetime.fromisoformat(new.replace('Z','+00:00')).astimezone(timezone(timedelta(hours=9))).date().isoformat()==value:continue
+        return False
+    return True
 
 def missing_reasons(event: dict) -> list[str]:
     reasons = []
@@ -29,7 +57,10 @@ def missing_reasons(event: dict) -> list[str]:
     if event.get('eventFormat') == 'MULTI_BOOTH' and not any(row.get('kind') == 'SALES' and row.get('url') and row.get('status') == 'PUBLISHED' for row in links):
         reasons.append('MISSING_SALES_SOURCE')
     if not any(row.get('matchesEdition') is True for row in event.get('banners') or []): reasons.append('MISSING_CURRENT_BANNER')
-    if event.get('subcategory') in GROUPS['SUBCULTURE'] and not event.get('visitorGuide'):reasons.append('MISSING_VISITOR_GUIDE')
+    if event.get('subcategory') in GROUPS['SUBCULTURE']:
+        guide=event.get('visitorGuide')
+        if not guide:reasons.append('MISSING_VISITOR_GUIDE')
+        elif _incomplete_guide(guide):reasons.append('INCOMPLETE_VISITOR_GUIDE')
     return reasons
 
 def _norm(value):
@@ -92,7 +123,7 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
                 for incoming in incoming_guide.get(kind) or []:
                     old=next((row for row in rows if row[key]==incoming[key]),None)
                     if old is None and len(rows)<limit:rows.append(deepcopy(incoming))
-                    elif old and old.get('status') in ('UNKNOWN','UNPUBLISHED','INACCESSIBLE') and incoming.get('sourceUrl') and incoming.get('checkedOn') and incoming.get('status') in ('PUBLISHED','CONFIRMED','PARTIAL'):rows[rows.index(old)]=deepcopy(incoming)
+                    elif old and _can_refresh_guide_row(old,incoming):rows[rows.index(old)]=deepcopy(incoming)
                 merged['visitorGuide'][kind]=rows
 
     old_status = merged.get('operationStatus') or {'state': 'UNKNOWN', 'note': None, 'sourceUrl': None, 'checkedOn': None}
