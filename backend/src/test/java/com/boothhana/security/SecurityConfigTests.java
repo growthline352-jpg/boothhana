@@ -79,12 +79,19 @@ class SecurityConfigTests {
         var csrfCookie = csrfResponse.getCookie("XSRF-TOKEN");
         assertThat(csrfCookie).isNotNull();
 
+        var priorMemberSession = new org.springframework.mock.web.MockHttpSession();
+        LoginSessionPolicy.kakao(priorMemberSession);
         mockMvc.perform(post("/api/auth/admin/login")
+                .session(priorMemberSession)
                 .cookie(csrfCookie)
                 .header("X-XSRF-TOKEN", token)
                 .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"operator\",\"password\":\"correct password\"}"))
             .andExpect(status().isNoContent())
+            .andDo(result -> {
+                assertThat(result.getRequest().getSession().getMaxInactiveInterval()).isEqualTo(1800);
+                assertThat(result.getRequest().getSession().getAttribute(LoginSessionPolicy.PERSISTENT_KAKAO)).isNull();
+            })
             .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("no-store")))
             .andExpect(request().sessionAttribute(
                 org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,

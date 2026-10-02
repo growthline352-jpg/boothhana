@@ -7,6 +7,8 @@ import java.util.Map;
 public final class SchemaContract {
     private SchemaContract() {}
     public static final Map<String,List<String>> TABLES=Map.ofEntries(
+        Map.entry("booth_session",List.of("primary_id","session_id","creation_time","last_access_time","max_inactive_interval","expiry_time","principal_name")),
+        Map.entry("booth_session_attributes",List.of("session_primary_id","attribute_name","attribute_bytes")),
         Map.entry("catalog_creator_booth",List.of("participant_id","event_id","user_id","base_booth_id","created_at")),
         Map.entry("organizer_identity",List.of("id","name","official_url","created_by","created_at")),
         Map.entry("event_manager",List.of("event_id","user_id","organizer_id","claim_ticket_id","state","granted_by","granted_at","revoked_by","revoked_at","reason","revision")),
@@ -70,6 +72,8 @@ public final class SchemaContract {
      * This guards same-named but incompatible columns, not just missing columns. */
     public record ColumnShape(String udt,Integer length,boolean notNull) {}
     private static final String COLUMN_SPEC = """
+        booth_session=primary_id:bpchar:36:1,session_id:bpchar:36:1,creation_time:int8:0:1,last_access_time:int8:0:1,max_inactive_interval:int4:0:1,expiry_time:int8:0:1,principal_name:varchar:100:0
+        booth_session_attributes=session_primary_id:bpchar:36:1,attribute_name:varchar:200:1,attribute_bytes:bytea:0:1
         catalog_creator_booth=participant_id:int8:0:1,event_id:int8:0:1,user_id:int8:0:1,base_booth_id:int8:0:1,created_at:timestamptz:0:1
         catalog_operating_group=root_event_id:int8:0:1,name:varchar:255:1,source_url:varchar:2048:1,checked_on:date:0:1,revision:int8:0:1,fixed_members:bool:0:1,updated_by:int8:0:0,updated_at:timestamptz:0:1
         catalog_operating_group_member=event_id:int8:0:1,root_event_id:int8:0:1,position:int4:0:1

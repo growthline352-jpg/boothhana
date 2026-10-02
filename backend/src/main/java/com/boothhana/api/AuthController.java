@@ -63,6 +63,7 @@ public class AuthController {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         securityContexts.saveContext(context, request, response);
+        com.boothhana.security.LoginSessionPolicy.admin(request.getSession(true));
         return ResponseEntity.noContent().cacheControl(CacheControl.noStore()).build();
     }
 
