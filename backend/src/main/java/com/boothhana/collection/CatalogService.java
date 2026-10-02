@@ -78,10 +78,14 @@ public class CatalogService {
         if(limit<1||limit>200) throw ApiException.badRequest("행사 처리 한도 오류");
         var scope=decode(one("select scope_json from subculture_pipeline_run where id=?",UUID.fromString(pipelineId)).get("scope_json"),Scope.class);
         var rows=db.queryForList("""
-            select * from subculture_event_candidate where review_state<>'EXCLUDED' and starts_on<=cast(? as date) and ends_on>=cast(? as date)
-            and (possible_duplicate_of is null or review_state='REVIEWED') order by (select min(g.updated_at) from subculture_participant_progress g where g.event_id=subculture_event_candidate.id) asc nulls first,starts_on,id limit ?
+            select *, exists(select 1 from support_ticket t where t.kind='INQUIRY' and t.category='FEATURE_REQUEST' and t.status='IN_PROGRESS' and t.client_context_json->>'eventId'=subculture_event_candidate.id::text and t.client_context_json->>'needType' in ('BOOTH','PRODUCT','PROGRAM','TICKET')) as information_requested from subculture_event_candidate where review_state<>'EXCLUDED' and starts_on<=cast(? as date) and ends_on>=cast(? as date)
+            and (possible_duplicate_of is null or review_state='REVIEWED')
+            order by exists(select 1 from support_ticket t where t.kind='INQUIRY' and t.category='FEATURE_REQUEST' and t.status='IN_PROGRESS'
+                and t.client_context_json->>'eventId'=subculture_event_candidate.id::text
+                and t.client_context_json->>'needType' in ('BOOTH','PRODUCT','PROGRAM','TICKET')) desc,
+                (select min(g.updated_at) from subculture_participant_progress g where g.event_id=subculture_event_candidate.id) asc nulls first,starts_on,id limit ?
             """,scope.endDate(),scope.startDate(),limit);
-        return rows.stream().map(r->Map.<String,Object>of("id",num(r,"id"),"revision",num(r,"revision"),"event",effective(r,EventData.class))).toList();
+        return rows.stream().map(r->Map.<String,Object>of("id",num(r,"id"),"revision",num(r,"revision"),"event",effective(r,EventData.class),"informationRequested",Boolean.TRUE.equals(r.get("information_requested")))).toList();
     }
     public List<Map<String,Object>> salesTargets(String pipelineId,int limit) {
         if(limit<1||limit>1000) throw ApiException.badRequest("판매정보 처리 한도 오류");
@@ -91,7 +95,9 @@ public class CatalogService {
             left join subculture_sales s on s.participant_id=p.id where e.review_state<>'EXCLUDED' and p.review_state<>'EXCLUDED'
             and e.starts_on<=cast(? as date) and e.ends_on>=cast(? as date) and (e.possible_duplicate_of is null or e.review_state='REVIEWED')
             and (p.sales_retry_after is null or p.sales_retry_after<=now())
-            order by p.sales_last_attempt_at asc nulls first,p.id limit ?
+            order by exists(select 1 from support_ticket t where t.kind='INQUIRY' and t.category='FEATURE_REQUEST' and t.status='IN_PROGRESS'
+                and t.client_context_json->>'eventId'=e.id::text and t.client_context_json->>'needType'='PRODUCT') desc,
+                p.sales_last_attempt_at asc nulls first,p.id limit ?
             """,scope.endDate(),scope.startDate(),limit).stream().map(p->Map.<String,Object>of("id",num(p,"id"),"eventId",num(p,"event_id"),"revision",num(p,"revision"),"participant",effective(p,Participant.class),"event",event(num(p,"event_id")))).toList();
     }
     @Transactional
@@ -349,7 +355,7 @@ public class CatalogService {
     }
     @Transactional public Map<String,Object> editEvent(long id,EditInput input) {
         var row=one("select * from subculture_event_candidate where id=? for update",id);
-        checkEdit(row,input,Set.of("name","venueName","address","description","admission","organizer","edition","subjects","occurrences","eventFormat","discoveryLinks","warnings","subcategory","region","operationStatus"),EventData.class);
+        checkEdit(row,input,Set.of("name","venueName","address","description","admission","organizer","edition","subjects","occurrences","eventFormat","discoveryLinks","warnings","subcategory","region","operationStatus","visitorGuide"),EventData.class);
         EventData e=effective(after(row,input),EventData.class);
         String start=e.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=e.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
         if(!CollectionRules.event(e,new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end)).accepted()) throw ApiException.badRequest("행사 수정값을 확인하세요.");

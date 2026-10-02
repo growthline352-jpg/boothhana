@@ -4,7 +4,7 @@ import { combineDfestaSummaries } from './eventGroup'
 import { loadAllEvents } from './allEvents'
 export type { EventData, Page, ReviewState }
 export type EvidenceScope = 'EVENT_LISTED' | 'EVENT_SALE_CONFIRMED' | 'PROFILE' | 'GENERAL_CATALOG' | 'PAST_REFERENCE' | 'UNKNOWN'
-export interface Location {code: string | null; status: string; hall: string | null; zone: string | null; startDate: string | null; endDate: string | null; floorPlanUrl: string | null}
+export interface Location {code: string | null; status: string; hall: string | null; zone: string | null; startDate: string | null; endDate: string | null; floorPlanUrl: string | null; dateEvidence?:'DECLARED'|'ROSTER'|'EVENT_PERIOD'|'UNKNOWN'|null}
 export interface Member {name: string; kind: string; aliases: string[]; profileUrl: string | null}
 export interface ImageCandidate {type: string; imageUrl: string; pageUrl: string; caption: string | null; rightsEvidence: string | null}
 export interface Identity {sourceSystem: string; entryId: string | null; detailUrl: string | null}

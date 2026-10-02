@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix='v6-java-contracts-') as temp:
     for rel,text in stubs.items():
         path=temp/rel;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text);files.append(path)
     src=ROOT/'backend/src/main/java/com/boothhana'
-    names=['CollectionModels','CollectionRules','CatalogModels','CatalogRules','CatalogIdentity','CatalogIdentityIndex','CatalogReviewRules','CatalogAccumulation','CatalogCursorRules','CatalogService','CatalogPublicationService','PublicEventProjection','CatalogBrowseQuery','CatalogMediaService','CatalogPublicController','CatalogAdminController']
+    names=['CollectionModels','CollectionRules','VisitorGuideRules','CatalogModels','CatalogRules','CatalogIdentity','CatalogIdentityIndex','CatalogReviewRules','CatalogAccumulation','CatalogCursorRules','CatalogService','CatalogPublicationService','PublicEventProjection','CatalogBrowseQuery','CatalogMediaService','CatalogPublicController','CatalogAdminController']
     files.extend(src/'collection'/(n+'.java') for n in names)
     files.extend([src/'api/ApiException.java',src/'upload/VerifiedImageStorage.java',src/'upload/ImageUploadRules.java'])
     subprocess.run(['javac','-encoding','UTF-8','-d',str(temp/'classes'),*map(str,files)],check=True)

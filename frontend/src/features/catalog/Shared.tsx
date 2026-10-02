@@ -1,3 +1,4 @@
+import { confirmedLocationDates } from '../visit/visit'
 import { SaveButton } from '../library/SaveButton'
 import type { MemoryTarget } from '../library/types'
 import { ReportLink } from '../support/ReportLink'
@@ -13,7 +14,7 @@ export function SafeLink({url,children}:{url:string|null|undefined;children?:Rea
  catch{return <span>잘못된 링크</span>}
  return <a className="catalog-external-link" href={url!} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">{children||url}</a>
 }
-export function LocationText({locations}:{locations:Location[]}){return <>{locations.length?locations.map((l,i)=><span className="catalog-location" key={i}>{l.code||labels[l.status]||l.status}{l.hall&&` · ${l.hall}`}{l.zone&&` · ${l.zone}`}{l.startDate&&` · ${l.startDate}${l.endDate!==l.startDate?'~'+l.endDate:''}`}</span>):'위치 미확인'}</>}
+export function LocationText({locations}:{locations:Location[]}){return <>{locations.length?locations.map((l,i)=><span className="catalog-location" key={i}>{l.code||labels[l.status]||l.status}{l.hall&&` · ${l.hall}`}{l.zone&&` · ${l.zone}`}{confirmedLocationDates(l)?` · ${l.startDate}${l.endDate!==l.startDate?'~'+l.endDate:''}`:' · 참가일 미확인'}</span>):'위치 미확인'}</>}
 export function Pager({page,total,change}:{page:number;total:number;change:(v:number)=>void}){return <nav className="catalog-pager" aria-label="페이지"><button className="btn secondary" disabled={!page} onClick={()=>change(page-1)}>이전</button><span>{page+1} / {Math.max(1,Math.ceil(total/20))} · {total}건</span><button className="btn secondary" disabled={(page+1)*20>=total} onClick={()=>change(page+1)}>다음</button></nav>}
 export const saleStates:Record<string,string>={PLANNED:'판매 예정',ON_SALE:'판매 중으로 안내됨',SOLD_OUT:'품절 안내',CANCELED:'판매 취소 안내',UNKNOWN:'판매 상태 미확인'}
 function productPrice(product:Product){

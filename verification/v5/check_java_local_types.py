@@ -35,7 +35,7 @@ def main():
   for rel,text in STUBS.items():
    f=temp/rel;f.parent.mkdir(parents=True,exist_ok=True);f.write_text(text);files.append(f)
   src=ROOT/'backend/src/main/java/com/boothhana'
-  for name in ['CollectionModels','CollectionRules','CatalogModels','CatalogRules','CatalogIdentity','CatalogIdentityIndex','CatalogReviewRules','CatalogAccumulation','CatalogCursorRules','CatalogService','CatalogPublicationService','PublicEventProjection','CatalogBrowseQuery']:
+  for name in ['CollectionModels','CollectionRules','VisitorGuideRules','CatalogModels','CatalogRules','CatalogIdentity','CatalogIdentityIndex','CatalogReviewRules','CatalogAccumulation','CatalogCursorRules','CatalogService','CatalogPublicationService','PublicEventProjection','CatalogBrowseQuery']:
    files.append(src/'collection'/(name+'.java'))
   files.append(src/'api/ApiException.java')
   subprocess.run(['javac','-Xlint:unchecked','-encoding','UTF-8','-d',str(temp/'classes'),*map(str,files)],check=True)

@@ -223,6 +223,15 @@
                     "null"
                   ],
                   "maxLength": 2048
+                },
+                "dateEvidence": {
+                  "enum": [
+                    "DECLARED",
+                    "ROSTER",
+                    "EVENT_PERIOD",
+                    "UNKNOWN",
+                    null
+                  ]
                 }
               },
               "required": [

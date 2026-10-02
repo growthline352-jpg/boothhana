@@ -4,12 +4,15 @@ import { supportApi, type Ticket, type ReplyInput } from './api'
 import { categories,kinds,statuses,resolutions,evidenceLines,outcomeTone } from './rules'
 import { SafeLink } from '../catalog/Shared'
 import { useUnsaved } from './useSupportUnsaved'
+import { informationKinds } from './InformationRequestButton'
 
 export function TicketHeader({ticket}:{ticket:Ticket}){return <header className="support-ticket-header"><span className="eyebrow">{kinds[ticket.kind]} · {ticket.number}</span><h1>{ticket.title}</h1><div className="row-actions"><span className={`chip ${outcomeTone(ticket.status)}`}>{statuses[ticket.status]??ticket.status}</span><span>{categories[ticket.kind][ticket.category]}</span>{ticket.resolution&&<strong>{resolutions[ticket.resolution]??ticket.resolution}</strong>}</div><small>{new Date(ticket.createdAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})} 접수</small></header>}
 export function TicketContext({ticket}:{ticket:Ticket}){
  const snapshot=ticket.receivedSnapshot as {label?:string;route?:string}
+ const need=ticket.clientContext.needType as keyof typeof informationKinds
  return <>{ticket.target&&<div className="support-target"><strong>신고·신청 대상 · {snapshot.label??ticket.target.type}</strong><p>{ticket.target.day&&`방문일 ${ticket.target.day} `}{ticket.target.hall&&`· ${ticket.target.hall} `}{ticket.target.areaId&&`· 영역 ${ticket.target.areaId}`}</p>{snapshot.route?.startsWith('/')&&!snapshot.route.startsWith('//')&&<Link to={snapshot.route}>현재 공개 정보 보기 ↗</Link>}</div>}
   {ticket.clientContext.errorCode&&<p>오류 문의 코드: <code>{ticket.clientContext.errorCode}</code></p>}
+  {informationKinds[need]&&<div className="support-target"><strong>정보 수집 요청 · {informationKinds[need]}</strong><p>{ticket.clientContext.day}{ticket.clientContext.searchQuery&&` · 검색: ${ticket.clientContext.searchQuery}`}</p>{/^[1-9][0-9]{0,17}$/.test(ticket.clientContext.eventId||'')&&<Link to={`/discover/${ticket.clientContext.eventId}`}>해당 행사 보기 →</Link>}<p>관리자가 확인 중으로 전환하면 해당 행사의 다음 정기 수집 순서를 앞당깁니다. 수집 결과는 검토 후 공개됩니다.</p></div>}
   <details className="support-evidence"><summary>접수 당시 정보 확인</summary><p>당시 서버가 확인한 정보입니다. 신고자가 보던 화면 버전과 다를 수 있어요.</p>{ticket.clientContext.viewedVersion&&<p>신고자가 본 버전: {ticket.clientContext.viewedVersion}</p>}<pre>{JSON.stringify(ticket.receivedSnapshot,null,2)}</pre></details></>
 }
 export function MessageThread({ticket}:{ticket:Ticket}){return <section className="support-thread" aria-label="접수·답변 내역"><h2>대화 내역</h2>{ticket.messages.map(m=><article key={m.id} className={`support-message ${m.internal?'is-internal':m.author==='ADMIN'?'is-answer':''}`}><div><strong>{m.internal?'관리자 내부 메모':m.author==='ADMIN'?'부스하나 운영팀':'작성자'}</strong><time>{new Date(m.createdAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}</time></div><p>{m.body}</p>{m.evidence.map((url,i)=><p key={i}><SafeLink url={url}>첨부 근거 {i+1}</SafeLink></p>)}</article>)}</section>}

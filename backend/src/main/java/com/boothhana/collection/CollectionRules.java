@@ -98,6 +98,7 @@ public final class CollectionRules {
                 if(link.url()!=null) url(link.url()); text(link.note(),500,true);
             }
             operationStatus(e.operationStatus());
+            VisitorGuideRules.validate(e.visitorGuide(), e.occurrences());
             list(e.banners(),3);
             for(Banner b:e.banners()) {
                 url(b.imageUrl());url(b.pageUrl());text(b.rightsEvidence(),500,true);

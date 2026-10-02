@@ -7,7 +7,11 @@ import static com.boothhana.collection.CollectionModels.*;
 /** External information only. Never used to grant account/booth ownership or make stock promises. */
 public final class CatalogModels {
     private CatalogModels() {}
-    public record Location(String code, String status, String hall, String zone, String startDate, String endDate, String floorPlanUrl) {}
+    public record Location(String code, String status, String hall, String zone, String startDate, String endDate, String floorPlanUrl, String dateEvidence) {
+        public Location(String code,String status,String hall,String zone,String startDate,String endDate,String floorPlanUrl) {
+            this(code,status,hall,zone,startDate,endDate,floorPlanUrl,null);
+        }
+    }
     public record Member(String name, String kind, List<String> aliases, String profileUrl) {}
     public record Image(String type, String imageUrl, String pageUrl, String rightsEvidence, String caption) {}
     public record Identity(String sourceSystem, String entryId, String detailUrl) {}

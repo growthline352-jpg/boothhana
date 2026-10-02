@@ -11,7 +11,7 @@ with tempfile.TemporaryDirectory(prefix='v7-service-check-') as tmp:
     for name,text in stubs.items():
         p=tmp/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(text);files.append(p)
     src=ROOT/'backend/src/main/java/com/boothhana'
-    files += [src/rel for rel in ['api/ApiException.java','upload/ImageUploadRules.java','upload/VerifiedImageStorage.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/CatalogTaxonomy.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogMediaService.java']]
+    files += [src/rel for rel in ['api/ApiException.java','upload/ImageUploadRules.java','upload/VerifiedImageStorage.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/VisitorGuideRules.java','collection/CatalogTaxonomy.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogMediaService.java']]
     files.append(ROOT/'verification/v7/BannerServiceSmokeTest.java')
     subprocess.run(['javac','-encoding','UTF-8','-d',str(tmp/'classes'),*map(str,files)],check=True)
     subprocess.run(['java','-cp',str(tmp/'classes'),'BannerServiceSmokeTest'],check=True)

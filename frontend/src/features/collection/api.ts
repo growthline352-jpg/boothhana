@@ -7,12 +7,19 @@ export interface SourceCoverage { channel: string; status: string; queries: stri
 export interface Banner { imageUrl: string; pageUrl: string; rights: string; rightsEvidence: string | null; matchesEdition: boolean | null }
 export interface OperationStatus { state: 'UNKNOWN'|'SCHEDULED'|'CANCELED'|'POSTPONED'|'RESCHEDULED'; note: string|null; sourceUrl: string|null; checkedOn: string|null }
 export interface EventData {
+  visitorGuide?: VisitorGuide | null
   operationStatus?: OperationStatus
   eventFormat?: string; discoveryLinks?: {kind: string; url: string | null; status: string; note: string | null}[]
   name: string; subcategory: Subcategory; organizer: string | null; edition: string | null; region: string
   venueName: string | null; address: string | null; description: string; admission: string | null
   subjects: string[]; occurrences: Occurrence[]; sources: EventSource[]; banners: Banner[]; warnings: string[]
 }
+export interface TicketInfo {id:string;name:string;visitDate:string|null;priceAmount:string|null;currency:string|null;salesStartsAt:string|null;salesEndsAt:string|null;entryTime:string|null;reservationUrl:string|null;status:string;note:string|null;sourceUrl:string|null;checkedOn:string|null}
+export interface ProgramInfo {id:string;name:string;type:string;subjects:string[];day:string|null;startTime:string|null;endTime:string|null;venue:string|null;ticketRequirement:'INCLUDED'|'SEPARATE'|'UNKNOWN';ticketId:string|null;status:string;note:string|null;sourceUrl:string|null;checkedOn:string|null}
+export interface FaqInfo {id:string;question:string;answer:string|null;status:'CONFIRMED'|'UNKNOWN';sourceUrl:string|null;checkedOn:string|null}
+export interface SaleAnnouncement {id:string;title:string;salesMethod:string|null;salesStartsAt:string|null;salesEndsAt:string|null;pickupDay:string|null;note:string|null;sourceUrl:string;checkedOn:string}
+export interface ContentStatus {kind:string;status:string;note:string|null;sourceUrl:string|null;checkedOn:string|null}
+export interface VisitorGuide {tickets:TicketInfo[];programs:ProgramInfo[];faq:FaqInfo[];sales:SaleAnnouncement[];coverage:ContentStatus[]}
 export interface Candidate {
   id: number; name: string; subcategory: Subcategory; venueName: string | null; startsOn: string; endsOn: string
   reviewState: ReviewState; revision: number; possibleDuplicateOf: number | null; lastSeenAt: string

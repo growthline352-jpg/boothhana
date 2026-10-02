@@ -12,10 +12,34 @@ public final class CollectionModels {
     public record DiscoveryLink(String kind, String url, String status, String note) {}
     public record SourceCoverage(String channel, String status, List<String> queries, List<String> checkedUrls, String notes) {}
     public record OperationStatus(String state, String note, String sourceUrl, String checkedOn) {}
+    public record TicketInfo(String id, String name, String visitDate, String priceAmount, String currency,
+        String salesStartsAt, String salesEndsAt, String entryTime, String reservationUrl,
+        String status, String note, String sourceUrl, String checkedOn) {}
+    public record ProgramInfo(String id, String name, String type, List<String> subjects, String day,
+        String startTime, String endTime, String venue, String ticketRequirement, String ticketId,
+        String status, String note, String sourceUrl, String checkedOn) {}
+    public record FaqInfo(String id, String question, String answer, String status, String sourceUrl, String checkedOn) {}
+    public record SaleAnnouncement(String id, String title, String salesMethod, String salesStartsAt,
+        String salesEndsAt, String pickupDay, String note, String sourceUrl, String checkedOn) {}
+    public record ContentStatus(String kind, String status, String note, String sourceUrl, String checkedOn) {}
+    public record VisitorGuide(List<TicketInfo> tickets, List<ProgramInfo> programs, List<FaqInfo> faq,
+        List<SaleAnnouncement> sales, List<ContentStatus> coverage) {
+        public VisitorGuide {
+            if(tickets==null) tickets=List.of(); if(programs==null) programs=List.of();
+            if(faq==null) faq=List.of(); if(sales==null) sales=List.of(); if(coverage==null) coverage=List.of();
+        }
+    }
     public record EventData(String name, String subcategory, String organizer, String edition, String region,
         String venueName, String address, String description, String admission, List<String> subjects,
         List<Occurrence> occurrences, List<Source> sources, List<Banner> banners, List<String> warnings,
-        String eventFormat, List<DiscoveryLink> discoveryLinks, OperationStatus operationStatus) {
+        String eventFormat, List<DiscoveryLink> discoveryLinks, OperationStatus operationStatus, VisitorGuide visitorGuide) {
+        public EventData(String name,String subcategory,String organizer,String edition,String region,String venueName,
+                String address,String description,String admission,List<String> subjects,List<Occurrence> occurrences,
+                List<Source> sources,List<Banner> banners,List<String> warnings,String eventFormat,List<DiscoveryLink> discoveryLinks,
+                OperationStatus operationStatus) {
+            this(name,subcategory,organizer,edition,region,venueName,address,description,admission,subjects,occurrences,
+                sources,banners,warnings,eventFormat,discoveryLinks,operationStatus,null);
+        }
         public EventData(String name,String subcategory,String organizer,String edition,String region,String venueName,
                 String address,String description,String admission,List<String> subjects,List<Occurrence> occurrences,
                 List<Source> sources,List<Banner> banners,List<String> warnings,String eventFormat,List<DiscoveryLink> discoveryLinks) {
