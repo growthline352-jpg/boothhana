@@ -7,10 +7,12 @@ import { PageHeader } from '../../components/layout/PageHeader'
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States'
 import { ImageUploader } from '../../components/ui/ImageUploader'
 import type { BoothSummary } from '../../types'
+import { eventBoothLabel, eventDates } from './context'
 
 export function CreatorBoothsPage() {
   const state = useRemote(creatorApi.booths, [])
   const approved = useRemote(creatorApi.eventBooths, [])
+  const events = useRemote(creatorApi.events, [])
   const [editing, setEditing, submission] = useConsoleDraft<Partial<BoothSummary> | null>('creator:booths', null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -50,8 +52,9 @@ export function CreatorBoothsPage() {
       ? <EmptyState title="등록한 부스가 없습니다" description="행사 참가에 사용할 첫 부스를 만들어 보세요." />
       : <div className="console-list">{state.data.map(booth => <article className="list-row" key={booth.id}><div><h2>{booth.name}</h2><p className="item-meta">{booth.intro}</p></div><div className="row-actions"><button className="btn subtle" disabled={busy} onClick={() => setEditing(booth)}>수정</button><button className="btn danger subtle" disabled={busy} onClick={() => void remove(booth.id)}>삭제</button></div></article>)}</div>}
     <div className="section-heading compact"><h2>승인된 행사 부스</h2></div>
+    {events.error && <ErrorState error={events.error} retry={() => void events.reload()} />}
     {approved.loading ? <LoadingState /> : approved.error ? <ErrorState error={approved.error} retry={() => void approved.reload()} /> : !approved.data?.length
       ? <EmptyState title="승인된 행사 부스가 없습니다" description="행사 참가 신청이 승인되면 상품과 공지를 관리할 수 있습니다." />
-      : <div className="console-list">{approved.data.map(booth => <article className="list-row" key={booth.id}><div><h2>{booth.name}</h2><p className="item-meta">부스 번호 {booth.boothNumber || '미정'}</p></div><div className="row-actions"><Link className="btn secondary" to={`/creator/event-booths/${booth.id}`}>부스 정보</Link><Link className="btn secondary" to={`/creator/event-booths/${booth.id}/products`}>상품</Link><Link className="btn secondary" to={`/creator/notices?booth=${booth.id}`}>공지</Link></div></article>)}</div>}
+      : <div className="console-list">{approved.data.map(booth => <article className="list-row" key={booth.id}><div><h2>{eventBoothLabel(booth, events.data ?? [])}</h2><p className="item-meta">{eventDates(events.data?.find(event => event.id === booth.eventId))}</p></div><div className="row-actions"><Link className="btn secondary" to={`/creator/event-booths/${booth.id}`}>부스 정보</Link><Link className="btn secondary" to={`/creator/event-booths/${booth.id}/products`}>상품</Link><Link className="btn secondary" to={`/creator/notices?booth=${booth.id}`}>공지</Link></div></article>)}</div>}
   </>
 }

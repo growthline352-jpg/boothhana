@@ -3,13 +3,14 @@ import { createImageUploadTask, type ImageUploadTask } from '../../api/image-upl
 
 interface ImageUploaderProps {
   currentUrl?: string | null
+  previewFile?: File
   target: 'booth' | 'product'
   disabled?: boolean
-  onUploaded: (objectKey: string) => void
+  onUploaded: (objectKey: string, file: File) => void
   onBusyChange?: (busy: boolean) => void
 }
-export function ImageUploader({ currentUrl, target, disabled = false, onUploaded, onBusyChange }: ImageUploaderProps) {
-  const [preview, setPreview] = useState(currentUrl ?? '')
+export function ImageUploader({ currentUrl, previewFile, target, disabled = false, onUploaded, onBusyChange }: ImageUploaderProps) {
+  const [preview, setPreview] = useState(previewFile ? '' : currentUrl ?? '')
   const [status, setStatus] = useState<'idle' | 'uploading' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const localUrl = useRef<string | null>(null)
@@ -21,8 +22,10 @@ export function ImageUploader({ currentUrl, target, disabled = false, onUploaded
   callbacks.current = { onBusyChange, onUploaded }
   useEffect(() => {
     if (localUrl.current) URL.revokeObjectURL(localUrl.current)
-    localUrl.current = null; setPreview(currentUrl ?? '')
-  }, [currentUrl])
+    // Keep only the File in a draft. Each mounted editor owns its own object URL.
+    localUrl.current = previewFile ? URL.createObjectURL(previewFile) : null
+    setPreview(localUrl.current ?? currentUrl ?? '')
+  }, [currentUrl, previewFile])
   useEffect(() => {
     alive.current = true
     return () => {
@@ -42,7 +45,7 @@ export function ImageUploader({ currentUrl, target, disabled = false, onUploaded
       if (!alive.current || selected.current !== selection) return
       if (localUrl.current) URL.revokeObjectURL(localUrl.current)
       localUrl.current = URL.createObjectURL(selection.file); setPreview(localUrl.current)
-      callbacks.current.onUploaded(key); selected.current = null; setStatus('idle')
+      callbacks.current.onUploaded(key, selection.file); selected.current = null; setStatus('idle')
     } catch (error) {
       if (!alive.current) return
       setErrorMessage(error instanceof Error ? error.message : '이미지를 업로드하지 못했습니다.')

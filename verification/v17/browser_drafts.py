@@ -53,7 +53,13 @@ async def run(dist):
                             body = dict(identity) if status == 200 else {'status':status,'code':'TEST','message':'fixture'}
                         elif endpoint == '/api/auth/csrf': body = {'token':'isolated-browser-fixture'}
                         elif endpoint == '/api/me/library/index': body = []
-                        elif endpoint in ['/api/creator/booths','/api/creator/event-booths','/api/admin/events'] or endpoint.endswith('/products'):
+                        # The product editor now validates the selected event booth
+                        # before showing its form; provide its real response shape.
+                        elif endpoint == '/api/creator/events' and req.method == 'GET':
+                            body = [{'id':61,'name':'격리 테스트 행사','startAt':'2027-01-01T10:00:00+09:00','endAt':'2027-01-01T18:00:00+09:00','venue':'격리 테스트 장소','description':'','status':'PUBLISHED'}]
+                        elif endpoint == '/api/creator/event-booths' and req.method == 'GET':
+                            body = [{'id':71,'eventId':61,'name':'격리 테스트 부스','creatorName':identity['displayName'],'boothNumber':'A01','intro':'','status':'APPROVED','isPublic':True}]
+                        elif endpoint in ['/api/creator/booths','/api/admin/events'] or endpoint.endswith('/products'):
                             if req.method in ['POST','PATCH']:
                                 state['saves'] += 1; save_started.set(); await save_ready.wait(); body = {'id':9101}
                         else:
@@ -62,6 +68,8 @@ async def run(dist):
                     await context.route('**/*', fixture)
                     try:
                         await page.goto(origin + path)
+                        if field == '상품명':
+                            await expect(page.get_by_text('격리 테스트 행사 · 격리 테스트 부스 · A01', exact=False)).to_be_visible()
                         if open_button: await page.get_by_role('button', name=open_button, exact=True).click()
                         control = page.get_by_label(field, exact=True)
                         await control.fill('초안-외부탭-복원')
