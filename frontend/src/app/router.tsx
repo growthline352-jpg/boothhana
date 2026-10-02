@@ -31,7 +31,6 @@ export const router = createBrowserRouter([
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
     { path: 'onboarding', element: <SupportBoundary><OnboardingPage/></SupportBoundary> },
     { path: 'account', element: <SupportBoundary><AccountPage/></SupportBoundary> },
-    { path: 'support/management', element: <SupportBoundary><OwnershipManagement/></SupportBoundary> },
     { path: 'support', element: <SupportBoundary><SupportHome/></SupportBoundary> },
     { path: 'support/new', element: <SupportBoundary><SupportNew/></SupportBoundary> },
     { path: 'support/guest', element: <SupportBoundary><GuestSupportPage/></SupportBoundary> },
@@ -49,6 +48,9 @@ export const router = createBrowserRouter([
     { path: 'reservations/:reservationId', element: <ReservationDetailPage /> },
   ] },
   { path: '/admin/login', element: <AdminLoginPage /> },
+  { element: <ConsoleLayout role="CREATOR" access="ownership" />, children: [
+    { path: '/support/management', element: <SupportBoundary><OwnershipManagement/></SupportBoundary> },
+  ] },
   { path: '/creator', element: <ConsoleLayout role="CREATOR" />, children: [
     { index: true, element: <CreatorHomePage /> },
     { path: 'events', element: <CreatorEventsPage /> },
