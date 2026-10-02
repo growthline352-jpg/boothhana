@@ -93,6 +93,7 @@ public class CatalogService {
         return db.queryForList("""
             select p.* from subculture_participant p join subculture_event_candidate e on e.id=p.event_id
             left join subculture_sales s on s.participant_id=p.id where e.review_state<>'EXCLUDED' and p.review_state<>'EXCLUDED'
+            and not exists(select 1 from catalog_creator_booth c where c.participant_id=p.id)
             and e.starts_on<=cast(? as date) and e.ends_on>=cast(? as date) and (e.possible_duplicate_of is null or e.review_state='REVIEWED')
             and (p.sales_retry_after is null or p.sales_retry_after<=now())
             order by exists(select 1 from support_ticket t where t.kind='INQUIRY' and t.category='FEATURE_REQUEST' and t.status='IN_PROGRESS'
@@ -136,6 +137,7 @@ public class CatalogService {
         if(input==null||!Set.of("STARTED","FAILED").contains(input.state())||input.reason()==null||input.reason().length()>300)
             throw ApiException.badRequest("조사 시도 상태 오류");
         var p=one("select * from subculture_participant where id=? for update",participantId);
+        if(!db.queryForList("select 1 from catalog_creator_booth where participant_id=?",participantId).isEmpty())throw ApiException.conflict("직접 등록한 부스의 상품은 등록자가 관리합니다.");
         if("EXCLUDED".equals(p.get("review_state"))) throw ApiException.conflict("제외된 참가자");
         var scope=decode(one("select scope_json from subculture_pipeline_run where id=?",UUID.fromString(pipelineId)).get("scope_json"),Scope.class);
         var eventRow=one("select * from subculture_event_candidate where id=?",num(p,"event_id"));
@@ -190,6 +192,7 @@ public class CatalogService {
         if(!CollectionRules.event(event,scope).accepted()) throw ApiException.conflict("배치 대상 기간 밖의 행사입니다.");
         if("PARTICIPANTS".equals(b.stage())) { if(num(e,"revision")!=b.targetRevision()) throw ApiException.conflict("행사 정보가 변경되었습니다. 다음 배치에서 다시 확인하세요."); }
         else { var p=one("select * from subculture_participant where id=? and event_id=? for update",b.participantId(),b.eventId());
+            if(!db.queryForList("select 1 from catalog_creator_booth where participant_id=?",b.participantId()).isEmpty())throw ApiException.conflict("직접 등록한 부스의 상품은 등록자가 관리합니다.");
             if(num(p,"revision")!=b.targetRevision()||"EXCLUDED".equals(p.get("review_state"))) throw ApiException.conflict("참가자 정보가 변경/제외되었습니다."); }
         Map<String,Object> cursorRow=null;
         if(b.cursor()!=null) {
@@ -201,7 +204,7 @@ public class CatalogService {
         if(manualImport) issues.add("MANUAL_IMPORT: CLI 웹 검색 관측 없이 검토형 데이터로 저장됨");
         if("PARTICIPANTS".equals(b.stage())) {
             Set<Long> seen=new HashSet<>();
-            var participantRows=db.queryForList("select * from subculture_participant where event_id=? for update",b.eventId());
+            var participantRows=db.queryForList("select p.* from subculture_participant p where event_id=? and not exists(select 1 from catalog_creator_booth c where c.participant_id=p.id) for update",b.eventId());
             for(Participant p:b.result().participants()) {
                 try { CatalogRules.participant(p);CatalogRules.locationDates(p,event); }
                 catch(RuntimeException ex) { rejected++;issues.add("참가항목 제외: "+Objects.toString(p==null?null:p.registrationName(),"이름 없음"));continue; }

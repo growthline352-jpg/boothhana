@@ -101,6 +101,8 @@ public class SupportService {
    if(!db.queryForList("select 1 from support_ticket where requester_id=? and kind='CLAIM' and category='ORGANIZER' and target_json->>'eventId'=? and status in ('OPEN','IN_PROGRESS','WAITING_USER')",actor.userId(),Long.toString(target.target().eventId())).isEmpty())throw ApiException.conflict("이미 검토 중인 주최자 신청이 있습니다.");
   } else if(c.kind().equals("CLAIM")){
    targets.requireClaimable(target.target(),c.exhibitorId());
+   com.boothhana.service.CreatorBoothLimits.lock(db,actor.userId());
+   com.boothhana.service.CreatorBoothLimits.available(db,actor.userId(),target.target().eventId(),target.target().id());
    if(!db.queryForList("select 1 from exhibitor_manager where exhibitor_id=? and user_id=? and state='ACTIVE' and permission='CATALOG_EDIT'",c.exhibitorId(),actor.userId()).isEmpty())throw ApiException.conflict("이미 관리 관계가 승인된 업체입니다.");
    if(!db.queryForList("select 1 from support_ticket where requester_id=? and exhibitor_id=? and kind='CLAIM' and status in ('OPEN','IN_PROGRESS','WAITING_USER')",actor.userId(),c.exhibitorId()).isEmpty())throw ApiException.conflict("이미 검토 중인 관리권 요청이 있습니다.");
   }

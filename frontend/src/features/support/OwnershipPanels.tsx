@@ -8,11 +8,13 @@ const disclaimer='운영 주체와 계정의 관계를 확인한 표시입니다
 export function OwnershipPanel({eventId,participantId}:{eventId:number;participantId?:number}){
  const state=useRemote(()=>ownershipApi.info(eventId),[eventId])
  const verified=participantId?state.data?.exhibitors.filter(x=>x.participantId===participantId):state.data?.organizers
+ const direct=participantId!=null&&state.data?.directParticipantIds?.includes(participantId)
  const target={namespace:'CATALOG' as const,type:participantId?'PARTICIPANT' as const:'EVENT' as const,eventId,id:participantId??eventId}
  return <section className="ownership-panel" aria-label={participantId?'부스 운영자 확인':'행사 주최자 확인'}>
-  {!!verified?.length&&<><span className="chip active">{participantId?'운영자 확인':'주최자 확인'}</span><span> {verified.map(x=>x.name).join(' · ')}</span><p className="support-note">{disclaimer}{participantId?' 공동 부스에서는 표시된 업체만 확인되었습니다.':''}</p></>}
+  {direct&&<><span className="chip">직접 등록</span><p className="support-note">등록자가 직접 작성한 정보입니다. 주최 측 참가 승인이나 부스 배정 여부는 공식 안내를 확인해 주세요.</p></>}
+  {!direct&&!!verified?.length&&<><span className="chip active">{participantId?'운영자 확인':'주최자 확인'}</span><span> {verified.map(x=>x.name).join(' · ')}</span><p className="support-note">{disclaimer}{participantId?' 공동 부스에서는 표시된 업체만 확인되었습니다.':''}</p></>}
   {state.error&&<p role="status">운영자 확인 정보를 불러오지 못했습니다. <button type="button" onClick={()=>void state.reload()}>다시 확인</button></p>}
-  <Link className="support-report-link" to={supportPath('CLAIM',target)+(participantId?'':'&category=ORGANIZER')}>{participantId?'이 부스의 운영자이신가요?':'이 행사의 주최자이신가요?'}</Link>
+  {!direct&&<Link className="support-report-link" to={supportPath('CLAIM',target)+(participantId?'':'&category=ORGANIZER')}>{participantId?'이 부스의 운영자이신가요?':'이 행사의 주최자이신가요?'}</Link>}
   <Link className="support-report-link" to="/support/management">내 행사·부스 관리</Link>
  </section>
 }

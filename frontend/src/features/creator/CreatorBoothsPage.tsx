@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { CatalogBoothList } from './CreatorCatalogBoothPage'
+import { Link, useSearchParams } from 'react-router'
 import { creatorApi } from '../../api'
 import { useRemote } from '../../app/useRemote'
 import { useConsoleDraft } from '../../app/useConsoleDraft'
@@ -10,6 +11,9 @@ import type { BoothSummary } from '../../types'
 import { eventBoothLabel, eventDates } from './context'
 
 export function CreatorBoothsPage() {
+  const [params]=useSearchParams()
+  const returnTo=params.get('returnTo')
+  const safeReturn=returnTo&&/^\/creator\/catalog\/events\/\d+\/booths\/new$/.test(returnTo)?returnTo:null
   const state = useRemote(creatorApi.booths, [])
   const approved = useRemote(creatorApi.eventBooths, [])
   const events = useRemote(creatorApi.events, [])
@@ -36,6 +40,8 @@ export function CreatorBoothsPage() {
   }
   return <><PageHeader eyebrow="Creator · Booths" title="내 부스 목록" description="여러 행사에서 재사용할 기본 부스 소개를 관리합니다."
     actions={<button className="btn primary" disabled={busy} onClick={() => { setError(''); setEditing({ name: '', intro: '', snsUrl: '', imageKey: '' }) }}>새 부스</button>} />
+    <CatalogBoothList/>
+    {safeReturn&&<Link className="btn primary" to={safeReturn}>행사 부스 등록으로 돌아가기</Link>}
     {(error || submission.error) && <div className="form-alert" role="alert">{error || submission.error}</div>}
       {submission.message && <p role="status">{submission.message}</p>}
     <p className="item-meta">작성 중 내용은 이 탭에서만 임시 보관합니다. 새로고침·탭 종료·로그아웃 시 사라집니다. 인증 확인으로 중단된 이미지 업로드는 다시 선택해 주세요.</p>
@@ -51,10 +57,10 @@ export function CreatorBoothsPage() {
     {state.loading ? <LoadingState /> : state.error ? <ErrorState error={state.error} retry={() => void state.reload()} /> : !state.data?.length
       ? <EmptyState title="등록한 부스가 없습니다" description="행사 참가에 사용할 첫 부스를 만들어 보세요." />
       : <div className="console-list">{state.data.map(booth => <article className="list-row" key={booth.id}><div><h2>{booth.name}</h2><p className="item-meta">{booth.intro}</p></div><div className="row-actions"><button className="btn subtle" disabled={busy} onClick={() => setEditing(booth)}>수정</button><button className="btn danger subtle" disabled={busy} onClick={() => void remove(booth.id)}>삭제</button></div></article>)}</div>}
-    <div className="section-heading compact"><h2>승인된 행사 부스</h2></div>
+    <div className="section-heading compact"><h2>등록된 예약·판매 행사 부스</h2></div>
     {events.error && <ErrorState error={events.error} retry={() => void events.reload()} />}
     {approved.loading ? <LoadingState /> : approved.error ? <ErrorState error={approved.error} retry={() => void approved.reload()} /> : !approved.data?.length
-      ? <EmptyState title="승인된 행사 부스가 없습니다" description="행사 참가 신청이 승인되면 상품과 공지를 관리할 수 있습니다." />
+      ? <EmptyState title="등록된 예약·판매 행사 부스가 없습니다" description="행사에 부스를 등록하면 상품과 공지를 관리할 수 있습니다." />
       : <div className="console-list">{approved.data.map(booth => <article className="list-row" key={booth.id}><div><h2>{eventBoothLabel(booth, events.data ?? [])}</h2><p className="item-meta">{eventDates(events.data?.find(event => event.id === booth.eventId))}</p></div><div className="row-actions"><Link className="btn secondary" to={`/creator/event-booths/${booth.id}`}>부스 정보</Link><Link className="btn secondary" to={`/creator/event-booths/${booth.id}/products`}>상품</Link><Link className="btn secondary" to={`/creator/notices?booth=${booth.id}`}>공지</Link></div></article>)}</div>}
   </>
 }

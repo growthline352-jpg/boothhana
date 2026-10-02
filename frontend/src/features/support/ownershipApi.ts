@@ -1,11 +1,11 @@
 import { api, publicRead } from '../../api/client'
 import type { Occurrence } from '../collection/api'
 import type { ProductRow } from '../catalog/api'
-export interface VerifiedInfo {organizers:{id:number;name:string;officialUrl:string;verifiedAt:string}[];exhibitors:{id:number;name:string;participantId:number}[];series:{id:number;name:string;edition:string}[]}
+export interface VerifiedInfo {directParticipantIds?:number[];organizers:{id:number;name:string;officialUrl:string;verifiedAt:string}[];exhibitors:{id:number;name:string;participantId:number}[];series:{id:number;name:string;edition:string}[]}
 export interface SeriesLink {revision:number;seriesId?:number|null;edition:string;evidenceUrl?:string}
 export interface SeriesInput extends SeriesLink {name?:string;officialUrl?:string;note:string}
 export interface OwnerValue {revision:number;data:Record<string,unknown>}
-export interface OwnerProducts {revision:number;items:ProductRow[]}
+export interface OwnerProducts {directRegistration?:boolean;revision:number;items:ProductRow[]}
 export interface OwnerProductInput {revision:number;name:string;summary:string;amount:string;currency:string;saleState:string;note:string}
 const admin='/api/admin/ownership',mine='/api/me/ownership'
 export const ownershipApi={

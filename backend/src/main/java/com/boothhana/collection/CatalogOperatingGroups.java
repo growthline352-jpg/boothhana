@@ -60,6 +60,11 @@ public class CatalogOperatingGroups {
    String current=category(String.valueOf(rows.getFirst().get("subtype")));
    if(category!=null&&!category.equals(current))throw ApiException.badRequest("서브컬처·박람회·축제는 같은 분야끼리 묶어 주세요.");category=current;
   }
+  if(!previous.equals(input.eventIds())) {
+   String placeholders=String.join(",",Collections.nCopies(input.eventIds().size(),"?"));
+   var conflicts=db.queryForList("select user_id from (select c.user_id,c.participant_id from catalog_creator_booth c where c.event_id in ("+placeholders+") union select m.user_id,p.id from exhibitor_manager m join subculture_participant_member pm on pm.exhibitor_id=m.exhibitor_id join subculture_participant p on p.id=pm.participant_id where m.state='ACTIVE' and p.event_id in ("+placeholders+")) owned group by user_id having count(distinct participant_id)>1",java.util.stream.Stream.concat(input.eventIds().stream(),input.eventIds().stream()).toArray());
+   if(!conflicts.isEmpty())throw ApiException.conflict("묶을 행사에 한 계정의 부스가 여러 개 있습니다. 부스 연결을 먼저 정리해 주세요.");
+  }
   db.update("insert into catalog_operating_group(root_event_id,name,source_url,checked_on,updated_by) values(?,?,?,cast(? as date),?) on conflict(root_event_id) do update set name=excluded.name,source_url=excluded.source_url,checked_on=excluded.checked_on,updated_by=excluded.updated_by,updated_at=now(),revision=catalog_operating_group.revision+1",root,input.name().strip(),input.sourceUrl(),input.checkedOn(),actor);
   db.update("delete from catalog_operating_group_member where root_event_id=?",root);
   for(int n=0;n<input.eventIds().size();n++)db.update("insert into catalog_operating_group_member(event_id,root_event_id,position) values(?,?,?)",input.eventIds().get(n),root,n);

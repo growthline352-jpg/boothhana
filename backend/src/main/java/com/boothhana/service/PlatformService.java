@@ -151,7 +151,9 @@ public class PlatformService {
     }
     @Transactional
     public void deleteBooth(UserAccount owner, Long id) {
+        users.lockUploadOwner(owner.id).orElseThrow();
         Booth booth = requireOwnedBooth(owner, id);
+        if (booths.hasCatalogRegistration(id)) throw ApiException.conflict("공개 행사에 등록한 부스입니다. 기본 부스는 삭제할 수 없습니다.");
         List<EventBooth> linked = eventBooths.findByBoothIdIn(List.of(id));
         boolean used = linked.stream().anyMatch(value -> reservations.countByEventBoothId(value.id) > 0 || posSales.countByEventBoothId(value.id) > 0);
         if (used) throw ApiException.conflict("예약 또는 판매가 연결된 부스는 삭제할 수 없습니다.");
@@ -160,11 +162,12 @@ public class PlatformService {
     }
     @Transactional
     public ApplicationView applyToEvent(UserAccount owner, ApplicationInput input) {
+        users.lockUploadOwner(owner.id).orElseThrow();
         Event event = requireEvent(input.eventId());
         if (event.status != EventStatus.PUBLISHED) throw ApiException.conflict("현재 참가 신청을 받는 행사가 아닙니다.");
         Booth booth = requireOwnedBooth(owner, input.boothId());
-        if (eventBooths.findByEventIdAndBoothId(event.id, booth.id).isPresent()) throw ApiException.conflict("이미 참가 신청한 행사입니다.");
-        EventBooth value = new EventBooth(); value.eventId = event.id; value.boothId = booth.id; value.intro = booth.description;
+        if (eventBooths.findByBoothIdIn(booths.findByOwnerUserIdOrderByIdDesc(owner.id).stream().map(b -> b.id).toList()).stream().anyMatch(a -> Objects.equals(a.eventId,event.id) && (a.status == ApplicationStatus.PENDING || a.status == ApplicationStatus.APPROVED)) || eventBooths.findByEventIdAndBoothId(event.id, booth.id).isPresent()) throw ApiException.conflict("이미 참가 신청한 행사입니다.");
+        EventBooth value = new EventBooth(); value.eventId = event.id; value.boothId = booth.id; value.intro = booth.description;value.status = ApplicationStatus.APPROVED;value.isPublic = true;value.boothNumber = "미정";
         return applicationView(eventBooths.save(value));
     }
 
@@ -299,7 +302,12 @@ public class PlatformService {
     @Transactional public EventView endEvent(Long id) { Event value = requireEvent(id); value.status = EventStatus.ENDED; return eventView(events.save(value)); }
     @Transactional public void deleteEvent(Long id) { Event value = requireEvent(id); if (eventBooths.existsByEventId(id)) throw ApiException.conflict("참가 부스가 연결된 행사는 삭제할 수 없습니다."); events.delete(value); }
     public List<ApplicationView> applications() { return eventBooths.findAllByOrderByIdDesc().stream().map(this::applicationView).toList(); }
-    @Transactional public ApplicationView approve(Long id) { EventBooth value = eventBooths.findLocked(id).orElseThrow(() -> ApiException.notFound("신청 없음")); if(value.status != ApplicationStatus.PENDING) throw ApiException.conflict("대기 중인 신청만 승인할 수 있습니다."); value.rejectionReason = null; value.status = ApplicationStatus.APPROVED; value.isPublic = true; if (value.boothNumber == null) value.boothNumber = "미정"; return applicationView(eventBooths.save(value)); }
+    @Transactional public ApplicationView approve(Long id) {
+        EventBooth peek = eventBooths.findById(id).orElseThrow(() -> ApiException.notFound("등록 내역 없음"));
+        Long account = booths.findById(peek.boothId).orElseThrow().ownerUserId;users.lockUploadOwner(account).orElseThrow();
+        var ids = booths.findByOwnerUserIdOrderByIdDesc(account).stream().map(b -> b.id).toList();
+        if(eventBooths.findByBoothIdIn(ids).stream().anyMatch(a -> !Objects.equals(a.id,id) && Objects.equals(a.eventId,peek.eventId) && (a.status==ApplicationStatus.PENDING || a.status==ApplicationStatus.APPROVED)))throw ApiException.conflict("한 행사에는 계정당 부스 1개만 등록할 수 있습니다.");
+        EventBooth value = eventBooths.findLocked(id).orElseThrow(() -> ApiException.notFound("신청 없음")); if(value.status != ApplicationStatus.PENDING) throw ApiException.conflict("대기 중인 신청만 승인할 수 있습니다."); value.rejectionReason = null; value.status = ApplicationStatus.APPROVED; value.isPublic = true; if (value.boothNumber == null) value.boothNumber = "미정"; return applicationView(eventBooths.save(value)); }
     @Transactional public ApplicationView reject(Long id, RejectInput input) { EventBooth value = eventBooths.findLocked(id).orElseThrow(() -> ApiException.notFound("신청 없음")); if(value.status != ApplicationStatus.PENDING) throw ApiException.conflict("대기 중인 신청만 반려할 수 있습니다."); value.status = ApplicationStatus.REJECTED; value.isPublic = false; value.rejectionReason = input.reason(); return applicationView(eventBooths.save(value)); }
 
     private Event requireEvent(Long id) { return events.findById(id).orElseThrow(() -> ApiException.notFound("행사를 찾을 수 없습니다.")); }
@@ -307,7 +315,7 @@ public class PlatformService {
     private EventBooth requireEventBooth(Long id) { return eventBooths.findById(id).orElseThrow(() -> ApiException.notFound("행사 부스를 찾을 수 없습니다.")); }
     private EventBooth requirePublicEventBooth(Long id) { EventBooth value = requireEventBooth(id); Event event = requireEvent(value.eventId); if (value.status != ApplicationStatus.APPROVED || !value.isPublic || event.status == EventStatus.DRAFT) throw ApiException.notFound("공개된 부스를 찾을 수 없습니다."); return value; }
     private EventBooth requireOwnedEventBooth(UserAccount owner, Long id) { EventBooth value = requireEventBooth(id); requireOwnedBooth(owner, value.boothId); return value; }
-    private EventBooth requireApprovedOwnedEventBooth(UserAccount owner, Long id) { EventBooth value = requireOwnedEventBooth(owner, id); if (value.status != ApplicationStatus.APPROVED) throw ApiException.conflict("승인된 행사 부스만 관리할 수 있습니다."); return value; }
+    private EventBooth requireApprovedOwnedEventBooth(UserAccount owner, Long id) { EventBooth value = requireOwnedEventBooth(owner, id); if (value.status != ApplicationStatus.APPROVED) throw ApiException.conflict("등록이 완료된 행사 부스만 관리할 수 있습니다."); return value; }
     private EventBooth requireMutableOwnedEventBooth(UserAccount owner, Long id) { EventBooth value = requireApprovedOwnedEventBooth(owner, id); if (requireEvent(value.eventId).status == EventStatus.ENDED) throw ApiException.conflict("종료된 행사는 수정하거나 새 판매를 기록할 수 없습니다."); return value; }
     private EventProduct requireOwnedEventProduct(UserAccount owner, Long id) { EventProduct value = eventProducts.findById(id).orElseThrow(() -> ApiException.notFound("상품을 찾을 수 없습니다.")); requireOwnedEventBooth(owner, value.eventBoothId); return value; }
     private BoothNotice requireNotice(Long id) { return notices.findById(id).orElseThrow(() -> ApiException.notFound("공지를 찾을 수 없습니다.")); }

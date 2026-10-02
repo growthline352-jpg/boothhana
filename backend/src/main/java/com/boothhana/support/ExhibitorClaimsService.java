@@ -24,6 +24,7 @@ public class ExhibitorClaimsService {
   if("CATALOG_EDIT".equals(permission))try{SupportRules.evidence(List.of(d.officialUrl()));}catch(IllegalArgumentException e){throw ApiException.badRequest(e.getMessage());}
   if("APPROVE".equals(d.decision())){
    Target target=support.mapper().readValue(t.get("target_json").toString(),Target.class);support.targetResolver().requireClaimable(target,exhibitor);
+   com.boothhana.service.CreatorBoothLimits.claim(support.database(),user,exhibitor);
    support.database().queryForList("select id from subculture_exhibitor where id=? for update",exhibitor);
    support.database().update("""
     insert into exhibitor_manager(exhibitor_id,user_id,claim_ticket_id,state,granted_by,reason) values(?,?,?,'ACTIVE',?,?)

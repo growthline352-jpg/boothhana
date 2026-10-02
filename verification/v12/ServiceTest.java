@@ -16,13 +16,18 @@ public class ServiceTest {
   final Map<UUID,Map<String,Object>> tickets=new LinkedHashMap<>(),messages=new LinkedHashMap<>(),attachments=new LinkedHashMap<>();final List<Map<String,Object>> actions=new ArrayList<>();final Map<String,Long> rate=new HashMap<>();Map<String,Object> manager;
   @Override public void execute(String s){}
   @Override @SuppressWarnings("unchecked") public <T>T queryForObject(String sql,Class<T> t,Object...a){
+   if(sql.startsWith("select coalesce((select root_event_id"))return (T)a[0];
    if(sql.startsWith("insert into support_rate_limit")){long n=rate.merge(a[0].toString(),1L,Long::sum);return (T)Integer.valueOf((int)n);}
    if(sql.startsWith("select count(*) from support_message"))return (T)Long.valueOf(messages.values().stream().filter(x->a[0].equals(x.get("ticket_id"))).filter(x->!sql.contains("message_kind='DIALOGUE'")||!"SYSTEM".equals(x.get("message_kind"))).count());
    if(sql.startsWith("select count(*) from support_attachment"))return (T)Long.valueOf(attachments.values().stream().filter(x->a[0].equals(x.get("ticket_id"))).count());
    if(sql.startsWith("select count(*) from support_ticket"))return (T)Long.valueOf(tickets.size());
    throw new AssertionError("Unscripted scalar: "+sql);
   }
+  @Override public <T> List<T> queryForList(String sql,Class<T> type,Object...a){if(sql.contains("select distinct p.id from subculture_participant"))return List.of();throw new AssertionError("Unscripted typed query: "+sql);}
   @Override public List<Map<String,Object>> queryForList(String sql,Object...a){
+   if(sql.startsWith("select id from app_user"))return List.of(values("id",a[0]));
+   if(sql.contains("from catalog_creator_booth"))return List.of();
+   if(sql.startsWith("select p.id,p.event_id from subculture_participant_member"))return List.of(values("id",21L,"event_id",10L));
    if(sql.contains("pg_advisory_xact_lock"))return List.of(Map.of());
    if(sql.startsWith("select id from support_ticket where id=")){var x=tickets.get(a[0]);return x!=null&&Objects.equals(a[1],x.get("requester_id"))?List.of(values("id",a[0])):List.of();}
    if(sql.startsWith("select * from support_ticket where id=")){var x=tickets.get(a[0]);return x==null?List.of():List.of(x);}

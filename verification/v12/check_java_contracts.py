@@ -23,6 +23,7 @@ public class PlatformService{public java.util.Optional<EventView> findPublicEven
 'com/boothhana/floorplan/FloorplanService.java':'''package com.boothhana.floorplan;import java.util.*;public class FloorplanService{public Map<String,Object> data=Map.of("plans",List.of());public Optional<Map<String,Object>> findPublicPlans(long id){return Optional.of(data);}public Object publicPlans(long id){return data;}public Map<String,Object> version(UUID id){return Map.of("revision",0L);}public void withdraw(UUID id,FloorplanModels.Publish p){}}''',
 'com/boothhana/support/PrivateSupportStorage.java':'''package com.boothhana.support;import java.util.*;public class PrivateSupportStorage{public boolean enabled=true;public Map<String,byte[]> files=new HashMap<>();public boolean available(){return enabled;}public void put(String key,String type,byte[]b,String digest){files.put(key,b);}public byte[] get(String key,long size,String digest){return files.get(key);}}''',
 })
+STUBS['org/springframework/jdbc/core/JdbcTemplate.java']=STUBS['org/springframework/jdbc/core/JdbcTemplate.java'].replace('public List<Map<String,Object>> queryForList', 'public <T> List<T> queryForList(String s,Class<T> type,Object...args){return java.util.List.of();} public List<Map<String,Object>> queryForList')
 # Test JSON registry serializes records/maps to real JSON strings but only reads previously registered values.
 # It is deliberately NOT Jackson and cannot be used by the application.
 STUBS['tools/jackson/databind/json/JsonMapper.java']=r'''package tools.jackson.databind.json;
@@ -51,7 +52,7 @@ def run():
   t=Path(t);files=[]
   for path,code in STUBS.items():
    p=t/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(code);files.append(p)
-  actual=['api/ApiException.java','api/ApiModels.java','collection/CollectionModels.java','collection/CatalogModels.java','domain/DomainEnums.java','floorplan/FloorplanModels.java','upload/ImageUploadRules.java','service/ApplicationRules.java','service/ApplicationWorkflowService.java']
+  actual=['api/ApiException.java','api/ApiModels.java','collection/CollectionModels.java','collection/CatalogModels.java','domain/DomainEnums.java','floorplan/FloorplanModels.java','upload/ImageUploadRules.java','service/CreatorBoothLimits.java','service/ApplicationRules.java','service/ApplicationWorkflowService.java']
   actual+=['support/'+n+'.java' for n in ['SupportModels','SupportRules','SupportComparison','SupportRateLimiter','SupportTargets','SupportService','SupportResolutionService','ExhibitorClaimsService','SupportAttachmentTransactions','SupportAttachments','SupportOperations']]
   cmd=['javac','-encoding','UTF-8','-d',str(t/'classes'),*map(str,files),*[str(J/p) for p in actual]]
   if (V/'ServiceTest.java').exists():cmd.append(str(V/'ServiceTest.java'))
