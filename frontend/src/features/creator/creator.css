@@ -1,4 +1,21 @@
 .creator-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 16px; }
+.ownership-workspace > .panel { margin-bottom: 24px; }
+.ownership-workspace .panel-header { flex-wrap: wrap; }
+.ownership-workspace h3 { font-size: 18px; overflow-wrap: anywhere; }
+.ownership-workspace .list-row { flex-wrap: wrap; }
+.ownership-workspace .list-row > div { min-width: 0; }
+.ownership-workspace .row-actions { flex-wrap: wrap; }
+.ownership-workspace .ownership-card { display: grid; gap: 12px; }
+.ownership-workspace .ownership-card + .ownership-card { border-top: 1px solid var(--line); padding-top: 20px; }
+.ownership-workspace .ownership-card .panel-header { margin-bottom: 0; }
+.ownership-workspace .item-meta { margin: 8px 0 0; }
+.ownership-workspace .ownership-help { margin-top: 20px; }
+.ownership-workspace > .row-actions { margin-bottom: 24px; }
+@media (max-width: 720px) {
+  .ownership-workspace .panel { padding: 18px; }
+  .ownership-workspace .row-actions { width: 100%; }
+  .ownership-workspace .row-actions .btn { flex: 1 1 auto; }
+}
 .creator-breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; color: var(--muted); }
 .creator-breadcrumb a { text-decoration: underline; text-underline-offset: 3px; }
 .creator-filters { display: grid; grid-template-columns: 1fr 1fr 180px; gap: 12px; margin-bottom: 20px; }
