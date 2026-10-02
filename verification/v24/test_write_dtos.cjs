@@ -10,7 +10,7 @@ test('booth write does not submit public ownership labels or counters',async()=>
  assert.deepEqual(keys(calls[0].body),['name','intro','imageKey','snsUrl'].sort())
 })
 test('product update keeps optimistic-lock revisions but omits response IDs and image URL',async()=>{
- const {creatorApi,calls}=setup();await creatorApi.updateProduct(3,{id:3,eventBoothId:9,name:'Product',description:'d',imageKey:'k',imageUrl:'https://example.com',price:100,stockMode:'FINITE',stockQuantity:5,soldOut:false,isPublic:true,reservationEnabled:true,version:8,productVersion:4})
+ const {creatorApi,calls}=setup();await creatorApi.updateProduct(3,{id:3,eventBoothId:9,name:'Product',description:'d',imageKey:'k',imageUrl:'https://example.com',imagePreviewFile:new Blob(['preview'],{type:'image/png'}),price:100,stockMode:'FINITE',stockQuantity:5,soldOut:false,isPublic:true,reservationEnabled:true,version:8,productVersion:4})
  assert.deepEqual(keys(calls[0].body),['name','description','imageKey','price','stockMode','stockQuantity','soldOut','isPublic','reservationEnabled','version','productVersion'].sort());assert.equal(calls[0].body.version,8);assert.equal(calls[0].body.productVersion,4)
 })
 test('event booth write contains only the three input fields',async()=>{

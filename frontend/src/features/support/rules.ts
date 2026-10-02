@@ -16,6 +16,12 @@ export function readTarget(params:URLSearchParams):Target|null {
  }catch{return null}
 }
 export function supportPath(kind:TicketKind,target?:Target,viewedVersion?:string){const p=new URLSearchParams({kind});if(target)p.set('target',JSON.stringify(target));if(viewedVersion)p.set('seen',viewedVersion.slice(0,1000));return `/support/new?${p}`}
+export function supportTemplate(template:string|null):{title:string;body:string} {
+ if(template==='VISITOR_GUIDE')return {title:'방문 안내 변경 요청',body:'변경할 항목 (입장권 / 프로그램 / FAQ / 개최 상태):\n적용 날짜·시간:\n현재 안내와 바뀐 내용:\n공식 출처와 확인일:'}
+ if(template==='NEW_PRODUCT')return {title:'새 상품 추가 요청',body:'상품명:\n상품 설명:\n가격·판매 상태:\n판매하는 행사·참가일:\n공식 상품 안내 링크와 확인일:'}
+ if(template==='PRODUCT_IMAGE')return {title:'상품 이미지 변경 요청',body:'이미지를 바꿀 상품명:\n새 이미지 또는 공식 이미지 링크:\n이미지 사용 권한·출처:\n적용할 행사·참가일:'}
+ return {title:'',body:''}
+}
 export function safeReturnPath(value:string){if(!value.startsWith('/')||value.startsWith('//')||/[\\\r\n\0]/.test(value)||value.length>2000)return '/';return value}
 export function evidenceLines(text:string){const values=text.split('\n').map(x=>x.trim()).filter(Boolean);if(values.length>5)throw new Error('근거 링크는 5개까지 입력해 주세요.');for(const v of values){try{const u=new URL(v);if(!['https:','http:'].includes(u.protocol)||u.username||u.password||v.length>2048||v.includes('\\'))throw new Error()}catch{throw new Error('근거 링크는 올바른 HTTP(S) 주소로 입력해 주세요.')}}return values}
 export function secureGuestKey(){const bytes=crypto.getRandomValues(new Uint8Array(32));return btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replaceAll('=','')}
