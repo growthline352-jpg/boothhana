@@ -1,3 +1,4 @@
+import { taxonomy } from './taxonomy.mjs'
 import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryOrigin, splitSitesEnabled } from './category-sites.mjs'
 /** Shared server/SPA metadata. Only PUBLIC catalog responses may be supplied here. */
 export const SITE_TITLE = '부스하나 | 서울·경기 행사·부스·상품 찾기'
@@ -6,12 +7,7 @@ const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<'
 const text = (value, max) => typeof value === 'string' ? value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : ''
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 const TIME = /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/
-const CATEGORY_BY_TYPE = {
-  COMIC_DOUJIN: 'subculture', DOLL: 'subculture', ONLY_EVENT: 'subculture', BIRTHDAY_CAFE: 'subculture', STATIONERY_GOODS: 'subculture',
-  SUBCULTURE_MUSIC: 'subculture', ANIME_GAME_FESTIVAL: 'subculture', ART_BOOK: 'subculture', BOARD_GAME: 'subculture', CHARACTER_ART: 'subculture', ILLUSTRATION: 'subculture',
-  WINE: 'exhibitions', WEDDING: 'exhibitions', LIFESTYLE: 'exhibitions', DESIGN: 'exhibitions', BUSINESS: 'exhibitions',
-  WALK: 'festivals', LIGHT: 'festivals', MUSIC: 'festivals', FOOD: 'festivals', CULTURE: 'festivals',
-}
+const CATEGORY_BY_TYPE = Object.fromEntries(taxonomy.fields.flatMap(field => field.types.map(type => [type.code, field.key])))
 const CATEGORY_LABEL = { subculture: '서브컬처 행사', exhibitions: '박람회', festivals: '축제' }
 function verificationToken(raw) { return typeof raw === 'string' && /^[A-Za-z0-9_-]{20,200}$/.test(raw) ? raw : '' }
 

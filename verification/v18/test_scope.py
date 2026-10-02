@@ -52,6 +52,7 @@ class ScopeTests(unittest.TestCase):
   sql=(ROOT/'database/016_catalog_scope_offline.sql').read_text()
   self.assertIn('offline_allowed boolean not null default false',sql)
   sql+=(ROOT/'database/021_subculture_event_types.sql').read_text()
+  sql+=(ROOT/'database/023_event_taxonomy.sql').read_text()
   for types in GROUPS.values():
    for type_ in types:self.assertIn("'"+type_+"'",sql)
   self.assertNotIn('delete from',sql.lower());self.assertNotIn('update subculture',sql.lower())

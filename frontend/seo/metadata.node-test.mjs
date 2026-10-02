@@ -7,7 +7,7 @@ import { naverVerificationFor } from './naver-verification.mjs'
 const siteUrl = 'https://boothhana.example'
 
 test('subculture performances and fairs have a subculture canonical on split sites', () => {
-  for (const subcategory of ['SUBCULTURE_MUSIC', 'ANIME_GAME_FESTIVAL', 'ART_BOOK', 'BOARD_GAME', 'CHARACTER_ART', 'ILLUSTRATION']) {
+  for (const subcategory of ['SUBCULTURE_MUSIC', 'ANIME_GAME_FESTIVAL', 'ART_BOOK', 'BOARD_GAME', 'CHARACTER_ART', 'ILLUSTRATION', 'FAN_CAFE', 'POPUP_STORE', 'CARD_COLLECTIBLES', 'FAN_CONVENTION']) {
     const meta = pageMetadata({ path: '/discover/240', siteUrl: 'https://festival.boothana.kr', splitSites: true,
       catalog: { ...catalog, id: 240, event: { ...catalog.event, subcategory } } })
     assert.equal(meta.canonical, 'https://subculture.boothana.kr/discover/240')

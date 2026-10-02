@@ -1,7 +1,7 @@
 import { api, publicRead } from '../../api/client'
 import type { PopularEventSummary } from '../catalog/api'
 
-export interface InterestOption { code: string; label: string; types?: string[]; subjects?: string[] }
+export interface InterestOption { code: string; label: string; types?: string[]; subjects?: string[]; works?: string[] }
 export interface InterestField { code: string; label: string; formats: InterestOption[]; topics: InterestOption[] }
 export interface InterestSelection { formats: string[]; topics: string[] }
 export type InterestFields = Record<string, InterestSelection>

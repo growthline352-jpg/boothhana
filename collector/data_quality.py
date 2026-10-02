@@ -6,7 +6,7 @@ reviewed facts or changes the fields that define event identity.
 """
 from __future__ import annotations
 from copy import deepcopy
-from taxonomy import GROUPS
+from taxonomy import GROUPS, topic_review_reasons
 from datetime import date, datetime, timezone, timedelta
 import re
 
@@ -61,6 +61,7 @@ def missing_reasons(event: dict) -> list[str]:
         guide=event.get('visitorGuide')
         if not guide:reasons.append('MISSING_VISITOR_GUIDE')
         elif _incomplete_guide(guide):reasons.append('INCOMPLETE_VISITOR_GUIDE')
+    reasons.extend(topic_review_reasons(event.get('subcategory'),event.get('subjects')))
     return reasons
 
 def _norm(value):

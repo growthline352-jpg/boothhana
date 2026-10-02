@@ -49,6 +49,20 @@ class LibraryIntegrationTests {
  }
  void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
  Save input(){return new Save(new Target("PRODUCT",event,product,participant),day,"1관");}
+ @Test void expandedTopicsMatchPublishedSubjectsWithActualPostgres() {
+  db.update("update subculture_event_candidate set subcategory='FAN_CAFE' where id=?",event);
+  for(var sample:List.of(
+      List.of("SUBCULTURE","GAME","SUBCULTURE_MUSIC","GAME_OST_CONCERT"),
+      List.of("SUBCULTURE","NOVEL","ONLY_EVENT","괴담출근"),
+      List.of("EXHIBITION","PETS","LIFESTYLE","반려동물"),
+      List.of("FESTIVAL","ROCK","CONCERT","JPOP_JROCK"),
+      List.of("FESTIVAL","GARDEN","WALK","정원"))) {
+   var args=new ArrayList<Object>();args.add(json.writeValueAsString(Map.of("event",Map.of("subcategory",sample.get(2),"subjects",List.of(sample.get(3))))));
+   String predicate=com.boothhana.interests.InterestTaxonomy.predicate(sample.get(0),new com.boothhana.interests.InterestTaxonomy.Selection(List.of(),List.of(sample.get(1))),"p",args);
+   assertThat(db.queryForObject("select "+predicate+" from (select cast(? as jsonb) snapshot_json) p",Boolean.class,
+       java.util.stream.Stream.concat(args.subList(1,args.size()).stream(),args.subList(0,1).stream()).toArray())).isTrue();
+  }
+ }
  @Test void duplicateSaveHasOneIdentityAndOriginalMemo(){var first=service.save(user,input());var edited=service.edit(user,first.item().id(),new Edit(first.item().revision(),"개인 선물 메모",day,"1관"));var replay=service.save(user,input());assertThat(replay.created()).isFalse();assertThat(replay.item().id()).isEqualTo(edited.id());assertThat(replay.item().note()).isEqualTo("개인 선물 메모");assertThat(service.index(user)).hasSize(1);}
  @Test void productCarriesBoothAndEventWithoutExtraRows(){var row=service.save(user,input()).item();assertThat(row.target().participantId()).isEqualTo(participant);assertThat(row.saved().eventName()).isEqualTo("[TEST] memory event");assertThat(row.saved().participantName()).contains("Leaf studio");assertThat(service.index(user)).hasSize(1);}
  @Test void otherUserCannotReadEditOrDeleteMemory(){var e=service.save(user,input()).item();assertThatThrownBy(()->service.detail(other,e.id())).isInstanceOf(ApiException.class);assertThatThrownBy(()->service.edit(other,e.id(),new Edit(0,"stolen",day,""))).isInstanceOf(ApiException.class);service.delete(other,e.id(),0);assertThat(service.detail(user,e.id())).isNotNull();assertThat(service.list(other,"",null,"",false,0,24).total()).isZero();}

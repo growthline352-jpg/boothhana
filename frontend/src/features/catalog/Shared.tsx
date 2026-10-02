@@ -1,3 +1,4 @@
+import { eventTypeLabels } from '../interests/taxonomy'
 import { confirmedLocationDates } from '../visit/visit'
 import { SaveButton } from '../library/SaveButton'
 import type { MemoryTarget } from '../library/types'
@@ -7,7 +8,7 @@ import type { ProductCheck } from './api'
 import type { ReactNode } from 'react'
 import { ContentImage } from '../../components/ui/ContentImage'
 import type { Location, Product, EvidenceScope, PublicAsset } from './api'
-export const labels:Record<string,string>={WINE:'주류·와인',WEDDING:'웨딩',LIFESTYLE:'생활·취미',DESIGN:'디자인·아트',BUSINESS:'창업·산업',WALK:'걷기·거리',LIGHT:'불꽃·빛',MUSIC:'음악·공연',FOOD:'먹거리',CULTURE:'지역·문화',COMIC_DOUJIN:'코믹·동인',DOLL:'인형',ONLY_EVENT:'온리전',BIRTHDAY_CAFE:'생일카페',STATIONERY_GOODS:'문구·일러스트·굿즈',SUBCULTURE_MUSIC:'애니·게임·버추얼 공연',ANIME_GAME_FESTIVAL:'애니·게임 행사',ART_BOOK:'아트북·독립출판',BOARD_GAME:'보드게임',CHARACTER_ART:'캐릭터·아트',ILLUSTRATION:'일러스트 행사',PENDING:'검토 대기',REVIEWED:'검토 완료',EXCLUDED:'제외',ASSIGNED:'배정 확인',UNASSIGNED:'미배정',UNKNOWN:'미확인',NOT_APPLICABLE:'해당 없음',PARTIAL:'일부 수집',COMPLETE:'전체 확인 보고',UNPUBLISHED:'미공개',SUCCESS:'정상 종료',RUNNING:'실행 중',FAILED:'실패',STORED:'파일 저장 완료',CANDIDATE:'링크 확보',APPROVED:'사용 승인',REJECTED:'사용 거절',BANNER:'행사 배너',FLOOR_PLAN:'배치도',BOOTH_CUT:'부스컷',SALES_SHEET:'판매표',PRODUCT:'상품 사진',LOGO:'로고',PARTICIPANTS:'참가 부스',SALES:'판매정보',ACTIVE:'이어 수집 대기',BLOCKED:'재확인 필요',REJECTED_ALL:'전체 거절',NO_RESULTS:'확인 결과 없음',REGISTERED_BOOTHS:'등록 부스',BOOTH_CUTS:'부스컷',PRODUCTS:'상품'}
+export const labels:Record<string,string>={...eventTypeLabels,PENDING:'검토 대기',REVIEWED:'검토 완료',EXCLUDED:'제외',ASSIGNED:'배정 확인',UNASSIGNED:'미배정',UNKNOWN:'미확인',NOT_APPLICABLE:'해당 없음',PARTIAL:'일부 수집',COMPLETE:'전체 확인 보고',UNPUBLISHED:'미공개',SUCCESS:'정상 종료',RUNNING:'실행 중',FAILED:'실패',STORED:'파일 저장 완료',CANDIDATE:'링크 확보',APPROVED:'사용 승인',REJECTED:'사용 거절',BANNER:'행사 배너',FLOOR_PLAN:'배치도',BOOTH_CUT:'부스컷',SALES_SHEET:'판매표',PRODUCT:'상품 사진',LOGO:'로고',PARTICIPANTS:'참가 부스',SALES:'판매정보',ACTIVE:'이어 수집 대기',BLOCKED:'재확인 필요',REJECTED_ALL:'전체 거절',NO_RESULTS:'확인 결과 없음',REGISTERED_BOOTHS:'등록 부스',BOOTH_CUTS:'부스컷',PRODUCTS:'상품'}
 export const scopes:Record<EvidenceScope,string>={EVENT_LISTED:'이번 행사 등록 품목',EVENT_SALE_CONFIRMED:'이번 행사 판매 공지 확인',PROFILE:'취급 분야 · 개별 판매품 미확인',GENERAL_CATALOG:'상시 상품 · 이번 행사 판매 미확인',PAST_REFERENCE:'과거 판매 참고',UNKNOWN:'판매정보 확인 필요'}
 export function SafeLink({url,children}:{url:string|null|undefined;children?:ReactNode}) {
  try{if(!url) return <span>미확인</span>;const u=new URL(url);if(!['https:','http:'].includes(u.protocol)||u.username||u.password)return <span>잘못된 링크</span>}

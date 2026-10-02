@@ -1,3 +1,4 @@
+import { eventTypeLabels } from '../interests/taxonomy'
 import { useState, type ReactNode } from 'react'
 import { useRemote } from '../../app/useRemote'
 import { useSubmission } from '../../app/useSubmission'
@@ -6,14 +7,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States
 import { collectionApi, type Detail, type ReviewState, type Subcategory } from './api'
 import './collection.css'
 
-const categories: Record<Subcategory, string> = {
-  COMIC_DOUJIN: '코믹·동인', DOLL: '인형 행사', ONLY_EVENT: '온리전',
-  BIRTHDAY_CAFE: '생일카페', STATIONERY_GOODS: '문구·일러스트·굿즈',
-  SUBCULTURE_MUSIC: '애니·게임·버추얼 공연', ANIME_GAME_FESTIVAL: '애니·게임 행사',
-  ART_BOOK: '아트북·독립출판', BOARD_GAME: '보드게임', CHARACTER_ART: '캐릭터·아트', ILLUSTRATION: '일러스트 행사',
-  WINE: '주류·와인', WEDDING: '웨딩', LIFESTYLE: '생활·취미', DESIGN: '디자인·아트', BUSINESS: '창업·산업',
-  WALK: '걷기·거리', LIGHT: '불꽃·빛', MUSIC: '음악·공연', FOOD: '먹거리', CULTURE: '지역·문화',
-}
+const categories: Record<Subcategory, string> = eventTypeLabels
 const reviews: Record<ReviewState, string> = { PENDING: '검토 대기', REVIEWED: '확인 완료 · 비공개', EXCLUDED: '제외' }
 const runStatuses: Record<string, string> = { SUCCESS: '정상', PARTIAL: '일부 수집', NO_RESULTS: '검색 무결과', FAILED: '검색 실패', REJECTED_ALL: '전체 제외' }
 function External({ url, children }: { url: string; children: ReactNode }) {

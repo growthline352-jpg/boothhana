@@ -64,6 +64,8 @@ jobs:
           python -m pip install -r collector/requirements.txt
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium
+      - name: Verify shared taxonomy copies
+        run: python scripts/sync-taxonomy.py --check
       - name: Isolated fresh databases and actual migrations
         run: |
           createdb boothhana_release_test

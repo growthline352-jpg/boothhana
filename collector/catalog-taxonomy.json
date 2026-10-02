@@ -1,0 +1,899 @@
+{
+  "version": 1,
+  "fields": [
+    {
+      "code": "SUBCULTURE",
+      "label": "서브컬처",
+      "formats": [
+        {
+          "code": "COMIC_DOUJIN",
+          "label": "코믹·동인",
+          "types": [
+            "COMIC_DOUJIN"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "ONLY_EVENT",
+          "label": "온리전",
+          "types": [
+            "ONLY_EVENT"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "BIRTHDAY_CAFE",
+          "label": "생일카페",
+          "types": [
+            "BIRTHDAY_CAFE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "DOLL",
+          "label": "인형 행사",
+          "types": [
+            "DOLL"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "STATIONERY_GOODS",
+          "label": "문구·굿즈 행사",
+          "types": [
+            "STATIONERY_GOODS"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "SUBCULTURE_MUSIC",
+          "label": "애니·게임·버추얼 공연",
+          "types": [
+            "SUBCULTURE_MUSIC"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "ANIME_GAME_FESTIVAL",
+          "label": "애니·게임 행사",
+          "types": [
+            "ANIME_GAME_FESTIVAL"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "ART_BOOK",
+          "label": "아트북·독립출판",
+          "types": [
+            "ART_BOOK"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "BOARD_GAME",
+          "label": "보드게임",
+          "types": [
+            "BOARD_GAME"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "CHARACTER_ART",
+          "label": "캐릭터·아트",
+          "types": [
+            "CHARACTER_ART"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "ILLUSTRATION",
+          "label": "일러스트 행사",
+          "types": [
+            "ILLUSTRATION"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "FAN_CAFE",
+          "label": "팬카페·카페 이벤트",
+          "types": [
+            "FAN_CAFE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "POPUP_STORE",
+          "label": "팝업스토어",
+          "types": [
+            "POPUP_STORE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "CARD_COLLECTIBLES",
+          "label": "카드·수집 행사",
+          "types": [
+            "CARD_COLLECTIBLES"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "FAN_CONVENTION",
+          "label": "팬 컨벤션",
+          "types": [
+            "FAN_CONVENTION"
+          ],
+          "subjects": [],
+          "works": []
+        }
+      ],
+      "topics": [
+        {
+          "code": "VOCALOID",
+          "label": "보컬로이드",
+          "types": [],
+          "subjects": [
+            "보컬로이드",
+            "vocaloid",
+            "하츠네 미쿠",
+            "하츠네미쿠",
+            "초음미쿠"
+          ],
+          "works": [
+            "하츠네 미쿠",
+            "하츠네미쿠",
+            "초음미쿠"
+          ]
+        },
+        {
+          "code": "VTUBER",
+          "label": "버튜버",
+          "types": [],
+          "subjects": [
+            "버튜버",
+            "버츄얼 유튜버",
+            "버추얼 유튜버",
+            "vtuber",
+            "버추얼",
+            "버츄얼",
+            "버추얼 콘텐츠",
+            "버츄얼 콘텐츠"
+          ],
+          "works": []
+        },
+        {
+          "code": "ANIME_MANGA",
+          "label": "애니·만화",
+          "types": [],
+          "subjects": [
+            "애니",
+            "애니메이션",
+            "만화",
+            "애니·만화",
+            "주술회전",
+            "하이큐",
+            "명탐정 코난",
+            "가비지타임",
+            "지브리",
+            "스튜디오 지브리",
+            "애니송",
+            "ANISONG",
+            "SEIYUU_ANISONG"
+          ],
+          "works": [
+            "주술회전",
+            "하이큐",
+            "명탐정 코난",
+            "가비지타임",
+            "지브리",
+            "스튜디오 지브리"
+          ]
+        },
+        {
+          "code": "GAME",
+          "label": "게임",
+          "types": [],
+          "subjects": [
+            "게임",
+            "리듬게임",
+            "원신",
+            "붕괴: 스타레일",
+            "붕괴 스타레일",
+            "젠레스 존 제로",
+            "블루 아카이브",
+            "블루아카이브",
+            "페르소나",
+            "GAME_OST_CONCERT",
+            "인디게임",
+            "INDIE_GAME"
+          ],
+          "works": [
+            "원신",
+            "붕괴: 스타레일",
+            "붕괴 스타레일",
+            "젠레스 존 제로",
+            "블루 아카이브",
+            "블루아카이브",
+            "페르소나"
+          ]
+        },
+        {
+          "code": "NOVEL",
+          "label": "소설·웹소설",
+          "types": [],
+          "subjects": [
+            "소설",
+            "웹소설",
+            "괴담출근",
+            "괴담에 떨어져도 출근을 해야 하는구나",
+            "데못죽",
+            "데뷔 못 하면 죽는 병 걸림",
+            "어두운 바다의 등불이 되어"
+          ],
+          "works": [
+            "괴담출근",
+            "괴담에 떨어져도 출근을 해야 하는구나",
+            "데못죽",
+            "데뷔 못 하면 죽는 병 걸림",
+            "어두운 바다의 등불이 되어"
+          ]
+        },
+        {
+          "code": "ILLUSTRATION",
+          "label": "일러스트·창작",
+          "types": [],
+          "subjects": [
+            "일러스트",
+            "일러스트레이션",
+            "창작",
+            "오리지널",
+            "CHARACTER_DESIGN",
+            "캐릭터 디자인",
+            "CHARACTER_ART",
+            "아트북",
+            "독립출판"
+          ],
+          "works": []
+        },
+        {
+          "code": "BOARD_GAME",
+          "label": "보드게임",
+          "types": [
+            "BOARD_GAME"
+          ],
+          "subjects": [
+            "보드게임"
+          ],
+          "works": []
+        },
+        {
+          "code": "DOLL",
+          "label": "인형",
+          "types": [
+            "DOLL"
+          ],
+          "subjects": [
+            "인형",
+            "구체관절인형"
+          ],
+          "works": []
+        },
+        {
+          "code": "CARD_COLLECTIBLES",
+          "label": "카드·수집",
+          "types": [
+            "CARD_COLLECTIBLES"
+          ],
+          "subjects": [
+            "트레이딩카드",
+            "TCG",
+            "카드 수집"
+          ],
+          "works": []
+        },
+        {
+          "code": "COSPLAY",
+          "label": "코스프레",
+          "types": [],
+          "subjects": [
+            "코스프레",
+            "cosplay"
+          ],
+          "works": []
+        },
+        {
+          "code": "FURRY",
+          "label": "퍼리",
+          "types": [],
+          "subjects": [
+            "퍼리",
+            "furry",
+            "FURRY_CONVENTION"
+          ],
+          "works": []
+        }
+      ],
+      "key": "subculture",
+      "types": [
+        {
+          "code": "COMIC_DOUJIN",
+          "label": "코믹·동인"
+        },
+        {
+          "code": "DOLL",
+          "label": "인형"
+        },
+        {
+          "code": "ONLY_EVENT",
+          "label": "온리전"
+        },
+        {
+          "code": "BIRTHDAY_CAFE",
+          "label": "생일카페"
+        },
+        {
+          "code": "STATIONERY_GOODS",
+          "label": "문구·굿즈"
+        },
+        {
+          "code": "SUBCULTURE_MUSIC",
+          "label": "애니·게임·버추얼 공연"
+        },
+        {
+          "code": "ANIME_GAME_FESTIVAL",
+          "label": "애니·게임 행사"
+        },
+        {
+          "code": "ART_BOOK",
+          "label": "아트북·독립출판"
+        },
+        {
+          "code": "BOARD_GAME",
+          "label": "보드게임"
+        },
+        {
+          "code": "CHARACTER_ART",
+          "label": "캐릭터·아트"
+        },
+        {
+          "code": "ILLUSTRATION",
+          "label": "일러스트 행사"
+        },
+        {
+          "code": "FAN_CAFE",
+          "label": "팬카페·카페 이벤트"
+        },
+        {
+          "code": "POPUP_STORE",
+          "label": "팝업스토어"
+        },
+        {
+          "code": "CARD_COLLECTIBLES",
+          "label": "카드·수집 행사"
+        },
+        {
+          "code": "FAN_CONVENTION",
+          "label": "팬 컨벤션"
+        }
+      ]
+    },
+    {
+      "code": "EXHIBITION",
+      "label": "박람회",
+      "formats": [
+        {
+          "code": "FAIR",
+          "label": "박람회·전시회",
+          "types": [
+            "WINE",
+            "WEDDING",
+            "LIFESTYLE",
+            "DESIGN",
+            "BUSINESS"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "ART_FAIR",
+          "label": "아트페어",
+          "types": [],
+          "subjects": [
+            "아트페어",
+            "art fair"
+          ],
+          "works": []
+        },
+        {
+          "code": "BUSINESS_EXPO",
+          "label": "산업·비즈니스 전시",
+          "types": [
+            "BUSINESS"
+          ],
+          "subjects": [],
+          "works": []
+        }
+      ],
+      "topics": [
+        {
+          "code": "WINE",
+          "label": "주류·와인",
+          "types": [
+            "WINE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "WEDDING",
+          "label": "웨딩",
+          "types": [
+            "WEDDING"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "LIFESTYLE",
+          "label": "생활·취미",
+          "types": [
+            "LIFESTYLE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "DESIGN",
+          "label": "디자인·아트",
+          "types": [
+            "DESIGN"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "BUSINESS",
+          "label": "창업·산업",
+          "types": [
+            "BUSINESS"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "PETS",
+          "label": "반려동물",
+          "types": [],
+          "subjects": [
+            "반려동물",
+            "반려견",
+            "반려묘",
+            "펫"
+          ],
+          "works": []
+        },
+        {
+          "code": "BABY_KIDS",
+          "label": "육아·어린이",
+          "types": [],
+          "subjects": [
+            "육아",
+            "유아",
+            "출산",
+            "베이비",
+            "키즈"
+          ],
+          "works": []
+        },
+        {
+          "code": "FOOD_DRINK",
+          "label": "식품·음료",
+          "types": [],
+          "subjects": [
+            "식품",
+            "식음료",
+            "음료"
+          ],
+          "works": []
+        },
+        {
+          "code": "COFFEE_TEA",
+          "label": "커피·차",
+          "types": [],
+          "subjects": [
+            "커피",
+            "차",
+            "카페",
+            "디저트"
+          ],
+          "works": []
+        },
+        {
+          "code": "HOME_LIVING",
+          "label": "주거·인테리어",
+          "types": [],
+          "subjects": [
+            "주거",
+            "인테리어",
+            "가구",
+            "건축"
+          ],
+          "works": []
+        },
+        {
+          "code": "EDUCATION",
+          "label": "교육·유학",
+          "types": [],
+          "subjects": [
+            "교육",
+            "유학",
+            "진학",
+            "어학"
+          ],
+          "works": []
+        },
+        {
+          "code": "FINANCE",
+          "label": "금융·재테크",
+          "types": [],
+          "subjects": [
+            "금융",
+            "재테크",
+            "투자"
+          ],
+          "works": []
+        },
+        {
+          "code": "BEAUTY",
+          "label": "뷰티·건강",
+          "types": [],
+          "subjects": [
+            "뷰티",
+            "미용",
+            "화장품",
+            "건강"
+          ],
+          "works": []
+        },
+        {
+          "code": "IT_TECH",
+          "label": "IT·기술",
+          "types": [],
+          "subjects": [
+            "IT",
+            "기술",
+            "AI",
+            "인공지능",
+            "로봇",
+            "소프트웨어"
+          ],
+          "works": []
+        },
+        {
+          "code": "SPORTS_OUTDOOR",
+          "label": "스포츠·아웃도어",
+          "types": [],
+          "subjects": [
+            "스포츠",
+            "아웃도어",
+            "캠핑",
+            "레저"
+          ],
+          "works": []
+        },
+        {
+          "code": "ART",
+          "label": "미술·공예",
+          "types": [],
+          "subjects": [
+            "미술",
+            "공예",
+            "아트페어",
+            "art fair"
+          ],
+          "works": []
+        },
+        {
+          "code": "CONTENT_IP",
+          "label": "콘텐츠·지식재산",
+          "types": [],
+          "subjects": [
+            "콘텐츠 IP",
+            "지식재산",
+            "상표",
+            "디자인권"
+          ],
+          "works": []
+        }
+      ],
+      "key": "exhibitions",
+      "types": [
+        {
+          "code": "WINE",
+          "label": "주류·와인"
+        },
+        {
+          "code": "WEDDING",
+          "label": "웨딩"
+        },
+        {
+          "code": "LIFESTYLE",
+          "label": "생활·취미"
+        },
+        {
+          "code": "DESIGN",
+          "label": "디자인·아트"
+        },
+        {
+          "code": "BUSINESS",
+          "label": "창업·산업"
+        }
+      ]
+    },
+    {
+      "code": "FESTIVAL",
+      "label": "축제",
+      "formats": [
+        {
+          "code": "LIVE",
+          "label": "공연·음악 축제",
+          "types": [
+            "MUSIC",
+            "CONCERT",
+            "MUSIC_FESTIVAL"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "STREET",
+          "label": "거리·걷기 행사",
+          "types": [
+            "WALK"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "LIGHT_SHOW",
+          "label": "불꽃·빛 축제",
+          "types": [
+            "LIGHT"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "FOOD_FEST",
+          "label": "먹거리 축제",
+          "types": [
+            "FOOD"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "CULTURE_FEST",
+          "label": "지역·문화 축제",
+          "types": [
+            "CULTURE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "CONCERT",
+          "label": "단독 공연",
+          "types": [
+            "CONCERT"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "MUSIC_FESTIVAL",
+          "label": "음악 페스티벌",
+          "types": [
+            "MUSIC_FESTIVAL"
+          ],
+          "subjects": [],
+          "works": []
+        }
+      ],
+      "topics": [
+        {
+          "code": "MUSIC",
+          "label": "음악",
+          "types": [
+            "MUSIC",
+            "CONCERT",
+            "MUSIC_FESTIVAL"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "JAZZ",
+          "label": "재즈",
+          "types": [],
+          "subjects": [
+            "재즈",
+            "jazz",
+            "jazz_hiphop"
+          ],
+          "works": []
+        },
+        {
+          "code": "ROCK",
+          "label": "록·밴드",
+          "types": [],
+          "subjects": [
+            "록",
+            "락",
+            "rock",
+            "밴드",
+            "JPOP_JROCK",
+            "J-ROCK",
+            "JROCK",
+            "인디 록"
+          ],
+          "works": []
+        },
+        {
+          "code": "KPOP",
+          "label": "K-POP",
+          "types": [],
+          "subjects": [
+            "k-pop",
+            "kpop",
+            "kpop_idol",
+            "케이팝"
+          ],
+          "works": []
+        },
+        {
+          "code": "FOOD",
+          "label": "먹거리",
+          "types": [
+            "FOOD"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "LIGHT",
+          "label": "불꽃·빛",
+          "types": [
+            "LIGHT"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "LOCAL_CULTURE",
+          "label": "지역·전통문화",
+          "types": [
+            "CULTURE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "JPOP",
+          "label": "J-POP",
+          "types": [],
+          "subjects": [
+            "JPOP",
+            "J-POP",
+            "JPOP_JROCK"
+          ],
+          "works": []
+        },
+        {
+          "code": "INDIE",
+          "label": "인디 음악",
+          "types": [],
+          "subjects": [
+            "인디",
+            "인디 음악",
+            "INDIE",
+            "인디 록"
+          ],
+          "works": []
+        },
+        {
+          "code": "GARDEN",
+          "label": "꽃·정원",
+          "types": [],
+          "subjects": [
+            "꽃",
+            "정원",
+            "원예",
+            "가을꽃"
+          ],
+          "works": []
+        },
+        {
+          "code": "WALKING",
+          "label": "걷기·러닝",
+          "types": [],
+          "subjects": [
+            "걷기",
+            "러닝",
+            "달리기",
+            "트레킹",
+            "야외활동"
+          ],
+          "works": []
+        },
+        {
+          "code": "FAMILY",
+          "label": "가족·어린이",
+          "types": [],
+          "subjects": [
+            "가족",
+            "어린이",
+            "가족 체험"
+          ],
+          "works": []
+        },
+        {
+          "code": "HISTORY",
+          "label": "역사·전통",
+          "types": [],
+          "subjects": [
+            "역사",
+            "전통",
+            "전통문화"
+          ],
+          "works": []
+        }
+      ],
+      "key": "festivals",
+      "types": [
+        {
+          "code": "WALK",
+          "label": "걷기·거리"
+        },
+        {
+          "code": "LIGHT",
+          "label": "불꽃·빛"
+        },
+        {
+          "code": "MUSIC",
+          "label": "음악·공연"
+        },
+        {
+          "code": "FOOD",
+          "label": "먹거리"
+        },
+        {
+          "code": "CULTURE",
+          "label": "지역·문화"
+        },
+        {
+          "code": "CONCERT",
+          "label": "단독 공연"
+        },
+        {
+          "code": "MUSIC_FESTIVAL",
+          "label": "음악 페스티벌"
+        }
+      ]
+    }
+  ]
+}

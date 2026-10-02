@@ -1,3 +1,4 @@
+import { eventSubjectLabels } from '../interests/taxonomy'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { ContentImage } from '../../components/ui/ContentImage'
@@ -44,7 +45,7 @@ export function CalendarDetailPanel({ day, rows, event, today, returnTo, loading
     if (focus === document.body || dialog.current?.contains(focus)) (selectedEventId !== undefined ? eventHeading.current : dayHeading.current)?.focus({ preventScroll: true })
   }, [selectedEventId, day])
   const status = event && eventStatus(event.event, today)
-  const subjects = [...new Set(event?.event.subjects?.map(value => value.trim()).filter(Boolean) ?? [])]
+  const subjects = event ? eventSubjectLabels(event.event.subcategory,event.event.subjects) : []
   const hours = event && [...new Set(event.event.occurrences.filter(value => value.startDate <= day && value.endDate >= day)
     .map(value => value.startTime ? `${value.startTime}${value.endTime ? ` ~ ${value.endTime}` : '부터'}` : '시간 확인 필요'))]
   return <dialog ref={dialog} className="calendar-detail-panel" aria-labelledby="calendar-panel-heading"
