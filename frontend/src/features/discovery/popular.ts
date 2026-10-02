@@ -1,5 +1,4 @@
 import { publicCatalogApi, type PopularEventSummary, type PublicEventSummary } from '../catalog/api'
-import { interestApi } from '../interests/api'
 import { categories } from './categories'
 import { calendarEventRanges } from './calendar'
 import { combineOperatingSummaries, combineDfestaSummaries, DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID, isDfestaDay } from '../catalog/eventGroup'
@@ -11,7 +10,7 @@ export function rankedPopularEvents(rows: PopularEventSummary[], limit = 6): Pop
     .slice(0, limit)
 }
 
-export interface PopularEventsView { items: PopularEventSummary[]; personalized: boolean }
+export interface PopularEventsView { items: PopularEventSummary[] }
 
 function nextDate(row: PublicEventSummary, today: string): string {
   return calendarEventRanges(row).filter(range => range.to >= today)
@@ -28,24 +27,12 @@ export function unsavedUpcomingEvents(rows: PublicEventSummary[], today: string)
     .slice(0, 6).map(row => ({ ...row, saveCount: 0 }))
 }
 
-export async function loadPopularEvents(categoryCode: string | undefined, userId: number | null, today: string): Promise<PopularEventsView> {
-  if (userId !== null) {
-    const interests = await interestApi.get()
-    if (interests.userId !== userId) throw new Error('관심분야를 다시 확인해 주세요.')
-    // Selecting just the category means interest in its whole field, even without child options.
-    const selected = categories.filter(category => (!categoryCode || category.code === categoryCode) && category.code in interests.fields)
-    if (selected.length) {
-      const results = await Promise.all(selected.map(category => interestApi.featured(category.code, '', true)))
-      // Each category returns its top five after filtering; their union contains the overall top five.
-      const items = results.flatMap(result => result.items).sort((a, b) => b.saveCount - a.saveCount
-        || nextDate(a, today).localeCompare(nextDate(b, today)) || a.id - b.id).slice(0, 5)
-      return { items, personalized: true }
-    }
-  }
-  // An unset interest field also falls back across all three categories on category home pages.
-  const items = await publicCatalogApi.popular()
-  if (items.length) return { items: rankedPopularEvents(items), personalized: false }
-  const lists = await Promise.all(categories.map(category => publicCatalogApi.calendar(
+/** Shared member-save ranking; category filtering happens before the server limit. */
+export async function loadPopularEvents(categoryCode: string | undefined, today: string): Promise<PopularEventsView> {
+  const items = await publicCatalogApi.popular(categoryCode)
+  if (items.length) return { items: rankedPopularEvents(items) }
+  const selected = categories.filter(category => !categoryCode || category.code === categoryCode)
+  const lists = await Promise.all(selected.map(category => publicCatalogApi.calendar(
     new URLSearchParams({ category: category.code, from: today, sort: 'DATE_ASC' }).toString(), false)))
-  return { items: unsavedUpcomingEvents(lists.flat(), today), personalized: false }
+  return { items: unsavedUpcomingEvents(lists.flat(), today) }
 }
