@@ -176,7 +176,7 @@ class PlatformServiceTests {
 
         assertThatThrownBy(() -> service.createProduct(owner, eventBooth.id, input))
             .isInstanceOf(ApiException.class)
-            .hasMessage("승인된 행사 부스만 관리할 수 있습니다.");
+            .hasMessage("등록이 완료된 행사 부스만 관리할 수 있습니다.");
     }
 
     @Test
@@ -186,7 +186,7 @@ class PlatformServiceTests {
 
         assertThatThrownBy(() -> service.createNotice(owner, eventBooth.id, new NoticeInput("공지", "내용", false)))
             .isInstanceOf(ApiException.class)
-            .hasMessage("승인된 행사 부스만 관리할 수 있습니다.");
+            .hasMessage("등록이 완료된 행사 부스만 관리할 수 있습니다.");
     }
 
     @Test
@@ -197,7 +197,7 @@ class PlatformServiceTests {
 
         assertThatThrownBy(() -> service.createPos(owner, input))
             .isInstanceOf(ApiException.class)
-            .hasMessage("승인된 행사 부스만 관리할 수 있습니다.");
+            .hasMessage("등록이 완료된 행사 부스만 관리할 수 있습니다.");
     }
 
     @Test

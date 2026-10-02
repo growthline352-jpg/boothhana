@@ -85,6 +85,7 @@ public class SupportTargets {
  public Resolved current(Target target,Long owner){try{return resolve(target,owner);}catch(ApiException e){if(e.status.value()!=404)throw e;return new Resolved(target,"현재 비공개 또는 삭제된 대상","",Map.of(),hash(Map.of("visible",false)),false);}}
  /** IDs exposed only when an exact public member is also in the current membership relation. */
  public List<Map<String,Object>> claimables(long event,long participant){
+  if(!db.queryForList("select 1 from catalog_creator_booth where event_id=? and participant_id=?",event,participant).isEmpty())return List.of();
   var resolved=resolve(new Target("CATALOG","PARTICIPANT",event,participant,null,null,null,null),null);
   var participantData=map(map(resolved.snapshot()).get("data"));var p=map(participantData.get("participant"));
   List<Map<String,Object>> members=list(p.get("members")),out=new ArrayList<>();

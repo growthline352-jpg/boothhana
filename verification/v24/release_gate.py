@@ -32,6 +32,16 @@ def main():
         state('NOT_READY', reason='Inherited full checks passed; v24 checks pending')
         subprocess.run([sys.executable, 'verification/run_checks.py'], cwd=ROOT, check=True)
         required=[
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','groupedEventLimitSurvivesDifferentBaseAndPreventsConflictingMerge'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','concurrentDifferentBaseRegistrationsCommitExactlyOne'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','directRegistrationPublishesOnlyOwnBoothWithoutGrantAndEnforcesAccountLimit'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','claimApprovalRemainsRequiredAndCannotConflictWithDirectRegistration'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','approvedCollectedBoothBlocksNewBaseBoothInSameEvent'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','directProductsKeepIdentityEditsAndPublicStateThroughRepublication'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','registrationHttpRequiresLoginCsrfAndOwnedBase'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','platformRegistrationIsImmediateAndCannotUseAnotherBaseToRegisterTwice'),
+            ('TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml','endedUnpublishedAndOutOfPeriodRegistrationsAreRejected'),
+
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','anonymousFeedbackIsPrivateIdempotentAndRequiresCsrf'),
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','memberFeatureRequestUsesExistingReplyHistory'),
             ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','detachedProfileSaveCannotRevertCompletedOnboarding'),

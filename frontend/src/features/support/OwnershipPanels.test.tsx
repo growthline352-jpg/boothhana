@@ -24,6 +24,11 @@ describe('verified ownership UI',()=>{
   const html=renderToStaticMarkup(<MemoryRouter><OwnershipPanel eventId={10} participantId={20}/></MemoryRouter>)
   expect(html).toContain('운영자 확인');expect(html).toContain('작가 A');expect(html).toContain('표시된 업체만 확인')
  })
+ it('labels direct registration without offering a collected-booth claim or verification badge',()=>{
+  remote.mockReturnValue(state({...info,directParticipantIds:[20]}) as ReturnType<typeof useRemote>)
+  const html=renderToStaticMarkup(<MemoryRouter><OwnershipPanel eventId={10} participantId={20}/></MemoryRouter>)
+  expect(html).toContain('직접 등록');expect(html).not.toContain('chip active');expect(html).not.toContain('kind=CLAIM');expect(html).toContain('공식 안내')
+ })
  it('links independent editions rather than merging their comments or booths',()=>{
   remote.mockReturnValueOnce(state(info) as ReturnType<typeof useRemote>).mockReturnValueOnce(state({items:[{id:9,name:'1회 행사',edition:'1회',occurrences:[{startDate:'2026-05-01',endDate:'2026-05-02'}]}],total:1}) as ReturnType<typeof useRemote>)
   const html=renderToStaticMarkup(<MemoryRouter><EventHistory eventId={10}/></MemoryRouter>)

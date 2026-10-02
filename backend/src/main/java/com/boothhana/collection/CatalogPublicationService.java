@@ -33,7 +33,7 @@ public class CatalogPublicationService {
         EventData event=PublicEventProjection.fromReviewed(raw);
         List<Map<String,Object>> participants=new ArrayList<>();
         var rows=db.queryForList("""
-            select p.id,p.reviewed_payload_json,s.review_state sales_state,s.reviewed_payload_json sales_json,s.reviewed_product_checks_json checks_json,s.overrides_json sales_overrides
+            select p.id,exists(select 1 from catalog_creator_booth c where c.participant_id=p.id) as direct_registration,p.reviewed_payload_json,s.review_state sales_state,s.reviewed_payload_json sales_json,s.reviewed_product_checks_json checks_json,s.overrides_json sales_overrides
             from subculture_participant p left join subculture_sales s on s.participant_id=p.id
             where p.event_id=? and p.review_state='REVIEWED' and p.reviewed_payload_json is not null order by p.registration_name,p.id
             """,eventId);
@@ -41,7 +41,7 @@ public class CatalogPublicationService {
         for(var row:rows) {
             long id=((Number)row.get("id")).longValue();Participant p=json.readValue(row.get("reviewed_payload_json").toString(),Participant.class);
             Participant safe=new Participant(p.sourceEntryId(),p.registrationName(),p.kind(),p.members(),p.locations(),p.subjects(),p.description(),p.officialLinks(),p.sources(),List.of(),p.warnings(),p.identity());
-            Map<String,Object> view=new LinkedHashMap<>();view.put("id",id);view.put("participant",safe);view.put("sales",null);
+            Map<String,Object> view=new LinkedHashMap<>();view.put("id",id);view.put("participant",safe);view.put("sales",null);if(Boolean.TRUE.equals(row.get("direct_registration")))view.put("directRegistration",true);
             if("REVIEWED".equals(row.get("sales_state"))&&row.get("sales_json")!=null) {
                 Sales s=json.readValue(row.get("sales_json").toString(),Sales.class);
                 Map<?,?> overrides=json.readValue(row.get("sales_overrides").toString(),Map.class);

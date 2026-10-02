@@ -24,6 +24,7 @@ class GateReportingTests(unittest.TestCase):
             gate.ROOT = Path(temp)
             reports=gate.ROOT/'backend/build/test-results/test';reports.mkdir(parents=True)
             suites={
+                'TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml':['groupedEventLimitSurvivesDifferentBaseAndPreventsConflictingMerge', 'concurrentDifferentBaseRegistrationsCommitExactlyOne', 'directRegistrationPublishesOnlyOwnBoothWithoutGrantAndEnforcesAccountLimit', 'claimApprovalRemainsRequiredAndCannotConflictWithDirectRegistration', 'approvedCollectedBoothBlocksNewBaseBoothInSameEvent', 'directProductsKeepIdentityEditsAndPublicStateThroughRepublication', 'registrationHttpRequiresLoginCsrfAndOwnedBase', 'platformRegistrationIsImmediateAndCannotUseAnotherBaseToRegisterTwice', 'endedUnpublishedAndOutOfPeriodRegistrationsAreRejected'],
                 'TEST-com.boothhana.release.LibraryIntegrationTests.xml':[
                     'detachedProfileSaveCannotRevertCompletedOnboarding',
                     'memberInterestsArePrivateVersionedAndCategoryScoped',

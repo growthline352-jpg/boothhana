@@ -215,7 +215,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
       <small>공개본 갱신: {new Date(currentValue.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}. 수집 후 변경될 수 있으므로 방문 전 주최 측 최신 공지를 확인하세요.</small>
     </section>
     <div hidden={section!=='home'}><VisitorGuide value={currentValue} day={state.day}/></div>
-    <div hidden={section!=='home'}><OwnershipPanel eventId={currentEventId}/><Link className="btn secondary" to="/library">내 보관함에서 오프라인 정보 저장</Link><EventHistory key={`history-${eventId}`} eventId={Number(eventId)}/></div>
+    <div hidden={section!=='home'}><Link className="btn secondary" to={`/creator/catalog/events/${currentEventId}/booths/new`}>내 부스 등록</Link><OwnershipPanel eventId={currentEventId}/><Link className="btn secondary" to="/library">내 보관함에서 오프라인 정보 저장</Link><EventHistory key={`history-${eventId}`} eventId={Number(eventId)}/></div>
     <div hidden={section!=='reviews'}><EventComments key={eventId} eventId={Number(eventId)}/></div>
   </section>
 }
@@ -224,7 +224,7 @@ function ParticipantCard({eventId,row,day,hall,assets,showMap}:{eventId:number;r
   const locations=relevantLocations(row.participant.locations,day,hall),known=attendance(row,day,hall)
   return <article className="panel catalog-booth-card visit-booth-card has-image">
     <figure><ContentImage url={thumb?.url} kind="booth" alt={thumb?.caption||row.participant.registrationName}/>{thumb&&<figcaption>{thumb.credit} · <SafeLink url={thumb.attribution}>출처</SafeLink></figcaption>}</figure>
-    <div className="visit-booth-body"><LocationText locations={locations}/><h3>{row.participant.registrationName}</h3><p className="visit-booth-summary">{row.sales?.summary||'판매정보를 확인하고 있어요.'}</p>
+    <div className="visit-booth-body"><LocationText locations={locations}/><h3>{row.participant.registrationName}</h3>{row.directRegistration&&<span className="chip">직접 등록</span>}<p className="visit-booth-summary">{row.sales?.summary||'판매정보를 확인하고 있어요.'}</p>
       {known==='unknown'&&<small className="visit-warning">선택 날짜·전시관 참가 여부 미확인</small>}
       {row.sales&&<small>{scopes[row.sales.evidenceScope]}</small>}<p className="item-meta">{row.participant.subjects.join(' · ')}</p>
       <div className="row-actions"><SaveButton target={{type:'PARTICIPANT',eventId,id:row.id,participantId:row.id}} day={day} hall={hall} compact/>{showMap?<button className="btn secondary" onClick={()=>showMap(row.id)}>지도에서 보기</button>:<Link className="btn secondary" to={catalogEventPath(eventId,{day,hall},'map',row.id)}>지도에서 보기</Link>}<Link className="btn primary" to={catalogBoothPath(eventId,row.id,{day,hall})}>부스 상세</Link></div>

@@ -42,7 +42,7 @@ export const catalogApi={
  runs:(page=0)=>api<Page<PipelineRun>>(`${base}/runs?page=${page}&size=20`),
 }
 export interface PublicAsset {offlineAllowed?: boolean; id: number; participantId: number | null; productId: number | null; type: string; url: string; caption: string | null; attribution: string; credit: string}
-export interface PublicParticipant {id: number; participant: Participant; sales: Sales | null; salesSummaryOrigin?: 'EDITORIAL'|'COLLECTED'; productRows?: ProductRow[]}
+export interface PublicParticipant {directRegistration?:boolean;id: number; participant: Participant; sales: Sales | null; salesSummaryOrigin?: 'EDITORIAL'|'COLLECTED'; productRows?: ProductRow[]}
 export interface PublicEvent {operatingGroup?:OperatingGroup;banner?:PublicAsset|null;id:number;mode:'INFO_ONLY';event:EventData;participants:PublicParticipant[];publishedAt:string;assets:PublicAsset[]}
 export interface PublicEventSummary { operatingGroup?:OperatingGroup; id: number; event: EventData; participantCount: number; publishedAt?: string; banner?: PublicAsset | null }
 export interface PopularEventSummary extends PublicEventSummary { saveCount: number }

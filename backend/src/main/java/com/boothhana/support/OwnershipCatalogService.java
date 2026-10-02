@@ -45,7 +45,8 @@ public class OwnershipCatalogService {
       and (member->>'profileUrl') is not distinct from (e.profile_json->>'profileUrl'))
    """,eventId);
   var series=db().queryForList("select s.id,s.name,m.edition from event_series_member m join event_series s on s.id=m.series_id where m.event_id=?",eventId);
-  return Map.of("organizers",organizers,"exhibitors",exhibitors,"series",series);
+  var direct=db().queryForList("select participant_id from catalog_creator_booth where event_id=?",Long.class,eventId);
+  return Map.of("organizers",organizers,"exhibitors",exhibitors,"series",series,"directParticipantIds",direct);
  }
  public Map<String,Object> history(long eventId,int page){
   publicEvent(eventId);if(page<0||page>10000)throw ApiException.badRequest("페이지 오류");
@@ -101,7 +102,7 @@ public class OwnershipCatalogService {
   var booth=participants(support.obj(pub.get("snapshot_json"))).stream().filter(x->SupportService.n(x,"id")==participant).findFirst().orElseThrow(()->ApiException.notFound("공개 부스가 없습니다."));
   one("select id from subculture_participant where id=? and event_id=? and review_state<>'EXCLUDED'",participant,event);
   var sales=one("select revision,review_state from subculture_sales where participant_id=? and review_state<>'EXCLUDED'",participant);
-  return Map.of("revision",sales.get("revision"),"items",booth.getOrDefault("productRows",List.of()));
+  return Map.of("revision",sales.get("revision"),"items",booth.getOrDefault("productRows",List.of()),"directRegistration",direct(event,participant,user));
  }
  @Transactional public Map<String,Object> editProduct(long event,long participant,long product,ProductEdit input,long user){
   if(input==null)throw ApiException.badRequest("입력 오류");validateText(input.note(),2000,true);
@@ -118,7 +119,7 @@ public class OwnershipCatalogService {
   Map<String,Object> before=map(row.get("data")),after=new LinkedHashMap<>(before);
   after.put("name",input.name());after.put("summary",input.summary());after.put("saleState",input.saleState());
   if(input.amount()==null||input.amount().isBlank())after.put("price",null);
-  else after.put("price",Map.of("amount",input.amount(),"currency",input.currency()==null?"KRW":input.currency(),"checkedOn",java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString(),"note","확인된 운영자 입력"));
+  else after.put("price",Map.of("amount",input.amount(),"currency",input.currency()==null?"KRW":input.currency(),"checkedOn",java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString(),"note",direct(event,participant,user)?"등록자 직접 입력":"확인된 운영자 입력"));
   try{com.boothhana.collection.CatalogRules.product(support.mapper().readValue(support.enc(after),com.boothhana.collection.CatalogModels.ProductData.class));}catch(RuntimeException e){throw ApiException.badRequest("상품명·설명·가격·판매 상태를 확인해 주세요.");}
   var sales=map(booth.get("sales"));var products=maps(sales.get("products"));
   var matching=products.stream().filter(before::equals).toList();if(matching.size()!=1)throw ApiException.conflict("상품 연결이 모호합니다. 관리자에게 연결 확인을 요청해 주세요.");
@@ -139,10 +140,12 @@ public class OwnershipCatalogService {
   Set<String> allowed=switch(type){case "EVENT"->Set.of("description","venueName","address","admission","occurrences");case "PARTICIPANT"->Set.of("description","officialLinks");case "SALES"->Set.of("summary","salesMethod");default->throw ApiException.badRequest("편집 대상 오류");};
   if(fields==null||fields.isEmpty()||!allowed.containsAll(fields.keySet()))throw ApiException.badRequest("허용된 정보만 수정할 수 있습니다. 주최자·회차·부스 위치·공동 부스 구성은 관리자 확인이 필요합니다.");
  }
+ private boolean direct(long event,long participant,long user){return !db().queryForList("select participant_id from catalog_creator_booth where event_id=? and participant_id=? and user_id=?",event,participant,user).isEmpty();}
  private void authority(String type,long event,long participant,long user,boolean lock){
   if("EVENT".equals(type)) {
    one("select event_id from event_manager where event_id=? and user_id=? and state='ACTIVE'"+(lock?" for update":""),event,user);return;
   }
+  if(direct(event,participant,user))return;
   var members=db().queryForList("select exhibitor_id from subculture_participant_member where participant_id=?",participant);
   if(members.size()!=1)throw ApiException.forbidden("공동 부스 전체는 직접 수정할 수 없습니다. 본인 업체의 정정 요청을 이용해 주세요.");
   var target=new Target("CATALOG","PARTICIPANT",event,participant,null,null,null,null);
@@ -165,6 +168,7 @@ public class OwnershipCatalogService {
  private static void validateType(String type){if(!Set.of("EVENT","PARTICIPANT","SALES").contains(type))throw ApiException.badRequest("편집 대상 오류");}
  @Transactional public Map<String,Object> edit(String type,long event,long participant,OwnerEdit input,long user){
   if(input==null)throw ApiException.badRequest("입력 오류");validateFields(type,input.fields());validateText(input.note(),2000,true);
+  if(direct(event,participant,user))throw ApiException.conflict("직접 등록한 부스 정보는 내 부스 목록에서 수정해 주세요.");
   // Same order as catalogue publication: event -> participant -> grant -> publication.
   one("select id from subculture_event_candidate where id=? and review_state<>'EXCLUDED' for update",event);
   if(!"EVENT".equals(type))one("select id from subculture_participant where id=? and event_id=? and review_state<>'EXCLUDED' for update",participant,event);

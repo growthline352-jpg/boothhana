@@ -53,6 +53,7 @@ async def run(dist):
                             body = dict(identity) if status == 200 else {'status':status,'code':'TEST','message':'fixture'}
                         elif endpoint == '/api/auth/csrf': body = {'token':'isolated-browser-fixture'}
                         elif endpoint == '/api/me/library/index': body = []
+                        elif endpoint == '/api/creator/catalog/booths' and req.method == 'GET': body = []
                         # The product editor now validates the selected event booth
                         # before showing its form; provide its real response shape.
                         elif endpoint == '/api/creator/events' and req.method == 'GET':
