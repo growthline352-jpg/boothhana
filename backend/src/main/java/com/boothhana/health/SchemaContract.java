@@ -65,10 +65,12 @@ public final class SchemaContract {
             .collect(java.util.stream.Collectors.joining(" union all "));
     }
 
-    /** Derived from SQL001..016; verification/v24 compares every entry to the DDL.
+    /** Derived from SQL001..022; verification/v24 compares every entry to the DDL.
      * This guards same-named but incompatible columns, not just missing columns. */
     public record ColumnShape(String udt,Integer length,boolean notNull) {}
     private static final String COLUMN_SPEC = """
+        catalog_operating_group=root_event_id:int8:0:1,name:varchar:255:1,source_url:varchar:2048:1,checked_on:date:0:1,revision:int8:0:1,fixed_members:bool:0:1,updated_by:int8:0:0,updated_at:timestamptz:0:1
+        catalog_operating_group_member=event_id:int8:0:1,root_event_id:int8:0:1,position:int4:0:1
         organizer_identity=id:int8:0:1,name:varchar:160:1,official_url:varchar:2048:1,created_by:int8:0:1,created_at:timestamptz:0:1
         event_manager=event_id:int8:0:1,user_id:int8:0:1,organizer_id:int8:0:1,claim_ticket_id:uuid:0:1,state:varchar:12:1,granted_by:int8:0:1,granted_at:timestamptz:0:1,revoked_by:int8:0:0,revoked_at:timestamptz:0:0,reason:text:0:1,revision:int8:0:1
         event_series=id:int8:0:1,name:varchar:160:1,official_url:varchar:2048:1,created_by:int8:0:1,created_at:timestamptz:0:1
