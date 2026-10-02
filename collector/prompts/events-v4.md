@@ -6,10 +6,7 @@
 비공개 장소는 추적하지 않는다. 공식 근거로 시·도조차 확인하지 못하면 UNKNOWN으로 반환하여 검토 대상에서 제외되게 한다.
 
 다음 세 분야를 각각 검색한다. 하위 분류는 아래 코드 중 하나이며 중복 등록하지 않는다.
-서브컬처: COMIC_DOUJIN(코믹·동인), DOLL(인형), ONLY_EVENT(온리전), BIRTHDAY_CAFE(생일카페), STATIONERY_GOODS(문구·굿즈), SUBCULTURE_MUSIC(애니·게임·버추얼 공연), ANIME_GAME_FESTIVAL(애니·게임 행사), ART_BOOK(아트북·독립출판), BOARD_GAME(보드게임), CHARACTER_ART(캐릭터·아트), ILLUSTRATION(일러스트 행사).
-공연·전시 형식만으로 축제·박람회로 이동하지 말고, 공식 출처의 서브컬처 주제와 행사 성격을 확인해 위 유형으로 분류한다. 일반 음악 공연은 축제 MUSIC, 일반 디자인 박람회는 박람회 DESIGN을 유지한다.
-박람회: WINE(주류·와인), WEDDING(웨딩), LIFESTYLE(생활·취미), DESIGN(디자인·아트), BUSINESS(창업·산업).
-축제: WALK(걷기·거리), LIGHT(불꽃·빛), MUSIC(음악·공연), FOOD(먹거리), CULTURE(지역·문화).
+분야별 유형과 주제는 문서 하단의 공통 분류표를 따른다.
 여러 분야가 겹치면 주최 측의 주된 행사 목적과 참가 구성으로 하나를 선택하고 warnings에 분류 근거를 남긴다.
 굿즈 판매 중심 동인 행사를 단순히 DESIGN으로 옮기거나, 공식 주류 박람회를 FOOD 축제로 중복 등록하지 않는다.
 각 분야와 서울/경기를 검색하되 확인되지 않은 슬롯을 억지로 채우지 않는다. 미조사 분야·지역과 한도 초과는 summary에 적고 PARTIAL로 보고한다.
@@ -74,3 +71,15 @@ operationStatus를 반환하세요. state는 SCHEDULED/CANCELED/POSTPONED/RESCHE
 UNKNOWN 이외의 상태에는 note(안내 요약), sourceUrl(확인 원문), checkedOn(확인일 YYYY-MM-DD)이 모두 필요합니다.
 UNKNOWN은 세 근거값을 null로 둘 수 있습니다. 날짜가 미래라는 이유만으로 SCHEDULED를 추정하지 마세요.
 연기 후 새 날짜가 확인되지 않았다면 기존 일정은 원문 그대로 보존하고 POSTPONED와 안내로 구분하세요.
+
+<!-- TAXONOMY:START -->
+행사명 키워드만으로 유형을 추정하지 않는다. 공식 소개·행사 목적·프로그램을 확인한다.
+서브컬처 유형: COMIC_DOUJIN(코믹·동인), DOLL(인형), ONLY_EVENT(온리전), BIRTHDAY_CAFE(생일카페), STATIONERY_GOODS(문구·굿즈), SUBCULTURE_MUSIC(애니·게임·버추얼 공연), ANIME_GAME_FESTIVAL(애니·게임 행사), ART_BOOK(아트북·독립출판), BOARD_GAME(보드게임), CHARACTER_ART(캐릭터·아트), ILLUSTRATION(일러스트 행사), FAN_CAFE(팬카페·카페 이벤트), POPUP_STORE(팝업스토어), CARD_COLLECTIBLES(카드·수집 행사), FAN_CONVENTION(팬 컨벤션).
+서브컬처 취향 주제: VOCALOID(보컬로이드), VTUBER(버튜버), ANIME_MANGA(애니·만화), GAME(게임), NOVEL(소설·웹소설), ILLUSTRATION(일러스트·창작), BOARD_GAME(보드게임), DOLL(인형), CARD_COLLECTIBLES(카드·수집), COSPLAY(코스프레), FURRY(퍼리).
+박람회 유형: WINE(주류·와인), WEDDING(웨딩), LIFESTYLE(생활·취미), DESIGN(디자인·아트), BUSINESS(창업·산업).
+박람회 취향 주제: WINE(주류·와인), WEDDING(웨딩), LIFESTYLE(생활·취미), DESIGN(디자인·아트), BUSINESS(창업·산업), PETS(반려동물), BABY_KIDS(육아·어린이), FOOD_DRINK(식품·음료), COFFEE_TEA(커피·차), HOME_LIVING(주거·인테리어), EDUCATION(교육·유학), FINANCE(금융·재테크), BEAUTY(뷰티·건강), IT_TECH(IT·기술), SPORTS_OUTDOOR(스포츠·아웃도어), ART(미술·공예), CONTENT_IP(콘텐츠·지식재산).
+축제 유형: WALK(걷기·거리), LIGHT(불꽃·빛), MUSIC(음악·공연), FOOD(먹거리), CULTURE(지역·문화), CONCERT(단독 공연), MUSIC_FESTIVAL(음악 페스티벌).
+축제 취향 주제: MUSIC(음악), JAZZ(재즈), ROCK(록·밴드), KPOP(K-POP), FOOD(먹거리), LIGHT(불꽃·빛), LOCAL_CULTURE(지역·전통문화), JPOP(J-POP), INDIE(인디 음악), GARDEN(꽃·정원), WALKING(걷기·러닝), FAMILY(가족·어린이), HISTORY(역사·전통).
+subjects에는 확인된 취향 주제의 표준 코드와 작품·캐릭터 원문 태그를 함께 기록한다. ONLY_EVENT, BIRTHDAY_CAFE 등 행사 유형만을 주제 대신 넣지 않는다. 표준 주제와 작품은 별개이며 원문 근거를 sources에 남긴다.
+생일 기념이 확인된 경우에만 BIRTHDAY_CAFE를 사용하고 일반 팬카페는 FAN_CAFE로 둔다. 일반 음악 공연은 FESTIVAL의 CONCERT/MUSIC_FESTIVAL로 구분하고, 애니·게임 OST·버추얼 중심 공연만 SUBCULTURE_MUSIC로 둔다. 일반 브랜드 팝업을 팬덤 행사로 추정하지 않는다.
+<!-- TAXONOMY:END -->

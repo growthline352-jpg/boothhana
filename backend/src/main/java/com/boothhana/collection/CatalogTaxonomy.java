@@ -3,10 +3,8 @@ import java.util.*;
 /** v18 explicit wire taxonomy. Keeps old subculture IDs/tables, not names-based classification. */
 public final class CatalogTaxonomy {
  private CatalogTaxonomy() {}
- public static final Map<String,List<String>> GROUPS=Map.of(
-  "SUBCULTURE",List.of("COMIC_DOUJIN","DOLL","ONLY_EVENT","BIRTHDAY_CAFE","STATIONERY_GOODS","SUBCULTURE_MUSIC","ANIME_GAME_FESTIVAL","ART_BOOK","BOARD_GAME","CHARACTER_ART","ILLUSTRATION"),
-  "EXHIBITION",List.of("WINE","WEDDING","LIFESTYLE","DESIGN","BUSINESS"),
-  "FESTIVAL",List.of("WALK","LIGHT","MUSIC","FOOD","CULTURE"));
+ public static final Map<String,List<String>> GROUPS=com.boothhana.interests.TaxonomyRegistry.FIELDS.stream()
+  .collect(java.util.stream.Collectors.toUnmodifiableMap(f->f.code(),f->f.types().stream().map(t->t.code()).toList()));
  public static final Set<String> TYPES=Set.copyOf(GROUPS.values().stream().flatMap(Collection::stream).toList());
  public static final Set<String> REGIONS=Set.of("SEOUL","GYEONGGI");
  public static final Set<String> SCOPES=Set.of("SEOUL","GYEONGGI","SEOUL_GYEONGGI");

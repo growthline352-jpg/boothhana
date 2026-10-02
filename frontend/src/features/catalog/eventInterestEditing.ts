@@ -5,8 +5,11 @@ export function matchesInterest(option:InterestOption,subcategory:string,subject
   return !!option.types?.includes(subcategory)||subjects.some(subject=>[option.code,...option.subjects||[]].some(alias=>normalized(alias)===normalized(subject)))
 }
 export function toggleEventInterest(subjects:string[],option:InterestOption,checked:boolean) {
-  const without=subjects.filter(subject=>![option.code,...option.subjects||[]].some(alias=>normalized(alias)===normalized(subject)))
+  const without=subjects.filter(subject=>option.works?.some(work=>normalized(work)===normalized(subject))||![option.code,...option.subjects||[]].some(alias=>normalized(alias)===normalized(subject)))
   return checked?[...without,option.code]:without
+}
+export function linkedByWork(option:InterestOption,subjects:string[]) {
+  return subjects.some(subject=>option.works?.some(work=>normalized(work)===normalized(subject)))
 }
 /** UI-written canonical codes belong to one field; source labels/aliases remain evidence. */
 export function removeOtherCategoryInterestCodes(subjects:string[],category:string,fields:InterestField[]) {

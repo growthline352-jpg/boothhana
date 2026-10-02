@@ -105,6 +105,10 @@
               "BOARD_GAME",
               "CHARACTER_ART",
               "ILLUSTRATION",
+              "FAN_CAFE",
+              "POPUP_STORE",
+              "CARD_COLLECTIBLES",
+              "FAN_CONVENTION",
               "WINE",
               "WEDDING",
               "LIFESTYLE",
@@ -114,7 +118,9 @@
               "LIGHT",
               "MUSIC",
               "FOOD",
-              "CULTURE"
+              "CULTURE",
+              "CONCERT",
+              "MUSIC_FESTIVAL"
             ]
           },
           "organizer": {

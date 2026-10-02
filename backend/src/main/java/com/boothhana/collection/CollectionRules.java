@@ -55,6 +55,7 @@ public final class CollectionRules {
             text(e.organizer(), 255, true); text(e.edition(), 100, true); text(e.venueName(), 255, true);
             text(e.address(), 500, true); text(e.description(), 2000, false); text(e.admission(), 500, true);
             list(e.subjects(), 20); e.subjects().forEach(v -> text(v, 100, false));
+            warnings.addAll(com.boothhana.interests.TaxonomyRegistry.reviewIssues(e.subcategory(),e.subjects()));
             list(e.warnings(), 20); e.warnings().forEach(v -> text(v, 300, false)); warnings.addAll(e.warnings());
             require(e.region()!=null && CatalogTaxonomy.REGIONS.contains(e.region()), "서울·경기 개최 확인 안 됨");
             require("SEOUL_GYEONGGI".equals(scope.region()) || Objects.equals(scope.region(),e.region()), "배치 지역 범위 밖 행사");

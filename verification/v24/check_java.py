@@ -15,7 +15,7 @@ with tempfile.TemporaryDirectory(prefix='booth-v24-java-') as folder:
  for name,txt in stubs.items():
   p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(txt);files.append(p)
  src=ROOT/'backend/src/main/java/com/boothhana'
- rel=['api/ApiException.java','api/FailureDiagnostics.java','upload/ImageUploadRules.java','upload/VerifiedImageStorage.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/VisitorGuideRules.java','collection/CatalogTaxonomy.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogMediaService.java','floorplan/FloorplanModels.java','floorplan/FloorplanRules.java','floorplan/FloorplanImageInfo.java','floorplan/FloorplanService.java','health/SchemaContract.java','health/ReadinessService.java']
+ rel=['api/ApiException.java','api/FailureDiagnostics.java','upload/ImageUploadRules.java','upload/VerifiedImageStorage.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/VisitorGuideRules.java','collection/CatalogTaxonomy.java','interests/InterestTaxonomy.java','interests/TaxonomyRegistry.java','interests/TaxonomyRegistryData.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogMediaService.java','floorplan/FloorplanModels.java','floorplan/FloorplanRules.java','floorplan/FloorplanImageInfo.java','floorplan/FloorplanService.java','health/SchemaContract.java','health/ReadinessService.java']
  files += [src/p for p in rel]+[HERE/'CrossLayerTest.java']
  subprocess.run(['javac','-encoding','UTF-8','-d',str(d/'out'),*map(str,files)],check=True)
  f=d/'columns.tsv';rows=[]

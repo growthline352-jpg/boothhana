@@ -12,7 +12,7 @@ from jsonschema import Draft202012Validator
 from visitor_guide import validate_guide
 
 MAX_JSON_BYTES = 2 * 1024 * 1024
-from taxonomy import CATEGORIES, region_errors
+from taxonomy import CATEGORIES, region_errors, topic_review_reasons, TOPIC_REVIEW_LABELS
 SCHEMA = json.loads((Path(__file__).parent / 'schemas/search-result.schema.json').read_text(encoding='utf-8'))
 VALIDATOR = Draft202012Validator(SCHEMA)
 
@@ -72,6 +72,7 @@ def parse_result(data: bytes) -> dict:
 
 def check_event(e: dict, start: date, end: date) -> tuple[list[str], list[str]]:
     rejected=[]; warnings=list(e['warnings'])
+    warnings.extend(TOPIC_REVIEW_LABELS[r] for r in topic_review_reasons(e.get('subcategory'),e.get('subjects')))
     if not e['name'].strip(): rejected.append('행사명 없음')
     if e.get('subcategory') not in CATEGORIES: rejected.append('지원하지 않는 행사 분류')
     rejected.extend(region_errors(e.get('region'),e.get('address'),e.get('venueName')))

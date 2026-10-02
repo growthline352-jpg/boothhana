@@ -318,6 +318,7 @@ public class CatalogService {
         List<Map<String,Object>> items=rows.stream().map(e->{var data=effective(e,EventData.class);Map<String,Object> item=new LinkedHashMap<>();
             item.put("id",num(e,"id"));item.put("name",data.name());item.put("subcategory",data.subcategory());item.put("reviewState",e.get("review_state"));
             item.put("participantCount",e.get("participant_count"));item.put("salesCount",e.get("sales_count"));item.put("storedImageCount",e.get("image_count"));
+            item.put("taxonomyIssues",com.boothhana.interests.TaxonomyRegistry.reviewIssues(data.subcategory(),data.subjects()));
             item.put("published",e.get("published"));item.put("startDate",e.get("starts_on").toString());item.put("hasPendingChanges",e.get("has_pending_changes"));return item;}).toList();
         return new PageData<>(items,page,size,total);
     }
