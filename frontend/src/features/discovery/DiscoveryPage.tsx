@@ -17,6 +17,7 @@ import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import { currentSiteCategory } from './site'
 import { PopularEvents } from './PopularEvents'
+import { useRecommendationViewer } from './useRecommendationViewer'
 import { EventCalendar } from './EventCalendar'
 import { calendarMonth, monthRange } from './calendar'
 import './discovery.css'
@@ -38,11 +39,12 @@ export function DiscoveryPage() {
   const data = useRemote(() => category.enabled && !state.dateError && !isCalendar ? publicCatalogApi.browse(query)
     : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError, isCalendar])
   const auth = useAuth()
+  const viewer = useRecommendationViewer(auth)
   const [wholePopularity, setWholePopularity] = useState(false)
-  const personal = auth.status === 'authenticated' && !wholePopularity
-  const featured = useRemote(() => isHome && category.enabled ? interestApi.featured(category.code, state.region, personal)
+  const personal = typeof viewer === 'number' && !wholePopularity
+  const featured = useRemote(() => isHome && category.enabled && viewer !== 'pending' ? interestApi.featured(category.code, state.region, personal)
     : Promise.resolve({ items: [], mode: 'RECENT' as const, personalized: false }),
-    [isHome, category.enabled, category.code, state.region, personal, auth.user?.id, auth.generation, today])
+    [isHome, category.enabled, category.code, state.region, personal, viewer, today])
   usePageScroll(!data.loading)
   const [draft, setDraft] = useState(state.q)
   useEffect(() => { setDraft(state.q) }, [state.q, category.key])
@@ -107,13 +109,13 @@ export function DiscoveryPage() {
           </aside>
 
           <div className="featured-panel"><div className="featured-scope" aria-label="캐러셀 추천 범위">
-            {auth.user && <><button type="button" aria-pressed={!wholePopularity} onClick={() => setWholePopularity(false)}>내 관심분야</button><button type="button" aria-pressed={wholePopularity} onClick={() => setWholePopularity(true)}>전체 인기</button></>}
+            {typeof viewer === 'number' && <><button type="button" aria-pressed={!wholePopularity} onClick={() => setWholePopularity(false)}>내 관심분야</button><button type="button" aria-pressed={wholePopularity} onClick={() => setWholePopularity(true)}>전체 인기</button></>}
             <Link to="/account">관심분야 설정</Link>
             <p>{featured.data?.personalized ? '선택한 관심분야' : '이 분야 전체'} · {featuredLabel}</p>
           </div><div className="featured-stage" aria-label={featuredLabel}>
-            {featured.loading ? <div className="featured-loading" aria-label="추천 행사 로딩 중"/>
+            {viewer === 'pending' || featured.loading ? <div className="featured-loading" aria-label="추천 행사 로딩 중"/>
               : featured.error ? <div className="featured-empty" role="alert"><DiscoveryIcon name="info" size={38}/><strong>행사를 불러오지 못했어요</strong><button type="button" onClick={() => void featured.reload()}>다시 불러오기</button></div>
-              : featuredRows.length ? <FeaturedCarousel key={`${category.key}:${state.region}:${personal}:${auth.user?.id}:${featuredRows.map(row => row.id).join()}`} rows={featuredRows} today={today} returnTo={returnTo} label={featuredLabel} popular={featured.data?.mode === 'POPULAR'}/>
+              : featuredRows.length ? <FeaturedCarousel key={`${category.key}:${state.region}:${personal}:${viewer}:${featuredRows.map(row => row.id).join()}`} rows={featuredRows} today={today} returnTo={returnTo} label={featuredLabel} popular={featured.data?.mode === 'POPULAR'}/>
               : <div className="featured-empty"><DiscoveryIcon name="calendar" size={38}/><strong>조건에 맞는 공개 행사가 없어요</strong><span>관심분야나 지역을 바꿔보세요.</span></div>}
           </div></div>
 

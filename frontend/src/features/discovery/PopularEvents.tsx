@@ -4,13 +4,15 @@ import { ContentImage } from '../../components/ui/ContentImage'
 import { eventDateLabel, seoulToday } from './browse'
 import { categoryForType, categoryEventHref } from './categories'
 import { loadPopularEvents } from './popular'
+import { useRecommendationViewer } from './useRecommendationViewer'
 
 export function PopularEvents({ categoryCode }: { categoryCode?: string }) {
   const auth = useAuth()
+  const viewer = useRecommendationViewer(auth)
   const today = seoulToday()
-  const userId = auth.status === 'authenticated' ? auth.user?.id ?? null : null
-  const popular = useRemote(() => auth.status === 'checking' ? Promise.resolve(null)
-    : loadPopularEvents(categoryCode, userId, today), [categoryCode, userId, auth.status, auth.generation, today])
+  const userId = typeof viewer === 'number' ? viewer : null
+  const popular = useRemote(() => viewer === 'pending' ? Promise.resolve(null)
+    : loadPopularEvents(categoryCode, userId, today), [categoryCode, viewer, today])
   const rows = popular.data?.items || []
   const hasSaves = rows.some(row => row.saveCount > 0)
   const description = popular.data?.personalized
@@ -19,7 +21,7 @@ export function PopularEvents({ categoryCode }: { categoryCode?: string }) {
       : '전체 분야에서 회원들이 많이 저장한 행사예요.'
   return <section className="category-popular" aria-labelledby="category-popular-title">
     <div className="category-popular-heading"><h2 id="category-popular-title">인기있는 행사</h2><p>{description}</p></div>
-    {auth.status === 'checking' || popular.loading ? <p className="category-popular-status" role="status">인기 행사를 불러오는 중이에요.</p>
+    {viewer === 'pending' || popular.loading ? <p className="category-popular-status" role="status">인기 행사를 불러오는 중이에요.</p>
       : popular.error ? <div className="category-popular-status" role="alert">인기 행사를 불러오지 못했어요. <button type="button" onClick={() => void popular.reload()}>다시 시도</button></div>
         : !rows.length ? <p className="category-popular-status">현재 조건에 맞는 공개된 개최 예정 행사가 없어요.</p>
           : <div className="category-popular-grid">{rows.map((row, index) => {
