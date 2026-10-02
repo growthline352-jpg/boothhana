@@ -21,7 +21,7 @@ const adminLinks: ConsoleLink[] = [
   { to: '/admin/subculture', label: '공개 행사 관리', icon: 'calendar' },
   { to: '/admin/events', label: '예약·참가신청 행사', icon: 'calendar' },
   { to: '/admin/goods-showcase', label: 'POS 인기 굿즈', icon: 'sparkles' },
-  { to: '/admin/applications', label: '참가 신청', icon: 'ticket' },
+  { to: '/admin/applications', label: '행사 부스 등록 내역', icon: 'ticket' },
   { to: '/admin/comments', label: '행사 댓글', icon: 'info' },
   { to: '/admin/inquiries?category=EVENT_REQUEST', label: '행사 추가 요청', icon: 'info' },
   { to: '/admin/reports', label: '신고 내역', icon: 'info' },

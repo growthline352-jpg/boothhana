@@ -8,12 +8,12 @@ import { StatusChip } from '../../components/ui/StatusChip'
 import type { EventSummary } from '../../types'
 
 function eventState(event: EventSummary) {
-  if (event.status === 'ENDED') return { label: '종료', tone: 'muted' as const, button: '신청 종료' }
+  if (event.status === 'ENDED') return { label: '종료', tone: 'muted' as const, button: '등록 종료' }
   if (event.applicationStatus === 'PENDING') return { label: '이전 신청 대기', tone: 'warning' as const, button: '신청 완료' }
   if (event.applicationStatus === 'APPROVED') return { label: '등록 완료', tone: 'active' as const, button: '등록 완료' }
   if (event.applicationStatus === 'WITHDRAWN') return { label:'신청 철회',tone:'muted' as const,button:'내역에서 재신청' }
   if (event.applicationStatus === 'REJECTED') return { label: '반려', tone: 'danger' as const, button: '반려됨' }
-  return { label: event.status === 'PUBLISHED' ? '신청 가능' : '준비중', tone: 'muted' as const, button: '부스 등록' }
+  return { label: event.status === 'PUBLISHED' ? '등록 가능' : '준비중', tone: 'muted' as const, button: '부스 등록' }
 }
 export function CreatorEventsPage() {
   const applications=useRemote(creatorApi.applications,[])
@@ -36,7 +36,7 @@ export function CreatorEventsPage() {
       await events.reload();await applications.reload()
       setMessage('부스를 등록했습니다. 바로 상품과 소개를 관리할 수 있습니다.')
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : '참가 신청을 저장하지 못했습니다.')
+      setMessage(error instanceof Error ? error.message : '부스를 등록하지 못했습니다.')
     } finally {
       submitting.current = false
       setPending(null)
@@ -71,7 +71,7 @@ export function CreatorEventsPage() {
         {!selected ? <EmptyState title="참가할 부스를 선택해 주세요" description="기본 부스는 여러 개 만들 수 있지만 행사에는 계정당 1개만 등록할 수 있습니다." />
           : events.loading ? <LoadingState label="행사를 불러오고 있습니다" />
           : events.error ? <ErrorState error={events.error} retry={() => void events.reload()} />
-          : !events.data?.length ? <EmptyState title="표시할 행사가 없습니다" description="현재 참가신청을 받는 행사가 없습니다. 공개 행사 정보는 행사 둘러보기에서 확인할 수 있습니다." />
+          : !events.data?.length ? <EmptyState title="표시할 행사가 없습니다" description="현재 등록 가능한 예약·판매 행사가 없습니다. 공개 행사 정보는 행사 둘러보기에서 확인할 수 있습니다." />
           : <div className="console-list">{events.data.map(event => {
             const account=applications.data?.find(a=>a.eventId===event.id&&['PENDING','APPROVED'].includes(a.status))
             const state = eventState({...event,applicationStatus:account?.status??event.applicationStatus})
