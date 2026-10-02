@@ -7,8 +7,10 @@ vi.mock('react', () => ({ useState: (initial: unknown) => {
   return [frame.value, (next: unknown) => { frame.value = next }]
 } }))
 import { useRecommendationViewer } from './useRecommendationViewer'
-const read = (status: AuthSnapshot['status'], id = 1) => useRecommendationViewer({ status,
-  user: status === 'authenticated' ? { id, displayName: '회원', permissions: ['FAN'] } : null })
+function ViewerProbe({ status, id }: { status: AuthSnapshot['status']; id: number }) {
+  return useRecommendationViewer({ status, user: status === 'authenticated' ? { id, displayName: '회원', permissions: ['FAN'] } : null })
+}
+const read = (status: AuthSnapshot['status'], id = 1) => ViewerProbe({ status, id })
 
 describe('public recommendations during identity checks', () => {
   beforeEach(() => { frame.value = undefined })
