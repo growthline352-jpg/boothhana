@@ -54,7 +54,7 @@ public final class VisitorGuideRules {
             require(p.day()!=null || p.startTime()==null && p.endTime()==null,"프로그램 시각에는 날짜가 필요합니다.");
             require(Set.of("INCLUDED","SEPARATE","UNKNOWN").contains(p.ticketRequirement()),"프로그램 입장 조건 오류");
             require(p.ticketId()==null || ticketIds.contains(p.ticketId()),"연결된 프로그램 예매권 없음");
-            provenance(p.sourceUrl(),p.checkedOn(),"PUBLISHED".equals(p.status()));
+            provenance(p.sourceUrl(),p.checkedOn(),Set.of("PUBLISHED","SOLD_OUT").contains(p.status()));
         }
         ids.clear();
         for(var f:guide.faq()) {

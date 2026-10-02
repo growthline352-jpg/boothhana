@@ -46,7 +46,7 @@ def validate_guide(guide, occurrences, check_url):
         if t['status'] in ('UNKNOWN','UNPUBLISHED') and any(t[k] is not None for k in ('priceAmount','entryTime','reservationUrl')):raise ValueError('미확정 예매권 확정값 금지')
     ids(guide['programs']);ids(guide['faq']);ids(guide['sales']);ids(guide['coverage'],'kind')
     for p in guide['programs']:
-        day(p['day']);provenance(p,p['status']=='PUBLISHED')
+        day(p['day']);provenance(p,p['status'] in ('PUBLISHED','SOLD_OUT'))
         if not p['name'].strip():raise ValueError('프로그램 이름 필요')
         if not p['day'] and (p['startTime'] or p['endTime']):raise ValueError('프로그램 날짜 필요')
         if p['startTime'] and p['endTime'] and p['startTime']>=p['endTime']:raise ValueError('프로그램 시간 역전')

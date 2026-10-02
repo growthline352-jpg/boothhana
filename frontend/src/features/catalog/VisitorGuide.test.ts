@@ -9,6 +9,13 @@ function program(name:string,day:string|null):ProgramInfo {
   return {id:name,name,day,type:'STAGE',subjects:[],startTime:null,endTime:null,venue:null,ticketRequirement:'UNKNOWN',ticketId:null,status:'PUBLISHED',note:null,sourceUrl:'https://example.com/current-edition',checkedOn:'2026-10-02'}
 }
 describe('visitor program attendance dates',()=>{
+  it('shows unpublished, unknown and sold-out program states and the pickup date',()=>{
+    const programs=['UNPUBLISHED','UNKNOWN','SOLD_OUT'].map(status=>({...program(status,null),status}))
+    const value={id:173,participants:[],event:{discoveryLinks:[],visitorGuide:{tickets:[],programs,faq:[],sales:[{id:'pickup',title:'선입금',salesMethod:null,salesStartsAt:null,salesEndsAt:null,pickupDay:'2026-10-11',note:null,sourceUrl:null,checkedOn:null}],coverage:[]}}} as unknown as PublicEvent
+    const html=renderToStaticMarkup(createElement(VisitorGuide,{value,day:'2026-10-10'}))
+    for(const label of ['미공개','확인 중','매진 안내'])expect(html).toContain(`<span class="chip muted">${label}</span>`)
+    expect(html).toContain('수령일 10. 11. (일)')
+  })
   it('keeps undated performances out of the selected day schedule',()=>{
     const value={id:173,participants:[],event:{discoveryLinks:[],visitorGuide:{tickets:[],programs:[program('SaturdayConcert','2026-10-10'),program('SundayConcert','2026-10-11'),program('DateUnconfirmed',null)],faq:[],sales:[],coverage:[]}}} as unknown as PublicEvent
     for(const [day,shown,hidden] of [['2026-10-10','SaturdayConcert','SundayConcert'],['2026-10-11','SundayConcert','SaturdayConcert']]){
