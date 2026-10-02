@@ -10,6 +10,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class FeedbackTests {
+ @Test void missingInformationContextIsBoundedWithoutAdmittingPrivateFields(){
+  assertThatCode(()->SupportRules.feedback(input("FEATURE_REQUEST",null,Map.of("pagePath","/discover/6","needType","PRODUCT","eventId","6","day","2026-10-25","searchQuery","크툴루 인형"),List.of(),""))).doesNotThrowAnyException();
+  for(var context:List.of(Map.of("needType","PASSWORD"),Map.of("needType","PRODUCT","eventId","-1"),Map.of("needType","PRODUCT","day","2026-02-30"),Map.of("needType","PRODUCT","searchQuery","x".repeat(101)),Map.of("eventId","6")))
+   assertThatThrownBy(()->SupportRules.feedback(input("FEATURE_REQUEST",null,context,List.of(),""))).isInstanceOf(IllegalArgumentException.class);
+ }
  private static final String KEY="a".repeat(43), SECRET="isolated-feedback-test-only-secret";
  private GuestCreate input(String category,Target target,Map<String,String> context,List<String> evidence,String website) {
   return new GuestCreate(new Create(UUID.randomUUID(),"INQUIRY",category,"캘린더 개선","이전 달 일정도 보고 싶습니다.",evidence,target,context,null),KEY,website);

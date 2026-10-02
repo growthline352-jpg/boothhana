@@ -1,3 +1,4 @@
+import { InformationRequestButton } from '../support/InformationRequestButton'
 import { OwnershipPanel } from '../support/OwnershipPanels'
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
@@ -74,6 +75,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
   const occurrence = event.occurrences.find(item => item.startDate <= day && item.endDate >= day)
   const officialLinks = unique(row.participant.officialLinks)
   const summary = row.participant.description?.trim() || row.sales?.summary || (topics.length ? `${topics.slice(0, 3).join(' · ')} 관련 부스` : '공개된 부스 소개를 확인하고 있어요.')
+  const salesLinks=unique([...(row.sales?.sources??[]).map(source=>source.url),...officialLinks])
   const products = eventProducts(row)
   const unlinkedProductImages = assets.filter(asset => asset.type === 'PRODUCT' && asset.productId === null)
   const [productQuery, setProductQuery] = useState('')
@@ -126,6 +128,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
         </figure>) : <figure className="booth-detail-fallback"><ContentImage url={null} kind="booth" alt="" loading="eager"/></figure>}
       </div>
     </div>
+    {(row.sales?.salesMethod||salesLinks.length>0)&&<section className="booth-sales-links" aria-label="판매 안내"><h3>판매·선입금 안내</h3>{row.sales?.salesMethod&&<p>{row.sales.salesMethod}</p>}{salesLinks.map((url,index)=><SafeLink key={url} url={url}>판매 안내 {index+1} ↗</SafeLink>)}<p>온라인 선입금과 현장 판매 조건은 판매자 안내에서 확인해 주세요.</p></section>}
     <section className="booth-detail-products" aria-labelledby={`booth-products-${row.id}`}>
       <div className="booth-detail-section-heading">
         <div><span>판매 상품</span><h3 id={`booth-products-${row.id}`}>이 부스에서 만날 수 있어요</h3></div>
@@ -157,7 +160,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
       </div> : <div className="booth-detail-products-empty">
         <strong>공개 확인된 판매 상품이 아직 없어요.</strong>
         <p>판매하지 않는다는 뜻은 아니며, 참가자의 공식 안내에서 최신 품목을 확인해 주세요.</p>
-        {officialLinks[0] && <SafeLink url={officialLinks[0]}>공식 판매 안내 확인 ↗</SafeLink>}
+        {officialLinks[0] && <SafeLink url={officialLinks[0]}>공식 판매 안내 확인 ↗</SafeLink>}<InformationRequestButton kind="PRODUCT" eventId={eventId} day={day} query={row.participant.registrationName} label="상품 정보 요청"/>
       </div>}
       <p className="booth-detail-product-note">상품·가격·재고는 수집 당시 공개 안내 기준이며 행사 당일 달라질 수 있어요.</p>
     </section>
@@ -167,7 +170,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
         <dl>
           <div><dt>위치</dt><dd>{place.code}</dd></div>
           <div><dt>행사장</dt><dd>{event.venueName || place.hall}</dd></div>
-          <div><dt>운영</dt><dd>{occurrence?.startTime || '시간 미확인'}{occurrence?.endTime ? ` ~ ${occurrence.endTime}` : ''}</dd></div>
+          <div><dt>행사 운영시간</dt><dd>{occurrence?.startTime || '시간 미확인'}{occurrence?.endTime ? ` ~ ${occurrence.endTime}` : ''}</dd></div>
           <div><dt>입장</dt><dd>{event.admission || '조건 미확인'}</dd></div>
         </dl>
         {canOpenMap

@@ -291,6 +291,456 @@
               "checkedOn"
             ],
             "additionalProperties": false
+          },
+          "visitorGuide": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "tickets": {
+                "type": "array",
+                "maxItems": 40,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 150
+                    },
+                    "visitDate": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "priceAmount": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 16,
+                      "pattern": "^\\d{1,12}(?:\\.\\d{1,2})?$"
+                    },
+                    "currency": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 3,
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "salesStartsAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 40
+                    },
+                    "salesEndsAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 40
+                    },
+                    "entryTime": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 5,
+                      "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "reservationUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 2048
+                    },
+                    "status": {
+                      "enum": [
+                        "PUBLISHED",
+                        "UNPUBLISHED",
+                        "UNKNOWN",
+                        "SOLD_OUT"
+                      ]
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 700
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 2048
+                    },
+                    "checkedOn": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "visitDate",
+                    "priceAmount",
+                    "currency",
+                    "salesStartsAt",
+                    "salesEndsAt",
+                    "entryTime",
+                    "reservationUrl",
+                    "status",
+                    "note",
+                    "sourceUrl",
+                    "checkedOn"
+                  ]
+                }
+              },
+              "programs": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 150
+                    },
+                    "type": {
+                      "enum": [
+                        "STAGE",
+                        "DANCE",
+                        "MEETUP",
+                        "WORKSHOP",
+                        "EXHIBITION",
+                        "OTHER"
+                      ]
+                    },
+                    "subjects": {
+                      "type": "array",
+                      "maxItems": 20,
+                      "items": {
+                        "type": "string",
+                        "maxLength": 100
+                      }
+                    },
+                    "day": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "startTime": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 5,
+                      "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "endTime": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 5,
+                      "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+                    },
+                    "venue": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 200
+                    },
+                    "ticketRequirement": {
+                      "enum": [
+                        "INCLUDED",
+                        "SEPARATE",
+                        "UNKNOWN"
+                      ]
+                    },
+                    "ticketId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 80
+                    },
+                    "status": {
+                      "enum": [
+                        "PUBLISHED",
+                        "UNPUBLISHED",
+                        "UNKNOWN",
+                        "SOLD_OUT"
+                      ]
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 700
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 2048
+                    },
+                    "checkedOn": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "subjects",
+                    "day",
+                    "startTime",
+                    "endTime",
+                    "venue",
+                    "ticketRequirement",
+                    "ticketId",
+                    "status",
+                    "note",
+                    "sourceUrl",
+                    "checkedOn"
+                  ]
+                }
+              },
+              "faq": {
+                "type": "array",
+                "maxItems": 30,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "question": {
+                      "type": "string",
+                      "maxLength": 240
+                    },
+                    "answer": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 1000
+                    },
+                    "status": {
+                      "enum": [
+                        "CONFIRMED",
+                        "UNKNOWN"
+                      ]
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 2048
+                    },
+                    "checkedOn": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "question",
+                    "answer",
+                    "status",
+                    "sourceUrl",
+                    "checkedOn"
+                  ]
+                }
+              },
+              "sales": {
+                "type": "array",
+                "maxItems": 30,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "title": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "salesMethod": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 300
+                    },
+                    "salesStartsAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 40
+                    },
+                    "salesEndsAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 40
+                    },
+                    "pickupDay": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 700
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 2048
+                    },
+                    "checkedOn": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "salesMethod",
+                    "salesStartsAt",
+                    "salesEndsAt",
+                    "pickupDay",
+                    "note",
+                    "sourceUrl",
+                    "checkedOn"
+                  ]
+                }
+              },
+              "coverage": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "PARTICIPANTS",
+                        "SALES",
+                        "PROGRAMS",
+                        "TICKETS",
+                        "FAQ"
+                      ]
+                    },
+                    "status": {
+                      "enum": [
+                        "PUBLISHED",
+                        "PARTIAL",
+                        "UNPUBLISHED",
+                        "UNKNOWN",
+                        "INACCESSIBLE"
+                      ]
+                    },
+                    "note": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 500
+                    },
+                    "sourceUrl": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 2048
+                    },
+                    "checkedOn": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "maxLength": 10,
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "status",
+                    "note",
+                    "sourceUrl",
+                    "checkedOn"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "tickets",
+              "programs",
+              "faq",
+              "sales",
+              "coverage"
+            ]
           }
         },
         "required": [

@@ -47,6 +47,11 @@ public final class CatalogRules {
             text(l.hall(),150,true);text(l.zone(),150,true);
             require((l.startDate()==null)==(l.endDate()==null),"위치 적용 날짜는 시작/종료를 함께 지정하세요.");
             if(l.startDate()!=null) require(!date(l.startDate()).isAfter(date(l.endDate())),"위치 날짜 역전");
+            if(l.dateEvidence()!=null) {
+                choice(l.dateEvidence(),"DECLARED","ROSTER","EVENT_PERIOD","UNKNOWN");
+                require(!Set.of("DECLARED","ROSTER").contains(l.dateEvidence())||l.startDate()!=null,"참가일 확인 근거에는 날짜가 필요합니다.");
+                require(!Set.of("EVENT_PERIOD","UNKNOWN").contains(l.dateEvidence())||l.startDate()==null,"행사 기간을 부스 참가일로 복사할 수 없습니다.");
+            }
             if(l.floorPlanUrl()!=null) url(l.floorPlanUrl());
         }
         strings(p.subjects(),30,150);text(p.description(),1000,true);strings(p.officialLinks(),20,2048);p.officialLinks().forEach(CollectionRules::url);

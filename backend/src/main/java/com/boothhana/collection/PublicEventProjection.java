@@ -12,6 +12,6 @@ public final class PublicEventProjection {
         return new EventData(raw.name(), raw.subcategory(), raw.organizer(), raw.edition(), raw.region(),
             raw.venueName(), raw.address(), raw.description(), raw.admission(), raw.subjects(),
             raw.occurrences(), raw.sources(), List.of(), raw.warnings(), raw.eventFormat(),
-            raw.discoveryLinks(), raw.operationStatus());
+            raw.discoveryLinks(), raw.operationStatus(), raw.visitorGuide());
     }
 }

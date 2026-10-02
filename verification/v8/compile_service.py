@@ -11,7 +11,7 @@ with tempfile.TemporaryDirectory() as d:
  for name,txt in stubs.items():
   p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(txt);files.append(p)
  src=R/'backend/src/main/java/com/boothhana'
- rel=['api/ApiException.java','upload/ImageUploadRules.java','upload/VerifiedImageStorage.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogMediaService.java','floorplan/FloorplanModels.java','floorplan/FloorplanRules.java','floorplan/FloorplanImageInfo.java','floorplan/FloorplanService.java']
+ rel=['api/ApiException.java','upload/ImageUploadRules.java','upload/VerifiedImageStorage.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/VisitorGuideRules.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogMediaService.java','floorplan/FloorplanModels.java','floorplan/FloorplanRules.java','floorplan/FloorplanImageInfo.java','floorplan/FloorplanService.java']
  files += [src/p for p in rel]
  subprocess.run(['javac','-encoding','UTF-8','-d',str(d/'out'),*map(str,files)],check=True)
  print('Actual floorplan service + models/rules/media compiled against EXPLICIT external stubs, NOT full Spring build')

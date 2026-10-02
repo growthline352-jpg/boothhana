@@ -9,6 +9,7 @@ import unicodedata
 from urllib.parse import urlsplit, urlunsplit
 from pathlib import Path
 from jsonschema import Draft202012Validator
+from visitor_guide import validate_guide
 
 MAX_JSON_BYTES = 2 * 1024 * 1024
 from taxonomy import CATEGORIES, region_errors
@@ -111,6 +112,8 @@ def check_event(e: dict, start: date, end: date) -> tuple[list[str], list[str]]:
             if status.get('checkedOn') is not None: parse_date(status['checkedOn'])
             if status['state']!='UNKNOWN' and not (isinstance(status.get('note'),str) and status['note'].strip() and status.get('sourceUrl') and status.get('checkedOn')): raise ValueError('개최 상태 근거 누락')
         except (ValueError,TypeError,KeyError): rejected.append('개최 상태·원문·확인일을 확인하세요.')
+    try:validate_guide(e.get('visitorGuide'),e['occurrences'],public_url)
+    except (ValueError,TypeError,KeyError):rejected.append('관람 안내 출처·날짜·확정 상태를 확인하세요.')
     for b in e['banners']:
         try: public_url(b['imageUrl']); public_url(b['pageUrl'])
         except ValueError: rejected.append('안전하지 않은 배너 URL')

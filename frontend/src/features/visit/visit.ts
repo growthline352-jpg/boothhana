@@ -31,14 +31,20 @@ export function normalizePlace(value: string | null | undefined) {
   return (value || '').normalize('NFKC').trim().toLocaleLowerCase().replace(/\s+/g, ' ')
 }
 export function relevantLocations(locations: Location[], day: string, hall = '') {
-  return locations.filter(l => (!day || !l.startDate || !l.endDate || (l.startDate <= day && l.endDate >= day))
+  return locations.filter(l => (!day || !confirmedLocationDates(l) || !l.startDate || !l.endDate || (l.startDate <= day && l.endDate >= day))
     && (!hall || !l.hall || normalizePlace(l.hall) === normalizePlace(hall)))
 }
 export function attendance(row: PublicParticipant, day: string, hall = ''): 'confirmed' | 'unknown' | 'other' {
   const locations = relevantLocations(row.participant.locations, day, hall)
-  if (locations.some(l => (!day || (l.startDate && l.endDate)) && (!hall || l.hall))) return 'confirmed'
+  if (locations.some(l => (!day || confirmedLocationDates(l)) && (!hall || l.hall))) return 'confirmed'
   if (locations.length || !row.participant.locations.length) return 'unknown'
   return 'other'
+}
+/** An event's duration is not proof that a particular booth attends every day. */
+export function confirmedLocationDates(location: Location) {
+  if (!location.startDate || !location.endDate) return false
+  if (location.dateEvidence) return ['DECLARED','ROSTER'].includes(location.dateEvidence)
+  return ['ASSIGNED','NOT_APPLICABLE'].includes(location.status)
 }
 export type VisitTab = 'booths' | 'map' | 'info'
 export interface VisitQuery {day: string; hall: string; q: string; tab: VisitTab; booth: number | null; focus: number | null; product?: number | null}

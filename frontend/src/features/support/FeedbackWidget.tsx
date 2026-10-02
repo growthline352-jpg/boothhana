@@ -7,6 +7,7 @@ import { secureGuestKey } from './rules'
 import { TicketSubmission } from './submission'
 import './feedback.css'
 import { acquireBodyScrollLock } from '../../components/ui/bodyScrollLock'
+import { informationKinds, type InformationRequest } from './InformationRequestButton'
 
 export function FeedbackWidget({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
   const auth = useAuth()
@@ -26,11 +27,24 @@ export function FeedbackDialog({ open, setOpen }: { open: boolean; setOpen: (ope
   const [accessKey] = useState(secureGuestKey)
   const [title, setTitle] = useState(''), [body, setBody] = useState(''), [website, setWebsite] = useState('')
   const [pagePath, setPagePath] = useState(location.pathname)
+  const [request, setRequest] = useState<InformationRequest>({kind:'FEATURE'})
+  const [draftNotice,setDraftNotice] = useState('')
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [uncertain, setUncertain] = useState(false)
   const [receipt, setReceipt] = useState<{ id: string; number: string } | null>(null)
   const options = useRemote(() => open && auth.status === 'anonymous' ? supportApi.options() : Promise.resolve(null), [open, auth.status])
   const settled = auth.status === 'authenticated' || auth.status === 'anonymous'
   const ready = auth.status === 'authenticated' || auth.status === 'anonymous' && options.data?.feedbackEnabled
+  useEffect(()=>{
+    const receive=(event:Event)=>{
+      const detail=(event as CustomEvent<InformationRequest>).detail
+      if(!detail || !Object.hasOwn(informationKinds,detail.kind))return
+      if(attempt.requestId || title || body || busy) setDraftNotice('작성 중인 의견이 있어요. 먼저 이 의견을 보내거나 내용을 정리해 주세요.')
+      else {setRequest(detail);setPagePath(location.pathname);setReceipt(null);setDraftNotice('')}
+      setOpen(true)
+    }
+    window.addEventListener('boothana:information-request',receive)
+    return()=>window.removeEventListener('boothana:information-request',receive)
+  },[attempt,title,body,busy,location.pathname,setOpen])
   useEffect(() => { if (open && !attempt.requestId && !title && !body) setPagePath(location.pathname) }, [open, attempt, attempt.requestId, title, body, location.pathname])
   useEffect(() => {
     if (!open) return
@@ -45,10 +59,17 @@ export function FeedbackDialog({ open, setOpen }: { open: boolean; setOpen: (ope
     if (guard.current || !ready) return
     guard.current = true; setBusy(true); setError('')
     try {
-      const data: Omit<TicketInput, 'requestId'> = { kind: 'INQUIRY', category: 'FEATURE_REQUEST', title: title.trim(), body: body.trim(), evidence: [], target: null, context: { pagePath }, exhibitorId: null }
+      const context:Record<string,string>={pagePath}
+      if(request.kind!=='FEATURE') {
+        context.needType=request.kind
+        if(request.eventId)context.eventId=String(request.eventId)
+        if(request.day)context.day=request.day
+        if(request.query?.trim())context.searchQuery=request.query.trim().slice(0,100)
+      }
+      const data: Omit<TicketInput, 'requestId'> = { kind: 'INQUIRY', category: 'FEATURE_REQUEST', title: title.trim(), body: body.trim(), evidence: [], target: null, context, exhibitorId: null }
       const payload = attempt.uncertain && attempt.payload ? attempt.payload : attempt.prepare(data)
       const saved = auth.status === 'authenticated' ? await supportApi.create(payload) : await supportApi.feedback(payload, accessKey, website)
-      attempt.completed(); setUncertain(false); setReceipt({ id: saved.id, number: saved.number }); setTitle(''); setBody('')
+      attempt.completed(); setUncertain(false); setReceipt({ id: saved.id, number: saved.number }); setTitle(''); setBody('');setRequest({kind:'FEATURE'});setDraftNotice('')
     } catch (caught) {
       if (attempt.payload) attempt.failed(caught)
       setUncertain(attempt.uncertain)
@@ -62,6 +83,9 @@ export function FeedbackDialog({ open, setOpen }: { open: boolean; setOpen: (ope
     {receipt ? <div className="feedback-receipt" role="status"><span className="feedback-check" aria-hidden="true">✓</span><h3>의견을 보내주셔서 감사합니다</h3><p>접수번호 {receipt.number}</p><p>{auth.user ? '답변과 처리 상태는 내 문의에서 확인할 수 있어요.' : '보내주신 의견은 서비스 개선에 참고하겠습니다. 답변이 필요한 문의는 로그인 후 고객센터를 이용해 주세요.'}</p>{auth.user && <Link to={`/support/tickets/${receipt.id}`} onClick={close}>내 문의에서 확인하기 →</Link>}<button type="button" className="feedback-submit" onClick={() => { setReceipt(null); close() }}>확인</button></div>
       : <form onSubmit={event => void send(event)}>
         <p>어떤 점이 더 좋아지면 좋을까요?</p>
+        {draftNotice&&<p role="status">{draftNotice}</p>}
+        <label className="feedback-field">요청 종류<select value={request.kind} disabled={busy||uncertain} onChange={event=>setRequest({...request,kind:event.target.value as InformationRequest['kind']})}>{Object.entries(informationKinds).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
+        {request.kind!=='FEATURE'&&<p className="feedback-note">{request.eventId&&`행사 #${request.eventId} · `}{request.day&&`${request.day} · `}{request.query&&`검색: ${request.query} · `}찾는 정보를 적어주시면 확인할게요.</p>}
         <label className="feedback-field">제목<input autoFocus required maxLength={160} value={title} disabled={busy || uncertain} onChange={event => setTitle(event.target.value)} placeholder="어떤 개선이 필요한지 알려주세요"/></label>
         <label className="feedback-field">내용<textarea required minLength={10} maxLength={10000} rows={5} value={body} disabled={busy || uncertain} onChange={event => setBody(event.target.value)} placeholder="불편했던 점이나 원하는 기능을 적어주세요. (10자 이상)"/></label>
         <label className="feedback-honeypot" aria-hidden="true">웹사이트<input tabIndex={-1} autoComplete="off" value={website} onChange={event => setWebsite(event.target.value)}/></label>

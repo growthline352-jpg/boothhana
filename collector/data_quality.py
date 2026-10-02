@@ -6,6 +6,7 @@ reviewed facts or changes the fields that define event identity.
 """
 from __future__ import annotations
 from copy import deepcopy
+from taxonomy import GROUPS
 from datetime import date
 import re
 
@@ -28,6 +29,7 @@ def missing_reasons(event: dict) -> list[str]:
     if event.get('eventFormat') == 'MULTI_BOOTH' and not any(row.get('kind') == 'SALES' and row.get('url') and row.get('status') == 'PUBLISHED' for row in links):
         reasons.append('MISSING_SALES_SOURCE')
     if not any(row.get('matchesEdition') is True for row in event.get('banners') or []): reasons.append('MISSING_CURRENT_BANNER')
+    if event.get('subcategory') in GROUPS['SUBCULTURE'] and not event.get('visitorGuide'):reasons.append('MISSING_VISITOR_GUIDE')
     return reasons
 
 def _norm(value):
@@ -80,6 +82,18 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
         if placeholder and incoming.get('url'): links[links.index(placeholder)] = deepcopy(incoming)
         elif len(links) < 20: links.append(deepcopy(incoming))
     merged['discoveryLinks'] = links
+    incoming_guide=observed.get('visitorGuide')
+    if incoming_guide:
+        if not merged.get('visitorGuide'):merged['visitorGuide']=deepcopy(incoming_guide)
+        else:
+            for kind,limit in [('tickets',40),('programs',100),('faq',30),('sales',30),('coverage',8)]:
+                key='kind' if kind=='coverage' else 'id'
+                rows=merged['visitorGuide'].get(kind) or []
+                for incoming in incoming_guide.get(kind) or []:
+                    old=next((row for row in rows if row[key]==incoming[key]),None)
+                    if old is None and len(rows)<limit:rows.append(deepcopy(incoming))
+                    elif old and old.get('status') in ('UNKNOWN','UNPUBLISHED','INACCESSIBLE') and incoming.get('sourceUrl') and incoming.get('checkedOn') and incoming.get('status') in ('PUBLISHED','CONFIRMED','PARTIAL'):rows[rows.index(old)]=deepcopy(incoming)
+                merged['visitorGuide'][kind]=rows
 
     old_status = merged.get('operationStatus') or {'state': 'UNKNOWN', 'note': None, 'sourceUrl': None, 'checkedOn': None}
     new_status = observed.get('operationStatus') or {}
@@ -94,10 +108,10 @@ def target_priority(target: dict, attempts: dict, priority_keywords: list[str]):
     priority = 0 if any(_norm(word) in _norm(event.get('name')) for word in priority_keywords if _norm(word)) else 1
     start = min((row.get('startDate') or '9999-12-31' for row in event.get('occurrences') or []), default='9999-12-31')
     # Never/oldest attempted first prevents a permanently unpublished event from starving others.
-    return (bool(last), last, priority, start, int(target['id']))
+    return (not target.get('informationRequested',False), bool(last), last, priority, start, int(target['id']))
 
 def select_targets(targets: list[dict], attempts: dict, limit: int, priority_keywords: list[str]) -> list[dict]:
-    candidates = [target for target in targets if missing_reasons(target.get('event') or {})]
+    candidates = [target for target in targets if target.get('informationRequested') or missing_reasons(target.get('event') or {})]
     return sorted(candidates, key=lambda target: target_priority(target, attempts, priority_keywords))[:limit]
 
 def attempt_record(event: dict, status: str) -> dict:

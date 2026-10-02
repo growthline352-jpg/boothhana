@@ -5,6 +5,7 @@ import json,re
 from datetime import timedelta
 from urllib.parse import urlsplit
 from jsonschema import Draft202012Validator
+from visitor_guide import validate_guide
 from rules import public_url,check_event,parse_date,MAX_JSON_BYTES,InvalidResult
 ROOT=Path(__file__).resolve().parent
 SCOPES={'EVENT_LISTED','EVENT_SALE_CONFIRMED','PROFILE','GENERAL_CATALOG','PAST_REFERENCE','UNKNOWN'}
@@ -52,6 +53,9 @@ def check_participant(p: dict,event: dict,blocked: list[str]):
         if (loc['status']=='ASSIGNED') != bool(loc['code'] and loc['code'].strip()): raise InvalidResult('Booth assignment status/code mismatch')
         if loc['status']!='ASSIGNED' and loc['code'] is not None: raise InvalidResult('Unknown booth number must be null')
         if bool(loc['startDate'])!=bool(loc['endDate']): raise InvalidResult('Location date pair required')
+        proof=loc.get('dateEvidence')
+        if proof in ('DECLARED','ROSTER') and not loc['startDate']:raise InvalidResult('Confirmed attendance date required')
+        if proof in ('EVENT_PERIOD','UNKNOWN') and loc['startDate']:raise InvalidResult('Event duration is not booth attendance')
         if loc['startDate']:
             a,b=parse_date(loc['startDate']),parse_date(loc['endDate'])
             covered=[]
@@ -100,6 +104,7 @@ def validate_discovery(result: dict,start,end,blocked):
         errors,warnings=check_event(e,start,end)
         try:
             sources(e['sources'],blocked)
+            validate_guide(e.get('visitorGuide'),e['occurrences'],lambda url:allowed_source(url,blocked))
             for b in e['banners']: allowed_source(b['imageUrl'],blocked);allowed_source(b['pageUrl'],blocked)
             for link in e['discoveryLinks']:
                 if link['url']: allowed_source(link['url'],blocked)

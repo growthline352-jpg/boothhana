@@ -7,7 +7,7 @@ function participant(locations: Location[]) {
 }
 
 function location(code: string | null, startDate = '2026-10-10', endDate = '2026-10-10'): Location {
-  return { code, status: code ? 'CONFIRMED' : 'UNKNOWN', hall: null, zone: null, startDate, endDate, floorPlanUrl: null }
+  return { code, status: code ? 'ASSIGNED' : 'UNKNOWN', hall: null, zone: null, startDate, endDate, floorPlanUrl: null }
 }
 
 describe('booth map availability', () => {

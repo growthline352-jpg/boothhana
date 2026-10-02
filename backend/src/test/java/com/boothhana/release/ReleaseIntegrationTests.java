@@ -155,6 +155,27 @@ class ReleaseIntegrationTests {
   long id=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,venue_name,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state,reviewed_payload_json) values(?,?,?,'ONLY_EVENT','서울 전시장','2026-10-03','2026-10-03',cast(? as jsonb),?,'[]','REVIEWED',cast(? as jsonb)) returning id",Long.class,key,key,label,encoded,key,encoded);
   publications.publish(id,new com.boothhana.collection.CatalogModels.PublishInput(1));return id;
  }
+ @Test void informationRequestsNeedAdminReviewAndVisitorGuideNeedsRepublication() throws Exception {
+  long normal=catalogEvent("[TEST] ordinary "+UUID.randomUUID()),requested=catalogEvent("[TEST] requested "+UUID.randomUUID());
+  var ticket=new TicketInfo("general","일반권","2026-10-03","8000","KRW","2026-10-01",null,null,"https://example.com/ticket","PUBLISHED",null,"https://example.com/ticket","2026-10-02");
+  var guide=new VisitorGuide(List.of(ticket),List.of(),List.of(),List.of(),List.of());
+  catalog.editEvent(requested,new EditInput(1,"REVIEWED","Current edition source verified",Map.of("visitorGuide",guide)));
+  http.perform(get("/api/public/catalog/events/"+requested)).andExpect(status().isOk()).andExpect(jsonPath("$.event.visitorGuide").doesNotExist());
+  publications.publish(requested,new PublishInput(2));
+  http.perform(get("/api/public/catalog/events/"+requested)).andExpect(status().isOk()).andExpect(jsonPath("$.event.visitorGuide.tickets[0].priceAmount").value("8000"));
+  var request=UUID.randomUUID();support.create(new Create(request,"INQUIRY","FEATURE_REQUEST","정보 수집 요청","해당 행사의 인형 판매 안내를 확인해 주세요.",List.of(),null,Map.of("needType","PRODUCT","eventId",Long.toString(requested)),null),new Principal(owner.id,false,false));
+  var pipeline=UUID.randomUUID();
+  db.update("insert into subculture_pipeline_run(id,week_key,scope_json,state) values(?,cast(? as date),cast(? as jsonb),'RUNNING')",pipeline,"2026-10-02",json.writeValueAsString(new Scope("SEOUL_GYEONGGI","Asia/Seoul","2026-10-03","2026-10-03")));
+  var before=catalog.eventTargets(pipeline.toString(),200).stream().filter(r->Objects.equals(r.get("id"),requested)).findFirst().orElseThrow();
+  assertThat(before.get("informationRequested")).isEqualTo(false);
+  db.update("update support_ticket set status='IN_PROGRESS' where id=?",request);
+  var after=catalog.eventTargets(pipeline.toString(),200);
+  var accepted=after.stream().filter(r->Objects.equals(r.get("id"),requested)).findFirst().orElseThrow();
+  assertThat(accepted.get("informationRequested")).isEqualTo(true);
+  assertThat(after.indexOf(accepted)).isLessThan(after.indexOf(after.stream().filter(r->Objects.equals(r.get("id"),normal)).findFirst().orElseThrow()));
+  assertThat(accepted).doesNotContainKeys("body","requesterId","searchQuery");
+  db.update("update subculture_pipeline_run set state='SUCCESS',finished_at=now() where id=?",pipeline);
+ }
  @Test void correctedSubcultureTypesAreReviewedAndPublishedInTheirOwnField() throws Exception {
   String label="[TEST] Q4 classification "+UUID.randomUUID();
   for(String type:List.of("SUBCULTURE_MUSIC","ANIME_GAME_FESTIVAL","ART_BOOK","BOARD_GAME","CHARACTER_ART","ILLUSTRATION")) {

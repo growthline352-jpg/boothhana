@@ -20,6 +20,7 @@ public final class SupportRules {
   if(g.website()!=null&&!g.website().isBlank())throw new IllegalArgumentException("접수할 수 없습니다.");
   if(!"INQUIRY".equals(c.kind())||!"FEATURE_REQUEST".equals(c.category())||c.target()!=null||c.exhibitorId()!=null||c.evidence()!=null&&!c.evidence().isEmpty())throw new IllegalArgumentException("개선 의견 접수 형식을 확인해 주세요.");
   if(c.context()!=null)for(var entry:c.context().entrySet()) {
+   if(Set.of("needType","eventId","day","searchQuery").contains(entry.getKey()))continue;
    String path=entry.getValue();
    if(!"pagePath".equals(entry.getKey())||path==null||!path.startsWith("/")||path.startsWith("//")||path.contains("?")||path.contains("#")||path.contains("\\")||path.codePoints().anyMatch(Character::isISOControl))throw new IllegalArgumentException("접수 화면 경로를 확인해 주세요.");
   }
@@ -46,7 +47,21 @@ public final class SupportRules {
    } else if(c.exhibitorId()==null||c.exhibitorId()<1)throw new IllegalArgumentException("업체를 선택해 주세요.");
   }
   if(!"CLAIM".equals(c.kind())&&c.exhibitorId()!=null)throw new IllegalArgumentException("잘못된 업체 연결입니다.");
-  if(c.context()!=null){if(c.context().size()>5)throw new IllegalArgumentException("화면 문맥이 너무 큽니다.");for(var e:c.context().entrySet()){if(e.getKey()==null||!Set.of("pagePath","viewedVersion","viewedLabel","viewedAt","errorCode").contains(e.getKey()))throw new IllegalArgumentException("허용하지 않는 문맥입니다.");text(e.getValue(),1000,false);}}
+  if(c.context()!=null){
+   if(c.context().size()>9)throw new IllegalArgumentException("화면 문맥이 너무 큽니다.");
+   for(var e:c.context().entrySet()){
+    String key=e.getKey(),value=e.getValue();
+    if(key==null||!Set.of("pagePath","viewedVersion","viewedLabel","viewedAt","errorCode","needType","eventId","day","searchQuery").contains(key))throw new IllegalArgumentException("허용하지 않는 문맥입니다.");
+    text(value,"searchQuery".equals(key)?100:1000,false);
+    if(Set.of("needType","eventId","day","searchQuery").contains(key)){
+     if(value==null||value.codePoints().anyMatch(Character::isISOControl))throw new IllegalArgumentException("정보 요청 문맥을 확인해 주세요.");
+     if("needType".equals(key)&&!Set.of("BOOTH","PRODUCT","PROGRAM","TICKET").contains(value))throw new IllegalArgumentException("정보 요청 종류를 확인해 주세요.");
+     if("eventId".equals(key)&&!value.matches("[1-9][0-9]{0,17}"))throw new IllegalArgumentException("행사 번호를 확인해 주세요.");
+     if("day".equals(key))try{if(!value.matches("\\d{4}-\\d{2}-\\d{2}"))throw new IllegalArgumentException();LocalDate.parse(value);}catch(RuntimeException ex){throw new IllegalArgumentException("요청 날짜를 확인해 주세요.");}
+    }
+   }
+   if(c.context().keySet().stream().anyMatch(Set.of("eventId","day","searchQuery")::contains)&&!c.context().containsKey("needType"))throw new IllegalArgumentException("정보 요청 종류가 필요합니다.");
+  }
  }
  public static void message(Message m,boolean admin) {
   if(m==null||m.requestId()==null||m.revision()<0||(!admin&&m.internal()))throw new IllegalArgumentException("답변 형식이 올바르지 않습니다.");
