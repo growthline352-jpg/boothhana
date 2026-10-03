@@ -9,6 +9,7 @@ import { ProfileAvatar } from '../ui/ProfileAvatar'
 interface ConsoleLink { to: string; label: string; icon: IconName }
 const creatorLinks: ConsoleLink[] = [
   { to: '/support/management', label: '내 공개 행사·부스', icon: 'building' },
+  { to: '/creator/catalog/events', label: '공개 행사 부스 등록', icon: 'calendar' },
   { to: '/creator', label: '예약·판매 홈', icon: 'grid' },
   { to: '/creator/events', label: '예약·판매 행사', icon: 'calendar' },
   { to: '/creator/booths', label: '내 부스 목록', icon: 'building' },

@@ -21,6 +21,7 @@ import { AdminLoginPage } from '../pages/AdminLoginPage'
 import { BoothDetailPage, EventDetailPage, EventsPage, ProductDetailPage } from '../pages/PublicPages'
 import { ReservationCreatePage, ReservationDetailPage, ReservationsPage } from '../pages/ReservationPages'
 import { CreatorCatalogBoothPage } from '../features/creator/CreatorCatalogBoothPage'
+import { CreatorPublicEventsPage } from '../features/creator/CreatorPublicEventsPage'
 import { CreatorBoothsPage, CreatorEventBoothPage, CreatorEventsPage, CreatorHomePage, CreatorNoticesPage, CreatorPosPage, CreatorProductsPage, CreatorReservationsPage } from '../pages/CreatorPages'
 import { AdminApplicationsPage, AdminEventFormPage, AdminEventsPage } from '../pages/AdminPages'
 import { EmptyState } from '../components/ui/States'
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
     { index: true, element: <CreatorHomePage /> },
     { path: 'events', element: <CreatorEventsPage /> },
     { path: 'booths', element: <CreatorBoothsPage /> },
+    { path: 'catalog/events', element: <CreatorPublicEventsPage /> },
     { path: 'catalog/events/:eventId/booths/new', element: <CreatorCatalogBoothPage /> },
     { path: 'catalog/events/:eventId/booths/:participantId', element: <CreatorCatalogBoothPage /> },
     { path: 'event-booths/:eventBoothId', element: <CreatorEventBoothPage /> },
