@@ -61,7 +61,7 @@ def missing_reasons(event: dict) -> list[str]:
     if event.get('eventFormat') == 'MULTI_BOOTH' and not any(row.get('kind') == 'SALES' and row.get('url') and row.get('status') == 'PUBLISHED' for row in links):
         reasons.append('MISSING_SALES_SOURCE')
     if not any(row.get('matchesEdition') is True for row in event.get('banners') or []): reasons.append('MISSING_CURRENT_BANNER')
-    if event.get('subcategory') in GROUPS['SUBCULTURE']:
+    if any(event.get('subcategory') in values for values in GROUPS.values()):
         guide=event.get('visitorGuide')
         if not guide:reasons.append('MISSING_VISITOR_GUIDE')
         elif _incomplete_guide(guide):reasons.append('INCOMPLETE_VISITOR_GUIDE')
@@ -113,12 +113,18 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
     merged['subjects'] = _unique(merged.get('subjects') or [], observed.get('subjects') or [], _norm, 20)
     merged['sources'] = _unique(merged.get('sources') or [], observed.get('sources') or [], lambda row: row.get('url'), 5)
     merged['banners'] = _unique(merged.get('banners') or [], observed.get('banners') or [], lambda row: (row.get('imageUrl'), row.get('pageUrl')), 3)
+    for banner in merged['banners']:
+        incoming=next((row for row in observed.get('banners') or [] if row.get('imageUrl')==banner.get('imageUrl') and row.get('pageUrl')==banner.get('pageUrl')),None)
+        if incoming and incoming.get('matchesEdition') is True:banner['matchesEdition']=True
     merged['warnings'] = _unique(merged.get('warnings') or [], observed.get('warnings') or [], _norm, 20)
 
     links = deepcopy(merged.get('discoveryLinks') or [])
     for incoming in observed.get('discoveryLinks') or []:
         duplicate = next((row for row in links if row.get('kind') == incoming.get('kind') and row.get('url') == incoming.get('url')), None)
-        if duplicate: continue
+        if duplicate:
+            if duplicate.get('status') in ('UNKNOWN','UNPUBLISHED','INACCESSIBLE') and incoming.get('status') == 'PUBLISHED':
+                links[links.index(duplicate)] = deepcopy(incoming)
+            continue
         placeholder = next((row for row in links if row.get('kind') == incoming.get('kind') and not row.get('url')), None)
         if placeholder and incoming.get('url'): links[links.index(placeholder)] = deepcopy(incoming)
         elif len(links) < 20: links.append(deepcopy(incoming))
@@ -163,7 +169,8 @@ def select_targets(targets: list[dict], attempts: dict, limit: int, priority_key
 
 def needs_public_details(event: dict, attempt: dict) -> bool:
     from event_detail_sources import tmm_product_url
-    urls={url for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])] if (url:=tmm_product_url(row.get('url')))}
+    from official_site_sources import site_detail_url
+    urls={url for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])] if (url:=tmm_product_url(row.get('url')) or (site_detail_url(row.get('url')) if row.get('kind')=='OFFICIAL' else None))}
     return bool(urls and not urls.issubset(set(attempt.get('detailSourceUrls') or [])))
 
 def attempt_record(event: dict, status: str, fetched_urls=None) -> dict:

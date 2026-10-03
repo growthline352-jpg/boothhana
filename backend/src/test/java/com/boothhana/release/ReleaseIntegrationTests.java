@@ -176,6 +176,33 @@ class ReleaseIntegrationTests {
   assertThat(accepted).doesNotContainKeys("body","requesterId","searchQuery");
   db.update("update subculture_pipeline_run set state='SUCCESS',finished_at=now() where id=?",pipeline);
  }
+ @Test @org.springframework.transaction.annotation.Transactional
+ void enrichmentPaginationAndAssetSyncReachBeyond200Events() {
+  long seed=catalogEvent("[TEST] pagination "+UUID.randomUUID());
+  long after=db.queryForObject("select max(id) from subculture_event_candidate",Long.class);
+  var banner=new Banner("https://example.com/current.jpg","https://example.com/event","UNKNOWN",null,true);
+  // Seed source-owned banner data; admin edits deliberately cannot change this field.
+  String banners=json.writeValueAsString(List.of(banner));
+  db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{banners}',cast(? as jsonb)),reviewed_payload_json=jsonb_set(reviewed_payload_json,'{banners}',cast(? as jsonb)) where id=?",banners,banners,seed);
+  String prefix=UUID.randomUUID().toString();
+  db.update("""
+    insert into subculture_event_candidate(identity_key,match_key,name,subcategory,venue_name,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state,reviewed_payload_json)
+    select ?||i,?||i,e.name||i,e.subcategory,e.venue_name,e.starts_on,e.ends_on,e.payload_json,e.payload_hash,'[]','REVIEWED',e.reviewed_payload_json
+    from subculture_event_candidate e cross join generate_series(1,205) i where e.id=?
+    """,prefix,prefix,seed);
+  var pipeline=UUID.randomUUID();
+  db.update("insert into subculture_pipeline_run(id,week_key,scope_json,state) values(?,cast(? as date),cast(? as jsonb),'RUNNING')",pipeline,"2026-10-02",json.writeValueAsString(new Scope("SEOUL_GYEONGGI","Asia/Seoul","2026-10-03","2026-10-03")));
+  var first=catalog.enrichmentTargets(pipeline.toString(),200,after);assertThat(first).hasSize(200);
+  long cursor=(Long)first.getLast().get("id");
+  var second=catalog.enrichmentTargets(pipeline.toString(),200,cursor);assertThat(second).hasSize(5);
+  assertThat(second).allSatisfy(row->assertThat((Long)row.get("id")).isGreaterThan(cursor));
+  assertThat(catalog.enrichmentTargets(pipeline.toString(),200,(Long)second.getLast().get("id"))).isEmpty();
+  assertThatThrownBy(()->catalog.enrichmentTargets(pipeline.toString(),200,-1)).isInstanceOf(ApiException.class);
+  catalog.syncEventAssets(pipeline.toString());
+  long last=(Long)second.getLast().get("id");
+  assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where event_id=? and type='BANNER' and rights_state='PENDING'",Long.class,last)).isEqualTo(1);
+  db.update("update subculture_pipeline_run set state='SUCCESS',finished_at=now() where id=?",pipeline);
+ }
  @Test void correctedSubcultureTypesAreReviewedAndPublishedInTheirOwnField() throws Exception {
   String label="[TEST] Q4 classification "+UUID.randomUUID();
   for(String type:List.of("SUBCULTURE_MUSIC","ANIME_GAME_FESTIVAL","ART_BOOK","BOARD_GAME","CHARACTER_ART","ILLUSTRATION")) {

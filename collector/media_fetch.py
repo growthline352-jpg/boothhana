@@ -59,10 +59,11 @@ def inspect_image(data: bytes,content_type: str,max_pixels: int=MAX_PIXELS):
     except (UnidentifiedImageError,OSError,Image.DecompressionBombError,Image.DecompressionBombWarning) as exc: raise MediaError('Invalid image') from exc
     return hashlib.sha256(data).hexdigest()
 
-def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PIXELS):
+def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PIXELS,*,source_trace=None):
     deadline=time.monotonic()+timeout
     for _ in range(4):
         parsed,host=check_url(url,hosts);addresses=public_addresses(host,443)
+        if source_trace is not None:source_trace.append(url)
         remaining=deadline-time.monotonic()
         if remaining<=0: raise MediaError('Image deadline exceeded')
         connection=PinnedHTTPS(host,addresses[0],min(10,remaining))

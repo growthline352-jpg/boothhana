@@ -87,6 +87,19 @@ public class CatalogService {
             """,scope.endDate(),scope.startDate(),limit);
         return rows.stream().map(r->Map.<String,Object>of("id",num(r,"id"),"revision",num(r,"revision"),"event",effective(r,EventData.class),"informationRequested",Boolean.TRUE.equals(r.get("information_requested")))).toList();
     }
+    /** Stable keyset traversal for completeness checks, independent of participant progress. */
+    public List<Map<String,Object>> enrichmentTargets(String pipelineId,int limit,long afterId) {
+        if(limit<1||limit>200||afterId<0) throw ApiException.badRequest("보완 수집 조회 범위 오류");
+        var scope=decode(one("select scope_json from subculture_pipeline_run where id=?",UUID.fromString(pipelineId)).get("scope_json"),Scope.class);
+        var rows=db.queryForList("""
+            select *, exists(select 1 from support_ticket t where t.kind='INQUIRY' and t.category='FEATURE_REQUEST'
+                and t.status='IN_PROGRESS' and t.client_context_json->>'eventId'=e.id::text
+                and t.client_context_json->>'needType' in ('BOOTH','PRODUCT','PROGRAM','TICKET')) as information_requested
+            from subculture_event_candidate e where review_state<>'EXCLUDED' and starts_on<=cast(? as date) and ends_on>=cast(? as date)
+            and (possible_duplicate_of is null or review_state='REVIEWED') and id>? order by id limit ?
+            """,scope.endDate(),scope.startDate(),afterId,limit);
+        return rows.stream().map(r->Map.<String,Object>of("id",num(r,"id"),"revision",num(r,"revision"),"event",effective(r,EventData.class),"informationRequested",Boolean.TRUE.equals(r.get("information_requested")))).toList();
+    }
     public List<Map<String,Object>> salesTargets(String pipelineId,int limit) {
         if(limit<1||limit>1000) throw ApiException.badRequest("판매정보 처리 한도 오류");
         var scope=decode(one("select scope_json from subculture_pipeline_run where id=?",UUID.fromString(pipelineId)).get("scope_json"),Scope.class);
@@ -154,7 +167,10 @@ public class CatalogService {
     @Transactional public Map<String,Object> syncEventAssets(String pipelineId) {
         requireRunning(pipelineId);int count=0;
         // Includes older records in scope as well as this week's discoveries.
-        for(var t:eventTargets(pipelineId,200)) {
+        long afterId=0;
+        while(true) {
+            var targets=enrichmentTargets(pipelineId,200,afterId);
+            for(var t:targets) {
             EventData e=(EventData)t.get("event");long id=(Long)t.get("id");
             for(var banner:e.banners()) { media.register(id,null,null,new Image("BANNER",banner.imageUrl(),banner.pageUrl(),banner.rightsEvidence(),e.name()));count++; }
             for(var link:e.discoveryLinks()) {
@@ -165,6 +181,9 @@ public class CatalogService {
                     media.register(id,null,null,new Image("FLOOR_PLAN",link.url(),link.url(),null,Objects.toString(link.note(),"배치도")));count++;
                 }
             }
+            }
+            if(targets.size()<200) break;
+            afterId=(Long)targets.getLast().get("id");
         }
         return Map.of("registeredCandidates",count);
     }

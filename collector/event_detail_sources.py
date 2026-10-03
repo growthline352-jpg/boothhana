@@ -1,4 +1,4 @@
-"""Read anonymous TMM detail facts and attach bounded images for private analysis.
+"""Read anonymous TMM and official Google Sites details for private analysis.
 
 The public page is rendered from /prod/view. Only title, description and sale
 dates are retained from that response; account/payment/customer data is excluded.
@@ -19,7 +19,8 @@ from urllib.parse import urlsplit
 from urllib.robotparser import RobotFileParser
 from zoneinfo import ZoneInfo
 
-from media_fetch import MediaError, PinnedHTTPS, check_url, public_addresses, request_target, fetch_image
+from media_fetch import MediaError, PinnedHTTPS, check_url, public_addresses, request_target, fetch_image, fetch_html
+from official_site_sources import site_detail_url, site_root, parse_site_document, SITE_HOSTS, SITE_IMAGE_HOSTS
 
 PAGE_HOSTS = ['takemm.com']
 API_HOSTS = ['api.takemm.com']
@@ -166,19 +167,29 @@ def _scalar(value):
 
 
 def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str], timeout: int = 15,
-                           *, fetcher=None, image_fetcher=None, robots_checker=None) -> tuple[list[dict], list[Path]]:
+                           *, fetcher=None, image_fetcher=None, robots_checker=None, html_fetcher=None) -> tuple[list[dict], list[Path]]:
     fetcher = fetcher or fetch_document
     image_fetcher = image_fetcher or fetch_image
     robots_checker = robots_checker or allowed_by_robots
+    html_fetcher = html_fetcher or fetch_html
     urls = []
     for row in [*(event.get('sources') or []), *(event.get('discoveryLinks') or [])]:
         url = tmm_product_url(row.get('url'))
         if url and url not in urls: urls.append(url)
-    if not urls: return [], []
+    site_urls = []
+    for row in [*(event.get('sources') or []), *(event.get('discoveryLinks') or [])]:
+        url = site_detail_url(row.get('url')) if row.get('kind') == 'OFFICIAL' else None
+        if url and url not in site_urls: site_urls.append(url)
+    roots = {site_root(url) for url in site_urls}
+    for row in event.get('discoveryLinks') or []:
+        url = site_detail_url(row.get('url'))
+        if url and site_root(url) in roots and url not in site_urls: site_urls.append(url)
+    if not urls and not site_urls: return [], []
     directory.mkdir(parents=True, exist_ok=True)
     cache_file = directory / 'detail-sources.json'
     if cache_file.is_file():
         cache = json.loads(cache_file.read_text(encoding='utf-8'))
+        if cache.get('blockedHosts', blocked_hosts) != blocked_hosts: raise ValueError('Detail checkpoint source policy changed; retry in a new job')
         files = [directory / item for item in cache['imageFiles']]
         if not cache_file.is_symlink() and len(files)<=4 and all(file.parent == directory and file.is_file() and not file.is_symlink() for file in files):
             return cache['observations'], files
@@ -196,6 +207,23 @@ def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str
         if time.monotonic() >= deadline: raise MediaError('Detail job time limit')
         return robots_checker(url, hosts, remaining, robots_cache)
 
+    def attach_images(item, hosts):
+        # Blocked CDN hosts must stay blocked across every redirect too.
+        hosts = [host for host in hosts if not any(host == entry or host.endswith('.'+entry) for entry in blocked)]
+        for image in item['images']:
+            image['analysisStatus'] = 'NOT_READ'
+            if len(files) >= 4: continue
+            try:
+                if not permitted(image['url'], hosts): image['analysisStatus'] = 'BLOCKED'; continue
+                trace=[]
+                options={'source_trace':trace} if image_fetcher is fetch_image else {}
+                raw_image, mime, digest = image_fetcher(image['url'], hosts, max(1, min(timeout, int(deadline-time.monotonic()))), **options)
+                suffix = {'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif'}[mime]
+                path = directory / ('detail-image-' + str(len(files)) + suffix)
+                path.write_bytes(raw_image); path.chmod(0o600); files.append(path)
+                image.update(analysisStatus='ATTACHED', imageFile=path.name, sha256=digest, contentType=mime, fetchedUrls=trace)
+            except (ValueError, OSError, KeyError, HTTPException): image['analysisStatus'] = 'INACCESSIBLE'
+
     for page in urls[:2]:
         item = dict(sourceUrl=page, checkedOn=checked, status='INACCESSIBLE', images=[])
         try:
@@ -204,21 +232,31 @@ def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str
                 item['status'] = 'BLOCKED'; observations.append(item); continue
             raw = fetcher(api_url, API_HOSTS, max(1, min(timeout, int(deadline-time.monotonic()))))
             item = dict(parse_tmm_product(raw, page, checked), status='READ')
-            for image in item['images']:
-                image['analysisStatus'] = 'NOT_READ'
-                if len(files) >= 4: continue
-                try:
-                    if not permitted(image['url'], IMAGE_HOSTS): image['analysisStatus'] = 'BLOCKED'; continue
-                    raw_image, mime, digest = image_fetcher(image['url'], IMAGE_HOSTS, max(1, min(timeout, int(deadline-time.monotonic()))))
-                    suffix = {'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif'}[mime]
-                    path = directory / ('detail-image-' + str(len(files)) + suffix)
-                    path.write_bytes(raw_image); path.chmod(0o600); files.append(path)
-                    image.update(analysisStatus='ATTACHED', imageFile=path.name, sha256=digest)
-                except (ValueError, OSError, KeyError, HTTPException): image['analysisStatus'] = 'INACCESSIBLE'
+            attach_images(item, IMAGE_HOSTS)
         except (ValueError, OSError, TypeError, KeyError, HTTPException):
             item = dict(sourceUrl=page, checkedOn=checked, status='INACCESSIBLE', images=[])
         observations.append(item)
-    cache_file.write_text(json.dumps(dict(observations=observations, imageFiles=[file.name for file in files]), ensure_ascii=False, indent=2), encoding='utf-8')
+    # Bounded second pass: official landing page first, then same-site notices.
+    # Read fresh HTML each new job: Google Sites image URLs are signed and can expire.
+    index = 0
+    while index < min(3, len(site_urls)):
+        page = site_urls[index]; index += 1
+        item = dict(sourceUrl=page, checkedOn=checked, status='INACCESSIBLE', sourceType='GOOGLE_SITES', images=[])
+        try:
+            if not permitted(page, SITE_HOSTS): item['status']='BLOCKED'
+            else:
+                html, _ = html_fetcher(page, SITE_HOSTS, max(1, min(timeout, int(deadline-time.monotonic()))))
+                item = dict(parse_site_document(html, page, checked, maximum_text=32000), status='READ')
+                attach_images(item, SITE_IMAGE_HOSTS)
+                for child in item['childUrls']:
+                    if child not in site_urls: site_urls.append(child)
+        except (ValueError, OSError, TypeError, KeyError, HTTPException): pass
+        observations.append(item)
+    visited = {item['sourceUrl'] for item in observations}
+    for item in observations:
+        if item.get('sourceType') == 'GOOGLE_SITES':
+            item['unreadChildUrls'] = [url for url in item.get('childUrls', []) if url not in visited]
+    cache_file.write_text(json.dumps(dict(observations=observations, imageFiles=[file.name for file in files], blockedHosts=blocked_hosts), ensure_ascii=False, indent=2), encoding='utf-8')
     cache_file.chmod(0o600)
     return observations, files
 
@@ -237,6 +275,9 @@ def detail_coverage_issues(event: dict, observations: list[dict]) -> list[str]:
         if any(word in label for word in ('table', 'takeout', '예약')) and not guide.get('tickets') and not guide.get('faq'):
             issues.append('MISSING_DETAIL_RESERVATION')
         if row.get('textTruncated'): issues.append('DETAIL_TEXT_TRUNCATED')
+        if row.get('linksTruncated') or row.get('unreadChildUrls'): issues.append('DETAIL_CHILD_PAGES_NOT_FULLY_READ')
+        if row.get('sourceType') == 'GOOGLE_SITES' and any(image.get('role') == 'PAGE_PREVIEW' and image.get('analysisStatus') == 'ATTACHED' for image in row.get('images', [])) and not any(b.get('matchesEdition') is True and b.get('pageUrl') == row['sourceUrl'] for b in event.get('banners') or []):
+            issues.append('MISSING_DETAIL_BANNER')
         if row.get('imagesTruncated'): issues.append('DETAIL_IMAGES_NOT_FULLY_READ')
         if any(image.get('analysisStatus') in ('INACCESSIBLE', 'BLOCKED') for image in row.get('images', [])):
             issues.append('DETAIL_IMAGE_INACCESSIBLE')
