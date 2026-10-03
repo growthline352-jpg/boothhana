@@ -97,17 +97,20 @@ sudo ./install-timers.sh
 
 - 일요일 03:00 KST: 행사 발견 → 행사 보완 → 참가업체 → 상품 → 이미지 → 배치도 전체 파이프라인
 - 월요일~토요일 04:00 KST: 개최 임박 행사의 배치도 추가 확인
+- 매일 18:30 KST(최대 5분의 임의 지연): 공개 행사 이미지 보완·승인된 이미지 저장·공개 파일 검증. CLI 로그인·사용량을 사용하지 않으며 [이미지 보완 절차](../../collector/IMAGE_REPAIR_KO.md)를 따른다.
 - 주간 전체 작업은 `Persistent=true`라서 예약 시각에 서버가 꺼져 있었다면 다음 기동 후 누락 실행
 - 일일 배치도 작업은 전체 작업과 동시 기동하지 않도록 누락분을 즉시 재생하지 않고 다음 04:00에 다시 확인
-- 공통 파일 잠금: 두 작업이 겹치면 뒤 작업은 중복 실행하지 않고 종료
+- 일일 이미지 작업도 누락분을 즉시 재생하지 않고 다음 예약 시각에 다시 확인
+- 공통 파일 잠금: 세 작업이 겹치면 뒤 작업은 중복 실행하지 않고 종료. 이미지 작업의 잠금 생략은 종료 코드 2로 기록
 - API readiness 실패: DB 전송을 시도하지 않고 작업 종료
 
 상태와 로그 확인:
 
 ```bash
-systemctl list-timers --all boothhana-collector-weekly.timer boothhana-floorplans.timer
+systemctl list-timers --all boothhana-collector-weekly.timer boothhana-floorplans.timer boothhana-images.timer
 journalctl -u boothhana-collector-weekly.service -n 200 --no-pager
 journalctl -u boothhana-floorplans.service -n 200 --no-pager
+journalctl -u boothhana-images.service -n 200 --no-pager
 docker volume inspect boothhana-production_collector_state
 docker volume inspect boothhana-production_collector_auth
 ```

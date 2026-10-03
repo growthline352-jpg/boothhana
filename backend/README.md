@@ -40,6 +40,7 @@ cd backend
 ## API areas
 
 - `/api/public/**`: 공개 행사·부스·상품 조회
+- `GET /api/internal/subculture/v4/image-repair-events?limit=100&afterId=0`: 수집기 토큰으로 공개 행사의 이미지 보완 대상을 ID 순서로 조회. `limit`은 1~100이며 마지막 행사 ID를 다음 `afterId`로 전달한다. 배포·후보 검토·저장·공개 검증은 [이미지 보완 절차](../collector/IMAGE_REPAIR_KO.md)를 따른다.
 - `/api/me`, `/api/me/reservations/**`: 로그인 사용자와 자신의 예약
 - `GET /api/public/interests`: `InterestTaxonomy`가 정의한 분야별 행사 유형·취향 주제 옵션
 - `GET /api/me/interests`, `PUT /api/me/interests`: 현재 회원의 관심 설정 조회·저장. 저장에는 `expectedUserId`, `revision`, `onboardingStatus`, `fields`가 필요하며 다른 계정·과거 revision은 충돌로 거절합니다.

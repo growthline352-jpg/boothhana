@@ -37,6 +37,12 @@ class CatalogPostgresTests {
         db.execute(Files.readString(Path.of("../database/007_catalog_review_fixes.sql")));
         db.execute(Files.readString(Path.of("../database/008_catalog_presentation.sql")));
         db.execute(Files.readString(Path.of("../database/009_floorplan_automation.sql")));
+        // Later catalog fields; commerce/account modules remain empty in this
+        // catalog-only fixture. Match their lookup keys without seeding real users.
+        db.execute("alter table subculture_catalog_asset add column offline_allowed boolean not null default false");
+        db.execute("alter table subculture_catalog_review_history add column actor_id bigint");
+        db.execute("create table catalog_creator_booth(participant_id bigint primary key references subculture_participant(id),event_id bigint not null references subculture_event_candidate(id),user_id bigint not null,base_booth_id bigint not null,unique(event_id,user_id))");
+        db.execute("create table support_ticket(id uuid primary key,kind varchar(24),category varchar(40),status varchar(24),client_context_json jsonb)");
         db.execute("create table catalog_operating_group(root_event_id bigint primary key,name text)");
         db.execute("create table catalog_operating_group_member(event_id bigint primary key,root_event_id bigint,position integer)");
         db.execute("create table event(id bigint primary key,name text);insert into event values(1,'unchanged commerce sentinel')");
@@ -61,6 +67,18 @@ class CatalogPostgresTests {
     long participant() {return ingest(stage("PARTICIPANTS",null)).participantIds().getFirst();}
     void reviewEvent() {long revision=((Number)service.eventDetail(eventId).get("revision")).longValue();tx.execute(s->service.editEvent(eventId,new EditInput(revision,"REVIEWED","test checked",Map.of())));}
     void reviewParticipant(long id) {var row=service.participant(id);tx.execute(s->service.editParticipant(id,new EditInput(row.revision(),"REVIEWED","test checked",Map.of())));}
+    @Test void assetSyncContinuesPastLegacyRecordsWithoutBannerArrays() {
+        long missing=copyRepairEvent("PENDING",false),explicitNull=copyRepairEvent("PENDING",false);
+        db.update("update subculture_event_candidate set payload_json=payload_json-'banners'-'discoveryLinks' where id=?",missing);
+        db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{banners}','null'::jsonb) where id=?",explicitNull);
+        var banner=new Banner("https://example.com/current.jpg","https://example.com/event","UNKNOWN",null,true);
+        db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{banners}',cast(? as jsonb)) where id=?",json.writeValueAsString(List.of(banner)),eventId);
+        var result=tx.execute(s->service.syncEventAssets(pipeline));
+        assertThat(result.get("registeredCandidates")).isEqualTo(1);
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where event_id=? and type='BANNER' and rights_state='PENDING'",Long.class,eventId)).isEqualTo(1);
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where event_id in (?,?)",Long.class,missing,explicitNull)).isZero();
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_publication",Long.class)).isZero();
+    }
     @Test void reviewedOperationStatusSurvivesPublicationAndDatabaseRead() {
         for(String state:List.of("CANCELED","POSTPONED","RESCHEDULED","SCHEDULED")) {
             long revision=((Number)service.eventDetail(eventId).get("revision")).longValue();
@@ -297,6 +315,54 @@ class CatalogPostgresTests {
         tx.execute(status->media.rights(a.id(),new RightsInput(a.revision(),"APPROVED","test permission","Public credit")));
         db.update("update subculture_catalog_asset set storage_state='STORED',object_key=? where id=?","verified/catalog/"+suffix+".png",a.id());
         return media.detail(a.id());
+    }
+    @Test void imageRepairUsesPublishedSnapshotAndOnlyEventBannerAssetsWithoutWriting() {
+        long participantId=participant();reviewParticipant(participantId);publishForBrowse();
+        String publishedName=service.event(eventId).name();
+        long publishedRevision=db.queryForObject("select event_revision from subculture_catalog_publication where event_id=?",Long.class,eventId);
+        var banner=readyBanner("repair-poster");
+        db.update("update subculture_catalog_asset set sha256=? where id=?","a".repeat(64),banner.id());
+        tx.execute(s->media.register(eventId,participantId,null,new Image("BANNER","https://example.com/participant.png","https://example.com/source",null,"participant banner")));
+        tx.execute(s->media.register(eventId,null,null,new Image("FLOOR_PLAN","https://example.com/map.png","https://example.com/source",null,"map")));
+        tx.execute(s->service.editEvent(eventId,new EditInput(publishedRevision,"PENDING","draft correction",Map.of("name","[TEST] private new name"))));
+        long before=db.queryForObject("select revision from subculture_event_candidate where id=?",Long.class,eventId);
+        var row=service.imageRepairTargets(100,0).getFirst();
+        assertThat(row.get("event")).isInstanceOf(EventData.class);
+        assertThat(((EventData)row.get("event")).name()).isEqualTo(publishedName);
+        assertThat(row.get("revision")).isEqualTo(publishedRevision);
+        assertThat((List<?>)row.get("assets")).hasSize(1);
+        assertThat(((AssetView)((List<?>)row.get("assets")).getFirst()).id()).isEqualTo(banner.id());
+        assertThat(row.get("storedHashes")).isEqualTo(Map.of(banner.id(),"a".repeat(64)));
+        assertThat(((AssetView)row.get("banner")).id()).isEqualTo(banner.id());
+        assertThat(db.queryForObject("select revision from subculture_event_candidate where id=?",Long.class,eventId)).isEqualTo(before);
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_asset",Long.class)).isEqualTo(4);
+        tx.execute(s->media.rights(banner.id(),new RightsInput(banner.revision(),"REJECTED","withdrawn","")));
+        assertThat(service.imageRepairTargets(100,0).getFirst().get("banner")).isNull();
+        assertThat((List<?>)service.imageRepairTargets(100,0).getFirst().get("assets")).hasSize(1);
+    }
+    long copyRepairEvent(String state,boolean published) {
+        long id=db.queryForObject("""
+            insert into subculture_event_candidate(identity_key,match_key,name,subcategory,venue_name,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state)
+            select ?,match_key,name,subcategory,venue_name,starts_on,ends_on,payload_json,payload_hash,warnings_json,?
+            from subculture_event_candidate where id=? returning id
+            """,Long.class,CollectionRules.sha(UUID.randomUUID().toString()),state,eventId);
+        if(published) db.update("insert into subculture_catalog_publication(event_id,event_revision,snapshot_json) select ?,event_revision,snapshot_json from subculture_catalog_publication where event_id=?",id,eventId);
+        return id;
+    }
+    @Test void imageRepairKeysetSkipsUnpublishedAndExcludedEventsAndHonorsSelection() {
+        publishForBrowse();long draft=copyRepairEvent("PENDING",false),excluded=copyRepairEvent("EXCLUDED",true),second=copyRepairEvent("REVIEWED",true);
+        assertThat(service.imageRepairTargets(1,0).stream().map(r->r.get("id"))).containsExactly(eventId);
+        assertThat(service.imageRepairTargets(1,eventId).stream().map(r->r.get("id"))).containsExactly(second);
+        assertThat(service.imageRepairTargets(100,second)).isEmpty();
+        assertThat(service.imageRepairTargets(100,0).stream().map(r->r.get("id"))).doesNotContain(draft,excluded);
+        readyBanner("first");var selected=readyBanner("selected");
+        tx.execute(s->media.selectBanner(eventId,new BannerInput(selected.id(),0,selected.revision())));
+        var row=service.imageRepairTargets(100,0).getFirst();
+        assertThat(row.get("selectedBannerAssetId")).isEqualTo(selected.id());
+        assertThat(((AssetView)row.get("banner")).id()).isEqualTo(selected.id());
+        assertThat(((List<?>)row.get("assets"))).hasSize(2);
+        assertThatThrownBy(()->service.imageRepairTargets(101,0)).hasMessageContaining("조회 범위");
+        assertThatThrownBy(()->service.imageRepairTargets(1,-1)).hasMessageContaining("조회 범위");
     }
     @Test void explicitBannerAgreesOnListAndDetailAndKeepsOtherImageRights() {
         publishForBrowse();var first=readyBanner("original");var corrected=readyBanner("corrected");

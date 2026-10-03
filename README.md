@@ -1,5 +1,7 @@
 > **현재 코드와 운영 배포 · GitHub/Vercel/Ubuntu/GCS**
 >
+> v0.2.9.0은 2026-10-04 운영 배포 승인을 받아 일괄 반영을 준비 중입니다. 배포와 운영 수락검사 완료 여부는 아직 확인되지 않았습니다. [공개 행사 이미지 보완 절차](collector/IMAGE_REPAIR_KO.md), [부스 상세 화면 동작](frontend/README.md#routes), [변경 내역](CHANGELOG.md)을 확인하세요.
+>
 > v0.2.4.0 관리자·업체 화면의 공개 행사 관리, 방문 안내 편집, 운영일 묶음과 SQL022 적용 순서는 [운영 화면 안내](docs/OPERATIONS_CONSOLE_SYNC_KO.md)를 확인하세요.
 >
 > 현재 운영은 GitHub `main` 기반 Vercel 프런트와 Ubuntu의 BoothHana 전용 API·Cloudflare Tunnel을 사용합니다. 공개 이미지와 비공개 첨부는 Google Cloud Storage를 사용합니다. 변경 배포는 해당 커밋의 CI와 실제 운영 수락검사 결과를 기준으로 확인합니다.

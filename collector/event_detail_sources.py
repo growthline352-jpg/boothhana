@@ -16,7 +16,6 @@ from pathlib import Path
 import re
 import time
 from urllib.parse import urlsplit
-from urllib.robotparser import RobotFileParser
 from zoneinfo import ZoneInfo
 
 from media_fetch import MediaError, PinnedHTTPS, check_url, public_addresses, request_target, fetch_image, fetch_html
@@ -84,10 +83,9 @@ def allowed_by_robots(url: str, hosts: list[str], timeout: int, cache: dict) -> 
     origin = parsed.scheme + '://' + parsed.netloc
     if origin not in cache:
         raw = fetch_document(origin + '/robots.txt', hosts, timeout, robots=True)
-        parser = RobotFileParser(origin + '/robots.txt')
-        parser.parse(raw.decode('utf-8-sig', 'strict').splitlines())
-        cache[origin] = parser
-    return cache[origin].can_fetch(AGENT, url)
+        cache[origin] = raw.decode('utf-8-sig', 'strict')
+    from robots_policy import allowed
+    return allowed(cache[origin], AGENT, url)
 
 
 class DetailHTML(HTMLParser):

@@ -33,6 +33,13 @@ class PosterTests(unittest.TestCase):
   api=AdminApi.__new__(AdminApi);api.event=lambda id:dict(event=dict(sources=[dict(url=PAGE)]),assets=[])
   with patch('backfill_public_media.source_html',return_value=HTML),patch('event_detail_sources.allowed_by_robots',return_value=True):rows,note=discover_generic_banners(api,[dict(id=1,name='행사')])
   self.assertEqual(len(rows),1);self.assertTrue(rows[0].image_url.endswith('/poster.jpg'))
+ def test_generic_discovery_keeps_body_and_background_when_no_poster_marker_exists(self):
+  api=AdminApi.__new__(AdminApi);api.event=lambda id:dict(event=dict(sources=[dict(url=PAGE)]),assets=[])
+  html='<h1>행사 안내</h1><img data-src="/actual.jpg"><div style="background-image:url(/keyvisual.jpg)"></div>'
+  with patch('backfill_public_media.source_html',return_value=html),patch('event_detail_sources.allowed_by_robots',return_value=True):rows,_=discover_generic_banners(api,[dict(id=1,name='행사')])
+  self.assertEqual(rows[0].image_url,'https://festival.seoul.go.kr/actual.jpg')
+  with patch('backfill_public_media.source_html',return_value='<h1>행사 안내</h1><div style="background-image:url(/keyvisual.jpg)"></div>'),patch('event_detail_sources.allowed_by_robots',return_value=True):rows,_=discover_generic_banners(api,[dict(id=1,name='행사')])
+  self.assertEqual(rows[0].image_url,'https://festival.seoul.go.kr/keyvisual.jpg')
  def test_rejected_stored_site_image_does_not_suppress_poster_rediscovery(self):
   api=AdminApi.__new__(AdminApi);api.event=lambda id:dict(event=dict(sources=[dict(url=PAGE)]),assets=[dict(type='BANNER',storageState='STORED',rightsState='REJECTED')])
   with patch('backfill_public_media.source_html',return_value=HTML),patch('event_detail_sources.allowed_by_robots',return_value=True):rows,_=discover_generic_banners(api,[dict(id=1,name='행사')])

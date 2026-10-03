@@ -16,5 +16,5 @@ fi
 
 install -m 0644 "$SCRIPT_DIR"/systemd/*.service "$SCRIPT_DIR"/systemd/*.timer /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now boothhana-collector-weekly.timer boothhana-floorplans.timer
-systemctl list-timers --all boothhana-collector-weekly.timer boothhana-floorplans.timer
+systemctl enable --now boothhana-collector-weekly.timer boothhana-floorplans.timer boothhana-images.timer
+systemctl list-timers --all boothhana-collector-weekly.timer boothhana-floorplans.timer boothhana-images.timer

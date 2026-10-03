@@ -105,7 +105,6 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
           <span>부스 위치</span><strong>{place.code}</strong><small>{place.hall}{place.zone ? ` · ${place.zone}` : ''}</small>
         </div>
         <div className="booth-detail-copy">
-          <OwnershipPanel eventId={eventId} participantId={row.id}/>
           <h2 id={`booth-detail-title-${row.id}`} ref={headingRef} tabIndex={-1}>{row.participant.registrationName}</h2>
           <p className="booth-detail-members">{members.length ? members.join(' · ') : '참가자명 미확인'}</p>
           {topics.length > 0 && <div className="booth-detail-tags">{topics.map(topic => <span key={topic}>{topic}</span>)}</div>}
@@ -119,12 +118,13 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
             <SaveButton target={{ type: 'PARTICIPANT', eventId, id: row.id, participantId: row.id }} day={day} hall={hall}/>
             <ShareQr target={{ type: 'PARTICIPANT', eventId, id: row.id, participantId: row.id }} day={day} hall={hall} title={row.participant.registrationName}/>
           </div>
+          <OwnershipPanel eventId={eventId} participantId={row.id}/>
         </div>
       </div>
       <div className={`booth-detail-gallery count-${images.length}`}>
         {images.length > 0 ? images.map((asset, index) => <figure key={asset.id} className={index === 0 ? 'is-main' : ''}>
           <ContentImage url={asset.url} kind="booth" alt={asset.caption || `${row.participant.registrationName} 홍보 이미지 ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'}/>
-          <figcaption>{asset.credit} · <SafeLink url={asset.attribution}>출처</SafeLink></figcaption>
+          <figcaption>{asset.credit} · <SafeLink url={asset.url}>크게 보기</SafeLink> · <SafeLink url={asset.attribution}>출처</SafeLink></figcaption>
         </figure>) : <figure className="booth-detail-fallback"><ContentImage url={null} kind="booth" alt="" loading="eager"/></figure>}
       </div>
     </div>
