@@ -1,5 +1,5 @@
 .analytics-settings { color: inherit; }
 .analytics-settings > button { background: none; border: 0; text-decoration: underline; cursor: pointer; font: inherit; color: inherit; }
-.analytics-notice { position: fixed; z-index: 100; bottom: 80px; left: 16px; width: min(440px, calc(100vw - 32px)); padding: 20px; background: #fff; color: #253446; border: 1px solid #cbd5df; border-radius: 12px; box-shadow: 0 6px 30px #172b4d20; }
+.analytics-notice { position: fixed; z-index: 100; bottom: 80px; left: 16px; width: min(440px, calc(100vw - 32px)); padding: 20px; background: #fff; color: #253446; font-size: 14px; border: 1px solid #cbd5df; border-radius: 12px; box-shadow: 0 6px 30px #172b4d20; }
 .analytics-settings .analytics-notice p { margin: 10px 0 16px; font-size: 13px; line-height: 1.6; color: inherit; }
 .analytics-notice > div { display: flex; gap: 12px; justify-content: flex-end; }

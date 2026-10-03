@@ -47,7 +47,7 @@ it.each(['granted', 'denied'] as const)('retains %s across all four sites and re
 it('migrates an existing denial and removes the legacy origin choice', () => {
   local().set(CONSENT_KEY, 'denied')
   expect(readConsent()).toBe('denied')
-  expect(cookie).toBe(`${key}=denied`)
+  expect(cookie).toMatch(new RegExp(`^${key}=denied\\.\\d+$`))
   expect(local().has(CONSENT_KEY)).toBe(false)
 })
 it('shared withdrawal wins over a stale grant in another host', () => {
@@ -76,9 +76,18 @@ it('retains choices when cookies are blocked, even across reloads', async () => 
   vi.resetModules()
   expect((await import('./consent')).readConsent()).toBe('denied')
 })
-it('honors withdrawal in the current tab even when an existing cookie cannot be overwritten', () => {
+it('retains a newer withdrawal across reloads when an existing cookie cannot be overwritten', async () => {
   saveConsent('granted'); blocked = true; saveConsent('denied')
   expect(readConsent()).toBe('denied')
+  vi.resetModules()
+  expect((await import('./consent')).readConsent()).toBe('denied')
+})
+it('a newer shared choice replaces a previously blocked local fallback', () => {
+  saveConsent('granted'); blocked = true; saveConsent('denied')
+  blocked = false; host = 'festival.boothana.kr'
+  saveConsent('denied'); saveConsent('granted')
+  host = 'subculture.boothana.kr'
+  expect(readConsent()).toBe('granted')
 })
 it('retains a choice during remounts when all storage is blocked', () => {
   blocked = true
@@ -92,5 +101,5 @@ it('does not share production choices with a preview host', () => {
   saveConsent('granted'); host = 'preview.vercel.app'
   expect(readConsent()).toBeNull()
   saveConsent('denied')
-  expect(cookie).toBe(`${key}=granted`)
+  expect(cookie).toMatch(new RegExp(`^${key}=granted\\.\\d+$`))
 })
