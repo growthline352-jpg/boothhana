@@ -24,11 +24,16 @@
         "https://comicw.net/",
         "https://projectdoll.net/",
         "https://illustar.net/",
-        "https://agfkorea.com/"
+        "https://agfkorea.com/",
+        "https://www.ehyundai.com/",
+        "https://www.lotteshopping.com/",
+        "https://www.shinsegae.com/"
       ],
       "queryTemplates": [
         "{year} {month} 서브컬처 동인 인형 문구 굿즈 행사 공식",
-        "{year} {month} 박람회 축제 서울 경기 공식 주최"
+        "{year} {month} 박람회 축제 서울 경기 공식 주최",
+        "{year}년 {month}월 서울 경기 팝업스토어 체험형 전시형 팝업 공식 기간 예약",
+        "{start_date} {end_date} 캐릭터 브랜드 패션 뷰티 팝업 공식"
       ]
     },
     {
@@ -54,7 +59,8 @@
       ],
       "queryTemplates": [
         "{year} {month} 서울 경기 행사 예매 박람회 축제",
-        "{year} {month} 서브컬처 행사 티켓 예매"
+        "{year} {month} 서브컬처 행사 티켓 예매",
+        "{year} {month} 서울 경기 팝업 체험 전시 공식 예약 운영 기간"
       ]
     },
     {
@@ -72,7 +78,8 @@
       "seeds": [],
       "queryTemplates": [
         "{year} {month} 서브컬처 행사 일정 모음",
-        "{year} {month} 서울 경기 박람회 축제 일정 모음"
+        "{year} {month} 서울 경기 박람회 축제 일정 모음",
+        "{year} {month} 서울 경기 팝업스토어 일정 모음"
       ]
     }
   ]

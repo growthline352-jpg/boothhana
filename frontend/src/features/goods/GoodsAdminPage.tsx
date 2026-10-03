@@ -29,6 +29,6 @@ function GoodsSettingRow({row,reload}:{row:GoodsCandidate;reload:()=>Promise<voi
     finally{busyRef.current=false;setBusy(false)}
   }
   return <tr><td><strong>{row.name}</strong><small>{row.booth_name} · {row.event_name}</small></td><td>{Number(row.units).toLocaleString('ko-KR')}개<small>취소 제외 · 결제 검증 아님</small></td><td><div className="goods-admin-setting">
-    <select className="select" disabled={busy} value={category} onChange={e=>setCategory(e.target.value)} aria-label={`${row.name} 노출 분야`}><option value="SUBCULTURE">서브컬처</option><option value="EXHIBITION">박람회</option><option value="FESTIVAL">축제</option></select>
+    <select className="select" disabled={busy} value={category} onChange={e=>setCategory(e.target.value)} aria-label={`${row.name} 노출 분야`}><option value="SUBCULTURE">서브컬처</option><option value="EXHIBITION">박람회</option><option value="FESTIVAL">축제</option><option value="POPUP">팝업</option></select>
     <label><input type="checkbox" disabled={busy} checked={enabled} onChange={e=>setEnabled(e.target.checked)}/> 메인 노출 허용</label><button className="btn primary" disabled={busy} onClick={()=>void save()}>{busy?'저장 중…':'저장'}</button></div>{message&&<p role="status">{message}</p>}</td></tr>
 }
