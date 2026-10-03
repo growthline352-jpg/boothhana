@@ -117,7 +117,11 @@
           "code": "POPUP_STORE",
           "label": "팝업스토어",
           "types": [
-            "POPUP_STORE"
+            "POPUP_STORE",
+            "POPUP_RETAIL",
+            "POPUP_EXPERIENCE",
+            "POPUP_EXHIBITION",
+            "POPUP_MIXED"
           ],
           "subjects": [],
           "works": []
@@ -325,6 +329,17 @@
             "FURRY_CONVENTION"
           ],
           "works": []
+        },
+        {
+          "code": "CHARACTER_IP",
+          "label": "캐릭터·IP",
+          "types": [],
+          "subjects": [
+            "CHARACTER_IP",
+            "캐릭터 IP",
+            "캐릭터·IP"
+          ],
+          "works": []
         }
       ],
       "key": "subculture",
@@ -389,6 +404,12 @@
           "code": "FAN_CONVENTION",
           "label": "팬 컨벤션"
         }
+      ],
+      "relatedTypes": [
+        "POPUP_RETAIL",
+        "POPUP_EXPERIENCE",
+        "POPUP_EXHIBITION",
+        "POPUP_MIXED"
       ]
     },
     {
@@ -892,6 +913,250 @@
         {
           "code": "MUSIC_FESTIVAL",
           "label": "음악 페스티벌"
+        }
+      ]
+    },
+    {
+      "key": "popups",
+      "code": "POPUP",
+      "label": "팝업",
+      "types": [
+        {
+          "code": "POPUP_RETAIL",
+          "label": "판매형 팝업"
+        },
+        {
+          "code": "POPUP_EXPERIENCE",
+          "label": "체험형 팝업"
+        },
+        {
+          "code": "POPUP_EXHIBITION",
+          "label": "전시형 팝업"
+        },
+        {
+          "code": "POPUP_MIXED",
+          "label": "복합형 팝업"
+        }
+      ],
+      "relatedTypes": [
+        "POPUP_STORE"
+      ],
+      "formats": [
+        {
+          "code": "POPUP_RETAIL",
+          "label": "판매형 팝업",
+          "types": [
+            "POPUP_RETAIL",
+            "POPUP_STORE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "POPUP_EXPERIENCE",
+          "label": "체험형 팝업",
+          "types": [
+            "POPUP_EXPERIENCE"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "POPUP_EXHIBITION",
+          "label": "전시형 팝업",
+          "types": [
+            "POPUP_EXHIBITION"
+          ],
+          "subjects": [],
+          "works": []
+        },
+        {
+          "code": "POPUP_MIXED",
+          "label": "복합형 팝업",
+          "types": [
+            "POPUP_MIXED"
+          ],
+          "subjects": [],
+          "works": []
+        }
+      ],
+      "topics": [
+        {
+          "code": "VOCALOID",
+          "label": "보컬로이드",
+          "types": [],
+          "subjects": [
+            "보컬로이드",
+            "vocaloid",
+            "하츠네 미쿠",
+            "하츠네미쿠",
+            "초음미쿠"
+          ],
+          "works": [
+            "하츠네 미쿠",
+            "하츠네미쿠",
+            "초음미쿠"
+          ]
+        },
+        {
+          "code": "VTUBER",
+          "label": "버튜버",
+          "types": [],
+          "subjects": [
+            "버튜버",
+            "버츄얼 유튜버",
+            "버추얼 유튜버",
+            "vtuber",
+            "버추얼",
+            "버츄얼",
+            "버추얼 콘텐츠",
+            "버츄얼 콘텐츠"
+          ],
+          "works": []
+        },
+        {
+          "code": "ANIME_MANGA",
+          "label": "애니·만화",
+          "types": [],
+          "subjects": [
+            "애니",
+            "애니메이션",
+            "만화",
+            "애니·만화",
+            "주술회전",
+            "하이큐",
+            "명탐정 코난",
+            "가비지타임",
+            "지브리",
+            "스튜디오 지브리",
+            "애니송",
+            "ANISONG",
+            "SEIYUU_ANISONG"
+          ],
+          "works": [
+            "주술회전",
+            "하이큐",
+            "명탐정 코난",
+            "가비지타임",
+            "지브리",
+            "스튜디오 지브리"
+          ]
+        },
+        {
+          "code": "GAME",
+          "label": "게임",
+          "types": [],
+          "subjects": [
+            "게임",
+            "리듬게임",
+            "원신",
+            "붕괴: 스타레일",
+            "붕괴 스타레일",
+            "젠레스 존 제로",
+            "블루 아카이브",
+            "블루아카이브",
+            "페르소나",
+            "GAME_OST_CONCERT",
+            "인디게임",
+            "INDIE_GAME"
+          ],
+          "works": [
+            "원신",
+            "붕괴: 스타레일",
+            "붕괴 스타레일",
+            "젠레스 존 제로",
+            "블루 아카이브",
+            "블루아카이브",
+            "페르소나"
+          ]
+        },
+        {
+          "code": "ILLUSTRATION",
+          "label": "일러스트·창작",
+          "types": [],
+          "subjects": [
+            "일러스트",
+            "일러스트레이션",
+            "창작",
+            "오리지널",
+            "CHARACTER_DESIGN",
+            "캐릭터 디자인",
+            "CHARACTER_ART",
+            "아트북",
+            "독립출판"
+          ],
+          "works": []
+        },
+        {
+          "code": "CHARACTER_IP",
+          "label": "캐릭터·IP",
+          "types": [],
+          "subjects": [
+            "CHARACTER_IP",
+            "캐릭터 IP",
+            "캐릭터·IP"
+          ],
+          "works": []
+        },
+        {
+          "code": "FASHION",
+          "label": "패션",
+          "types": [],
+          "subjects": [
+            "FASHION",
+            "패션"
+          ],
+          "works": []
+        },
+        {
+          "code": "BEAUTY",
+          "label": "뷰티",
+          "types": [],
+          "subjects": [
+            "BEAUTY",
+            "뷰티"
+          ],
+          "works": []
+        },
+        {
+          "code": "FOOD_DRINK",
+          "label": "먹거리·음료",
+          "types": [],
+          "subjects": [
+            "FOOD_DRINK",
+            "먹거리·음료"
+          ],
+          "works": []
+        },
+        {
+          "code": "LIVING",
+          "label": "생활·리빙",
+          "types": [],
+          "subjects": [
+            "LIVING",
+            "생활·리빙"
+          ],
+          "works": []
+        },
+        {
+          "code": "ART_DESIGN",
+          "label": "아트·디자인",
+          "types": [],
+          "subjects": [
+            "ART_DESIGN",
+            "아트·디자인"
+          ],
+          "works": []
+        },
+        {
+          "code": "SPORTS",
+          "label": "스포츠",
+          "types": [],
+          "subjects": [
+            "SPORTS",
+            "스포츠"
+          ],
+          "works": []
         }
       ]
     }

@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { categoryFor, injectCrawlableContent, injectMetadata, normalizePath, pageMetadata, renderCrawlableContent, siteOrigin } from '../seo/metadata.mjs'
-import { PORTAL_ORIGIN, categorySite, categoryRedirect, requestSiteOrigin } from '../seo/category-sites.mjs'
+import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryRedirect, requestSiteOrigin } from '../seo/category-sites.mjs'
 import { naverVerificationFor } from '../seo/naver-verification.mjs'
 
 const MAX_RESPONSE = 4 * 1024 * 1024
@@ -28,7 +28,7 @@ export async function readBoundedJson(response) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'))
 }
 
-const CATALOG_CATEGORY = { subculture: 'SUBCULTURE', exhibitions: 'EXHIBITION', festivals: 'FESTIVAL' }
+const CATALOG_CATEGORY = Object.fromEntries(Object.entries(CATEGORY_SITES).map(([key, site]) => [key, site.code]))
 const clean = value => typeof value === 'string' ? value.trim() : ''
 function catalogListing(rows) {
   if (!Array.isArray(rows)) return []
@@ -41,7 +41,7 @@ function catalogListing(rows) {
     const occurrence = Array.isArray(event.occurrences) ? event.occurrences[0] : null
     return [{
       id, name: dfesta ? '제35회 디. 페스타' : clean(event.name), description: clean(event.description), venue: clean(event.venueName), address: clean(event.address),
-      startDate: dfesta ? '2026-10-03' : clean(occurrence?.startDate), endDate: dfesta ? '2026-10-04' : clean(occurrence?.endDate), urlPath: `/discover/${id}`,
+      startDate: dfesta ? '2026-10-03' : clean(occurrence?.startDate), endDate: dfesta ? '2026-10-04' : clean(occurrence?.endDate), urlPath: `/discover/${id}`, category: categoryFor(event),
     }]
   })
 }

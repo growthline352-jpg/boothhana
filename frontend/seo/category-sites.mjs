@@ -1,6 +1,7 @@
 /** Fixed allowlist shared by HTML handlers and the SPA. Never trust arbitrary Host values. */
 export const PORTAL_ORIGIN = 'https://boothana.kr'
 export const CATEGORY_SITES = Object.freeze({
+  popups: { origin: 'https://popup.boothana.kr', label: '팝업', code: 'POPUP', name: '부스하나 팝업', description: '캐릭터·브랜드 팝업스토어, 체험형·전시형 팝업의 일정, 장소와 예약 정보를 찾아보세요.' },
   subculture: { origin: 'https://subculture.boothana.kr', label: '서브컬처', code: 'SUBCULTURE', name: '부스하나 서브컬처', description: '코믹·동인 행사, 온리전, 생일카페와 문구·굿즈 행사의 일정, 참가 부스, 판매 상품과 배치도를 찾아보세요.' },
   exhibitions: { origin: 'https://expo.boothana.kr', label: '박람회', code: 'EXHIBITION', name: '부스하나 박람회', description: '주류·와인, 웨딩, 생활·취미, 디자인과 산업 박람회의 일정, 전시장, 참가업체와 부스 배치도를 확인하세요.' },
   festivals: { origin: 'https://festival.boothana.kr', label: '축제', code: 'FESTIVAL', name: '부스하나 축제', description: '지역 축제, 음악·공연, 빛 축제와 먹거리 행사의 일정, 장소, 운영시간과 체험 부스를 찾아보세요.' },

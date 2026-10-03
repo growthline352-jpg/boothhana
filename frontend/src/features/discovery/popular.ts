@@ -20,7 +20,8 @@ function nextDate(row: PublicEventSummary, today: string): string {
 /** Zero saves is a real count only after the global ranking confirms no saved current events. */
 export function unsavedUpcomingEvents(rows: PublicEventSummary[], today: string): PopularEventSummary[] {
   // Exclude each source day before combining editions, preserving a remaining day's real ID.
-  const eligible = rows.filter(row => !['CANCELED', 'POSTPONED', 'RESCHEDULED'].includes(row.event.operationStatus?.state || '') && nextDate(row, today))
+  const unique = [...new Map(rows.map(row => [row.id, row])).values()]
+  const eligible = unique.filter(row => !['CANCELED', 'POSTPONED', 'RESCHEDULED'].includes(row.event.operationStatus?.state || '') && nextDate(row, today))
   const paired = [DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID].every(id => eligible.some(row => row.id === id && isDfestaDay(row.id, row.event.name)))
   return (eligible.some(row=>row.operatingGroup)?combineOperatingSummaries(eligible):paired ? combineDfestaSummaries(eligible) : eligible)
     .sort((a, b) => nextDate(a, today).localeCompare(nextDate(b, today)) || a.id - b.id)

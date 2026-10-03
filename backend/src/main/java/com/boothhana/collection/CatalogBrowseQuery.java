@@ -16,7 +16,7 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
         if(page<0||page>100000||size<1||size>100)throw new IllegalArgumentException("페이지 값을 확인해 주세요.");
         if(!CatalogTaxonomy.GROUPS.containsKey(category))throw new IllegalArgumentException("지원하지 않는 행사 분야입니다.");
         if(q.length()>100)throw new IllegalArgumentException("검색어는 100자 이하로 입력해 주세요.");
-        if(!subcategory.isEmpty()&&!CatalogTaxonomy.GROUPS.get(category).contains(subcategory))throw new IllegalArgumentException("선택한 분야의 세부 분류가 아닙니다.");
+        if(!subcategory.isEmpty()&&!CatalogTaxonomy.browseTypes(category).contains(subcategory))throw new IllegalArgumentException("선택한 분야의 세부 분류가 아닙니다.");
         if(!region.isEmpty()&&!CatalogTaxonomy.REGIONS.contains(region))throw new IllegalArgumentException("서울·경기만 지원합니다. 인천은 제외합니다.");
         validateDate(from);validateDate(to);
         if(!from.isEmpty()&&!to.isEmpty()&&from.compareTo(to)>0)throw new IllegalArgumentException("조회 시작일은 종료일 이후일 수 없습니다.");
@@ -30,11 +30,11 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
         catch(RuntimeException e){throw new IllegalArgumentException("날짜는 유효한 YYYY-MM-DD 형식이어야 합니다.");}
     }
     public String whereSql(){
-        var types=CatalogTaxonomy.GROUPS.get(category);
+        var args=new ArrayList<Object>();
         var sql=new StringBuilder("e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')");
-        sql.append(" and p.snapshot_json->'event'->>'subcategory' in (").append(String.join(",",Collections.nCopies(types.size(),"?"))).append(')');
+        sql.append(" and ").append(CatalogTaxonomy.scopeSql(category,"p.snapshot_json->'event'",args));
         if(!region.isEmpty())sql.append(" and p.snapshot_json->'event'->>'region'=?");
-        if(!subcategory.isEmpty())sql.append(" and p.snapshot_json->'event'->>'subcategory'=?");
+        if(!subcategory.isEmpty())sql.append(" and ").append(CatalogTaxonomy.subtypeSql(category,subcategory,"p.snapshot_json->'event'",args));
         if(!q.isEmpty())sql.append(" and strpos(lower(concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')),lower(?))>0");
         if(!from.isEmpty()||!to.isEmpty()){
             sql.append(" and exists(select 1 from jsonb_array_elements(coalesce(p.snapshot_json->'event'->'occurrences','[]'::jsonb)) d where true");
@@ -45,8 +45,8 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
         return sql.toString();
     }
     public List<Object> whereArgs(){
-        List<Object> a=new ArrayList<>(CatalogTaxonomy.GROUPS.get(category));
-        if(!region.isEmpty())a.add(region);if(!subcategory.isEmpty())a.add(subcategory);if(!q.isEmpty())a.add(q);
+        List<Object> a=new ArrayList<>();CatalogTaxonomy.scopeSql(category,"p.snapshot_json->'event'",a);
+        if(!region.isEmpty())a.add(region);if(!subcategory.isEmpty())CatalogTaxonomy.subtypeSql(category,subcategory,"p.snapshot_json->'event'",a);if(!q.isEmpty())a.add(q);
         if(!from.isEmpty())a.add(from);if(!to.isEmpty())a.add(to);return a;
     }
     public String orderSql(){

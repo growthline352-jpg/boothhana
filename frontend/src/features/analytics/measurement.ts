@@ -1,7 +1,7 @@
 // Public measurement identifier, not an authentication secret.
 export const MEASUREMENT_ID = 'G-NBLNPS9QHV'
 export const CONSENT_KEY = 'boothhana.analytics-consent.v1'
-const hosts = ['boothana.kr', 'subculture.boothana.kr', 'expo.boothana.kr', 'festival.boothana.kr']
+const hosts = ['boothana.kr', 'subculture.boothana.kr', 'expo.boothana.kr', 'festival.boothana.kr', 'popup.boothana.kr']
 export type Consent = 'granted' | 'denied' | null
 export function publicPage(href: string) {
   try {

@@ -6,6 +6,16 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.*;
 
 class InterestTaxonomyTests {
+    @Test void fourFieldsAndPopupLegacyFormatsRemainCompatible(){
+        var selections=new LinkedHashMap<String,InterestTaxonomy.Selection>();
+        for(var field:TaxonomyRegistry.FIELDS)selections.put(field.code(),new InterestTaxonomy.Selection(List.of(),List.of()));
+        selections.put("POPUP",new InterestTaxonomy.Selection(List.of("POPUP_RETAIL"),List.of("CHARACTER_IP")));
+        assertThat(InterestTaxonomy.validate(selections)).hasSize(4);
+        var args=new ArrayList<Object>();InterestTaxonomy.predicate("POPUP",selections.get("POPUP"),"p",args);
+        assertThat(args).contains("POPUP_RETAIL","POPUP_STORE","character_ip");
+        assertThat(com.boothhana.collection.CatalogTaxonomy.category("POPUP_STORE")).isEqualTo("SUBCULTURE");
+        assertThat(com.boothhana.collection.CatalogTaxonomy.category("POPUP_EXPERIENCE")).isEqualTo("POPUP");
+    }
     @Test void sharedRegistryRetainsSavedCodesAndAddsIndependentTopics() {
         var old=Map.of("EXHIBITION",new InterestTaxonomy.Selection(List.of("FAIR"),List.of("LIFESTYLE")),
             "FESTIVAL",new InterestTaxonomy.Selection(List.of("LIVE"),List.of("MUSIC")));

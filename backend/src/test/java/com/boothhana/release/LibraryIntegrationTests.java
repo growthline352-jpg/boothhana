@@ -47,6 +47,29 @@ class LibraryIntegrationTests {
   var good=Map.of("name","[TEST] Leaf keyring","summary","초록 식물 키링","categories",List.of("키링"),"productUrl","https://example.com/product","saleState","PLANNED","evidenceScope","EVENT_LISTED");
   snapshot=new LinkedHashMap<>();snapshot.put("event",e);snapshot.put("participants",List.of(Map.of("id",participant,"participant",p,"sales",Map.of("summary","초록 식물 소품","categories",List.of("키링")),"productRows",List.of(Map.of("id",product,"data",good)))));snapshot.put("publishedAt",Instant.now().toString());publish();
  }
+ @Test @org.springframework.transaction.annotation.Transactional @SuppressWarnings("unchecked")
+ void popupDiscoverySharesIdentityAndSavesOnlyForConfirmedSubcultureTopics(){
+  var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
+  var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
+  String future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(2).toString(),name="[TEST] popup "+event;
+  e.put("name",name);e.put("region","SEOUL");e.put("occurrences",List.of(Map.of("startDate",future,"endDate",future)));
+  for(long owner:List.of(user,other))db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,?,'EVENT',?,'{}'::jsonb)",UUID.randomUUID(),owner,event,event);
+  for(var sample:List.of(List.of("POPUP_STORE","GAME","true"),List.of("POPUP_RETAIL"," game ","true"),List.of("POPUP_EXPERIENCE","CHARACTER_IP","true"),List.of("POPUP_EXHIBITION","FASHION","false"),List.of("POPUP_MIXED","BEAUTY","false"))){
+   String type=sample.get(0);boolean subculture=Boolean.parseBoolean(sample.get(2));
+   db.update("update subculture_event_candidate set subcategory=? where id=?",type,event);
+   e.put("subcategory",type);e.put("subjects",List.of(sample.get(1)));snapshot.put("event",e);publish();
+   for(String category:List.of("POPUP","SUBCULTURE","EXHIBITION","FESTIVAL")){
+    boolean shown=category.equals("POPUP")||category.equals("SUBCULTURE")&&subculture;
+    var query=new com.boothhana.collection.CatalogBrowseQuery(0,20,category,name,"",future,future,"DATE_ASC","SEOUL");
+    assertThat(publications.list(query).total()).isEqualTo(shown?1:0);
+    assertThat(publications.groupedList(query).total()).isEqualTo(shown?1:0);
+    assertThat(publications.popular(12,category).stream().anyMatch(row->((Number)row.get("id")).longValue()==event)).isEqualTo(shown);
+   }
+   var ranked=publications.popular(12,"POPUP").stream().filter(row->((Number)row.get("id")).longValue()==event).findFirst().orElseThrow();
+   assertThat(((Number)ranked.get("saveCount")).longValue()).isEqualTo(2);
+   if(type.equals("POPUP_STORE")||type.equals("POPUP_RETAIL"))assertThat(publications.list(new com.boothhana.collection.CatalogBrowseQuery(0,20,"POPUP",name,"POPUP_RETAIL",future,future,"RECENT")).total()).isEqualTo(1);
+  }
+ }
  void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
  Save input(){return new Save(new Target("PRODUCT",event,product,participant),day,"1관");}
  @Test void expandedTopicsMatchPublishedSubjectsWithActualPostgres() {
