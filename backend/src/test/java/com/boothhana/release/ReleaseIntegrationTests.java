@@ -176,7 +176,8 @@ class ReleaseIntegrationTests {
   assertThat(accepted).doesNotContainKeys("body","requesterId","searchQuery");
   db.update("update subculture_pipeline_run set state='SUCCESS',finished_at=now() where id=?",pipeline);
  }
- @Test void enrichmentPaginationAndAssetSyncReachBeyond200Events() {
+ @Test @org.springframework.transaction.annotation.Transactional
+ void enrichmentPaginationAndAssetSyncReachBeyond200Events() {
   long seed=catalogEvent("[TEST] pagination "+UUID.randomUUID());
   long after=db.queryForObject("select max(id) from subculture_event_candidate",Long.class);
   var banner=new Banner("https://example.com/current.jpg","https://example.com/event","UNKNOWN",null,true);
