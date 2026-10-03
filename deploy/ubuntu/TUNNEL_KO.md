@@ -57,10 +57,11 @@ sudo가 필요 없고 로그인 세션이 종료되어도 실행된다. 기존 �
 CLI 로그인이 만료되거나 사용량이 소진되면 인증/한도를 확인하고 재실행한다.
 서버가 꺼진 동안 놓친 cron은 자동 소급 실행하지 않는다. 전체 실제 수집 성공 여부는 첫 실행 로그로 확인해야 한다.
 
-## 이미지 보완 작업 — 일괄 배포 후 추가 예정
+## v0.2.9.0 이미지 보완 작업 배포 준비
 
-2026-10-03 현재 운영 cron에는 아직 설치하지 않았다. API와 수집기 배포 및
-`run-tunnel-collector.sh` 교체 후 bpdeploy crontab에 추가한다.
+2026-10-04 운영 배포 승인을 받아 일괄 반영을 준비 중이며 설치·첫 실행 완료는 아직 확인되지 않았다.
+해당 릴리스 커밋의 CI 확인, 같은 커밋의 API·수집기 배포와 API 준비 상태 확인 및
+`run-tunnel-collector.sh` 교체 후 bpdeploy crontab에 추가한다. 기존 주간·배치도 cron은 유지한다.
 
 ```cron
 30 18 * * * /bin/bash /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh images
@@ -68,7 +69,7 @@ CLI 로그인이 만료되거나 사용량이 소진되면 인증/한도를 확�
 
 이미지 작업은 LLM CLI 로그인/한도를 사용하지 않으며, 기존 collector 토큰과 호스트 정책을 사용한다.
 `logs/images.status`와 수집기 상태 디렉터리의 `image-repair-v1/report.json`에서 미완료 원인을 확인한다.
-잠금 생략은 `2 SKIPPED_LOCK`으로 기록한다. 적용·검토 절차는 `collector/IMAGE_REPAIR_KO.md`를 참고한다.
+잠금 생략은 `2 SKIPPED_LOCK`으로 기록한다. 적용·검토·첫 실행 수락 절차는 [공개 행사 이미지 누락 보완](../../collector/IMAGE_REPAIR_KO.md)을 참고한다.
 
 ## 운영 전환 및 복구
 
