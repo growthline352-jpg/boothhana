@@ -9,7 +9,8 @@ from datetime import datetime,timedelta
 from pathlib import Path
 from run import ROOT,SEOUL,RunError,run_lock,utcnow,write_json,date_window,execute_search,audit_opened_urls,canonical_audit_url,config as base_config
 from rules import inspect_result,public_url
-from catalog_rules import parse_schema,validate_stage,validate_discovery,check_participant
+from catalog_rules import parse_schema,validate_stage,validate_discovery,check_participant,allowed_source
+from visitor_guide import retain_valid_guide_rows
 from catalog_transport import Api
 from media_fetch import fetch_image
 from data_quality import attempt_record,merge_enrichment,missing_reasons,select_targets
@@ -542,6 +543,14 @@ class Pipeline:
         if result['searchStatus']=='FAILED':raise RunError('Event enrichment failed; previous event data is preserved')
         result,date_issues=normalize_detail_sales_dates(result,details)
         if date_issues:self.issues.append(key+': '+', '.join(date_issues))
+        discarded=[]
+        for index,event in enumerate(result['events']):
+            result['events'][index],rows=retain_valid_guide_rows(event,lambda url:allowed_source(url,self.cfg['blockedSourceHosts']))
+            discarded.extend(rows)
+        if discarded:
+            self.issues.append(key+': INVALID_VISITOR_GUIDE_ROWS '+str(len(discarded)))
+            if result['searchStatus']=='COMPLETE':result={**result,'searchStatus':'PARTIAL'}
+            result={**result,'summary':(result['summary']+' 검증되지 않은 관람 안내 '+str(len(discarded))+'개를 제외한 부분 수집입니다.')[:2000]}
         from rules import parse_date
         accepted,rejected=validate_discovery(result,parse_date(self.scope['startDate']),parse_date(self.scope['endDate']),self.cfg['blockedSourceHosts'])
         if rejected or len(accepted)!=1:raise RunError('Event enrichment must return exactly one valid target event')

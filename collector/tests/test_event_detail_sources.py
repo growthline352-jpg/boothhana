@@ -7,7 +7,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import event_detail_sources as details
 import weekly
 from data_quality import missing_reasons,merge_enrichment,select_targets,attempt_record
-from visitor_guide import validate_guide
+from visitor_guide import validate_guide,retain_valid_guide_rows
 from rules import public_url
 from run import output_schema_for_cli
 
@@ -144,6 +144,21 @@ class DetailSourceTests(unittest.TestCase):
         merged=merge_enrichment(value,observed)
         self.assertEqual(merged['visitorGuide']['sales'][0]['note'],'딸기라떼 6,500원')
         self.assertTrue(any('관람 안내 충돌 검토' in note and URL in note for note in merged['warnings']))
+    def test_unverified_rows_are_removed_without_losing_confirmed_menu_and_faq(self):
+        from test_visitor_guide import ticket,program
+        value=event();bad_ticket=ticket();bad_ticket.update(status='UNKNOWN',priceAmount='0',sourceUrl=URL)
+        dependent=program();dependent.update(ticketId=bad_ticket['id'],sourceUrl=URL)
+        sale=dict(id='menu',title='메뉴',salesMethod='현장 주문',salesStartsAt=None,salesEndsAt=None,pickupDay=None,note='딸기라떼 6,500원',sourceUrl=URL,checkedOn='2026-10-03')
+        faq=dict(id='qr',question='QR 안내?',answer='캡처 불가',status='CONFIRMED',sourceUrl=URL,checkedOn='2026-10-03')
+        coverage=dict(kind='PARTICIPANTS',status='INACCESSIBLE',note='미확인',sourceUrl=None,checkedOn='2026-10-03')
+        value['visitorGuide']=dict(tickets=[bad_ticket],programs=[dependent],faq=[faq],sales=[sale],coverage=[coverage])
+        output,rejected=retain_valid_guide_rows(value,public_url)
+        self.assertEqual(rejected,['tickets/general','programs/stage','coverage/PARTICIPANTS'])
+        self.assertEqual(output['visitorGuide']['tickets'],[])
+        self.assertEqual(output['visitorGuide']['programs'],[])
+        self.assertEqual(output['visitorGuide']['sales'],[sale]);self.assertEqual(output['visitorGuide']['faq'],[faq])
+        self.assertEqual(value['visitorGuide']['tickets'],[bad_ticket])
+        validate_guide(output['visitorGuide'],value['occurrences'],public_url)
 
 class DetailPipelineTests(unittest.TestCase):
     def test_images_reach_cli_source_audit_and_missing_menu_prevents_complete(self):
