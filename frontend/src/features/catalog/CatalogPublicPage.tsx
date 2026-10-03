@@ -181,7 +181,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
         <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
         <div><dt>장소</dt><dd>{e.venueName||'장소 미공개·미확인'}{e.address&&<small>{e.address}</small>}</dd></div>
         <div><dt>입장</dt><dd>{e.admission||'입장 조건 미확인 · 무료 여부는 주최 공지를 확인하세요.'}</dd></div></dl>
-      <div className="visit-primary-actions"><button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
+      <div className="visit-primary-actions">{currentValue.participants.length>0&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
       <div className="visit-utility-actions">{usableAddress(e.address)&&<><SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(e.address!)}`}>장소 지도 ↗</SafeLink><button type="button" onClick={()=>void copyAddress()}>주소 복사</button></>}
         <SaveButton target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall}/><ShareQr target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall} title={e.name}/><ReportLink target={{namespace:'CATALOG',type:'EVENT',eventId:currentEventId,id:currentEventId,day:state.day,hall:state.hall}} viewedVersion={currentValue.publishedAt}/></div><p className="item-meta">로그인 없이 둘러볼 수 있어요. 예매·구매는 공식 안내를 확인하세요.</p>
     </div></header>
