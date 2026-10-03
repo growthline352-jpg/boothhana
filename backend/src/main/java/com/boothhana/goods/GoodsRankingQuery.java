@@ -11,7 +11,7 @@ public final class GoodsRankingQuery {
     public static final String BASIS="POS_LOGGED_UNITS";
     private GoodsRankingQuery() {}
     public static String category(String value) {
-        if (value == null || !Set.of("SUBCULTURE", "EXHIBITION", "FESTIVAL").contains(value))
+        if (value == null || !Set.of("SUBCULTURE", "EXHIBITION", "FESTIVAL", "POPUP").contains(value))
             throw new IllegalArgumentException("지원하지 않는 굿즈 분류입니다.");
         return value;
     }

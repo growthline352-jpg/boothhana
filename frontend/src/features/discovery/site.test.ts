@@ -57,6 +57,7 @@ describe('category site routing', () => {
     ['subculture.boothana.kr', 'subculture', 'SUBCULTURE'],
     ['expo.boothana.kr', 'exhibitions', 'EXHIBITION'],
     ['festival.boothana.kr', 'festivals', 'FESTIVAL'],
+    ['popup.boothana.kr', 'popups', 'POPUP'],
   ])('locks %s to its own category feed', (host, category, code) => {
     vi.stubGlobal('window', { location: { host } })
     const state = parseBrowse(new URLSearchParams('category=subculture'))

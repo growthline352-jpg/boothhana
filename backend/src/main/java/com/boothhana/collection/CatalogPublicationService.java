@@ -151,11 +151,11 @@ public class CatalogPublicationService {
         if(limit<1||limit>12)throw ApiException.badRequest("인기 행사 조회 개수를 확인해 주세요.");
         if(category==null)category="";
         if(!category.isEmpty()&&!CatalogTaxonomy.GROUPS.containsKey(category))throw ApiException.badRequest("행사 분야를 확인해 주세요.");
-        Collection<String> selected=category.isEmpty()?CatalogTaxonomy.TYPES:CatalogTaxonomy.GROUPS.get(category);
+        List<Object> args=new ArrayList<>();
+        String scope=CatalogTaxonomy.scopeSql(category,"p.snapshot_json->'event'",args);
         if(region==null)region="";
         if(!Set.of("","SEOUL","GYEONGGI").contains(region))throw ApiException.badRequest("지역을 확인해 주세요.");
-        String types=String.join(",",Collections.nCopies(selected.size(),"?"));
-        List<Object> args=new ArrayList<>(selected);
+
         String regionSql=region.isEmpty()?"true":"p.snapshot_json->'event'->>'region'=?";
         if(!region.isEmpty())args.add(region);
         String today=LocalDate.now(ZoneId.of("Asia/Seoul")).toString();
@@ -168,7 +168,7 @@ public class CatalogPublicationService {
             with visible as (
               select p.* from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
               where e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')
-                and p.snapshot_json->'event'->>'subcategory' in (%s)
+                and %s
                 and (%s) and coalesce(p.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED','RESCHEDULED')
             ), editions as (
               select p.*,g.name group_name,first_value(p.event_id) over (
@@ -199,7 +199,7 @@ public class CatalogPublicationService {
               where sibling.edition_id=p.event_id and d->>'endDate'>=?)
             order by %s
             limit ?
-            """.formatted(types,regionSql,saveJoin,interests,order),args.toArray());
+            """.formatted(scope,regionSql,saveJoin,interests,order),args.toArray());
         return summaries(rows);
     }
     private List<Map<String,Object>> summaries(List<Map<String,Object>> rows) {

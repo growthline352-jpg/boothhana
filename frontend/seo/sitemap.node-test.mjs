@@ -32,5 +32,5 @@ test('published event discovery combines all public categories and removes dupli
   }
   const rows = await publishedEvents({ apiBase: 'https://api.example', fetcher })
   assert.deepEqual(rows.map(row => row.id), [1, 2, 3])
-  assert.equal(seen.length, 3)
+  assert.equal(seen.length, 4)
 })

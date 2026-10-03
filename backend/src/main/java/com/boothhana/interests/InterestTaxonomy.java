@@ -17,7 +17,7 @@ public final class InterestTaxonomy {
         .map(f -> new Field(f.code(),f.label(),f.formats(),f.topics())).toList();
     public static Field field(String category){return FIELDS.stream().filter(f->f.code().equals(category)).findFirst().orElseThrow(()->ApiException.badRequest("행사 분야를 확인해 주세요."));}
     public static Map<String,Selection> validate(Map<String,Selection> fields){
-        if(fields==null||fields.size()>3)throw ApiException.badRequest("관심 분야를 확인해 주세요.");
+        if(fields==null||fields.size()>TaxonomyRegistry.FIELDS.size())throw ApiException.badRequest("관심 분야를 확인해 주세요.");
         Map<String,Selection> result=new LinkedHashMap<>();
         fields.forEach((category,selection)->{
             Field options=field(category);if(selection==null)throw ApiException.badRequest("관심 항목을 확인해 주세요.");

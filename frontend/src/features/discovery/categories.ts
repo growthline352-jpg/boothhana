@@ -2,9 +2,9 @@ import { eventTypeOptions } from '../interests/taxonomy'
 import { categoryHome } from '../../../seo/category-sites.mjs'
 import { categorySitesActive, currentSiteCategory, currentSiteOrigin, isLocalPreview } from './site'
 /** v18: explicit taxonomy shared with collector/backend. Do not classify by names. */
-export type CategoryKey = 'subculture' | 'exhibitions' | 'festivals'
+export type CategoryKey = 'subculture' | 'exhibitions' | 'festivals' | 'popups'
 export interface DiscoveryCategory {
-  key: CategoryKey; code: 'SUBCULTURE' | 'EXHIBITION' | 'FESTIVAL'; label: string
+  key: CategoryKey; code: 'SUBCULTURE' | 'EXHIBITION' | 'FESTIVAL' | 'POPUP'; label: string
   eyebrow: string; title: string; emphasis: string; description: string; searchHint: string
   enabled: boolean; icon: 'sparkles' | 'building' | 'festival'; filters: { value: string; label: string }[]
 }
@@ -24,6 +24,11 @@ export const categories: readonly DiscoveryCategory[] = [
     description: '서울·경기 축제와 공개된 참가·체험 부스를 찾아보세요.\n시간표·현장 변경사항은 공식 안내를 확인하세요.',
     searchHint: '축제명, 장소, 즐길 거리로 찾아보세요', enabled: true, icon: 'festival',
     filters: eventTypeOptions('FESTIVAL') },
+  { key: 'popups', code: 'POPUP', label: '팝업', eyebrow: '잠깐 열리는 새로운 공간',
+    title: '캐릭터와 브랜드를', emphasis: '가까이 만나는 시간.',
+    description: '서울·경기 팝업스토어와 체험·전시형 팝업을 찾아보세요.\n일정과 장소, 예약 정보를 확인하고 방문을 준비하세요.',
+    searchHint: '팝업명, 브랜드, 장소로 찾아보세요', enabled: true, icon: 'building',
+    filters: eventTypeOptions('POPUP') },
 ]
 export function getCategory(value: string | null | undefined): DiscoveryCategory {
   return categories.find(c => c.key === value) ?? categories[0]

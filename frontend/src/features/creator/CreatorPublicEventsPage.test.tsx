@@ -28,7 +28,7 @@ describe('creator public event registration', () => {
       expect(html).not.toContain('href="/discover"')
     }
   })
-  it.each([['subculture', 'SUBCULTURE'], ['exhibitions', 'EXHIBITION'], ['festivals', 'FESTIVAL']] as const)(
+  it.each([['subculture', 'SUBCULTURE'], ['exhibitions', 'EXHIBITION'], ['festivals', 'FESTIVAL'], ['popups', 'POPUP']] as const)(
     'defaults to the %s site and queries exact event IDs, including ongoing events', (site, code) => {
       const query = registrationQuery(new URLSearchParams(), '2026-10-03', site)
       expect(query.get('category')).toBe(code)

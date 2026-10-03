@@ -11,7 +11,11 @@ describe('shared event taxonomy', () => {
       expect(calendarTone(type)).not.toBe('neutral')
     }
     for (const type of ['CONCERT','MUSIC_FESTIVAL']) expect(categoryForType(type).code).toBe('FESTIVAL')
-    expect(categories.flatMap(c=>c.filters.filter(f=>f.value))).toHaveLength(27)
+    for (const type of ['POPUP_RETAIL','POPUP_EXPERIENCE','POPUP_EXHIBITION','POPUP_MIXED']) {
+      expect(categoryForType(type).code).toBe('POPUP')
+      expect(calendarTone(type)).not.toBe('neutral')
+    }
+    expect(categories.flatMap(c=>c.filters.filter(f=>f.value))).toHaveLength(31)
   })
   it('keeps works visible while showing canonical codes as Korean labels', () => {
     expect(eventSubjectLabels('SUBCULTURE_MUSIC',['GAME','페르소나','GAME','게임'])).toEqual(['게임','페르소나'])
