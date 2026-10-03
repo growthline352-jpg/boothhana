@@ -37,6 +37,8 @@ public final class VisitorGuideRules {
         Set<String> ticketIds=new HashSet<>();
         for(var t:guide.tickets()) {
             id(t.id(),ticketIds);text(t.name(),150,false);require(!t.name().isBlank(),"예매권 이름 없음");day(t.visitDate(),dates);
+            require(t.bookingState()==null || Set.of("UNKNOWN","UPCOMING","OPEN","CLOSED","SOLD_OUT").contains(t.bookingState()),"예매 상태 오류");
+            require(t.bookingState()==null || "UNKNOWN".equals(t.bookingState()) || Set.of("PUBLISHED","SOLD_OUT").contains(t.status()),"예매 상태 확정에는 공개 자료 확인이 필요합니다.");
             status(t.status());provenance(t.sourceUrl(),t.checkedOn(),!Set.of("UNKNOWN","UNPUBLISHED").contains(t.status()));
             require(t.priceAmount()==null || t.priceAmount().matches("\\d{1,12}(?:\\.\\d{1,2})?"),"예매권 가격 오류");
             require(t.priceAmount()==null || t.currency()!=null && t.currency().matches("[A-Z]{3}"),"예매권 통화 오류");

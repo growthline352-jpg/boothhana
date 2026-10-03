@@ -13,9 +13,9 @@ public class CatalogPublicController {
             @RequestParam(defaultValue="SUBCULTURE") String category, @RequestParam(defaultValue="") String q,
             @RequestParam(defaultValue="") String subcategory, @RequestParam(defaultValue="") String from,
             @RequestParam(defaultValue="") String to, @RequestParam(defaultValue="RECENT") String sort,
-            @RequestParam(defaultValue="") String region,@RequestParam(defaultValue="false") boolean grouped) {
+            @RequestParam(defaultValue="") String region,@RequestParam(defaultValue="") String areas,@RequestParam(defaultValue="false") boolean grouped) {
         final CatalogBrowseQuery query;
-        try { query = new CatalogBrowseQuery(page,size,category,q,subcategory,from,to,sort,region); }
+        try { query = new CatalogBrowseQuery(page,size,category,q,subcategory,from,to,sort,region,areas); }
         catch (IllegalArgumentException e) { throw com.boothhana.api.ApiException.badRequest(e.getMessage()); }
         return grouped?publications.groupedList(query):publications.list(query);
     }

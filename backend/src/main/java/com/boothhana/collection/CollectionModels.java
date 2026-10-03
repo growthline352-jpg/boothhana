@@ -14,7 +14,11 @@ public final class CollectionModels {
     public record OperationStatus(String state, String note, String sourceUrl, String checkedOn) {}
     public record TicketInfo(String id, String name, String visitDate, String priceAmount, String currency,
         String salesStartsAt, String salesEndsAt, String entryTime, String reservationUrl,
-        String status, String note, String sourceUrl, String checkedOn) {}
+        String status, String note, String sourceUrl, String checkedOn, String bookingState) {
+        public TicketInfo(String id,String name,String visitDate,String priceAmount,String currency,String salesStartsAt,String salesEndsAt,String entryTime,String reservationUrl,String status,String note,String sourceUrl,String checkedOn) {
+            this(id,name,visitDate,priceAmount,currency,salesStartsAt,salesEndsAt,entryTime,reservationUrl,status,note,sourceUrl,checkedOn,null);
+        }
+    }
     public record ProgramInfo(String id, String name, String type, List<String> subjects, String day,
         String startTime, String endTime, String venue, String ticketRequirement, String ticketId,
         String status, String note, String sourceUrl, String checkedOn) {}
@@ -32,7 +36,10 @@ public final class CollectionModels {
     public record EventData(String name, String subcategory, String organizer, String edition, String region,
         String venueName, String address, String description, String admission, List<String> subjects,
         List<Occurrence> occurrences, List<Source> sources, List<Banner> banners, List<String> warnings,
-        String eventFormat, List<DiscoveryLink> discoveryLinks, OperationStatus operationStatus, VisitorGuide visitorGuide) {
+        String eventFormat, List<DiscoveryLink> discoveryLinks, OperationStatus operationStatus, VisitorGuide visitorGuide, List<String> districts) {
+        public EventData(String name,String subcategory,String organizer,String edition,String region,String venueName,String address,String description,String admission,List<String> subjects,List<Occurrence> occurrences,List<Source> sources,List<Banner> banners,List<String> warnings,String eventFormat,List<DiscoveryLink> discoveryLinks,OperationStatus operationStatus,VisitorGuide visitorGuide) {
+            this(name,subcategory,organizer,edition,region,venueName,address,description,admission,subjects,occurrences,sources,banners,warnings,eventFormat,discoveryLinks,operationStatus,visitorGuide,List.of());
+        }
         public EventData(String name,String subcategory,String organizer,String edition,String region,String venueName,
                 String address,String description,String admission,List<String> subjects,List<Occurrence> occurrences,
                 List<Source> sources,List<Banner> banners,List<String> warnings,String eventFormat,List<DiscoveryLink> discoveryLinks,
@@ -53,7 +60,7 @@ public final class CollectionModels {
             this(name,subcategory,organizer,edition,region,venueName,address,description,admission,subjects,occurrences,
                 sources,banners,warnings,"UNKNOWN",List.of());
         }
-        public EventData { if(operationStatus==null) operationStatus=new OperationStatus("UNKNOWN",null,null,null); if(eventFormat==null) eventFormat="UNKNOWN"; if(discoveryLinks==null) discoveryLinks=List.of(); }
+        public EventData { if(districts==null) districts=List.of(); if(operationStatus==null) operationStatus=new OperationStatus("UNKNOWN",null,null,null); if(eventFormat==null) eventFormat="UNKNOWN"; if(discoveryLinks==null) discoveryLinks=List.of(); }
     }
     public record SearchResult(String schemaVersion, String searchStatus, String summary, List<String> queries,
             List<SourceCoverage> sourceCoverage, List<EventData> events) {

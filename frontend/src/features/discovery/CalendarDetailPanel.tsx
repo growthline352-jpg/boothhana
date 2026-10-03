@@ -1,3 +1,4 @@
+import { BookingBadge } from '../catalog/BookingBadge'
 import { eventSubjectLabels } from '../interests/taxonomy'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Link } from 'react-router'
@@ -67,7 +68,7 @@ export function CalendarDetailPanel({ day, rows, event, today, returnTo, loading
           <span className={`calendar-type-tag calendar-tone-${calendarTone(event.event.subcategory)}`}>{labels[event.event.subcategory] || '기타 행사'}</span>
           <h4 className="calendar-panel-event-name" ref={eventHeading} tabIndex={-1}>{event.event.name}</h4>
           <span className={`calendar-event-status is-${status.state}`}>{status.label}</span>
-          {status.notice && <p className="calendar-status-notice">{status.notice}</p>}
+          <BookingBadge event={event.event} day={day}/>{status.notice && <p className="calendar-status-notice">{status.notice}</p>}
           <dl className="calendar-event-facts">
             <div><dt>일정</dt><dd>{calendarEventRanges(event).map(interval => <span key={interval.from}>{dateLabel(interval.from)}{interval.to !== interval.from && ` ~ ${dateLabel(interval.to)}`}</span>)}</dd></div>
             <div><dt>선택일 시간</dt><dd>{hours?.join(' · ') || '시간 확인 필요'}</dd></div>
@@ -84,7 +85,7 @@ export function CalendarDetailPanel({ day, rows, event, today, returnTo, loading
             return <button type="button" className="calendar-panel-event" key={row.id} onClick={() => onSelect(row.id)}>
               <div className="calendar-event-image"><ContentImage url={row.banner?.url} kind="event" eventType={row.event.subcategory} alt=""/></div>
               <div><span className={`calendar-type-tag calendar-tone-${calendarTone(row.event.subcategory)}`}>{labels[row.event.subcategory] || '기타 행사'}</span><h4>{row.event.name}</h4>
-                <p>{row.event.venueName || '장소 확인 필요'}</p><span className={`calendar-event-status is-${state.state}`}>{state.label}</span></div><DiscoveryIcon name="chevron" size={16}/>
+                <p>{row.event.venueName || '장소 확인 필요'}</p><span className={`calendar-event-status is-${state.state}`}>{state.label}</span><BookingBadge event={row.event} day={day}/></div><DiscoveryIcon name="chevron" size={16}/>
             </button>
           })}</div> : <p className="calendar-day-empty">이 날짜에는 조건에 맞는 공개 행사가 없어요.</p>}
         </>}

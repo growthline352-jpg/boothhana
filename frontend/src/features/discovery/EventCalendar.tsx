@@ -1,3 +1,5 @@
+import { eventBooking } from '../catalog/booking'
+import { useBookingNow } from '../catalog/BookingBadge'
 import type { CSSProperties } from 'react'
 import { useSearchParams } from 'react-router'
 import { useRemote } from '../../app/useRemote'
@@ -11,6 +13,7 @@ import './calendar.css'
 
 export function EventCalendar({ state, today, returnTo, update }: { state: BrowseState; today: string; returnTo: string; update: (changes: Record<string, string>) => void }) {
   const [params] = useSearchParams()
+  const now=useBookingNow()
   const month = calendarMonth(params.get('month'), today), range = monthRange(month)
   const candidate = params.get('day') || ''
   const selected = candidate >= range.from && candidate <= range.to && /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : ''
@@ -48,9 +51,9 @@ export function EventCalendar({ state, today, returnTo, update }: { state: Brows
                 return <button type="button" key={segment.key}
                   className={`calendar-event-bar calendar-tone-${calendarTone(segment.row.event.subcategory)}${segment.continuesBefore ? ' continues-before' : ''}${segment.continuesAfter ? ' continues-after' : ''}${withdrawn ? ' is-withdrawn' : ''}${selectedEvent?.id === segment.row.id ? ' is-active' : ''}`}
                   style={{ gridColumn: `${segment.column} / span ${segment.span}`, gridRow: segment.lane + 1 }}
-                  aria-label={`${segment.row.event.name}, ${labels[segment.row.event.subcategory] || '기타 행사'}, ${dateLabel(segment.from)}${segment.to !== segment.from ? `부터 ${dateLabel(segment.to)}까지` : ''}${withdrawn ? `, ${status.label}` : ''}, 상세 보기`}
+                  aria-label={`${segment.row.event.name}, ${labels[segment.row.event.subcategory] || '기타 행사'}, ${dateLabel(segment.from)}${segment.to !== segment.from ? `부터 ${dateLabel(segment.to)}까지` : ''}${withdrawn ? `, ${status.label}` : ''}${eventBooking(segment.row.event,'',now)?', '+eventBooking(segment.row.event,'',now)!.label:''}, 상세 보기`}
                   onClick={() => update({ day: selected >= segment.from && selected <= segment.to ? selected : segment.from, calendarEvent: String(segment.row.id) })}>
-                  {segment.continuesBefore && <span aria-hidden="true">‹ </span>}{withdrawn && <span>{status.label} · </span>}{segment.row.event.name}{segment.continuesAfter && <span aria-hidden="true"> ›</span>}
+                  {segment.continuesBefore && <span aria-hidden="true">‹ </span>}{withdrawn && <span>{status.label} · </span>}{segment.row.event.name}{eventBooking(segment.row.event,'',now)&&<small> · {eventBooking(segment.row.event,'',now)!.label}</small>}{segment.continuesAfter && <span aria-hidden="true"> ›</span>}
                 </button>
               })}</div>
               <div className="calendar-week-more">{week.hiddenCounts.map((count, column) => count > 0 && <button type="button" key={column} style={{ gridColumn: column + 1 }} onClick={() => pickDay(week.days[column].day)} aria-label={`${dateLabel(week.days[column].day)}, 행사 ${count}개 더 보기`}>+{count}개</button>)}</div>

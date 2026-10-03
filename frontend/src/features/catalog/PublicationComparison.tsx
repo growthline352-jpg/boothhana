@@ -1,5 +1,5 @@
 import type { EventDetail } from './api'
-const fields:Record<string,string>={name:'행사명',subcategory:'행사 유형',subjects:'취향 주제',occurrences:'일정',venueName:'장소',address:'주소',description:'소개',admission:'입장 안내',operationStatus:'개최 상태',visitorGuide:'방문 안내'}
+const fields:Record<string,string>={name:'행사명',subcategory:'행사 유형',subjects:'취향 주제',occurrences:'일정',venueName:'장소',address:'주소',description:'소개',admission:'입장 안내',operationStatus:'개최 상태',visitorGuide:'방문 안내',districts:'서울 세부 지역'}
 export function PublicationComparison({detail}:{detail:EventDetail}) {
   if(!detail.publishedEvent)return <p>아직 공개본이 없습니다. 검토 후 처음 공개할 수 있습니다.</p>
   const current=detail.event as unknown as Record<string,unknown>,published=detail.publishedEvent as unknown as Record<string,unknown>

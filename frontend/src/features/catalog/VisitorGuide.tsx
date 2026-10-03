@@ -2,6 +2,8 @@ import type {PublicEvent} from './api'
 import { SafeLink } from './Shared'
 import { dateLabel } from '../discovery/browse'
 import { InformationRequestButton } from '../support/InformationRequestButton'
+import { ticketBooking, bookingLabels } from './booking'
+import { useBookingNow } from './BookingBadge'
 import './visitorGuide.css'
 
 const statusLabels:Record<string,string>={PUBLISHED:'공개 정보 확인',PARTIAL:'일부 수집',UNPUBLISHED:'미공개',UNKNOWN:'확인 중',INACCESSIBLE:'원문 접근 실패',SOLD_OUT:'매진 안내'}
@@ -16,6 +18,7 @@ function Evidence({source,checked}:{source:string|null;checked:string|null}) {
   return <p className="guide-evidence">{source&&<SafeLink url={source}>안내 원문 확인 ↗</SafeLink>}{checked&&<small> · {checked} 확인</small>}</p>
 }
 export function VisitorGuide({value,day,preview=false}:{value:PublicEvent;day:string;preview?:boolean}) {
+  const now=useBookingNow()
   const guide=value.event.visitorGuide
   const programGroups=[
     {key:'scheduled',label:`${day?dateLabel(day):'날짜별'} 프로그램`,programs:(guide?.programs??[]).filter(p=>p.day===day)},
@@ -30,7 +33,8 @@ export function VisitorGuide({value,day,preview=false}:{value:PublicEvent;day:st
       <p>{t.priceAmount!==null?`${Number(t.priceAmount).toLocaleString('ko-KR')}${t.currency==='KRW'?'원':` ${t.currency}`}`:'가격 확인 중'}</p>
       {(t.salesStartsAt||t.salesEndsAt)&&<p>예매 {t.salesStartsAt?guideDate(t.salesStartsAt):'시작 미확인'}{t.salesEndsAt?` ~ ${guideDate(t.salesEndsAt)}`:''}</p>}
       {t.entryTime&&<p>입장 {t.entryTime}</p>}<span className="chip muted">{statusLabels[t.status]??'확인 중'}</span>
-      {t.note&&<p>{t.note}</p>}{t.reservationUrl&&<SafeLink url={t.reservationUrl}>예매 안내 바로가기 ↗</SafeLink>}<Evidence source={t.sourceUrl} checked={t.checkedOn}/>
+      <span className={`booking-badge is-${ticketBooking(t,now).toLowerCase()}`}>{bookingLabels[ticketBooking(t,now)]}</span>
+      {t.note&&<p>{t.note}</p>}{t.reservationUrl&&<SafeLink url={t.reservationUrl}>{['CLOSED','SOLD_OUT'].includes(ticketBooking(t,now))?'예약·입장 안내 보기 ↗':'예매 안내 바로가기 ↗'}</SafeLink>}<Evidence source={t.sourceUrl} checked={t.checkedOn}/>
     </article>)}</div></section>}
     {programGroups.map(group=><section key={group.key} aria-label={group.label}><h3>{group.label}</h3><div className="guide-grid">{group.programs.map(p=><article className="guide-card" key={p.id}>
       <h4>{p.name}</h4><span className="chip muted">{statusLabels[p.status]??'확인 중'}</span><p>{p.startTime?`${p.startTime}${p.endTime?` ~ ${p.endTime}`:''}`:'시간 확인 중'}{p.venue?` · ${p.venue}`:''}</p>

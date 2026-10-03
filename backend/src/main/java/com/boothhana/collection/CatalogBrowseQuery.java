@@ -5,14 +5,19 @@ import java.util.*;
 
 /** v18 shared catalogue filters. All caller values are SQL parameters. */
 public record CatalogBrowseQuery(int page,int size,String category,String q,String subcategory,
-                                 String from,String to,String sort,String region) {
+                                 String from,String to,String sort,String region,String areas) {
+    public CatalogBrowseQuery(int page,int size,String category,String q,String subcategory,String from,String to,String sort,String region) {
+        this(page,size,category,q,subcategory,from,to,sort,region,"");
+    }
     /** Source compatibility for callers predating the optional region filter. */
     public CatalogBrowseQuery(int page,int size,String category,String q,String subcategory,String from,String to,String sort) {
         this(page,size,category,q,subcategory,from,to,sort,"");
     }
     public CatalogBrowseQuery {
         category=normalized(category,"SUBCULTURE");q=normalized(q,"");subcategory=normalized(subcategory,"");
-        from=normalized(from,"");to=normalized(to,"");sort=normalized(sort,"RECENT");region=normalized(region,"");
+        from=normalized(from,"");to=normalized(to,"");sort=normalized(sort,"RECENT");region=normalized(region,"");areas=normalized(areas,"");
+        CatalogAreas.selected(areas);
+        if(!areas.isEmpty()&&!"SEOUL".equals(region))throw new IllegalArgumentException("서울 세부 지역은 서울 선택 시 사용할 수 있습니다.");
         if(page<0||page>100000||size<1||size>100)throw new IllegalArgumentException("페이지 값을 확인해 주세요.");
         if(!CatalogTaxonomy.GROUPS.containsKey(category))throw new IllegalArgumentException("지원하지 않는 행사 분야입니다.");
         if(q.length()>100)throw new IllegalArgumentException("검색어는 100자 이하로 입력해 주세요.");
@@ -34,6 +39,7 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
         var sql=new StringBuilder("e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')");
         sql.append(" and p.snapshot_json->'event'->>'subcategory' in (").append(String.join(",",Collections.nCopies(types.size(),"?"))).append(')');
         if(!region.isEmpty())sql.append(" and p.snapshot_json->'event'->>'region'=?");
+        if(!areas.isEmpty())sql.append(" and ").append(CatalogAreas.filterSql("p.snapshot_json->'event'",CatalogAreas.selected(areas),new ArrayList<>()));
         if(!subcategory.isEmpty())sql.append(" and p.snapshot_json->'event'->>'subcategory'=?");
         if(!q.isEmpty())sql.append(" and strpos(lower(concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')),lower(?))>0");
         if(!from.isEmpty()||!to.isEmpty()){
@@ -46,7 +52,7 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
     }
     public List<Object> whereArgs(){
         List<Object> a=new ArrayList<>(CatalogTaxonomy.GROUPS.get(category));
-        if(!region.isEmpty())a.add(region);if(!subcategory.isEmpty())a.add(subcategory);if(!q.isEmpty())a.add(q);
+        if(!region.isEmpty())a.add(region);if(!areas.isEmpty())CatalogAreas.filterSql("p.snapshot_json->'event'",CatalogAreas.selected(areas),a);if(!subcategory.isEmpty())a.add(subcategory);if(!q.isEmpty())a.add(q);
         if(!from.isEmpty())a.add(from);if(!to.isEmpty())a.add(to);return a;
     }
     public String orderSql(){
