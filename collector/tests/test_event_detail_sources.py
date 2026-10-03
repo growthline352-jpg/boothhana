@@ -9,6 +9,7 @@ import weekly
 from data_quality import missing_reasons,merge_enrichment,select_targets,attempt_record
 from visitor_guide import validate_guide
 from rules import public_url
+from run import output_schema_for_cli
 
 URL='https://takemm.com/prod/view/12345'
 
@@ -92,6 +93,27 @@ class DetailSourceTests(unittest.TestCase):
             with patch.object(details,'public_addresses',return_value=['8.8.8.8']),patch.object(details,'PinnedHTTPS',return_value=connection):
                 with self.assertRaises(ValueError):details.fetch_document('https://api.takemm.com/prod/view?last_selection_id=12345',details.API_HOSTS,5)
             connection.close.assert_called_once()
+    def test_unavailable_robots_is_allowed_but_resource_403_and_server_errors_rejected(self):
+        for status,robots,expected in [(403,True,True),(404,True,True),(403,False,False),(500,True,False),(429,True,False)]:
+            response=unittest.mock.Mock();response.status=status
+            connection=unittest.mock.Mock();connection.getresponse.return_value=response
+            with patch.object(details,'public_addresses',return_value=['8.8.8.8']),patch.object(details,'PinnedHTTPS',return_value=connection):
+                if expected:self.assertEqual(details.fetch_document('https://image.takemm.com/robots.txt',details.IMAGE_HOSTS,5,robots=robots),b'')
+                else:
+                    with self.assertRaises(ValueError):details.fetch_document('https://image.takemm.com/robots.txt',details.IMAGE_HOSTS,5,robots=robots)
+    def test_live_output_schema_requires_visitor_guide_and_preserves_input_compatibility(self):
+        source=json.loads((weekly.ROOT/'schemas/event-result-v4.schema.json').read_text(encoding='utf-8'))
+        before=deepcopy(source);strict=output_schema_for_cli(source)
+        self.assertIn('visitorGuide',strict['properties']['events']['items']['required'])
+        self.assertNotIn('visitorGuide',source['properties']['events']['items']['required'])
+        self.assertEqual(source,before)
+        def check(node):
+            if isinstance(node,dict):
+                if 'properties' in node:self.assertEqual(set(node['properties']),set(node['required']))
+                for child in node.values():check(child)
+            elif isinstance(node,list):
+                for child in node:check(child)
+        check(strict)
     def test_missing_guide_sections_and_safe_title_description_upgrade(self):
         value=event();value['description']=value['name']
         self.assertIn('MISSING_DESCRIPTION',missing_reasons(value))

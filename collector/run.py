@@ -177,11 +177,16 @@ def persist_refreshed_auth(source: Path, initial: bytes | None, refreshed: Path)
 def output_schema_for_cli(value: dict) -> dict:
     """Live results must state UNKNOWN explicitly; archived input schemas remain optional."""
     result=json.loads(json.dumps(value))
-    if 'sourceCoverage' in result.get('properties',{}):
-        result['required']=list(dict.fromkeys([*result.get('required',[]),'sourceCoverage']))
-    event_schema=result.get('properties',{}).get('events',{}).get('items',{})
-    if 'operationStatus' in event_schema.get('properties',{}):
-        event_schema['required']=list(dict.fromkeys([*event_schema.get('required',[]),'operationStatus']))
+    def strict(node):
+        if isinstance(node,dict):
+            if 'properties' in node:
+                node['required']=list(node['properties'])
+            for child in node.values():strict(child)
+        elif isinstance(node,list):
+            for child in node:strict(child)
+    # Structured output requires every property in required, including nullable
+    # visitorGuide added to the backward-compatible ingestion schema.
+    strict(result)
     return result
 
 def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | None = None, *, images: list[Path] | None = None, web_search: bool = True) -> tuple[bytes,bool,dict]:

@@ -46,16 +46,18 @@ def fetch_document(url: str, hosts: list[str], timeout: int, *, robots: bool = F
         connection.request('GET', request_target(parsed), headers={
             'User-Agent': AGENT, 'Accept': 'text/plain' if robots else 'application/json', 'Accept-Encoding': 'identity'})
         response = connection.getresponse()
-        # RFC 9309: a missing robots file has no disallow rules. Other failures
-        # and redirects are rejected, including redirects to a login page.
-        if robots and response.status in (404, 410): return b''
+        # RFC 9309 section 2.3.1.3 permits crawling when robots.txt is
+        # unavailable (4xx). Object-store CDNs commonly use 403 for absent
+        # keys. This applies ONLY to robots.txt; detail/image 403 stays denied.
+        # Rate limits, server errors and redirects remain fail-closed.
+        if robots and response.status in (403, 404, 410): return b''
         if response.status != 200: raise MediaError('Detail document HTTP failure')
         if response.getheader('Content-Encoding', 'identity') not in ('', 'identity'):
             raise MediaError('Compressed detail response rejected')
         content_type = response.getheader('Content-Type', '').split(';')[0].strip().lower()
         allowed = ('text/plain',) if robots else ('application/json',)
         if content_type not in allowed: raise MediaError('Detail content type mismatch')
-        maximum = 64 * 1024 if robots else MAX_DOCUMENT_BYTES
+        maximum = 512 * 1024 if robots else MAX_DOCUMENT_BYTES
         length = response.getheader('Content-Length')
         if length is not None and (not length.isdigit() or not 0 <= int(length) <= maximum):
             raise MediaError('Declared detail size invalid')
