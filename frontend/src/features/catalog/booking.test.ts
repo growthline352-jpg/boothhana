@@ -3,6 +3,10 @@ import type { TicketInfo,EventData } from '../collection/api'
 import { ticketBooking,eventBooking } from './booking'
 const ticket=(overrides:Partial<TicketInfo>={}):TicketInfo=>({id:'t',name:'예약',visitDate:null,priceAmount:null,currency:null,salesStartsAt:'2026-10-01T12:00:00+09:00',salesEndsAt:'2026-10-02T20:00:00+09:00',entryTime:null,reservationUrl:'https://example.com',status:'PUBLISHED',note:null,sourceUrl:'https://example.com',checkedOn:'2026-10-03',...overrides})
 describe('예약과 행사 일정 분리',()=>{
+ it('uses a fresh official upcoming announcement even when the opening time is not published',()=>{
+  expect(ticketBooking(ticket({salesStartsAt:null,salesEndsAt:null,bookingState:'UPCOMING'}),new Date('2026-10-03T03:00:00Z'))).toBe('UPCOMING')
+  expect(ticketBooking(ticket({salesStartsAt:null,salesEndsAt:null,bookingState:'UPCOMING'}),new Date('2026-10-04T03:00:00Z'))).toBe('UNKNOWN')
+ })
  it('closes at the actual timestamp independently of the host timezone',()=>{
   expect(ticketBooking(ticket(),new Date('2026-10-02T10:59:59Z'))).toBe('OPEN')
   expect(ticketBooking(ticket(),new Date('2026-10-02T11:00:00Z'))).toBe('CLOSED')

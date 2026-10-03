@@ -23,7 +23,7 @@ export function ticketBooking(t:TicketInfo,now=new Date()):BookingState {
   // Unknown opening time on today's date must not appear as accepting bookings.
   if(t.salesStartsAt?.length===10&&t.salesStartsAt===seoulDay(now))return 'UNKNOWN'
   if(start!==null&&end!==null&&time>=start&&time<end)return 'OPEN'
-  if(t.bookingState==='OPEN'&&t.checkedOn===seoulDay(now))return 'OPEN'
+  if((t.bookingState==='OPEN'||t.bookingState==='UPCOMING')&&t.checkedOn===seoulDay(now))return t.bookingState
   return 'UNKNOWN'
 }
 export function eventBooking(event:EventData,day='',now=new Date()):{state:BookingState;label:string}|null {
