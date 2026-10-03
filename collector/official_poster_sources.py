@@ -22,7 +22,7 @@ def poster_detail_url(value):
 class PosterHTML(HTMLParser):
     def __init__(self,page):
         super().__init__(convert_charrefs=True)
-        self.page=page;self.stack=[];self.images=[];self.parts=[]
+        self.page=page;self.stack=[];self.images=[];self.parts=[];self.links=[];self.anchor=None
     def add_image(self,value,role,alt,priority):
         if not value:return
         url=urljoin(self.page,value)
@@ -41,6 +41,7 @@ class PosterHTML(HTMLParser):
         if tag=='meta' and (a.get('property') or a.get('name','')).lower() in ('og:image','og:image:secure_url','twitter:image'):
             self.add_image(a.get('content'),'PAGE_PREVIEW','',1)
         if not hidden:
+            if tag=='a':self.anchor=[a.get('href',''),'']
             priority=0 if re.search(r'poster|detail-visual|exhibition.*image|event.*image',context,re.I) else 2
             if tag=='img':
                 for key in ('data-src','data-original','data-lazy-src','src'):
@@ -57,13 +58,26 @@ class PosterHTML(HTMLParser):
             self.stack.append((tag,a.get('class','')+' '+a.get('id','')))
         if tag in ('p','div','li','br','h1','h2','h3'):self.parts.append('\n')
     def handle_endtag(self,tag):
+        if tag=='a' and self.anchor:
+            href,label=self.anchor;self.anchor=None
+            url=urljoin(self.page,href)
+            if urlsplit(url).hostname==urlsplit(self.page).hostname and re.search(r'공지|안내|소개|포스터|notice|about|intro|poster',label+' '+href,re.I) and not re.search(r'login|signin|logout|write|delete|password',href,re.I):
+                try:check_url(url,[urlsplit(self.page).hostname]);self.links.append(url)
+                except (ValueError,TypeError):pass
         for i in range(len(self.stack)-1,-1,-1):
             if self.stack[i][0]==tag:del self.stack[i:];break
     def handle_data(self,value):
+        if self.anchor:self.anchor[1]=(self.anchor[1]+value)[:500]
         if not any(x[0] in ('script','style','template','iframe','nav','footer','header') for x in self.stack):self.parts.append(value)
 
 def parse_poster_document(html,page,checked_on,event_name=None):
     if not poster_detail_url(page) or not isinstance(html,str) or len(html.encode())>MAX_HTML_BYTES:raise ValueError('Invalid official poster document')
+    return parse_official_document(html,page,checked_on,event_name)
+
+def parse_official_document(html,page,checked_on,event_name=None):
+    """Unverified candidates from an already associated official source only."""
+    check_url(page,[urlsplit(page).hostname or ''])
+    if not isinstance(html,str) or len(html.encode())>MAX_HTML_BYTES:raise ValueError('Invalid official document')
     parser=PosterHTML(page);parser.feed(html)
     text=re.sub(r'\n\s*\n+','\n',re.sub(r'[ \t]+',' ',''.join(parser.parts))).strip()
     if not text:raise ValueError('Empty official poster document')
@@ -80,4 +94,4 @@ def parse_poster_document(html,page,checked_on,event_name=None):
         images=[row for row in images if target and norm(row['nearbyText'])==target]
     return dict(sourceUrl=page,sourceType='OFFICIAL_POSTER_PAGE',checkedOn=checked_on,bodyText=text[:32000],
                 textTruncated=len(text)>32000,images=images[:40],imagesTruncated=len(images)>40,
-                bodySha256=hashlib.sha256(html.encode()).hexdigest())
+                bodySha256=hashlib.sha256(html.encode()).hexdigest(),childUrls=list(dict.fromkeys(parser.links))[:8])

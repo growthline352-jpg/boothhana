@@ -361,7 +361,7 @@ def discover_generic_banners(api: AdminApi, events: list[dict]) -> tuple[list[Ca
                 text=source_html(source)
                 if poster_detail_url(source):
                     document=parse_poster_document(text,source,'',row['name'])
-                    image=next((x['url'] for x in document['images'] if x['role'] in ('POSTER','PAGE_PREVIEW')),None)
+                    image=next((x['url'] for x in document['images'] if x['role'] in ('POSTER','PAGE_PREVIEW','CONTENT','BACKGROUND')),None)
                 else:
                     parser = OpenGraphParser();parser.feed(text)
                     image = next((absolute(source, value) for value in parser.images if absolute(source, value)), None)

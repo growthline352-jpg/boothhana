@@ -100,6 +100,30 @@ public class CatalogService {
             """,scope.endDate(),scope.startDate(),afterId,limit);
         return rows.stream().map(r->Map.<String,Object>of("id",num(r,"id"),"revision",num(r,"revision"),"event",effective(r,EventData.class),"informationRequested",Boolean.TRUE.equals(r.get("information_requested")))).toList();
     }
+    /** Images have their own traversal, independent of weekly research progress. */
+    public List<Map<String,Object>> imageRepairTargets(int limit,long afterId) {
+        if(limit<1||limit>100||afterId<0) throw ApiException.badRequest("이미지 보완 조회 범위 오류");
+        var rows=db.queryForList("""
+            select p.event_id,p.event_revision,p.snapshot_json->'event' event_json,s.banner_asset_id
+            from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
+            left join subculture_catalog_presentation s on s.event_id=p.event_id
+            where e.review_state<>'EXCLUDED' and p.event_id>? order by p.event_id limit ?
+            """,afterId,limit);
+        var ids=rows.stream().map(r->num(r,"event_id")).toList();
+        var assets=media.repairBanners(ids);var hashes=media.repairHashes(ids);var banners=media.publicBanners(ids);
+        List<Map<String,Object>> result=new ArrayList<>();
+        for(var row:rows) {
+            long id=num(row,"event_id");Map<String,Object> value=new LinkedHashMap<>();
+            value.put("id",id);value.put("revision",num(row,"event_revision"));
+            value.put("event",decode(row.get("event_json"),EventData.class));
+            var eventAssets=assets.getOrDefault(id,List.of());value.put("assets",eventAssets);
+            Map<Long,String> eventHashes=new LinkedHashMap<>();
+            for(var asset:eventAssets) if(hashes.containsKey(asset.id())) eventHashes.put(asset.id(),hashes.get(asset.id()));
+            value.put("storedHashes",eventHashes);value.put("banner",banners.get(id));
+            value.put("selectedBannerAssetId",row.get("banner_asset_id"));result.add(value);
+        }
+        return result;
+    }
     public List<Map<String,Object>> salesTargets(String pipelineId,int limit) {
         if(limit<1||limit>1000) throw ApiException.badRequest("판매정보 처리 한도 오류");
         var scope=decode(one("select scope_json from subculture_pipeline_run where id=?",UUID.fromString(pipelineId)).get("scope_json"),Scope.class);

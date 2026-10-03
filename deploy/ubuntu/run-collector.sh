@@ -10,7 +10,7 @@ if [[ ! -f .env ]]; then
 fi
 
 if [[ $# -ne 1 ]]; then
-  echo "Usage: ./run-collector.sh weekly|floorplans|doctor" >&2
+  echo "Usage: ./run-collector.sh weekly|floorplans|images|doctor" >&2
   exit 1
 fi
 
@@ -21,11 +21,14 @@ case "$1" in
   floorplans)
     job=(python floorplans.py --config /etc/boothhana/collector.json --imminent)
     ;;
+  images)
+    job=(python image_repair.py --config /etc/boothhana/collector.json --apply)
+    ;;
   doctor)
     job=(python doctor.py --config /etc/boothhana/collector.json)
     ;;
   *)
-    echo "Unknown job '$1'. Use weekly, floorplans, or doctor." >&2
+    echo "Unknown job '$1'. Use weekly, floorplans, images, or doctor." >&2
     exit 1
     ;;
 esac
@@ -33,6 +36,7 @@ esac
 exec 9>/run/lock/boothhana-collector.lock
 if ! flock -n 9; then
   echo "Another BoothHana collector job is already running; skipping duplicate invocation."
+  if [[ "$1" == images ]]; then exit 2; fi
   exit 0
 fi
 

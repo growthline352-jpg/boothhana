@@ -24,6 +24,7 @@ public class CatalogController {
     @PostMapping("/stages") public StageReceipt stage(@RequestBody StageBatch batch){return service.ingest(batch);}
     @PostMapping("/manual-stages") public StageReceipt manualStage(@RequestBody StageBatch batch){return service.ingestManual(batch);}
     @GetMapping("/assets") public List<AssetView> assets(@RequestParam(defaultValue="100") int limit){return media.pending(limit);}
+    @GetMapping("/image-repair-events") public List<Map<String,Object>> imageRepairEvents(@RequestParam(defaultValue="100") int limit,@RequestParam(defaultValue="0") long afterId){return service.imageRepairTargets(limit,afterId);}
     @PostMapping("/events/{id}/assets") public AssetView registerAsset(@PathVariable long id,@RequestBody AssetRegistrationInput input){return media.registerValidated(id,input);}
     @PostMapping("/assets/{id}/content") public AssetView content(@PathVariable long id,@RequestHeader("X-Asset-Revision") long revision,
         @RequestHeader("X-Image-SHA256") String digest,@RequestHeader("X-Image-Size") long size,HttpServletRequest request) throws IOException {

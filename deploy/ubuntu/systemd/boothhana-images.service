@@ -1,0 +1,15 @@
+[Unit]
+Description=BoothHana published event image repair and delivery verification
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/boothhana/deploy/ubuntu
+ExecStart=/opt/boothhana/deploy/ubuntu/run-collector.sh images
+TimeoutStartSec=2h
+SuccessExitStatus=2
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077

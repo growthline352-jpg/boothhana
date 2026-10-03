@@ -49,6 +49,27 @@ public class CatalogMediaService {
         String q="select * from subculture_catalog_asset where event_id=?"+(participant==null?"":" and participant_id=?")+" order by id";
         return participant==null?db.query(q,this::asset,event):db.query(q,this::asset,event,participant);
     }
+    /** Banner-only bookkeeping for a bounded, published-event repair page. */
+    public Map<Long,List<AssetView>> repairBanners(List<Long> eventIds) {
+        if(eventIds.isEmpty()) return Map.of();
+        if(eventIds.size()>100) throw ApiException.badRequest("이미지 보완 조회 한도 오류");
+        String placeholders=String.join(",",Collections.nCopies(eventIds.size(),"?"));
+        var rows=db.query("select * from subculture_catalog_asset where event_id in ("+placeholders+") " +
+            "and type='BANNER' and participant_id is null and product_id is null order by event_id,id",this::asset,eventIds.toArray());
+        Map<Long,List<AssetView>> result=new LinkedHashMap<>();
+        for(var row:rows) result.computeIfAbsent(row.eventId(),k->new ArrayList<>()).add(row);
+        return result;
+    }
+    public Map<Long,String> repairHashes(List<Long> eventIds) {
+        if(eventIds.isEmpty()) return Map.of();
+        if(eventIds.size()>100) throw ApiException.badRequest("이미지 보완 조회 한도 오류");
+        String placeholders=String.join(",",Collections.nCopies(eventIds.size(),"?"));
+        Map<Long,String> result=new LinkedHashMap<>();
+        for(var row:db.queryForList("select id,sha256 from subculture_catalog_asset where event_id in ("+placeholders+") " +
+            "and type='BANNER' and participant_id is null and product_id is null and sha256 is not null",eventIds.toArray()))
+            result.put(((Number)row.get("id")).longValue(),row.get("sha256").toString());
+        return result;
+    }
     /** One query per result page; never expose external candidates or rights-revoked posters. */
     public Map<Long,AssetView> publicBanners(List<Long> eventIds) {
         if(eventIds.isEmpty()||base.isBlank()) return Map.of();

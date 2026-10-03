@@ -71,9 +71,10 @@ def inspect_image(data: bytes,content_type: str,max_pixels: int=MAX_PIXELS):
     except (UnidentifiedImageError,OSError,Image.DecompressionBombError,Image.DecompressionBombWarning) as exc: raise MediaError('Invalid image') from exc
     return hashlib.sha256(data).hexdigest()
 
-def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PIXELS,*,source_trace=None):
+def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PIXELS,*,source_trace=None,url_guard=None,user_agent='BoothHana-Approved-Image-Fetcher/4'):
     deadline=time.monotonic()+timeout
     for _ in range(4):
+        if url_guard is not None and not url_guard(url):raise MediaError('Image source policy denied')
         parsed,host=check_url(url,hosts);addresses=public_addresses(host,443)
         if source_trace is not None:source_trace.append(url)
         remaining=deadline-time.monotonic()
@@ -81,7 +82,7 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PI
         connection=PinnedHTTPS(host,addresses[0],min(10,remaining))
         try:
             path=request_target(parsed)
-            connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Image-Fetcher/4','Accept':'image/png,image/jpeg,image/webp,image/gif','Accept-Encoding':'identity'})
+            connection.request('GET',path,headers={'User-Agent':user_agent,'Accept':'image/png,image/jpeg,image/webp,image/gif','Accept-Encoding':'identity'})
             response=connection.getresponse()
             if response.status in (301,302,303,307,308):
                 target=response.getheader('Location')
