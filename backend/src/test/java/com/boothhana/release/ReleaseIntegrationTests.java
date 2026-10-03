@@ -180,7 +180,9 @@ class ReleaseIntegrationTests {
   long seed=catalogEvent("[TEST] pagination "+UUID.randomUUID());
   long after=db.queryForObject("select max(id) from subculture_event_candidate",Long.class);
   var banner=new Banner("https://example.com/current.jpg","https://example.com/event","UNKNOWN",null,true);
-  catalog.editEvent(seed,new EditInput(1,"REVIEWED","Current poster candidate",Map.of("banners",List.of(banner))));
+  // Seed source-owned banner data; admin edits deliberately cannot change this field.
+  String banners=json.writeValueAsString(List.of(banner));
+  db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{banners}',cast(? as jsonb)),reviewed_payload_json=jsonb_set(reviewed_payload_json,'{banners}',cast(? as jsonb)) where id=?",banners,banners,seed);
   String prefix=UUID.randomUUID().toString();
   db.update("""
     insert into subculture_event_candidate(identity_key,match_key,name,subcategory,venue_name,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state,reviewed_payload_json)
