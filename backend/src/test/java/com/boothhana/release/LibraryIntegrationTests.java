@@ -48,7 +48,6 @@ class LibraryIntegrationTests {
   snapshot=new LinkedHashMap<>();snapshot.put("event",e);snapshot.put("participants",List.of(Map.of("id",participant,"participant",p,"sales",Map.of("summary","초록 식물 소품","categories",List.of("키링")),"productRows",List.of(Map.of("id",product,"data",good)))));snapshot.put("publishedAt",Instant.now().toString());publish();
  }
  @Test @org.springframework.transaction.annotation.Transactional @SuppressWarnings("unchecked")
-<<<<<<< HEAD
  void seoulAreaFiltersApplyToCountsListsCalendarAndMultiVenueEvents(){
   var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
   var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
@@ -64,15 +63,15 @@ class LibraryIntegrationTests {
   e.put("districts",null);snapshot.put("event",e);publish();assertThat(publications.list(query).total()).isEqualTo(1);
   e.remove("districts");e.put("address",null);snapshot.put("event",e);publish();assertThat(publications.list(query).total()).isZero();
   assertThat(publications.list(new com.boothhana.collection.CatalogBrowseQuery(0,20,"SUBCULTURE","[TEST] areas "+event,"",day,day,"DATE_ASC","SEOUL")).total()).isEqualTo(1);
- } void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
-=======
+ }
+ @Test @org.springframework.transaction.annotation.Transactional @SuppressWarnings("unchecked")
  void popupDiscoverySharesIdentityAndSavesOnlyForConfirmedSubcultureTopics(){
   var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
   var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
   String future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(2).toString(),name="[TEST] popup "+event;
   e.put("name",name);e.put("region","SEOUL");e.put("occurrences",List.of(Map.of("startDate",future,"endDate",future)));
   for(long owner:List.of(user,other))db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,?,'EVENT',?,'{}'::jsonb)",UUID.randomUUID(),owner,event,event);
-  for(var sample:List.of(List.of("POPUP_STORE","GAME","true"),List.of("POPUP_RETAIL","GAME","true"),List.of("POPUP_EXPERIENCE","CHARACTER_IP","true"),List.of("POPUP_EXHIBITION","FASHION","false"),List.of("POPUP_MIXED","BEAUTY","false"))){
+  for(var sample:List.of(List.of("POPUP_STORE","GAME","true"),List.of("POPUP_RETAIL"," game ","true"),List.of("POPUP_EXPERIENCE","CHARACTER_IP","true"),List.of("POPUP_EXHIBITION","FASHION","false"),List.of("POPUP_MIXED","BEAUTY","false"))){
    String type=sample.get(0);boolean subculture=Boolean.parseBoolean(sample.get(2));
    db.update("update subculture_event_candidate set subcategory=? where id=?",type,event);
    e.put("subcategory",type);e.put("subjects",List.of(sample.get(1)));snapshot.put("event",e);publish();
@@ -89,7 +88,6 @@ class LibraryIntegrationTests {
   }
  }
  void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
->>>>>>> 755c7ed (feat: add popup site, taxonomy and canonical discovery)
  Save input(){return new Save(new Target("PRODUCT",event,product,participant),day,"1관");}
  @Test void expandedTopicsMatchPublishedSubjectsWithActualPostgres() {
   db.update("update subculture_event_candidate set subcategory='FAN_CAFE' where id=?",event);

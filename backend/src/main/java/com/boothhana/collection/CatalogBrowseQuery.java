@@ -39,12 +39,8 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
         var sql=new StringBuilder("e.review_state<>'EXCLUDED' and p.snapshot_json->'event'->>'region' in ('SEOUL','GYEONGGI')");
         sql.append(" and ").append(CatalogTaxonomy.scopeSql(category,"p.snapshot_json->'event'",args));
         if(!region.isEmpty())sql.append(" and p.snapshot_json->'event'->>'region'=?");
-<<<<<<< HEAD
         if(!areas.isEmpty())sql.append(" and ").append(CatalogAreas.filterSql("p.snapshot_json->'event'",CatalogAreas.selected(areas),new ArrayList<>()));
-        if(!subcategory.isEmpty())sql.append(" and p.snapshot_json->'event'->>'subcategory'=?");
-=======
         if(!subcategory.isEmpty())sql.append(" and ").append(CatalogTaxonomy.subtypeSql(category,subcategory,"p.snapshot_json->'event'",args));
->>>>>>> 755c7ed (feat: add popup site, taxonomy and canonical discovery)
         if(!q.isEmpty())sql.append(" and strpos(lower(concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')),lower(?))>0");
         if(!from.isEmpty()||!to.isEmpty()){
             sql.append(" and exists(select 1 from jsonb_array_elements(coalesce(p.snapshot_json->'event'->'occurrences','[]'::jsonb)) d where true");
@@ -55,13 +51,8 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
         return sql.toString();
     }
     public List<Object> whereArgs(){
-<<<<<<< HEAD
-        List<Object> a=new ArrayList<>(CatalogTaxonomy.GROUPS.get(category));
-        if(!region.isEmpty())a.add(region);if(!areas.isEmpty())CatalogAreas.filterSql("p.snapshot_json->'event'",CatalogAreas.selected(areas),a);if(!subcategory.isEmpty())a.add(subcategory);if(!q.isEmpty())a.add(q);
-=======
         List<Object> a=new ArrayList<>();CatalogTaxonomy.scopeSql(category,"p.snapshot_json->'event'",a);
-        if(!region.isEmpty())a.add(region);if(!subcategory.isEmpty())CatalogTaxonomy.subtypeSql(category,subcategory,"p.snapshot_json->'event'",a);if(!q.isEmpty())a.add(q);
->>>>>>> 755c7ed (feat: add popup site, taxonomy and canonical discovery)
+        if(!region.isEmpty())a.add(region);if(!areas.isEmpty())CatalogAreas.filterSql("p.snapshot_json->'event'",CatalogAreas.selected(areas),a);if(!subcategory.isEmpty())CatalogTaxonomy.subtypeSql(category,subcategory,"p.snapshot_json->'event'",a);if(!q.isEmpty())a.add(q);
         if(!from.isEmpty())a.add(from);if(!to.isEmpty())a.add(to);return a;
     }
     public String orderSql(){

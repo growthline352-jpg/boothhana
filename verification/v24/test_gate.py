@@ -28,6 +28,7 @@ class GateReportingTests(unittest.TestCase):
                 'TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml':['groupedEventLimitSurvivesDifferentBaseAndPreventsConflictingMerge', 'concurrentDifferentBaseRegistrationsCommitExactlyOne', 'directRegistrationPublishesOnlyOwnBoothWithoutGrantAndEnforcesAccountLimit', 'claimApprovalRemainsRequiredAndCannotConflictWithDirectRegistration', 'approvedCollectedBoothBlocksNewBaseBoothInSameEvent', 'directProductsKeepIdentityEditsAndPublicStateThroughRepublication', 'registrationHttpRequiresLoginCsrfAndOwnedBase', 'platformRegistrationIsImmediateAndCannotUseAnotherBaseToRegisterTwice', 'endedUnpublishedAndOutOfPeriodRegistrationsAreRejected'],
                 'TEST-com.boothhana.release.LibraryIntegrationTests.xml':[
                     'seoulAreaFiltersApplyToCountsListsCalendarAndMultiVenueEvents',
+                    'popupDiscoverySharesIdentityAndSavesOnlyForConfirmedSubcultureTopics',
                     'detachedProfileSaveCannotRevertCompletedOnboarding',
                     'memberInterestsArePrivateVersionedAndCategoryScoped',
                     'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback',
