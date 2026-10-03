@@ -215,11 +215,13 @@ def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str
             if len(files) >= 4: continue
             try:
                 if not permitted(image['url'], hosts): image['analysisStatus'] = 'BLOCKED'; continue
-                raw_image, mime, digest = image_fetcher(image['url'], hosts, max(1, min(timeout, int(deadline-time.monotonic()))))
+                trace=[]
+                options={'source_trace':trace} if image_fetcher is fetch_image else {}
+                raw_image, mime, digest = image_fetcher(image['url'], hosts, max(1, min(timeout, int(deadline-time.monotonic()))), **options)
                 suffix = {'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif'}[mime]
                 path = directory / ('detail-image-' + str(len(files)) + suffix)
                 path.write_bytes(raw_image); path.chmod(0o600); files.append(path)
-                image.update(analysisStatus='ATTACHED', imageFile=path.name, sha256=digest)
+                image.update(analysisStatus='ATTACHED', imageFile=path.name, sha256=digest, contentType=mime, fetchedUrls=trace)
             except (ValueError, OSError, KeyError, HTTPException): image['analysisStatus'] = 'INACCESSIBLE'
 
     for page in urls[:2]:
