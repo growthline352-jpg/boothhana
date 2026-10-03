@@ -11,7 +11,7 @@ import type { BoothSummary } from '../../types'
 
 export function CatalogBoothList(){
  const state=useRemote(creatorCatalogApi.mine,[])
- return <section className="panel"><div className="panel-header"><h2>직접 등록한 공개 행사 부스</h2><Link className="btn secondary" to="/discover">행사 찾아 등록하기</Link></div>
+ return <section className="panel"><div className="panel-header"><h2>직접 등록한 공개 행사 부스</h2><Link className="btn secondary" to="/creator/catalog/events">행사 찾아 등록하기</Link></div>
  {state.loading?<LoadingState/>:state.error?<ErrorState error={state.error} retry={()=>void state.reload()}/>:!state.data?.length?<p>참가할 행사 화면에서 ‘내 부스 등록’을 선택해 주세요. 계정당 행사별 1개까지 등록할 수 있습니다.</p>:state.data.map(b=><article className="list-row" key={b.participantId}><div><h3>{b.name}</h3><p>{b.eventName}{b.reviewState==='EXCLUDED'?' · 공개 제외됨':''}</p></div>{b.reviewState!=='EXCLUDED'&&<div className="row-actions"><Link className="btn secondary" to={`/creator/catalog/events/${b.eventId}/booths/${b.participantId}`}>부스 수정</Link><Link className="btn secondary" to={`/support/management?event=${b.eventId}&participant=${b.participantId}&type=PRODUCTS`}>상품 관리</Link><Link to={`/discover/${b.eventId}/booths/${b.participantId}`}>공개 화면</Link></div>}</article>)}
  </section>
 }
@@ -26,7 +26,7 @@ export function CreatorCatalogBoothPage(){
  if(state.error)return <ErrorState error={state.error} retry={()=>void state.reload()}/>
  if(!state.data)return null
  const {value,booths,availability,existing}=state.data
- return <><PageHeader eyebrow="Creator · Booth" title={existing?'행사별 부스 수정':'내 부스 등록'} description={value.event.name} actions={<Link className="btn secondary" to={`/discover/${event}`}>행사 보기</Link>}/>
+ return <><PageHeader eyebrow="Creator · Booth" title={existing?'행사별 부스 수정':'내 부스 등록'} description={value.event.name} actions={<div className="row-actions"><Link className="btn secondary" to="/creator/catalog/events">공개 행사 찾기</Link><Link className="btn subtle" to={`/discover/${event}`}>공개 행사 보기</Link></div>}/>
  {saved&&<p className="notice-banner" role="status">부스 정보를 저장했습니다.</p>}
  <p>새 부스는 저장하면 바로 공개됩니다. 이미 소개된 본인 부스가 있다면 부스 상세 화면에서 연결을 요청해 주세요. 기존 연결을 포함해 계정당 행사별 1개만 등록할 수 있습니다.</p>
  {!availability.eventOpen?<EmptyState title="부스 등록·수정이 마감된 행사입니다" description="종료되거나 일정이 취소·변경된 행사입니다."/>:!existing&&!availability.canRegister?<EmptyState title="이미 내 부스가 연결된 행사입니다" description="기존에 등록하거나 연결한 부스를 관리해 주세요." action={<div className="row-actions"><Link to="/creator/booths">내 부스 목록</Link><Link to="/support/management">연결한 부스 관리</Link></div>}/>:!booths.length?<EmptyState title="먼저 기본 부스를 만들어 주세요" description="기본 부스를 만든 다음 이 화면으로 돌아와 행사별 소개를 입력할 수 있습니다." action={<Link className="btn primary" to={`/creator/booths?returnTo=${encodeURIComponent(`/creator/catalog/events/${event}/booths/new`)}`}>기본 부스 만들기</Link>}/>:<BoothForm key={`${event}:${participant}:${existing?.revision??0}`} event={event} booths={booths} existing={existing} reload={()=>{setSaved(true);void state.reload()}}/>}

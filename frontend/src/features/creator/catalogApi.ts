@@ -1,5 +1,5 @@
-import { api } from '../../api/client'
-import type { Participant } from '../catalog/api'
+import { api, publicRead } from '../../api/client'
+import type { Page, Participant, PublicEventSummary } from '../catalog/api'
 import type { OwnerProductInput, OwnerProducts } from '../support/ownershipApi'
 export interface CatalogBoothInput {boothId:number;name:string;description:string;subjects:string[];boothNumber:string;startDate:string;endDate:string}
 export interface CatalogBoothValue {eventId:number;participantId:number;boothId:number;revision:number;data:Participant}
@@ -8,6 +8,8 @@ export interface RegistrationAvailability {canRegister:boolean;eventOpen:boolean
 const base='/api/creator/catalog'
 const path=(event:number)=>`${base}/events/${event}/booths`
 export const creatorCatalogApi={
+ // Keep individual event IDs: customer grouping must not change the registration target.
+ events:(query:URLSearchParams)=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`),
  mine:()=>api<MyCatalogBooth[]>(`${base}/booths`,{cache:'no-store'}),
  availability:(event:number)=>api<RegistrationAvailability>(`${base}/events/${event}/availability`,{cache:'no-store'}),
  detail:(event:number,participant:number)=>api<CatalogBoothValue>(`${path(event)}/${participant}`,{cache:'no-store'}),

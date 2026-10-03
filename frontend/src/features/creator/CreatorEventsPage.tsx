@@ -52,7 +52,7 @@ export function CreatorEventsPage() {
   }
   return <>
     <PageHeader eyebrow="Creator · Events" title="예약·판매 행사 등록" description="부스를 등록하면 바로 운영할 수 있습니다. 계정당 행사별 1개만 등록할 수 있습니다." />
-    <p><Link className="btn secondary" to="/discover">공개 행사 찾아 부스 등록하기</Link></p>
+    <p><Link className="btn secondary" to="/creator/catalog/events">공개 행사 찾아 부스 등록하기</Link></p>
     {message && <div className="notice-banner" role="status">{message}</div>}
     {applications.error&&<ErrorState error={applications.error} retry={()=>void applications.reload()}/>}
     {!!applications.data?.length&&<section className="panel"><h2>내 계정의 등록 내역</h2>{applications.data.map(a=><article className="support-ticket-row" key={a.id}><div><h3>{a.eventName} · {a.boothName}</h3><p>{a.status==='REJECTED'?'반려':a.status==='WITHDRAWN'?'철회':a.status==='APPROVED'?'등록 완료':'대기'}</p>{a.reason&&<p className="form-alert">반려 사유: {a.reason}</p>}</div><div className="row-actions">{['REJECTED','WITHDRAWN','PENDING'].includes(a.status)&&<button className="btn secondary" disabled={pending!==null||events.data?.find(e=>e.id===a.eventId)?.status!=='PUBLISHED'} onClick={()=>void change(a.id,a.revision,'resubmit')}>등록하고 공개</button>}{a.status==='PENDING'&&<button className="btn subtle" disabled={pending!==null} onClick={()=>void change(a.id,a.revision,'withdraw')}>신청 철회</button>}</div></article>)}</section>}
@@ -71,7 +71,7 @@ export function CreatorEventsPage() {
         {!selected ? <EmptyState title="참가할 부스를 선택해 주세요" description="기본 부스는 여러 개 만들 수 있지만 행사에는 계정당 1개만 등록할 수 있습니다." />
           : events.loading ? <LoadingState label="행사를 불러오고 있습니다" />
           : events.error ? <ErrorState error={events.error} retry={() => void events.reload()} />
-          : !events.data?.length ? <EmptyState title="표시할 행사가 없습니다" description="현재 등록 가능한 예약·판매 행사가 없습니다. 공개 행사 정보는 행사 둘러보기에서 확인할 수 있습니다." />
+          : !events.data?.length ? <EmptyState title="표시할 행사가 없습니다" description="현재 등록 가능한 예약·판매 행사가 없습니다. 위의 ‘공개 행사 찾아 부스 등록하기’에서 참가할 공개 행사를 찾아보세요." />
           : <div className="console-list">{events.data.map(event => {
             const account=applications.data?.find(a=>a.eventId===event.id&&['PENDING','APPROVED'].includes(a.status))
             const state = eventState({...event,applicationStatus:account?.status??event.applicationStatus})
