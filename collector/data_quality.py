@@ -36,10 +36,11 @@ def _can_refresh_guide_row(old, incoming):
     if incoming.get('status') in ('UNKNOWN','UNPUBLISHED','INACCESSIBLE'):return False
     if old.get('status') in ('PUBLISHED','CONFIRMED','SOLD_OUT') and old['status'] != incoming.get('status'):return False
     for key,value in old.items():
-        if key in ('sourceUrl','checkedOn','status','bookingState') or key=='note' and 'kind' in old or _blank(value) or value == []:continue
+        if key in ('sourceUrl','checkedOn','status') or key=='note' and 'kind' in old or _blank(value) or value == []:continue
         if key == 'ticketRequirement' and value == 'UNKNOWN':continue
         new=incoming.get(key)
         if new == value:continue
+        if key=='bookingState' and new in ('UPCOMING','OPEN','CLOSED','SOLD_OUT'):continue
         # An announced sale date can gain a time without changing its Korean date.
         if key in ('salesStartsAt','salesEndsAt') and len(value)==10 and isinstance(new,str) and len(new)>10:
             if datetime.fromisoformat(new.replace('Z','+00:00')).astimezone(timezone(timedelta(hours=9))).date().isoformat()==value:continue
