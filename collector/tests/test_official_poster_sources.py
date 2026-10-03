@@ -1,4 +1,6 @@
 import sys,unittest,tempfile
+import io,hashlib
+from PIL import Image
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -52,6 +54,16 @@ class PosterTests(unittest.TestCase):
   from official_poster_sources import PLACEHOLDER_SHA256
   with tempfile.TemporaryDirectory() as tmp:
    rows,files=collect_detail_sources(dict(name='제38회 플래툰 컨벤션',sources=[dict(kind='VENUE',url=page)]),Path(tmp),[],html_fetcher=lambda *args:(html,'unused'),robots_checker=lambda *args:True,image_fetcher=lambda *args:(b'x','image/png',next(iter(PLACEHOLDER_SHA256))))
-   self.assertEqual(rows[0]['images'][0]['analysisStatus'],'PLACEHOLDER');self.assertEqual(files,[])
+  self.assertEqual(rows[0]['images'][0]['analysisStatus'],'PLACEHOLDER');self.assertEqual(files,[])
+ def test_missing_mime_uses_verified_bytes_but_declared_mismatch_html_and_limits_reject(self):
+  from media_fetch import verified_content_type,MediaError
+  out=io.BytesIO();Image.new('RGB',(2,2)).save(out,format='JPEG');raw=out.getvalue()
+  for declared in ('','application/octet-stream'):
+   self.assertEqual(verified_content_type(raw,declared),('image/jpeg',hashlib.sha256(raw).hexdigest()))
+   for bad in (b'<html>no poster</html>',b'<svg/>',raw[:10]):
+    with self.assertRaises(MediaError):verified_content_type(bad,declared)
+   with self.assertRaises(MediaError):verified_content_type(raw,declared,max_pixels=1)
+  for declared in ('image/png','text/html'):
+   with self.assertRaises(MediaError):verified_content_type(raw,declared)
 
 if __name__=='__main__':unittest.main()
