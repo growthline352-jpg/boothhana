@@ -1,5 +1,6 @@
 """Deterministic checks, not a claim that AI-extracted facts are verified."""
 from __future__ import annotations
+from areas import district_errors
 from datetime import date, datetime
 import hashlib
 import ipaddress
@@ -76,6 +77,7 @@ def check_event(e: dict, start: date, end: date) -> tuple[list[str], list[str]]:
     if not e['name'].strip(): rejected.append('행사명 없음')
     if e.get('subcategory') not in CATEGORIES: rejected.append('지원하지 않는 행사 분류')
     rejected.extend(region_errors(e.get('region'),e.get('address'),e.get('venueName')))
+    rejected.extend(district_errors(e))
     address=(e['address'] or '').strip()
     if not e['venueName'] or '비공개' in e['venueName']: warnings.append('장소 미확정/비공개')
     if not address: warnings.append('상세 주소 확인 필요')

@@ -48,3 +48,8 @@ subjects에는 확인된 취향 주제의 표준 코드와 작품·캐릭터 원
 공식 한정 운영 팝업은 판매·체험·전시·복합 목적에 맞는 POPUP_RETAIL/POPUP_EXPERIENCE/POPUP_EXHIBITION/POPUP_MIXED를 사용한다. 공식 소개로 확인한 취향 주제만 기록한다. 상설 체험관은 팝업으로 추정하지 않는다. 티켓 사용기한이나 프리오픈 종료일을 행사 종료일로 쓰지 않는다. 종료일이 확인되지 않으면 후보로 남겨 재확인한다.
 생일 기념이 확인된 경우에만 BIRTHDAY_CAFE를 사용하고 일반 팬카페는 FAN_CAFE로 둔다. 일반 음악 공연은 FESTIVAL의 CONCERT/MUSIC_FESTIVAL로 구분하고, 애니·게임 OST·버추얼 중심 공연만 SUBCULTURE_MUSIC로 둔다. 일반 브랜드 팝업을 팬덤 행사로 추정하지 않는다.
 <!-- TAXONOMY:END -->
+
+
+## 예약 접수 상태와 세부 지역
+행사 occurrences와 예약 판매 기간을 분리한다. 예약 종료를 행사 종료·매진으로 추정하지 않는다. visitorGuide.tickets의 bookingState는 UNKNOWN/UPCOMING/OPEN/CLOSED/SOLD_OUT이며 정보 확인 상태 status와 별개다. 원문이 접수 종료라고 확인된 경우 CLOSED와 sourceUrl·checkedOn을 기록한다. 날짜/회차/판매처마다 개별 항목을 만들고 salesStartsAt/salesEndsAt은 시간대 포함 일시로, 시간 미공개는 날짜만 기록한다. 현장 입장·현장 구매 조건은 해당 회차의 원문으로 확인해 note와 FAQ에 기록한다. 예약폼 마감 후에도 행사일까지 후속 공지를 확인한다.
+서울 행사 districts에는 공식 주소/개최 장소로 확인된 구 이름을 배열로 기록한다(예: ["마포구"]). 여러 장소면 확인된 모든 구를 기록한다. 장소 비공개·미확정이면 []로 두며 행사명/주최 소재지로 추정하지 않는다. 경기 행사에는 서울 districts를 넣지 않는다. 주소가 비어 있으면 후속 보완 대상이며 지역 정보 확인도 함께 수행한다.

@@ -385,7 +385,7 @@ public class CatalogService {
     }
     @Transactional public Map<String,Object> editEvent(long id,EditInput input) {
         var row=one("select * from subculture_event_candidate where id=? for update",id);
-        checkEdit(row,input,Set.of("name","venueName","address","description","admission","organizer","edition","subjects","occurrences","eventFormat","discoveryLinks","warnings","subcategory","region","operationStatus","visitorGuide"),EventData.class);
+        checkEdit(row,input,Set.of("name","venueName","address","description","admission","organizer","edition","subjects","occurrences","eventFormat","discoveryLinks","warnings","subcategory","region","operationStatus","visitorGuide","districts"),EventData.class);
         EventData e=effective(after(row,input),EventData.class);
         String start=e.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=e.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
         if(!CollectionRules.event(e,new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end)).accepted()) throw ApiException.badRequest("행사 수정값을 확인하세요.");

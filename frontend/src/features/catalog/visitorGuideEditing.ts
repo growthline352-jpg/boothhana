@@ -9,6 +9,8 @@ export function visitorGuideError(guide:VisitorGuide,dates:Occurrence[]):string|
   }
   for(const [key,max] of Object.entries({tickets:40,programs:100,faq:30,sales:30,coverage:8}))if(guide[key as keyof VisitorGuide].length>max)return `한 번에 저장할 수 있는 ${key} 항목 수는 ${max}개입니다.`
   for(const t of guide.tickets){
+    if(t.bookingState&&!['UNKNOWN','UPCOMING','OPEN','CLOSED','SOLD_OUT'].includes(t.bookingState))return '예매 상태를 확인해 주세요.'
+    if(t.bookingState&&t.bookingState!=='UNKNOWN'&&!['PUBLISHED','SOLD_OUT'].includes(t.status))return '예매 상태 확정에는 공개 자료 확인과 출처가 필요합니다.'
     if(!t.name.trim())return '입장권 이름을 입력해 주세요.'
     if(!within(t.visitDate))return `${t.name}: 관람일이 행사 운영일 밖에 있습니다.`
     if(evidence(t,['PUBLISHED','SOLD_OUT'].includes(t.status)))return `${t.name}: 올바른 출처 주소와 확인일을 입력해 주세요.`

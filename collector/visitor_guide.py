@@ -65,6 +65,7 @@ def validate_guide(guide, occurrences, check_url):
         return set(values)
     ticket_ids=ids(guide['tickets'])
     for t in guide['tickets']:
+        if t.get('bookingState') not in (None,'UNKNOWN') and t['status'] not in ('PUBLISHED','SOLD_OUT'):raise ValueError('예매 상태 확정에는 공개 자료 확인 필요')
         day(t['visitDate']);period(t);provenance(t,t['status'] not in ('UNKNOWN','UNPUBLISHED'))
         if not t['name'].strip():raise ValueError('예매권 이름 필요')
         if t['priceAmount'] is not None and not t['currency']:raise ValueError('예매권 통화 필요')

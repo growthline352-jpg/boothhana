@@ -30,6 +30,7 @@ export function calendarApiParams(state: BrowseState, month: string): URLSearchP
   const params = new URLSearchParams({ category: state.category.code, sort: 'DATE_ASC', from: range.from, to: range.to })
   if (state.q) params.set('q', state.q)
   if (state.region) params.set('region', state.region)
+  if (state.region==='SEOUL'&&state.areas) params.set('areas', state.areas)
   if (state.subcategory) params.set('subcategory', state.subcategory)
   return params
 }

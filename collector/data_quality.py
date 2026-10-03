@@ -36,7 +36,7 @@ def _can_refresh_guide_row(old, incoming):
     if incoming.get('status') in ('UNKNOWN','UNPUBLISHED','INACCESSIBLE'):return False
     if old.get('status') in ('PUBLISHED','CONFIRMED','SOLD_OUT') and old['status'] != incoming.get('status'):return False
     for key,value in old.items():
-        if key in ('sourceUrl','checkedOn','status') or key=='note' and 'kind' in old or _blank(value) or value == []:continue
+        if key in ('sourceUrl','checkedOn','status','bookingState') or key=='note' and 'kind' in old or _blank(value) or value == []:continue
         if key == 'ticketRequirement' and value == 'UNKNOWN':continue
         new=incoming.get(key)
         if new == value:continue
@@ -97,6 +97,7 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
     merged = deepcopy(original)
     for field in IDENTITY_FIELDS:
         merged[field] = deepcopy(original.get(field))
+    if not merged.get('districts') and observed.get('districts'):merged['districts']=deepcopy(observed['districts'])
     for field in ('address', 'admission', 'description'):
         gap=_placeholder_description(merged) if field=='description' else _blank(merged.get(field))
         if gap and not _blank(observed.get(field)): merged[field] = deepcopy(observed[field])
