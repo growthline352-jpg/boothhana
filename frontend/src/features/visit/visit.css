@@ -26,14 +26,17 @@
 .booth-detail-copy>.ownership-panel{width:100%;margin:20px 0 0;padding-top:16px;border-top:1px solid var(--line);font-size:.8rem}
 .booth-detail-summary{margin:18px 0;color:#4f5751;font-size:.94rem;line-height:1.75;overflow-wrap:anywhere}
 .booth-detail-actions{margin-top:auto;padding-top:12px}
-.booth-detail-gallery{display:grid;grid-template-columns:1.15fr .85fr;grid-template-rows:1fr 1fr;gap:2px;min-width:0;background:var(--line)}
-.booth-detail-gallery figure{position:relative;min-height:0;margin:0;overflow:hidden;background:#f0eee8}
+.booth-detail-gallery{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:2px;min-width:0;height:480px;background:var(--line)}
+.booth-detail-gallery figure{display:grid;grid-template-rows:minmax(0,1fr) auto;min-width:0;min-height:0;margin:0;overflow:hidden;background:#f1f2f4}
 .booth-detail-gallery figure.is-main{grid-row:1/3}
-.booth-detail-gallery img{width:100%;height:100%;min-height:210px;object-fit:cover}
-.booth-detail-gallery figcaption{position:absolute;left:8px;right:8px;bottom:8px;padding:6px 8px;background:rgba(28,25,22,.76);color:#fff;border-radius:6px;font-size:.65rem;line-height:1.4;overflow-wrap:anywhere}
-.booth-detail-gallery figcaption a{color:#fff;text-decoration:underline}
-.booth-detail-gallery.count-0,.booth-detail-gallery.count-1{display:block}
-.booth-detail-gallery.count-1 figure{height:100%}
+.booth-detail-gallery img{width:100%;height:100%;min-height:0;object-fit:contain}
+.booth-detail-gallery figcaption{padding:8px 12px;background:#f1f2f4;color:var(--muted);font-size:.75rem;line-height:1.5;overflow-wrap:anywhere}
+.booth-detail-gallery figcaption a{color:var(--ink);text-decoration:underline}
+.booth-detail-gallery.count-0,.booth-detail-gallery.count-1{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr)}
+.booth-detail-gallery.count-2{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}
+.booth-detail-gallery.count-2 figure.is-main{grid-row:auto}
+.booth-detail-gallery.count-0{height:240px;align-self:center}
+.booth-detail-gallery.count-0 figure{grid-template-rows:minmax(0,1fr)}
 .booth-detail-placeholder{display:flex;flex-direction:column;justify-content:flex-end;gap:6px;width:100%;height:100%;min-height:430px;padding:30px;background:#eceae4;color:#58524a}
 .booth-detail-placeholder span{margin-bottom:auto;color:var(--accent);font-size:clamp(3rem,7vw,5.5rem);font-weight:900;letter-spacing:-.07em}
 .booth-detail-placeholder strong{font-size:1.25rem;overflow-wrap:anywhere}
@@ -89,7 +92,7 @@
 .booth-map-facts dd{margin:0;overflow-wrap:anywhere}
 
 @media(max-width:940px){
- .booth-detail-hero{grid-template-columns:1fr}.booth-detail-gallery{min-height:360px}
+ .booth-detail-hero{grid-template-columns:1fr}.booth-detail-gallery{height:420px}
  .booth-detail-visit{width:100%}
  .booth-related-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -102,7 +105,7 @@
  .booth-detail-location small{grid-column:1}.booth-detail-copy{padding:23px 20px 20px}
  .booth-detail-copy h2{font-size:1.7rem}.booth-detail-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
  .booth-detail-actions>.btn.primary{grid-column:1/-1;grid-row:1;width:100%}.booth-detail-actions>.memory-save-control,.booth-detail-actions>.memory-save-control .btn,.booth-detail-actions>.btn:not(.primary){width:100%}
- .booth-detail-gallery{min-height:270px}.booth-detail-gallery.count-0{min-height:190px}.booth-detail-gallery img{min-height:135px}.booth-detail-placeholder{min-height:190px;padding:22px}
+ .booth-detail-gallery{height:360px}.booth-detail-gallery.count-0{height:190px}.booth-detail-gallery.count-3{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1.4fr) minmax(0,1fr);height:460px}.booth-detail-gallery.count-3 figure.is-main{grid-column:1/-1;grid-row:1}.booth-detail-placeholder{min-height:190px;padding:22px}
  .booth-detail-products{margin-top:12px;padding:18px}.booth-detail-section-heading{align-items:flex-start}.booth-product-tools{grid-template-columns:1fr}.booth-product-grid{grid-template-columns:1fr}.booth-detail-information{margin-top:12px}.booth-detail-visit{padding:18px}.booth-detail-visit dl{grid-template-columns:1fr 1fr}
  .booth-map-gallery{grid-template-columns:1fr 1fr}.booth-map-gallery img{height:145px}
  .booth-related-grid{grid-template-columns:1fr}.booth-related-card:nth-child(n+4){display:none}
