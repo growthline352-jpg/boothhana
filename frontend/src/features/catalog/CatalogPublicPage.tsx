@@ -1,3 +1,4 @@
+import { hasMappableLocation } from './BoothDetail.utils'
 import { BookingBadge } from './BookingBadge'
 import { boothListReturn, boothVisit, eventSection, type EventSection } from './detailNavigation'
 import { OwnershipPanel, EventHistory } from '../support/OwnershipPanels'
@@ -194,6 +195,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
         <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
         <div><dt>장소</dt><dd>{e.venueName||'장소 미공개·미확인'}{e.address&&<small>{e.address}</small>}</dd></div>
         <div><dt>입장</dt><dd>{e.admission||'입장 조건 미확인 · 무료 여부는 주최 공지를 확인하세요.'}</dd></div></dl>
+      {section==='home'&&days.length>1&&<label className="field event-visit-day"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(day=><option key={day} value={day}>{dateLabel(day)}{day===today?' · 오늘':''}</option>)}</select></label>}
       <div className="visit-primary-actions">{currentValue.participants.length>0&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
       <div className="visit-utility-actions">{usableAddress(e.address)&&<><SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(e.address!)}`}>장소 지도 ↗</SafeLink><button type="button" onClick={()=>void copyAddress()}>주소 복사</button></>}
         <SaveButton target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall}/><ShareQr target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall} title={e.name}/><ReportLink target={{namespace:'CATALOG',type:'EVENT',eventId:currentEventId,id:currentEventId,day:state.day,hall:state.hall}} viewedVersion={currentValue.publishedAt}/></div>
@@ -241,6 +243,6 @@ function ParticipantCard({eventId,row,day,hall,assets,showMap}:{eventId:number;r
     <div className="visit-booth-body"><LocationText locations={locations}/><h3>{row.participant.registrationName}</h3>{row.directRegistration&&<span className="chip">직접 등록</span>}<p className="visit-booth-summary">{row.sales?.summary||'판매정보를 확인하고 있어요.'}</p>
       {known==='unknown'&&<small className="visit-warning">선택 날짜·전시관 참가 여부 미확인</small>}
       {row.sales&&<small>{scopes[row.sales.evidenceScope]}</small>}<p className="item-meta">{row.participant.subjects.join(' · ')}</p>
-      <div className="row-actions"><SaveButton target={{type:'PARTICIPANT',eventId,id:row.id,participantId:row.id}} day={day} hall={hall} compact/>{showMap?<button className="btn secondary" onClick={()=>showMap(row.id)}>지도에서 보기</button>:<Link className="btn secondary" to={catalogEventPath(eventId,{day,hall},'map',row.id)}>지도에서 보기</Link>}<Link className="btn primary" to={catalogBoothPath(eventId,row.id,{day,hall})}>부스 상세</Link></div>
-    </div></article>
+      </div><div className="row-actions"><SaveButton target={{type:'PARTICIPANT',eventId,id:row.id,participantId:row.id}} day={day} hall={hall} compact/>{hasMappableLocation(row,day,hall)&&(showMap?<button className="btn secondary" onClick={()=>showMap(row.id)}>지도에서 보기</button>:<Link className="btn secondary" to={catalogEventPath(eventId,{day,hall},'map',row.id)}>지도에서 보기</Link>)}<Link className="btn primary" to={catalogBoothPath(eventId,row.id,{day,hall})}>부스 상세</Link></div>
+    </article>
 }

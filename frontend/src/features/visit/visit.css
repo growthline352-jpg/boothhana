@@ -116,6 +116,7 @@
 @media(max-width:900px){.visit-occurrence-row{grid-template-columns:1fr 1fr}.visit-occurrence-row>.btn{grid-column:1/-1}}@media(max-width:480px){.visit-form-fields{padding:12px}.visit-next-task{padding:16px}}
 
 /* Essentials first: avoid stacking ornamental gaps ahead of the shared visit controls. */
+html:has(.visit-page){min-width:0}
 .visit-page>.discovery-back-link{margin-bottom:6px}.visit-summary{margin-top:12px}.visit-summary .eyebrow{margin:0 0 8px}.visit-summary h1{margin:8px 0 14px}.visit-actions{margin-top:12px}.visit-facts>div{padding:5px 0}.visit-unresolved{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:16px 0;max-height:180px;overflow:auto}.visit-unresolved>strong{width:100%}
 
 .booth-visit-controls{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0;align-items:end}

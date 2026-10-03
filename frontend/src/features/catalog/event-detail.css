@@ -60,3 +60,17 @@
 .public-shell .event-detail-redesign .visit-main-tabs{margin-top:18px}
 .public-shell .event-detail-redesign .visit-map-section{scroll-margin-top:calc(var(--detail-header-height,76px) + 76px)}
 .public-shell .event-detail-redesign .visit-utility-actions{flex-wrap:wrap}
+.public-shell .event-detail-redesign .event-visit-day{max-width:260px;margin:14px 0 0}
+.public-shell .event-detail-redesign .event-visit-day .select{width:100%;min-height:44px}
+
+/* Keep card actions outside the narrow thumbnail/text column on small screens. */
+.public-shell .event-detail-redesign .visit-booth-body{min-width:0}
+.public-shell .event-detail-redesign .visit-booth-card>.row-actions{display:flex;flex-wrap:wrap;grid-column:1/-1;width:100%;margin-top:auto;padding-top:12px}
+.public-shell .event-detail-redesign .visit-booth-card>.row-actions .btn{min-height:44px;white-space:normal;word-break:keep-all}
+.public-shell .event-detail-redesign .visit-booth-card>.row-actions .memory-save-control .btn{min-width:44px}
+.public-shell .event-detail-redesign .visit-booth-summary,.public-shell .event-detail-redesign .visit-booth-body>.item-meta{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere}
+@media(max-width:480px){
+ .public-shell .event-detail-redesign .visit-booth-card.has-image{grid-template-columns:76px minmax(0,1fr)}
+ .public-shell .event-detail-redesign .visit-booth-card>.row-actions{margin-top:0;padding-top:0}
+ .public-shell .event-detail-redesign .visit-booth-body>.item-meta{-webkit-line-clamp:2}
+}
