@@ -27,7 +27,7 @@ from PIL import Image as PillowImage, ImageOps
 from media_fetch import MediaError, fetch_html, fetch_image, inspect_image
 
 
-API_DEFAULT = "https://boothhana2-api-zn7x.onrender.com"
+API_DEFAULT = "https://api.boothana.kr"
 EXPLICITLY_RESTRICTED = {
     "https://dongne.co/api/images/5633?size=large",
     "w_R7vKfX_Jy4zD",
@@ -104,7 +104,16 @@ class AdminApi:
             raise RuntimeError(f"{method} {path}: HTTP {error.code}: {detail}") from error
 
     def events(self):
-        return self.request("GET", "/api/admin/subculture/v4/events?page=0&size=100")["items"]
+        result=[];seen=set();page=0
+        while True:
+            value=self.request("GET", f"/api/admin/subculture/v4/events?page={page}&size=100")
+            items=value['items']
+            if not items and len(result)<value['total']:raise RuntimeError('Incomplete event pagination')
+            for row in items:
+                if row['id'] in seen:raise RuntimeError('Non-advancing event pagination')
+                seen.add(row['id']);result.append(row)
+            if len(result)>=value['total']:return result
+            page+=1
 
     def event(self, event_id: int):
         return self.request("GET", f"/api/admin/subculture/v4/events/{event_id}")
@@ -127,7 +136,7 @@ class AdminApi:
                 "type": candidate.type,
                 "imageUrl": candidate.image_url,
                 "pageUrl": candidate.page_url,
-                "rightsEvidence": "공식 공개 페이지의 홍보 이미지. 운영 홍보 사용을 사용자가 승인함.",
+                "rightsEvidence": "공식 공개 페이지의 이미지 후보. 해당 회차 및 사용 승인은 별도 검토.",
                 "caption": candidate.caption[:1000],
             },
         })
@@ -331,9 +340,11 @@ def discover_dongne(event: dict, participants: list[dict], slug: str) -> tuple[l
 def discover_generic_banners(api: AdminApi, events: list[dict]) -> tuple[list[Candidate], dict]:
     found = []
     skipped = []
+    from event_detail_sources import allowed_by_robots
+    robots_cache={}
     for row in events:
         detail = api.event(row["id"])
-        if any(asset["type"] == "BANNER" and asset.get("storageState") == "STORED" for asset in detail.get("assets", [])):
+        if any(asset["type"] == "BANNER" and asset.get("storageState") == "STORED" and asset.get('rightsState')=='APPROVED' for asset in detail.get("assets", [])):
             continue
         sources = [item["url"] for item in ((detail.get("event") or {}).get("sources") or [])
                    if item.get("url") and item.get("access") != "INACCESSIBLE"]
@@ -344,9 +355,16 @@ def discover_generic_banners(api: AdminApi, events: list[dict]) -> tuple[list[Ca
         source_errors = []
         for source in sources[:3]:
             try:
-                parser = OpenGraphParser()
-                parser.feed(source_html(source))
-                image = next((absolute(source, value) for value in parser.images if absolute(source, value)), None)
+                from official_poster_sources import poster_detail_url,parse_poster_document
+                if not allowed_by_robots(source,[urlsplit(source).hostname],15,robots_cache):
+                    source_errors.append('robots-blocked');continue
+                text=source_html(source)
+                if poster_detail_url(source):
+                    document=parse_poster_document(text,source,'',row['name'])
+                    image=next((x['url'] for x in document['images'] if x['role'] in ('POSTER','PAGE_PREVIEW')),None)
+                else:
+                    parser = OpenGraphParser();parser.feed(text)
+                    image = next((absolute(source, value) for value in parser.images if absolute(source, value)), None)
                 if not image:
                     source_errors.append("no-og-image")
                     continue
@@ -403,6 +421,8 @@ def execute(args) -> dict:
     if not args.apply:
         return summary
     changed_events = set()
+    from event_detail_sources import allowed_by_robots
+    robots_cache={}
     for candidate in candidates:
         try:
             asset = api.register(candidate)
@@ -415,6 +435,7 @@ def execute(args) -> dict:
             asset = api.approve(asset, candidate)
             if asset["storageState"] != "STORED":
                 host = urlsplit(candidate.image_url).hostname
+                if not allowed_by_robots(candidate.image_url,[host],15,robots_cache):raise MediaError('Image blocked by source robots policy')
                 data, content_type, digest = fetch_promotional_image(candidate.image_url, host)
                 asset = api.upload(asset, data, content_type, digest)
             if asset["storageState"] == "STORED":

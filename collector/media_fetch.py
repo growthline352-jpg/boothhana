@@ -16,6 +16,18 @@ def normalize_image_content_type(value: str):
     value=value.split(';')[0].strip().lower()
     return 'image/jpeg' if value in ('image/jpg','image/pjpeg') else value
 
+def verified_content_type(data: bytes,declared: str,max_pixels: int=MAX_PIXELS):
+    """An omitted HTTP type is not a file format. Sniff only verified raster bytes.
+
+    Explicit image/HTML types are never overridden. All candidates retain the
+    same byte, pixel, decompression and complete-file validation limits.
+    """
+    if declared not in ('','application/octet-stream'):return declared,inspect_image(data,declared,max_pixels)
+    for mime in ('image/jpeg','image/png','image/webp','image/gif'):
+        try:return mime,inspect_image(data,mime,max_pixels)
+        except MediaError:pass
+    raise MediaError('Missing/generic content type without a valid bounded raster image')
+
 def public_addresses(host: str,port: int,resolver=socket.getaddrinfo):
     addresses=[]
     for row in resolver(host,port,type=socket.SOCK_STREAM):
@@ -90,7 +102,7 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PI
                 data.extend(chunk)
                 if len(data)>MAX_BYTES: raise MediaError('Actual image exceeds 10MiB')
             if length is not None and len(data)!=int(length): raise MediaError('Truncated image')
-            result=bytes(data);digest=inspect_image(result,type_,max_pixels)
+            result=bytes(data);type_,digest=verified_content_type(result,type_,max_pixels)
             return result,type_,digest
         finally: connection.close()
     raise MediaError('Too many image redirects')

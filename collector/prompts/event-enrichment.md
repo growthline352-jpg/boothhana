@@ -74,6 +74,12 @@ matchesEdition=true를 기록한다. rights=UNKNOWN, rightsEvidence=null을 유�
 공식 주최 자료에서 도로명 주소·가격을 못 찾으면 전시장·공식 예매처를 추가 확인한다.
 빈 값은 추정하지 않는다. 남은 미공개·접근 실패·자료 부족을 coverage와 warnings에 구분한다.
 
+sourceType=OFFICIAL_POSTER_PAGE는 공식 행사 상세 본문에서 읽은 포스터·이미지 후보와 본문이다.
+POSTER/CONTENT/BACKGROUND/PAGE_PREVIEW 역할은 HTML 위치로 정한 후보일 뿐 해당 회차 확인을 뜻하지 않는다.
+ATTACHED 이미지를 직접 보고 행사명·회차·기간을 대조한 뒤에만 banners에 matchesEdition=true로 기록한다.
+공통 사이트 이미지, 로고, 추천하는 다른 행사, 과거 포스터는 배제한다. rights=UNKNOWN,
+rightsEvidence=null을 유지하며 실제 url/sourceUrl을 변경하지 않는다. 수집 후보와 사용 승인·파일 저장은 별도 단계다.
+
 
 ## 예약 접수 상태와 세부 지역
 행사 occurrences와 예약 판매 기간을 분리한다. 예약 종료를 행사 종료·매진으로 추정하지 않는다. visitorGuide.tickets의 bookingState는 UNKNOWN/UPCOMING/OPEN/CLOSED/SOLD_OUT이며 정보 확인 상태 status와 별개다. 원문이 접수 종료라고 확인된 경우 CLOSED와 sourceUrl·checkedOn을 기록한다. 날짜/회차/판매처마다 개별 항목을 만들고 salesStartsAt/salesEndsAt은 시간대 포함 일시로, 시간 미공개는 날짜만 기록한다. 현장 입장·현장 구매 조건은 해당 회차의 원문으로 확인해 note와 FAQ에 기록한다. 예약폼 마감 후에도 행사일까지 후속 공지를 확인한다.
