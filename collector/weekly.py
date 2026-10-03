@@ -560,6 +560,7 @@ class Pipeline:
             self.issues.append(key+': '+', '.join(detail_issues))
             if result['searchStatus']=='COMPLETE':result={**result,'searchStatus':'PARTIAL'}
             result={**result,'summary':(result['summary']+' 상세 원문 보완 필요: '+', '.join(detail_issues))[:2000]}
+        write_json(self.job_dir(key)/'completeness.json',{'before':reasons,'remaining':missing_reasons(merged),'detailIssues':detail_issues})
         final={key:result[key] for key in ('schemaVersion','searchStatus','summary','queries','sourceCoverage') if key in result}
         final['events']=[merged]
         receipt=self.deliver(key,{'schemaVersion':'1','runId':str(uuid.uuid5(uuid.UUID(self.id),key)),'startedAt':began,'finishedAt':utcnow(),'executionMode':'CLI','webSearchObserved':observed,'scope':self.scope,'result':final},legacy=True)
@@ -579,8 +580,25 @@ class Pipeline:
             finally:
                 audit_path=self.job_dir(f'enrichment-{target["id"]}-{target["revision"]}')/'audit.json'
                 fetched=json.loads(audit_path.read_text(encoding='utf-8')).get('fetchedSourceUrls',[]) if audit_path.exists() else []
-                self.enrichment_attempts[str(target['id'])]=attempt_record(target['event'],status,fetched)
+                payload=self.job_dir(f'enrichment-{target["id"]}-{target["revision"]}')/'payload.json'
+                latest=json.loads(payload.read_text(encoding='utf-8'))['result']['events'][0] if status in ('SUCCESS','PARTIAL','DRY_RUN') and payload.exists() else target['event']
+                self.enrichment_attempts[str(target['id'])]=attempt_record(latest,status,fetched)
                 write_json(self.enrichment_state_path,self.enrichment_attempts)
+    def enrichment_backlog(self):
+        """Read every eligible event before fair selection; no 200-event blind spot."""
+        rows=[];after=0
+        while True:
+            self.check_budget()
+            page=self.request('GET',f'/pipelines/{self.id}/enrichment-events?limit=200&afterId={after}')
+            if not isinstance(page,list) or len(page)>200:raise RunError('Invalid enrichment page')
+            ids=[row.get('id') for row in page]
+            if any(type(value) is not int or value<=after for value in ids) or ids!=sorted(set(ids)):raise RunError('Non-advancing enrichment cursor')
+            rows.extend(page)
+            if len(page)<200:break
+            after=ids[-1]
+        self.stats['enrichmentInspected']=len(rows)
+        write_json(self.folder/'enrichment-backlog.json',{'events':[{'id':row['id'],'name':row['event']['name'],'reasons':missing_reasons(row['event'])} for row in rows]})
+        return rows
     def cursors(self,event):
         if self.api:
             values=self.request('POST',f'/pipelines/{self.id}/events/{event["id"]}/cursors',{})
@@ -604,8 +622,7 @@ class Pipeline:
                         events.append({'id':len(events)+1,'revision':1,'event':event});known.add(identity)
         if self.api:
             self.check_budget()
-            enrichment_limit=min(200,max(self.cfg['maxEvents']+1,self.cfg['maxEventEnrichments']*5))
-            events=self.request('GET',f'/pipelines/{self.id}/events?limit={enrichment_limit}')
+            events=self.enrichment_backlog() if self.cfg['maxEventEnrichments'] else []
             self.enrich_events(events)
             self.request('POST',f'/pipelines/{self.id}/event-assets',{})
             # Enrichment can advance event revisions; participant stages must use fresh targets.

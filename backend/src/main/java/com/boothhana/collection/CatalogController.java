@@ -17,6 +17,7 @@ public class CatalogController {
     @PostMapping("/pipelines/{id}/finish") public Map<String,Object> finish(@PathVariable String id,@RequestBody PipelineFinish input){return service.finish(id,input);}
     @PostMapping("/pipelines/{id}/event-assets") public Map<String,Object> assets(@PathVariable String id){return service.syncEventAssets(id);}
     @GetMapping("/pipelines/{id}/events") public List<Map<String,Object>> events(@PathVariable String id,@RequestParam(defaultValue="50") int limit){return service.eventTargets(id,limit);}
+    @GetMapping("/pipelines/{id}/enrichment-events") public List<Map<String,Object>> enrichmentEvents(@PathVariable String id,@RequestParam(defaultValue="200") int limit,@RequestParam(defaultValue="0") long afterId){return service.enrichmentTargets(id,limit,afterId);}
     @GetMapping("/pipelines/{id}/participants") public List<Map<String,Object>> participants(@PathVariable String id,@RequestParam(defaultValue="100") int limit){return service.salesTargets(id,limit);}
     @PostMapping("/pipelines/{id}/events/{eventId}/cursors") public List<Map<String,Object>> cursors(@PathVariable String id,@PathVariable long eventId){return service.participantCursors(id,eventId);}
     @PostMapping("/pipelines/{id}/participants/{participantId}/attempt") public Map<String,Object> attempt(@PathVariable String id,@PathVariable long participantId,@RequestBody SalesAttemptInput input){return service.salesAttempt(id,participantId,input);}

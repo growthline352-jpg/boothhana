@@ -160,6 +160,7 @@ class PipelineTests(unittest.TestCase):
    def reply(self,value,status=200):self.send_response(status);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(json.dumps(value).encode())
    def do_GET(self):
     if self.headers.get('Authorization')!='Bearer '+('t'*40):return self.reply({},401)
+    if '/enrichment-events?' in self.path:return self.reply([{'id':11,'revision':1,'event':fixture('events')['events'][0]}])
     if '/events?' in self.path:return self.reply([{'id':11,'revision':1,'event':fixture('events')['events'][0]}])
     if '/participants?' in self.path:return self.reply([{'id':21,'eventId':11,'revision':1,'event':fixture('events')['events'][0],'participant':fixture('participants')['participants'][0]}])
     if '/assets?' in self.path:return self.reply([])
