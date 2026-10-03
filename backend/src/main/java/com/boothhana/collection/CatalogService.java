@@ -196,7 +196,9 @@ public class CatalogService {
             var targets=enrichmentTargets(pipelineId,200,afterId);
             for(var t:targets) {
             EventData e=(EventData)t.get("event");long id=(Long)t.get("id");
-            for(var banner:e.banners()) { media.register(id,null,null,new Image("BANNER",banner.imageUrl(),banner.pageUrl(),banner.rightsEvidence(),e.name()));count++; }
+            // Legacy records can omit banners; one empty record must not abort the sweep.
+            var banners=e.banners()==null?List.<Banner>of():e.banners();
+            for(var banner:banners) { media.register(id,null,null,new Image("BANNER",banner.imageUrl(),banner.pageUrl(),banner.rightsEvidence(),e.name()));count++; }
             for(var link:e.discoveryLinks()) {
                 if("FLOOR_PLAN".equals(link.kind()) && link.url()!=null && java.net.URI.create(link.url()).getPath().toLowerCase(java.util.Locale.ROOT).matches(".*\\.(png|jpe?g|webp|gif)$")) {
                     // Use the direct image itself as the source page until discovery finds a

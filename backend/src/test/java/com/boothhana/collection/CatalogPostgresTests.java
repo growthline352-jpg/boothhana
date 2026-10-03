@@ -67,6 +67,18 @@ class CatalogPostgresTests {
     long participant() {return ingest(stage("PARTICIPANTS",null)).participantIds().getFirst();}
     void reviewEvent() {long revision=((Number)service.eventDetail(eventId).get("revision")).longValue();tx.execute(s->service.editEvent(eventId,new EditInput(revision,"REVIEWED","test checked",Map.of())));}
     void reviewParticipant(long id) {var row=service.participant(id);tx.execute(s->service.editParticipant(id,new EditInput(row.revision(),"REVIEWED","test checked",Map.of())));}
+    @Test void assetSyncContinuesPastLegacyRecordsWithoutBannerArrays() {
+        long missing=copyRepairEvent("PENDING",false),explicitNull=copyRepairEvent("PENDING",false);
+        db.update("update subculture_event_candidate set payload_json=payload_json-'banners'-'discoveryLinks' where id=?",missing);
+        db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{banners}','null'::jsonb) where id=?",explicitNull);
+        var banner=new Banner("https://example.com/current.jpg","https://example.com/event","UNKNOWN",null,true);
+        db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{banners}',cast(? as jsonb)) where id=?",json.writeValueAsString(List.of(banner)),eventId);
+        var result=tx.execute(s->service.syncEventAssets(pipeline));
+        assertThat(result.get("registeredCandidates")).isEqualTo(1);
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where event_id=? and type='BANNER' and rights_state='PENDING'",Long.class,eventId)).isEqualTo(1);
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where event_id in (?,?)",Long.class,missing,explicitNull)).isZero();
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_publication",Long.class)).isZero();
+    }
     @Test void reviewedOperationStatusSurvivesPublicationAndDatabaseRead() {
         for(String state:List.of("CANCELED","POSTPONED","RESCHEDULED","SCHEDULED")) {
             long revision=((Number)service.eventDetail(eventId).get("revision")).longValue();
