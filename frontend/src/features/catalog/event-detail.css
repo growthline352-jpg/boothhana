@@ -15,7 +15,7 @@
 .public-shell .event-detail-redesign .visit-primary-actions{display:flex;align-items:center;gap:15px;margin:15px 0 0}
 .public-shell .event-detail-redesign .visit-primary-actions .btn{width:auto;min-height:42px}
 .public-shell .event-detail-redesign .visit-utility-actions{margin-top:14px}
-.public-shell .event-detail-redesign .visit-main-tabs{position:sticky;top:76px;z-index:12;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 0 22px;padding:5px;border:1px solid #cbd5df;border-radius:11px;background:#e8edf2}
+.public-shell .event-detail-redesign .visit-main-tabs{position:sticky;top:76px;z-index:12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:0 0 22px;padding:5px;border:1px solid #cbd5df;border-radius:11px;background:#e8edf2}
 .public-shell .event-detail-redesign .visit-main-tabs button{min-height:52px;padding:11px 8px;border:1px solid transparent;border-radius:7px;background:transparent;color:#43566c;font-size:16px;font-weight:700;cursor:pointer}
 .public-shell .event-detail-redesign .visit-main-tabs button:hover{background:#f4f7fa;color:#24394d}
 .public-shell .event-detail-redesign .visit-main-tabs button.is-current{border-color:#8fa3b9;border-bottom:3px solid #b84532;background:#fff;box-shadow:0 2px 5px rgb(24 45 69 / 12%);color:#172d49;font-weight:800}
