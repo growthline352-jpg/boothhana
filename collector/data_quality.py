@@ -172,7 +172,8 @@ def select_targets(targets: list[dict], attempts: dict, limit: int, priority_key
 def needs_public_details(event: dict, attempt: dict) -> bool:
     from event_detail_sources import tmm_product_url
     from official_site_sources import site_detail_url
-    urls={url for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])] if (url:=tmm_product_url(row.get('url')) or (site_detail_url(row.get('url')) if row.get('kind')=='OFFICIAL' else None))}
+    from official_poster_sources import poster_detail_url
+    urls={url for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])] if (url:=tmm_product_url(row.get('url')) or (site_detail_url(row.get('url')) if row.get('kind')=='OFFICIAL' else None) or (poster_detail_url(row.get('url')) if row.get('kind') in ('OFFICIAL','VENUE') else None))}
     return bool(urls and not urls.issubset(set(attempt.get('detailSourceUrls') or [])))
 
 def attempt_record(event: dict, status: str, fetched_urls=None) -> dict:

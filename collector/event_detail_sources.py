@@ -21,6 +21,7 @@ from zoneinfo import ZoneInfo
 
 from media_fetch import MediaError, PinnedHTTPS, check_url, public_addresses, request_target, fetch_image, fetch_html
 from official_site_sources import site_detail_url, site_root, parse_site_document, SITE_HOSTS, SITE_IMAGE_HOSTS
+from official_poster_sources import poster_detail_url,parse_poster_document,PLACEHOLDER_SHA256
 
 PAGE_HOSTS = ['takemm.com']
 API_HOSTS = ['api.takemm.com']
@@ -184,7 +185,11 @@ def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str
     for row in event.get('discoveryLinks') or []:
         url = site_detail_url(row.get('url'))
         if url and site_root(url) in roots and url not in site_urls: site_urls.append(url)
-    if not urls and not site_urls: return [], []
+    poster_urls=[]
+    for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])]:
+        url=poster_detail_url(row.get('url')) if row.get('kind') in ('OFFICIAL','VENUE') else None
+        if url and not tmm_product_url(url) and url not in poster_urls:poster_urls.append(url)
+    if not urls and not site_urls and not poster_urls: return [], []
     directory.mkdir(parents=True, exist_ok=True)
     cache_file = directory / 'detail-sources.json'
     if cache_file.is_file():
@@ -218,6 +223,8 @@ def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str
                 trace=[]
                 options={'source_trace':trace} if image_fetcher is fetch_image else {}
                 raw_image, mime, digest = image_fetcher(image['url'], hosts, max(1, min(timeout, int(deadline-time.monotonic()))), **options)
+                if item.get('sourceType')=='OFFICIAL_POSTER_PAGE' and digest in PLACEHOLDER_SHA256:
+                    image['analysisStatus']='PLACEHOLDER';continue
                 suffix = {'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif'}[mime]
                 path = directory / ('detail-image-' + str(len(files)) + suffix)
                 path.write_bytes(raw_image); path.chmod(0o600); files.append(path)
@@ -252,6 +259,17 @@ def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str
                     if child not in site_urls: site_urls.append(child)
         except (ValueError, OSError, TypeError, KeyError, HTTPException): pass
         observations.append(item)
+    for page in poster_urls[:2]:
+        host=urlsplit(page).hostname;item=dict(sourceUrl=page,checkedOn=checked,status='INACCESSIBLE',sourceType='OFFICIAL_POSTER_PAGE',images=[])
+        try:
+            if not permitted(page,[host]):item['status']='BLOCKED'
+            else:
+                html,_=html_fetcher(page,[host],max(1,min(timeout,int(deadline-time.monotonic()))))
+                item=dict(parse_poster_document(html,page,checked,event.get('name')),status='READ')
+                hosts=list(dict.fromkeys(urlsplit(image['url']).hostname for image in item['images']))
+                attach_images(item,hosts)
+        except (ValueError,OSError,TypeError,KeyError,HTTPException):pass
+        observations.append(item)
     visited = {item['sourceUrl'] for item in observations}
     for item in observations:
         if item.get('sourceType') == 'GOOGLE_SITES':
@@ -279,6 +297,7 @@ def detail_coverage_issues(event: dict, observations: list[dict]) -> list[str]:
         if row.get('sourceType') == 'GOOGLE_SITES' and any(image.get('role') == 'PAGE_PREVIEW' and image.get('analysisStatus') == 'ATTACHED' for image in row.get('images', [])) and not any(b.get('matchesEdition') is True and b.get('pageUrl') == row['sourceUrl'] for b in event.get('banners') or []):
             issues.append('MISSING_DETAIL_BANNER')
         if row.get('imagesTruncated'): issues.append('DETAIL_IMAGES_NOT_FULLY_READ')
+        if any(image.get('analysisStatus')=='PLACEHOLDER' for image in row.get('images',[])):issues.append('DETAIL_PLACEHOLDER_IMAGE')
         if any(image.get('analysisStatus') in ('INACCESSIBLE', 'BLOCKED') for image in row.get('images', [])):
             issues.append('DETAIL_IMAGE_INACCESSIBLE')
         if any(image.get('analysisStatus')=='NOT_READ' for image in row.get('images', [])):
