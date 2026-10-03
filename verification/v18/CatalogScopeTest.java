@@ -13,7 +13,8 @@ public class CatalogScopeTest {
    ok(q.connected(),"connected");ok(q.whereArgs().contains(region),"bound region");ok(!q.whereSql().contains(q.q()),"bound query");
    ok(q.whereSql().chars().filter(c->c=='?').count()==q.whereArgs().size(),"where placeholders");
    ok((q.whereSql()+q.orderSql()+" limit ? offset ?").chars().filter(c->c=='?').count()==q.listArgs().size(),"full placeholders");
-   for(var other:CatalogTaxonomy.GROUPS.entrySet())if(!other.getKey().equals(entry.getKey()))for(String ot:other.getValue())ok(!q.whereArgs().contains(ot),"category isolation");
+   for(var other:CatalogTaxonomy.GROUPS.entrySet())if(!other.getKey().equals(entry.getKey()))for(String ot:other.getValue())
+    ok(q.whereArgs().contains(ot)==CatalogTaxonomy.browseTypes(entry.getKey()).contains(ot),"only declared category sharing");
   }
   for(String region:List.of("SEOUL","GYEONGGI","INCHEON","UNKNOWN"))ok(!CollectionRules.event(event("CULTURE",region,"인천광역시 연수구","송도컨벤시아"),scope).accepted(),"Incheon denied");
   ok(!CollectionRules.event(event("DOLL","GYEONGGI","서울특별시 강남구","코엑스"),scope).accepted(),"mismatch");
