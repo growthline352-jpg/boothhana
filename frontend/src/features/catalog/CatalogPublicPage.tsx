@@ -1,5 +1,5 @@
 import { BookingBadge } from './BookingBadge'
-import { eventSection, type EventSection } from './detailNavigation'
+import { boothListReturn, boothVisit, eventSection, type EventSection } from './detailNavigation'
 import { OwnershipPanel, EventHistory } from '../support/OwnershipPanels'
 import { EventComments } from './EventComments'
 import { PageMetadata } from '../../app/PageMetadata'
@@ -78,12 +78,12 @@ function LoadBooth({eventId,participantId}:{eventId:string;participantId:string}
   return <><PageMetadata catalog={state.data} participant={row}/><CatalogBoothPage eventId={eventId} value={state.data} row={row}/></>
 }
 function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;row:PublicParticipant}) {
-  const location=useLocation(),navigate=useNavigate(),[params]=useSearchParams()
-  const state=parseVisit(params,value.event),event=value.event
+  const location=useLocation(),navigate=useNavigate(),[params,setParams]=useSearchParams()
+  const state=boothVisit(params,value.event,row),event=value.event
   const context={day:state.day,hall:state.hall}
   const canonicalEventPath=catalogEventPath(eventId,context)
   const storedReturn=(location.state as {catalogEventReturnTo?:unknown}|null)?.catalogEventReturnTo
-  const eventReturn=safeEventReturnTo(storedReturn,eventId,canonicalEventPath,value.operatingGroup?.members.map(member=>member.eventId))
+  const eventReturn=boothListReturn(safeEventReturnTo(storedReturn,eventId,canonicalEventPath,value.operatingGroup?.members.map(member=>member.eventId)),state.day,state.hall)
   const status=eventStatus(event,seoulToday())
   const related=value.participants.filter(participant=>participant.id!==row.id&&attendance(participant,state.day,state.hall)!=='other')
   const relatedPreview=related.slice(0,4)
@@ -92,7 +92,7 @@ function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;
     <nav className="discovery-back-link" aria-label="현재 위치">
       <Link to="/">홈</Link>{' / '}<Link to={categoryHref(categoryForType(event.subcategory).key)}>행사 목록</Link>{' / '}<Link to={eventReturn}>{event.name}</Link>{' / '}<span aria-current="page">부스 상세</span>
     </nav>
-    <BoothDetail eventId={Number(eventId)} event={event} row={row} assets={value.assets.filter(asset=>asset.participantId===row.id)} day={state.day} hall={state.hall} eventNotice={status.notice} onMap={openMap} onClose={()=>void navigate(eventReturn)}/>
+    <BoothDetail eventId={Number(eventId)} event={event} row={row} assets={value.assets.filter(asset=>asset.participantId===row.id)} day={state.day} hall={state.hall} eventNotice={status.notice} onMap={openMap} onVisitChange={(day,hall)=>{const next=new URLSearchParams(params);next.set('day',day);if(hall)next.set('hall',hall);else next.delete('hall');setParams(next,{replace:true,preventScrollReset:true,state:location.state})}} onClose={()=>void navigate(eventReturn)}/>
     {relatedPreview.length>0&&<section className="booth-related" aria-label="같은 행사 추천 부스">
       <div className="visit-list-heading"><h2>같은 행사에서 더 둘러보기</h2><Link to={eventReturn}>전체 부스 보기</Link></div>
       <div className="booth-related-grid">{relatedPreview.map(participant=><RelatedBoothCard key={participant.id} eventId={Number(eventId)} row={participant} day={state.day} hall={state.hall}/>)}</div>

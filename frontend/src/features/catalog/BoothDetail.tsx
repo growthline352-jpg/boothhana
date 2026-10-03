@@ -3,7 +3,7 @@ import { OwnershipPanel } from '../support/OwnershipPanels'
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
 import { dateLabel } from '../discovery/browse'
-import { attendance, relevantLocations } from '../visit/visit'
+import { attendance, relevantLocations, visitDays } from '../visit/visit'
 import type { EventData } from '../collection/api'
 import type { ProductRow, PublicAsset, PublicParticipant } from './api'
 import { hasMappableLocation } from './BoothDetail.utils'
@@ -50,7 +50,7 @@ function productPriceValue(row: ProductRow) {
   return Number.isFinite(value) ? value : null
 }
 
-export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotice, onMap, onClose, headingRef }: {
+export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotice, onMap, onVisitChange, onClose, headingRef }: {
   eventId: number
   event: EventData
   row: PublicParticipant
@@ -59,10 +59,13 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
   hall: string
   eventNotice?: string | null
   onMap: () => void
+  onVisitChange: (day: string, hall: string) => void
   onClose: () => void
   headingRef?: RefObject<HTMLHeadingElement | null>
 }) {
   const place = locationLabel(row, day, hall)
+  const days = visitDays(event)
+  const halls = unique(relevantLocations(row.participant.locations, day).map(location => location.hall))
   const canOpenMap = hasMappableLocation(row, day, hall)
   const state = attendance(row, day, hall)
   const images = detailImages(assets)
@@ -99,13 +102,17 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
       <p><strong>{event.name}</strong>의 참가 부스</p>
       <button className="btn secondary" type="button" onClick={onClose}>부스 목록으로</button>
     </div>
+    <div className="booth-visit-controls" aria-label="부스 방문 조건">
+      <label className="field"><span>방문일</span><select className="select" value={day} onChange={event => onVisitChange(event.target.value, '')}>{days.map(value => <option key={value} value={value}>{dateLabel(value)}{attendance(row, value) === 'confirmed' ? ' · 참가 확인' : ''}</option>)}{!days.length && <option value="">일정 미확인</option>}</select></label>
+      {(halls.length > 0 || hall) && <label className="field"><span>전시관</span><select className="select" value={hall} onChange={event => onVisitChange(day, event.target.value)}><option value="">전체 전시관</option>{unique([...halls, hall]).map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+    </div>
     <div className="booth-detail-hero">
       <div className="booth-detail-intro">
         <div className="booth-detail-location">
           <span>부스 위치</span><strong>{place.code}</strong><small>{place.hall}{place.zone ? ` · ${place.zone}` : ''}</small>
         </div>
         <div className="booth-detail-copy">
-          <h2 id={`booth-detail-title-${row.id}`} ref={headingRef} tabIndex={-1}>{row.participant.registrationName}</h2>
+          <h1 id={`booth-detail-title-${row.id}`} ref={headingRef} tabIndex={-1}>{row.participant.registrationName}</h1>
           <p className="booth-detail-members">{members.length ? members.join(' · ') : '참가자명 미확인'}</p>
           {topics.length > 0 && <div className="booth-detail-tags">{topics.map(topic => <span key={topic}>{topic}</span>)}</div>}
           <p className="booth-detail-summary">{summary}</p>
