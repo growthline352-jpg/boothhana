@@ -40,6 +40,7 @@ def _can_refresh_guide_row(old, incoming):
         if key == 'ticketRequirement' and value == 'UNKNOWN':continue
         new=incoming.get(key)
         if new == value:continue
+        if key=='bookingState' and new in ('UPCOMING','OPEN','CLOSED','SOLD_OUT'):continue
         # An announced sale date can gain a time without changing its Korean date.
         if key in ('salesStartsAt','salesEndsAt') and len(value)==10 and isinstance(new,str) and len(new)>10:
             if datetime.fromisoformat(new.replace('Z','+00:00')).astimezone(timezone(timedelta(hours=9))).date().isoformat()==value:continue
@@ -97,6 +98,7 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
     merged = deepcopy(original)
     for field in IDENTITY_FIELDS:
         merged[field] = deepcopy(original.get(field))
+    if not merged.get('districts') and observed.get('districts'):merged['districts']=deepcopy(observed['districts'])
     for field in ('address', 'admission', 'description'):
         gap=_placeholder_description(merged) if field=='description' else _blank(merged.get(field))
         if gap and not _blank(observed.get(field)): merged[field] = deepcopy(observed[field])

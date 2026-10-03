@@ -1,10 +1,11 @@
+import { parseAreas } from './areas'
 import type { Occurrence } from '../collection/api'
 import type { PublicEventSummary } from '../catalog/api'
 import { getCategory, type DiscoveryCategory } from './categories'
 import { currentSiteCategory } from './site'
 export type Period = 'upcoming' | 'week' | 'month' | 'all' | 'weekend' | 'nextmonth' | 'custom'
-export interface BrowseState { category: DiscoveryCategory; q: string; region: string; subcategory: string; period: Period; sort: 'date' | 'recent'; page: number; from?: string; to?: string; dateError?: string }
-const RESULT_MODE_KEYS = ['q', 'type', 'period', 'sort', 'page', 'from', 'to'] as const
+export interface BrowseState { category: DiscoveryCategory; q: string; region: string; areas?: string; subcategory: string; period: Period; sort: 'date' | 'recent'; page: number; from?: string; to?: string; dateError?: string }
+const RESULT_MODE_KEYS = ['q', 'type', 'period', 'sort', 'page', 'from', 'to', 'areas'] as const
 
 /** Category-only discovery URLs are landing pages. Search/filter intent opens the result view. */
 export function isDiscoveryResults(pathname: string, params: URLSearchParams): boolean {
@@ -27,6 +28,7 @@ export function parseBrowse(params: URLSearchParams): BrowseState {
   const rawPage = params.get('page') || '0'
   const p = params.get('period')
   return { category, region: ['SEOUL','GYEONGGI'].includes(params.get('region') || '') ? params.get('region')! : '', q: (params.get('q') || '').trim().slice(0, 100),
+    areas: params.get('region')==='SEOUL'?parseAreas(params.get('areas')):'',
     subcategory: category.filters.some(f => f.value === subcategory) ? subcategory : '',
     period: ['week','month','all','weekend','nextmonth','custom'].includes(p || '') ? p as Period : 'upcoming',
     from: params.get('from') || '', to: params.get('to') || '',
@@ -63,6 +65,7 @@ export function browseApiParams(state: BrowseState, today: string): URLSearchPar
   const params = new URLSearchParams({ page: String(state.page), size: '20', category: state.category.code,
     sort: state.sort === 'recent' ? 'RECENT' : 'DATE_ASC' })
   if (state.region) params.set('region', state.region)
+  if (state.region==='SEOUL'&&state.areas) params.set('areas', state.areas)
   if (state.q) params.set('q', state.q)
   if (state.subcategory) params.set('subcategory', state.subcategory)
   if (range.from) params.set('from', range.from)

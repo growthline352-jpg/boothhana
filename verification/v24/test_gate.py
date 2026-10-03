@@ -27,6 +27,7 @@ class GateReportingTests(unittest.TestCase):
                 'TEST-com.boothhana.release.PersistentSessionIntegrationTests.xml':['storedKakaoSessionSurvivesRepositoryRecreationAndRenewsOnUse', 'expiredSessionCannotBeRestoredOrRenewed', 'logoutRequiresCsrfAndPermanentlyRevokesStoredSession', 'sessionTablesArePrivateAndAnonymousLoginIsShortLived'],
                 'TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml':['groupedEventLimitSurvivesDifferentBaseAndPreventsConflictingMerge', 'concurrentDifferentBaseRegistrationsCommitExactlyOne', 'directRegistrationPublishesOnlyOwnBoothWithoutGrantAndEnforcesAccountLimit', 'claimApprovalRemainsRequiredAndCannotConflictWithDirectRegistration', 'approvedCollectedBoothBlocksNewBaseBoothInSameEvent', 'directProductsKeepIdentityEditsAndPublicStateThroughRepublication', 'registrationHttpRequiresLoginCsrfAndOwnedBase', 'platformRegistrationIsImmediateAndCannotUseAnotherBaseToRegisterTwice', 'endedUnpublishedAndOutOfPeriodRegistrationsAreRejected'],
                 'TEST-com.boothhana.release.LibraryIntegrationTests.xml':[
+                    'seoulAreaFiltersApplyToCountsListsCalendarAndMultiVenueEvents',
                     'detachedProfileSaveCannotRevertCompletedOnboarding',
                     'memberInterestsArePrivateVersionedAndCategoryScoped',
                     'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback',

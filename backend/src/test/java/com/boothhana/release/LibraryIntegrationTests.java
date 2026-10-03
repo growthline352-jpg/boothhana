@@ -47,7 +47,23 @@ class LibraryIntegrationTests {
   var good=Map.of("name","[TEST] Leaf keyring","summary","초록 식물 키링","categories",List.of("키링"),"productUrl","https://example.com/product","saleState","PLANNED","evidenceScope","EVENT_LISTED");
   snapshot=new LinkedHashMap<>();snapshot.put("event",e);snapshot.put("participants",List.of(Map.of("id",participant,"participant",p,"sales",Map.of("summary","초록 식물 소품","categories",List.of("키링")),"productRows",List.of(Map.of("id",product,"data",good)))));snapshot.put("publishedAt",Instant.now().toString());publish();
  }
- void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
+ @Test @org.springframework.transaction.annotation.Transactional @SuppressWarnings("unchecked")
+ void seoulAreaFiltersApplyToCountsListsCalendarAndMultiVenueEvents(){
+  var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
+  var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
+  e.put("region","SEOUL");e.put("subcategory","ONLY_EVENT");e.put("name","[TEST] areas "+event);
+  var query=new com.boothhana.collection.CatalogBrowseQuery(0,20,"SUBCULTURE","[TEST] areas "+event,"",day,day,"DATE_ASC","SEOUL","NORTHWEST,CENTRAL");
+  for(var districts:List.of(List.of("강남구"),List.of("중구","강남구"),List.of("마포구"))){
+   e.put("districts",districts);e.put("address","서울특별시 강남구 테스트로 1");snapshot.put("event",e);publish();
+   int count=districts.equals(List.of("강남구"))?0:1;
+   assertThat(publications.list(query).total()).isEqualTo(count);assertThat(publications.groupedList(query).total()).isEqualTo(count);
+  }
+  e.put("districts",List.of());e.put("address","서울특별시 마포구 테스트로 1");snapshot.put("event",e);publish();
+  assertThat(publications.list(query).total()).isEqualTo(1);assertThat(publications.groupedList(query).total()).isEqualTo(1);
+  e.put("districts",null);snapshot.put("event",e);publish();assertThat(publications.list(query).total()).isEqualTo(1);
+  e.remove("districts");e.put("address",null);snapshot.put("event",e);publish();assertThat(publications.list(query).total()).isZero();
+  assertThat(publications.list(new com.boothhana.collection.CatalogBrowseQuery(0,20,"SUBCULTURE","[TEST] areas "+event,"",day,day,"DATE_ASC","SEOUL")).total()).isEqualTo(1);
+ } void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
  Save input(){return new Save(new Target("PRODUCT",event,product,participant),day,"1관");}
  @Test void expandedTopicsMatchPublishedSubjectsWithActualPostgres() {
   db.update("update subculture_event_candidate set subcategory='FAN_CAFE' where id=?",event);
