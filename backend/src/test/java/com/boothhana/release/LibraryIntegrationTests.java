@@ -54,7 +54,7 @@ class LibraryIntegrationTests {
   String future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(2).toString(),name="[TEST] popup "+event;
   e.put("name",name);e.put("region","SEOUL");e.put("occurrences",List.of(Map.of("startDate",future,"endDate",future)));
   for(long owner:List.of(user,other))db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,?,'EVENT',?,'{}'::jsonb)",UUID.randomUUID(),owner,event,event);
-  for(var sample:List.of(List.of("POPUP_STORE","GAME","true"),List.of("POPUP_RETAIL","GAME","true"),List.of("POPUP_EXPERIENCE","CHARACTER_IP","true"),List.of("POPUP_EXHIBITION","FASHION","false"),List.of("POPUP_MIXED","BEAUTY","false"))){
+  for(var sample:List.of(List.of("POPUP_STORE","GAME","true"),List.of("POPUP_RETAIL"," game ","true"),List.of("POPUP_EXPERIENCE","CHARACTER_IP","true"),List.of("POPUP_EXHIBITION","FASHION","false"),List.of("POPUP_MIXED","BEAUTY","false"))){
    String type=sample.get(0);boolean subculture=Boolean.parseBoolean(sample.get(2));
    db.update("update subculture_event_candidate set subcategory=? where id=?",type,event);
    e.put("subcategory",type);e.put("subjects",List.of(sample.get(1)));snapshot.put("event",e);publish();
