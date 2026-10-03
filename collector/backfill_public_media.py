@@ -344,7 +344,7 @@ def discover_generic_banners(api: AdminApi, events: list[dict]) -> tuple[list[Ca
     robots_cache={}
     for row in events:
         detail = api.event(row["id"])
-        if any(asset["type"] == "BANNER" and asset.get("storageState") == "STORED" for asset in detail.get("assets", [])):
+        if any(asset["type"] == "BANNER" and asset.get("storageState") == "STORED" and asset.get('rightsState')=='APPROVED' for asset in detail.get("assets", [])):
             continue
         sources = [item["url"] for item in ((detail.get("event") or {}).get("sources") or [])
                    if item.get("url") and item.get("access") != "INACCESSIBLE"]

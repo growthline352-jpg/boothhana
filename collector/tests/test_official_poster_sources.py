@@ -31,6 +31,10 @@ class PosterTests(unittest.TestCase):
   api=AdminApi.__new__(AdminApi);api.event=lambda id:dict(event=dict(sources=[dict(url=PAGE)]),assets=[])
   with patch('backfill_public_media.source_html',return_value=HTML),patch('event_detail_sources.allowed_by_robots',return_value=True):rows,note=discover_generic_banners(api,[dict(id=1,name='행사')])
   self.assertEqual(len(rows),1);self.assertTrue(rows[0].image_url.endswith('/poster.jpg'))
+ def test_rejected_stored_site_image_does_not_suppress_poster_rediscovery(self):
+  api=AdminApi.__new__(AdminApi);api.event=lambda id:dict(event=dict(sources=[dict(url=PAGE)]),assets=[dict(type='BANNER',storageState='STORED',rightsState='REJECTED')])
+  with patch('backfill_public_media.source_html',return_value=HTML),patch('event_detail_sources.allowed_by_robots',return_value=True):rows,_=discover_generic_banners(api,[dict(id=1,name='행사')])
+  self.assertEqual(len(rows),1)
  def test_official_body_is_provided_to_analysis_and_blocked_hosts_never_fetched(self):
   event=dict(sources=[dict(kind='OFFICIAL',url=PAGE)])
   with tempfile.TemporaryDirectory() as tmp:
