@@ -1,11 +1,37 @@
 """Edition-scoped public visitor facts. Schema checks do not verify the source itself."""
 from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
+from copy import deepcopy
 import json
 from jsonschema import Draft202012Validator
 
 SCHEMA=json.loads((Path(__file__).parent/'schemas/visitor-guide.schema.json').read_text(encoding='utf-8'))
 VALIDATOR=Draft202012Validator(SCHEMA)
+
+def retain_valid_guide_rows(event, check_url):
+    """Drop unverified guide rows without manufacturing a status or provenance.
+
+    Core event validation still runs separately. Programs referring to a dropped
+    ticket are also rejected; reviewed rows are preserved by the later merge.
+    """
+    guide=event.get('visitorGuide')
+    if guide is None:return event,[]
+    try:
+        validate_guide(guide,event['occurrences'],check_url)
+        return event,[]
+    except ValueError:pass
+    kept={kind:[] for kind in ('tickets','programs','faq','sales','coverage')}
+    rejected=[]
+    for kind in kept:
+        for row in guide[kind]:
+            candidate=deepcopy(kept);candidate[kind].append(deepcopy(row))
+            try:validate_guide(candidate,event['occurrences'],check_url)
+            except ValueError:rejected.append(kind+'/'+str(row.get('id') or row.get('kind')))
+            else:kept=candidate
+    output=deepcopy(event);output['visitorGuide']=kept
+    if rejected and len(output.get('warnings') or [])<20:
+        output['warnings']=[*(output.get('warnings') or []),('관람 안내 부분 수집: 검증되지 않은 항목을 제외했습니다 ('+', '.join(rejected)+').')[:300]]
+    return output,rejected
 
 def validate_guide(guide, occurrences, check_url):
     if guide is None:return

@@ -15,6 +15,9 @@ IDENTITY_FIELDS = ('name', 'subcategory', 'organizer', 'edition', 'region', 'ven
 def _blank(value):
     return value is None or isinstance(value, str) and not value.strip()
 
+def _placeholder_description(event):
+    return _blank(event.get('description')) or _norm(event.get('description')) == _norm(event.get('name'))
+
 def _incomplete_guide(guide):
     if not any(guide.get(kind) for kind in ('tickets','programs','faq','sales','coverage')):return True
     if any(row.get('status') != 'PUBLISHED' for row in guide.get('coverage') or []):return True
@@ -33,7 +36,7 @@ def _can_refresh_guide_row(old, incoming):
     if incoming.get('status') in ('UNKNOWN','UNPUBLISHED','INACCESSIBLE'):return False
     if old.get('status') in ('PUBLISHED','CONFIRMED','SOLD_OUT') and old['status'] != incoming.get('status'):return False
     for key,value in old.items():
-        if key in ('sourceUrl','checkedOn','note','status') or _blank(value) or value == []:continue
+        if key in ('sourceUrl','checkedOn','status') or key=='note' and 'kind' in old or _blank(value) or value == []:continue
         if key == 'ticketRequirement' and value == 'UNKNOWN':continue
         new=incoming.get(key)
         if new == value:continue
@@ -47,6 +50,7 @@ def missing_reasons(event: dict) -> list[str]:
     reasons = []
     if _blank(event.get('address')): reasons.append('MISSING_ADDRESS')
     if _blank(event.get('admission')): reasons.append('MISSING_ADMISSION')
+    if _placeholder_description(event): reasons.append('MISSING_DESCRIPTION')
     occurrences = event.get('occurrences') or []
     if any(_blank(row.get('startTime')) or _blank(row.get('endTime')) for row in occurrences): reasons.append('MISSING_HOURS')
     links = event.get('discoveryLinks') or []
@@ -61,6 +65,9 @@ def missing_reasons(event: dict) -> list[str]:
         guide=event.get('visitorGuide')
         if not guide:reasons.append('MISSING_VISITOR_GUIDE')
         elif _incomplete_guide(guide):reasons.append('INCOMPLETE_VISITOR_GUIDE')
+        if event.get('subcategory') in ('BIRTHDAY_CAFE','FAN_CAFE') and guide:
+            if not guide.get('sales'):reasons.append('MISSING_CAFE_MENU')
+            if not guide.get('faq'):reasons.append('MISSING_CAFE_VISIT_RULES')
     reasons.extend(topic_review_reasons(event.get('subcategory'),event.get('subjects')))
     return reasons
 
@@ -79,6 +86,7 @@ def _unique(existing: list, incoming: list, key, limit: int) -> list:
     for row in incoming:
         identity = key(row)
         if identity in seen: continue
+        if len(result) >= limit: break
         seen.add(identity); result.append(deepcopy(row))
         if len(result) >= limit: break
     return result
@@ -90,7 +98,8 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
     for field in IDENTITY_FIELDS:
         merged[field] = deepcopy(original.get(field))
     for field in ('address', 'admission', 'description'):
-        if _blank(merged.get(field)) and not _blank(observed.get(field)): merged[field] = deepcopy(observed[field])
+        gap=_placeholder_description(merged) if field=='description' else _blank(merged.get(field))
+        if gap and not _blank(observed.get(field)): merged[field] = deepcopy(observed[field])
     if merged.get('eventFormat') == 'UNKNOWN' and observed.get('eventFormat') in ('MULTI_BOOTH', 'SINGLE_HOST'):
         merged['eventFormat'] = observed['eventFormat']
 
@@ -125,6 +134,12 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
                     old=next((row for row in rows if row[key]==incoming[key]),None)
                     if old is None and len(rows)<limit:rows.append(deepcopy(incoming))
                     elif old and _can_refresh_guide_row(old,incoming):rows[rows.index(old)]=deepcopy(incoming)
+                    elif old and incoming.get('checkedOn') and incoming['checkedOn'] >= (old.get('checkedOn') or ''):
+                        excluded=('id','kind','sourceUrl','checkedOn')+ (('note',) if kind=='coverage' else ())
+                        conflicts=[field for field in old if field not in excluded and not _blank(old[field]) and old[field] != [] and old[field] != incoming.get(field)]
+                        if conflicts:
+                            note=('관람 안내 충돌 검토: '+kind+'/'+str(incoming[key])+', '+','.join(conflicts)+'. 기존 값 유지. 원문: '+str(incoming.get('sourceUrl') or '미확인'))[:300]
+                            merged['warnings']=_unique(merged['warnings'],[note],_norm,20)
                 merged['visitorGuide'][kind]=rows
 
     old_status = merged.get('operationStatus') or {'state': 'UNKNOWN', 'note': None, 'sourceUrl': None, 'checkedOn': None}
@@ -143,8 +158,16 @@ def target_priority(target: dict, attempts: dict, priority_keywords: list[str]):
     return (not target.get('informationRequested',False), bool(last), last, priority, start, int(target['id']))
 
 def select_targets(targets: list[dict], attempts: dict, limit: int, priority_keywords: list[str]) -> list[dict]:
-    candidates = [target for target in targets if target.get('informationRequested') or missing_reasons(target.get('event') or {})]
+    candidates = [target for target in targets if target.get('informationRequested') or missing_reasons(target.get('event') or {}) or needs_public_details(target.get('event') or {},attempts.get(str(target['id'])) or {})]
     return sorted(candidates, key=lambda target: target_priority(target, attempts, priority_keywords))[:limit]
 
-def attempt_record(event: dict, status: str) -> dict:
-    return {'checkedAt': date.today().isoformat(), 'status': status, 'reasons': missing_reasons(event)}
+def needs_public_details(event: dict, attempt: dict) -> bool:
+    from event_detail_sources import tmm_product_url
+    urls={url for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])] if (url:=tmm_product_url(row.get('url')))}
+    return bool(urls and not urls.issubset(set(attempt.get('detailSourceUrls') or [])))
+
+def attempt_record(event: dict, status: str, fetched_urls=None) -> dict:
+    record={'checkedAt': date.today().isoformat(), 'status': status, 'reasons': missing_reasons(event)}
+    if status in ('SUCCESS','PARTIAL','DRY_RUN') and fetched_urls:
+        record['detailSourceUrls']=list(dict.fromkeys(fetched_urls))
+    return record
