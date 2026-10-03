@@ -42,6 +42,11 @@ class GateReportingTests(unittest.TestCase):
                     'seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership',
                     'verifiedBoothProductEditPreservesPendingCollectionAndIdentityThroughRepublication'],
                 'TEST-com.boothhana.release.OperationsIntegrationTests.xml':[
+                    'rechecksPreservePublicFactsDeduplicateAndRequireFreshAdminReview',
+                    'recheckFailuresBackOffAndCannotClearFactsOrUseUnregisteredSources',
+                    'comparisonDeduplicatesEditionsAndPreservesPublishedPlaceAdmissionByDay',
+                    'popupPlaceAndComparisonUseOnlyCurrentPublishedFactsAndDisappearAfterAddressChanges',
+                    'observationRoutesProtectPrivateSourcesAndRequireAdminCsrf',
                     'operatingGroupPreservesSourceIdsSavesCommentsAndOwnership',
                     'operatingGroupRejectsStaleChangesDuplicateMembershipAndCrossCategory',
                     'operatingGroupPaginationCountsEditionsAndScopesMatchingDays',

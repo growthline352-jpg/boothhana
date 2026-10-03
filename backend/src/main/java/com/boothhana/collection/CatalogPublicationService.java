@@ -202,7 +202,7 @@ public class CatalogPublicationService {
             """.formatted(scope,regionSql,saveJoin,interests,order),args.toArray());
         return summaries(rows);
     }
-    private List<Map<String,Object>> summaries(List<Map<String,Object>> rows) {
+    List<Map<String,Object>> summaries(List<Map<String,Object>> rows) {
         List<Long> ids=rows.stream().map(r->((Number)r.get("event_id")).longValue()).toList();
         Map<Long,AssetView> banners=media.publicBanners(ids);
         var operatingGroups=groups.publicGroups(ids);

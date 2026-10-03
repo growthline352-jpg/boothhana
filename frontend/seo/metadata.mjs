@@ -163,8 +163,8 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     title = '행사 분야 확인 | 부스하나'
     description = '서울·경기 서브컬처·박람회·축제·팝업 정보를 제공합니다. 지원하는 분야를 선택해 주세요.'
   } else if (browse && supported && category !== 'subculture') {
-    title = `${category === 'exhibitions' ? '서울·경기 박람회' : '서울·경기 축제'} | 부스하나`
-    description = `${category === 'exhibitions' ? '박람회 참가 브랜드·제품' : '축제와 공개된 참가·체험 부스'}를 찾고 방문을 준비하세요. 검토·공개된 정보만 제공합니다.`
+    title = `서울·경기 ${CATEGORY_SITES[category].label} | 부스하나`
+    description = CATEGORY_SITES[category].description
   } else if (boothMatch) {
     if (validParticipant) {
       const boothName = text(participant.participant.registrationName, 100)
@@ -195,6 +195,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     title = '예약 가능한 행사 | 부스하나'
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
     indexable = true
+  } else if (path === '/compare' || path === '/popups') {
+    title = path === '/compare' ? '행사 비교 | 부스하나' : '동네 팝업 | 부스하나'
+    description = path === '/compare' ? '두 행사의 공개 일정과 장소, 입장 조건을 비교하세요.' : '날짜와 동네를 골라 공개된 서울 팝업을 살펴보세요.'
   } else if (!browse) {
     title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
     description = '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'

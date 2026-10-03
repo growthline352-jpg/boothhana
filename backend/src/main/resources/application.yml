@@ -47,6 +47,9 @@ server:
         secure: ${SESSION_COOKIE_SECURE:false}
         same-site: ${SESSION_COOKIE_SAME_SITE:lax}
 app:
+  discovery:
+    compare-enabled: ${EVENT_COMPARE_ENABLED:false}
+    popups-enabled: ${POPUP_EXPLORE_ENABLED:false}
   support:
     guest-enabled: ${SUPPORT_GUEST_ENABLED:false}
     rate-secret: ${SUPPORT_RATE_SECRET:}

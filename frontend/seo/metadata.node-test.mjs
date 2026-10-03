@@ -5,6 +5,12 @@ import { renderPage } from '../api/page.mjs'
 import { naverVerificationFor } from './naver-verification.mjs'
 
 const siteUrl = 'https://boothhana.example'
+test('comparison and neighborhood utilities stay noindex and have public feature titles',()=>{
+ for(const [path,title] of [['/compare','행사 비교'],['/popups','동네 팝업']]){
+  const meta=pageMetadata({path,search:'?ids=1,2',siteUrl});assert.ok(meta.title.includes(title));assert.equal(meta.robots,'noindex,follow');assert.equal(meta.schema,null)
+ }
+ const legacy=pageMetadata({path:'/discover',search:'?category=popups',siteUrl,splitSites:false});assert.ok(legacy.title.includes('팝업'));assert.ok(!legacy.title.includes('축제'))
+})
 
 test('subculture performances and fairs have a subculture canonical on split sites', () => {
   for (const subcategory of ['SUBCULTURE_MUSIC', 'ANIME_GAME_FESTIVAL', 'ART_BOOK', 'BOARD_GAME', 'CHARACTER_ART', 'ILLUSTRATION', 'FAN_CAFE', 'POPUP_STORE', 'CARD_COLLECTIBLES', 'FAN_CONVENTION']) {

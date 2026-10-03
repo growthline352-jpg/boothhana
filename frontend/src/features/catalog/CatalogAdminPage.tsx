@@ -1,3 +1,4 @@
+import {ObservationWorkspace,ObservationSummary} from './ObservationWorkspace'
 import { seoulAreas } from '../discovery/areas'
 import { OperatingGroupEditor } from './OperatingGroupEditor'
 import { CatalogEventList } from './CatalogEventList'
@@ -32,6 +33,7 @@ function CatalogAdminContent(){
  return <><PageHeader eyebrow="관리자 · 수집·공개" title="공개 행사 관리" description="수집한 행사와 참가 부스, 판매정보를 검토하고 공개합니다."/>
  <div className="collection-process" aria-label="수집과 공개 순서"><div><span>01</span><strong>행사 수집</strong></div><i aria-hidden="true">→</i><div><span>02</span><strong>참가 부스·판매정보</strong></div><i aria-hidden="true">→</i><div><span>03</span><strong>검토 후 공개</strong></div></div>
  <p className="collection-process-note">정기 수집: 일요일 03:00 · 한국시간. 수집 정보는 검토 전 공개되지 않으며 예약·POS와 분리됩니다.</p>
+ <ObservationSummary/>
  <div className="catalog-tabs"><button className={`btn ${tab==='events'?'primary':'secondary'}`} onClick={()=>{if(guard()){setTab('events');setId(null)}}}>행사별 수집 현황</button><button className={`btn ${tab==='runs'?'primary':'secondary'}`} onClick={()=>{if(guard())setTab('runs')}}>주간 배치 기록</button><Link className="btn subtle" to="/admin/subculture/legacy">이전 행사 수집 기록</Link></div>
  {tab==='runs'?<BatchRuns/>:id!==null?<EventWorkspace key={id} id={id} close={()=>{if(guard())setId(null)}}/>:<CatalogEventList open={setId}/>}</>
 }
@@ -43,9 +45,10 @@ function EventWorkspace({id,close}:{id:number;close:()=>void}){
  const publish=async(remove=false)=>{if((!remove&&hasUnsaved)||!guard()||!action.begin())return;setError('');try{if(remove)await catalogApi.unpublish(id);else await catalogApi.publish(id,detail.revision);refresh()}catch(e){setError(textError(e))}finally{action.finish()}}
  return <section><div className="panel-header"><div><p className="eyebrow">외부 행사 #{id}</p><h2>{detail.event.name}</h2><p>{detail.event.venueName||'장소 미확인'}</p></div><button className="btn secondary" onClick={close}>목록</button></div>
  <div className="visit-next-task"><strong>{detail.reviewState!=='REVIEWED'?'다음 할 일: 행사 일정·장소·개최 상태 확인':!detail.publication.length?'다음 할 일: 참가 부스·판매정보 검토 후 공개':'공개 중 · 변경 내용을 검토한 뒤 공개본을 갱신하세요'}</strong><p>이미지 사용 승인과 지도 공개는 별도 검토입니다. 누락된 부스는 미참가로 간주하지 않습니다.</p><div className="row-actions"><button className="btn secondary" onClick={()=>{if(guard())setTab('participants')}}>참가 부스 검토</button><button className="btn secondary" onClick={()=>{if(guard())setTab('floorplan')}}>지도 연결 확인</button></div></div>
- <div className="catalog-tabs">{[['event','행사 정보'],['guide','방문 안내'],['group','운영일 묶음'],['participants','참가 부스·판매정보'],['floorplan','클릭형 배치도'],['assets','이미지'],['history','출처·수집 이력']].map(([key,label])=><button className={`btn ${key===tab?'primary':'secondary'}`} key={key} onClick={()=>{if(key!==tab&&guard())setTab(key)}}>{label}</button>)}</div>
+ <div className="catalog-tabs">{[['event','행사 정보'],['guide','방문 안내'],['observations','재확인·동네'],['group','운영일 묶음'],['participants','참가 부스·판매정보'],['floorplan','클릭형 배치도'],['assets','이미지'],['history','출처·수집 이력']].map(([key,label])=><button className={`btn ${key===tab?'primary':'secondary'}`} key={key} onClick={()=>{if(key!==tab&&guard())setTab(key)}}>{label}</button>)}</div>
  {error&&<div className="form-alert">{error}</div>}
  {tab==='event'&&<EventEditor key={detail.revision} detail={detail} saved={refresh}/>}
+ {tab==='observations'&&<ObservationWorkspace detail={detail} saved={refresh}/>}
  {tab==='guide'&&<VisitorGuideEditor key={detail.revision} detail={detail} saved={refresh}/>}
  <PublicationComparison detail={detail}/>
  {tab==='participants'&&<Participants eventId={id}/>}

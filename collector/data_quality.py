@@ -177,7 +177,9 @@ def needs_public_details(event: dict, attempt: dict) -> bool:
     return bool(urls and not urls.issubset(set(attempt.get('detailSourceUrls') or [])))
 
 def attempt_record(event: dict, status: str, fetched_urls=None) -> dict:
-    record={'checkedAt': date.today().isoformat(), 'status': status, 'reasons': missing_reasons(event)}
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    record={'checkedAt': datetime.now(ZoneInfo('Asia/Seoul')).date().isoformat(), 'status': status, 'reasons': missing_reasons(event)}
     if status in ('SUCCESS','PARTIAL','DRY_RUN') and fetched_urls:
         record['detailSourceUrls']=list(dict.fromkeys(fetched_urls))
     return record

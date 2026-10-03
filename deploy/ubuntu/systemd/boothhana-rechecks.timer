@@ -1,0 +1,10 @@
+[Unit]
+Description=BoothHana daily official-source recheck pilot
+[Timer]
+OnCalendar=*-*-* 07:10:00 Asia/Seoul
+Persistent=false
+AccuracySec=1min
+RandomizedDelaySec=2min
+Unit=boothhana-rechecks.service
+[Install]
+WantedBy=timers.target

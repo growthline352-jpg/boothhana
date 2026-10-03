@@ -1,3 +1,6 @@
+import {EventComparePage} from '../features/discovery/EventComparePage'
+import {PopupExplorePage} from '../features/discovery/PopupExplorePage'
+import {discoveryFeatures} from '../features/discovery/features'
 import { AdminEventComments } from '../features/catalog/AdminEventComments'
 import { OwnershipManagement } from '../features/support/OwnershipManagement'
 import { AdminSeries } from '../features/support/AdminSeries'
@@ -39,6 +42,8 @@ export const router = createBrowserRouter([
     { path: 'login', element: <LoginPage /> },
     { path: 'events', element: <EventsPage /> },
     { path: 'discover', element: <CatalogPublicPage /> },
+    { path: 'compare', element: discoveryFeatures.comparison?<EventComparePage/>:<Navigate to="/discover?view=results" replace/> },
+    { path: 'popups', element: discoveryFeatures.popupExplore?<PopupExplorePage/>:<Navigate to="/discover?category=popups&view=results" replace/> },
     { path: 'discover/:eventId/booths/:participantId', element: <CatalogPublicBoothDetail /> },
     { path: 'discover/:eventId', element: <CatalogPublicDetail /> },
     { path: 'events/:eventId', element: <EventDetailPage /> },

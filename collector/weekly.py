@@ -15,7 +15,7 @@ from catalog_transport import Api
 from media_fetch import fetch_image
 from data_quality import attempt_record,merge_enrichment,missing_reasons,select_targets
 from event_queue import EventNameQueue,normalize_name
-from discovery_work import DiscoveryWorkQueue,festival_jobs,load_profiles,subculture_recent_jobs
+from discovery_work import DiscoveryWorkQueue,festival_jobs,load_profiles,subculture_recent_jobs,popup_jobs
 from x_recent import search_recent
 from taxonomy import GROUPS,category_for
 from event_detail_sources import collect_detail_sources,detail_coverage_issues,normalize_detail_sales_dates
@@ -25,7 +25,7 @@ DISCOVERY_CHANNELS=('VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY','TICKE
 AUTHORITATIVE_CHANNELS={'VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY'}
 EXTRA={'maxEvents':50,'maxParticipantPages':10,'maxSales':100,'maxSalesPagesPerParticipant':5,'maxCliCalls':240,'maxRuntimeMinutes':240,
        'maxImages':100,'maxEventEnrichments':50,'maxEventNameJobs':50,'eventNameMaxAttempts':8,'eventNameRetryHours':24,'eventNameNotFoundRetryHours':168,'eventNameFailureRetryHours':6,
-       'maxFestivalDiscoveryJobs':12,'maxSubcultureDiscoveryJobs':6,'discoveryWorkRetryHours':24,
+       'maxFestivalDiscoveryJobs':12,'maxSubcultureDiscoveryJobs':6,'maxPopupDiscoveryJobs':0,'discoveryWorkRetryHours':24,
        'xBearerTokenEnv':'X_BEARER_TOKEN','maxXRecentPages':2,
        'priorityEventKeywords':[],'discoveryEventNames':[],'discoveryLeadUrls':[],'discoverySourceSeeds':{},'imageAllowedHosts':[],'blockedSourceHosts':['witchform.com'],'downloadApprovedImages':True,'floorplanMaxEvents':30,'floorplanMaxSources':10,'floorplanMaxTiles':40,'floorplanMaxCliCalls':100,'floorplanMaxMinutes':180}
 class BudgetExceeded(RunError): pass
@@ -44,7 +44,7 @@ def load_config(path:Path|None):
     for key,max_ in limits.items():
         if type(cfg[key]) is not int or not 1<=cfg[key]<=max_: raise RunError(key+' outside allowed range')
     if type(cfg['maxEventEnrichments']) is not int or not 0<=cfg['maxEventEnrichments']<=100:raise RunError('maxEventEnrichments outside allowed range')
-    for key in ('maxFestivalDiscoveryJobs','maxSubcultureDiscoveryJobs'):
+    for key in ('maxFestivalDiscoveryJobs','maxSubcultureDiscoveryJobs','maxPopupDiscoveryJobs'):
         if type(cfg[key]) is not int or not 0<=cfg[key]<=100:raise RunError(key+' outside allowed range')
     if type(cfg['discoveryWorkRetryHours']) is not int or not 1<=cfg['discoveryWorkRetryHours']<=168:raise RunError('discoveryWorkRetryHours outside allowed range')
     if not isinstance(cfg['xBearerTokenEnv'],str) or not cfg['xBearerTokenEnv'].strip() or len(cfg['xBearerTokenEnv'])>100:raise RunError('xBearerTokenEnv format')
@@ -185,6 +185,7 @@ class Pipeline:
         self.discovery_work_queue=DiscoveryWorkQueue(work_path)
         self.discovery_work_queue.enqueue(festival_jobs(self.discovery_profiles,self.scope))
         self.discovery_work_queue.enqueue(subculture_recent_jobs(self.discovery_profiles,self.scope))
+        self.discovery_work_queue.enqueue(popup_jobs(self.discovery_profiles,self.scope))
         for saved in sorted((self.folder/'jobs').glob('*/receipt.json')):
             if saved.parent.name.startswith('image-'): self.image_receipts[saved.parent.name]=json.loads(saved.read_text(encoding='utf-8'))
             else: self.record_receipt(saved.parent.name,json.loads(saved.read_text(encoding='utf-8')),report_issue=False)
@@ -456,12 +457,13 @@ class Pipeline:
     def discovery_work(self):
         festival=self.discovery_work_queue.due('FESTIVAL_SOURCE',self.cfg['maxFestivalDiscoveryJobs'])
         subculture=self.discovery_work_queue.due('SUBCULTURE_RECENT',self.cfg['maxSubcultureDiscoveryJobs'])
-        targets=[*festival,*subculture]
+        popup=self.discovery_work_queue.due('POPUP_SOURCE',self.cfg['maxPopupDiscoveryJobs'])
+        targets=[*festival,*subculture,*popup]
         for item in targets:
             try:self.discovery_work_item(item)
             except BudgetExceeded:raise
             except Exception as exc:self.issue('lead-'+item['key'][:16],exc)
-        self.stats['festivalSourceJobs']=len(festival);self.stats['subcultureDiscoveryJobs']=len(subculture);self.stats['discoveryWorkJobs']=len(targets)
+        self.stats['festivalSourceJobs']=len(festival);self.stats['subcultureDiscoveryJobs']=len(subculture);self.stats['popupDiscoveryJobs']=len(popup);self.stats['discoveryWorkJobs']=len(targets)
         self.stats['discoveryWorkOutcomes']=self.discovery_work_queue.summary()
     def discovery(self):
         prompt=(ROOT/'prompts/events-v4.md').read_text(encoding='utf-8').format(today=datetime.now(SEOUL).date().isoformat(),start_date=self.scope['startDate'],end_date=self.scope['endDate'])+'\nExcluded source hosts: '+', '.join(self.cfg['blockedSourceHosts'])
