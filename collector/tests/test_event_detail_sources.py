@@ -114,6 +114,19 @@ class DetailSourceTests(unittest.TestCase):
             elif isinstance(node,list):
                 for child in node:check(child)
         check(strict)
+    def test_only_exact_source_unzoned_time_becomes_date_without_guessing_zone(self):
+        source=details.parse_tmm_product(raw_product(),URL,'2026-10-03');source['status']='READ'
+        row=dict(sourceUrl=URL,salesStartsAt='2026-09-26T21:00:00',salesEndsAt=None)
+        result=dict(searchStatus='COMPLETE',summary='가상',events=[dict(visitorGuide=dict(tickets=[row],sales=[]))])
+        normalized,issues=details.normalize_detail_sales_dates(result,[source])
+        self.assertEqual(normalized['events'][0]['visitorGuide']['tickets'][0]['salesStartsAt'],'2026-09-26')
+        self.assertEqual(normalized['searchStatus'],'PARTIAL');self.assertEqual(issues,['DETAIL_SALES_TIMEZONE_UNCONFIRMED'])
+        self.assertEqual(row['salesStartsAt'],'2026-09-26T21:00:00')
+        for url,time in [(URL,'2026-09-27T21:00:00'),('https://example.com/reserve','2026-09-26T21:00:00'),(URL,'2026-09-26T21:00:00+09:00')]:
+            row.update(sourceUrl=url,salesStartsAt=time)
+            normalized,issues=details.normalize_detail_sales_dates(result,[source])
+            self.assertEqual(normalized['events'][0]['visitorGuide']['tickets'][0]['salesStartsAt'],time)
+            self.assertEqual(issues,[])
     def test_missing_guide_sections_and_safe_title_description_upgrade(self):
         value=event();value['description']=value['name']
         self.assertIn('MISSING_DESCRIPTION',missing_reasons(value))

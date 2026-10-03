@@ -7,6 +7,7 @@ Remote text is untrusted input, never executable code or an instruction.
 from __future__ import annotations
 
 from datetime import datetime
+from copy import deepcopy
 from html.parser import HTMLParser
 import hashlib
 from http.client import HTTPException
@@ -242,3 +243,32 @@ def detail_coverage_issues(event: dict, observations: list[dict]) -> list[str]:
         if any(image.get('analysisStatus')=='NOT_READ' for image in row.get('images', [])):
             issues.append('DETAIL_IMAGES_NOT_FULLY_READ')
     return list(dict.fromkeys(issues))
+
+
+def normalize_detail_sales_dates(result: dict, observations: list[dict]) -> tuple[dict,list[str]]:
+    """Retain only the known calendar date of an exactly copied unzoned API time.
+
+    No timezone inference and no repair of other guessed/malformed timestamps.
+    The normal validator still rejects those. Existing reviewed data is merged
+    later, so this cannot remove a reviewed time or change its date.
+    """
+    output=deepcopy(result);changed=False
+    sources={row['sourceUrl']:row for row in observations if row.get('status')=='READ'}
+    for event in output.get('events') or []:
+        for kind in ('tickets','sales'):
+            for row in (event.get('visitorGuide') or {}).get(kind) or []:
+                source=sources.get(tmm_product_url(row.get('sourceUrl')))
+                if not source:continue
+                for field,raw_field in (('salesStartsAt','reservationOpenRaw'),('salesEndsAt','reservationCloseRaw')):
+                    value,raw=row.get(field),source.get(raw_field)
+                    if not isinstance(value,str) or len(value)<=10 or not isinstance(raw,str) or len(raw)<=10:continue
+                    try:
+                        timestamp=datetime.fromisoformat(value.replace('Z','+00:00'))
+                        original=datetime.fromisoformat(raw.replace('Z','+00:00'))
+                    except ValueError:continue
+                    if timestamp.tzinfo is None and original.tzinfo is None and timestamp==original:
+                        row[field]=original.date().isoformat();changed=True
+    if changed:
+        if output.get('searchStatus')=='COMPLETE':output['searchStatus']='PARTIAL'
+        output['summary']=(output.get('summary','')+' 원문 예약 시각의 시간대 미확인: 확인된 날짜만 기록했습니다.')[:2000]
+    return output,['DETAIL_SALES_TIMEZONE_UNCONFIRMED'] if changed else []
