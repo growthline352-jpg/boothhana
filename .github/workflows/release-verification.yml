@@ -82,7 +82,7 @@ jobs:
         run: |
           cp -a backend/build/test-results/test backend/build/full-suite-test-results
           cd backend
-          ./gradlew test --tests com.boothhana.collection.CatalogPostgresTests --rerun-tasks --no-daemon
+          bash ./gradlew test --tests com.boothhana.collection.CatalogPostgresTests --rerun-tasks --no-daemon
           python -c "import xml.etree.ElementTree as E; r=E.parse('build/test-results/test/TEST-com.boothhana.collection.CatalogPostgresTests.xml').getroot(); assert int(r.get('tests'))>0 and all(int(r.get(k,'0'))==0 for k in ('failures','errors','skipped'))"
       - name: Archive test reports (not deploy)
         if: always()
