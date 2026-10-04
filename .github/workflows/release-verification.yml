@@ -37,6 +37,9 @@ jobs:
       BOOTH_SUPPORT_TEST_URL: jdbc:postgresql://127.0.0.1:5432/boothhana_support_test
       BOOTH_SUPPORT_TEST_USER: postgres
       BOOTH_SUPPORT_TEST_PASSWORD: isolated-ci-only
+      BOOTH_CATALOG_TEST_URL: jdbc:postgresql://127.0.0.1:5432/boothhana_catalog_test
+      BOOTH_CATALOG_TEST_USER: postgres
+      BOOTH_CATALOG_TEST_PASSWORD: isolated-ci-only
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,6 +73,7 @@ jobs:
         run: |
           createdb boothhana_release_test
           createdb boothhana_support_test
+          createdb boothhana_catalog_test
           PGDATABASE=boothhana_release_test python verification/v18/prepare_test_db.py --confirm-isolated-empty-test-cluster
       - name: Required clean build and actual integration gate
         run: python verification/v24/release_gate.py

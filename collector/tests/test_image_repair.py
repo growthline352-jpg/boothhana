@@ -23,14 +23,17 @@ def target(id=1):
 def asset(id=10,rights='APPROVED',state='STORED'):
     return dict(id=id,revision=7,imageUrl=URL,pageUrl=PAGE,rightsState=rights,storageState=state,storedUrl=PUBLIC if state=='STORED' else None)
 class FakeApi:
-    def __init__(self,rows):self.rows=rows;self.calls=[];self.public={'banner':{'id':10,'url':PUBLIC}}
+    def __init__(self,rows):self.rows=rows;self.calls=[];self.public={'banner':{'id':10,'url':PUBLIC}};self.listing=None
     def public_event(self,id):return self.public
+    def public_listing(self,event,id):return self.public if self.listing is None else self.listing
     def request(self,method,path,data=None,**kwargs):
         self.calls.append((method,path,data,kwargs))
         if method=='GET':
             after=int(path.split('afterId=')[1]);return [copy.deepcopy(t) for t in self.rows if t['id']>after][:100]
         if path.endswith('/content'):return asset()
         if path.endswith('/assets'):return dict(id=42,rightsState='PENDING')
+        if '/pipelines' in path:return dict(state=data.get('state','RUNNING'))
+        if path.endswith('/failure'):return asset(state='FAILED')
         raise AssertionError('Unintended mutation '+path)
 
 class RobotsTests(unittest.TestCase):
@@ -109,6 +112,55 @@ class RepairTests(unittest.TestCase):
     def test_unreadable_public_file_is_not_completion(self):
         self.mock_network();job=self.job();value=target();value.update(assets=[asset()],storedHashes={'10':SHA},banner=asset())
         with patch.object(repair,'fetch_image',side_effect=TimeoutError):self.assertEqual(job.verify(value)[0],'PUBLICATION_FAILED')
+    def test_detail_poster_without_matching_list_poster_is_not_complete(self):
+        self.mock_network();job=self.job();value=target();value.update(assets=[asset()],storedHashes={'10':SHA},banner=asset())
+        for listing in ({},{'banner':None},{'banner':{'id':99,'url':PUBLIC}},{'banner':{'id':10,'url':URL}}):
+            job.api.listing=listing;self.assertEqual(job.verify(value)[0],'PUBLICATION_FAILED')
+    def test_pending_wrong_poster_does_not_block_new_official_poster_research(self):
+        self.mock_network('<h1>2026 행사</h1><img src="/current-poster.png">');job=self.job(apply=True);value=target()
+        value['assets']=[asset(rights='PENDING',state='CANDIDATE')]
+        state,note=job.repair(value)
+        self.assertEqual(state,'WAITING_REVIEW');self.assertEqual(note['assetIds'],[10])
+        self.assertEqual(note['candidates'][0]['url'],'https://official.example/current-poster.png')
+        self.assertEqual([c[1] for c in job.api.calls],[repair.PATH+'/events/1/assets'])
+    def test_pending_research_reports_blocked_source_without_approving_or_uploading(self):
+        job=self.job(apply=True);value=target();value['assets']=[asset(rights='PENDING',state='CANDIDATE')]
+        with patch.object(repair,'allowed_by_robots',return_value=False):state,note=job.repair(value)
+        self.assertEqual(state,'WAITING_REVIEW');self.assertEqual(note['discoveryState'],'SOURCE_BLOCKED');self.assertEqual(job.api.calls,[])
+    def test_storage_only_uploads_approved_missing_banner_and_records_public_verification(self):
+        self.mock_network();value=target();value['assets']=[asset(state='CANDIDATE')];job=self.job([value],apply=True,store_only=True)
+        with patch.object(job,'discover',side_effect=AssertionError('storage worker must not discover')):self.assertEqual(job.run(),0)
+        finish=next(c for c in job.api.calls if c[1].endswith('/finish'))
+        self.assertEqual(finish[2]['state'],'SUCCESS');self.assertEqual(finish[2]['summary']['job'],'IMAGE_STORAGE')
+        self.assertEqual(finish[2]['summary']['counts'],{'VERIFIED':1})
+    def test_storage_only_no_work_does_not_flood_pipeline_history(self):
+        value=target();value['assets']=[asset(rights='PENDING',state='CANDIDATE')];job=self.job([value],apply=True,store_only=True)
+        with patch.object(job,'discover',side_effect=AssertionError):self.assertEqual(job.run(),0)
+        self.assertTrue(all(c[0]=='GET' for c in job.api.calls))
+    def test_storage_failure_is_persisted_and_does_not_trigger_discovery_in_fast_job(self):
+        job=self.job(apply=True,store_only=True);value=target();value['assets']=[asset(state='CANDIDATE')]
+        with patch.object(job,'store',side_effect=TimeoutError),patch.object(job,'discover',side_effect=AssertionError):
+            self.assertEqual(job.repair(value)[0],'STORAGE_FAILED')
+        self.assertEqual(job.api.calls[0][1],repair.PATH+'/assets/10/failure')
+    def test_waiting_review_and_deferred_work_are_partial_not_success(self):
+        self.mock_network();job=self.job([target(1),target(2)],apply=True,max_events=1);self.assertEqual(job.run(),2)
+        finish=next(c for c in job.api.calls if c[1].endswith('/finish'))[2]
+        self.assertEqual(finish['state'],'PARTIAL');self.assertEqual(finish['summary']['unresolvedCount'],2)
+        self.assertEqual(finish['summary']['counts'],{'NOT_ATTEMPTED':1,'WAITING_REVIEW':1})
+        self.assertNotIn(PAGE,json.dumps(finish));self.assertTrue(any(c[1].endswith('/heartbeat') for c in job.api.calls))
+    def test_failed_target_query_finishes_pipeline_as_failed(self):
+        job=self.job(apply=True);original=job.api.request
+        def request(method,path,*args,**kwargs):
+            if method=='GET':raise TimeoutError()
+            return original(method,path,*args,**kwargs)
+        job.api.request=request
+        with self.assertRaises(TimeoutError):job.run()
+        self.assertEqual(job.api.calls[-1][2]['state'],'FAILED')
+    def test_server_summary_stays_bounded_for_large_backlog(self):
+        job=self.job();report=dict(publishedEvents=5000,processed=100,dueDeferred=4900,counts={'WAITING_REVIEW':5000},
+            events=[dict(eventId=i,name='가'*300,state='WAITING_REVIEW',details={'nextAction':'나'*1000}) for i in range(5000)])
+        summary=job.summary(report);self.assertEqual(len(summary['imageTasks']),40)
+        self.assertEqual(summary['unresolvedCount'],5000);self.assertLess(len(json.dumps(summary,ensure_ascii=False)),20000)
     def test_rejected_candidate_is_not_reregistered(self):
         self.mock_network();job=self.job(apply=True);value=target();value['assets']=[asset(rights='REJECTED')]
         self.assertEqual(job.discover(value)[0],'NO_IMAGE_FOUND');self.assertEqual(job.api.calls,[])
@@ -145,7 +197,7 @@ class RepairTests(unittest.TestCase):
         self.mock_network('<h1>행사</h1><img src="/replacement.png">');job=self.job(apply=True);value=target();value['assets']=[asset(state='FAILED')]
         with patch.object(job,'store',side_effect=TimeoutError):state,note=job.repair(value)
         self.assertEqual(state,'WAITING_REVIEW');self.assertEqual(note['storageAttempts'][0]['state'],'STORAGE_FAILED')
-        self.assertEqual([c[1] for c in job.api.calls],[repair.PATH+'/events/1/assets'])
+        self.assertEqual([c[1] for c in job.api.calls],[repair.PATH+'/assets/10/failure',repair.PATH+'/events/1/assets'])
     def test_explicit_rejected_selection_is_not_silently_changed(self):
         job=self.job(apply=True);value=target();value.update(assets=[asset()],selectedBannerAssetId=99)
         self.assertEqual(job.repair(value)[0],'SELECTION_BLOCKED');self.assertEqual(job.api.calls,[])
@@ -225,5 +277,15 @@ class PublicTransportTests(unittest.TestCase):
         self.assertEqual(api.public_event(7),{'banner':None})
         request=api.opener.open.call_args.args[0];self.assertIsNone(request.get_header('Authorization'))
         self.assertEqual(request.full_url,'https://api.example/api/public/catalog/events/7')
+    def test_listing_verification_is_category_scoped_paginated_and_anonymous(self):
+        from taxonomy import GROUPS
+        api=Api('https://api.example','secret-'+'x'*32);response=Mock();response.__enter__=Mock(return_value=response);response.__exit__=Mock(return_value=False)
+        response.read.side_effect=[json.dumps({'items':[{'id':i} for i in range(1,101)]}).encode(),b'{"items":[{"id":173,"banner":{"id":10}}]}']
+        api.opener=Mock();api.opener.open.return_value=response
+        self.assertEqual(api.public_listing(dict(name='테스트 행사',subcategory=GROUPS['FESTIVAL'][0],occurrences=[dict(startDate='2026-10-04')]),173)['banner']['id'],10)
+        self.assertEqual(api.opener.open.call_count,2)
+        for call in api.opener.open.call_args_list:
+            request=call.args[0];self.assertIsNone(request.get_header('Authorization'))
+            self.assertIn('category=FESTIVAL',request.full_url);self.assertIn('from=2026-10-04',request.full_url)
 
 if __name__=='__main__':unittest.main()

@@ -65,6 +65,7 @@ CLI 로그인이 만료되거나 사용량이 소진되면 인증/한도를 확�
 
 ```cron
 30 18 * * * /bin/bash /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh images
+*/15 * * * * /bin/bash /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh images-store
 ```
 
 이미지 작업은 LLM CLI 로그인/한도를 사용하지 않으며, 기존 collector 토큰과 호스트 정책을 사용한다.
