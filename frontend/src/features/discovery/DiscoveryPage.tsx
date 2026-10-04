@@ -7,7 +7,7 @@ import { SaveButton } from '../library/SaveButton'
 import { BestsellerSection } from '../goods/BestsellerCarousel'
 import { eventStatus } from '../visit/eventStatus'
 import { usePageScroll } from '../visit/ScrollMemory'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../../app/useAuth'
 import { interestApi } from '../interests/api'
@@ -17,7 +17,8 @@ import { publicCatalogApi, type PublicEventSummary } from '../catalog/api'
 import { SafeLink, labels } from '../catalog/Shared'
 import { ContentImage } from '../../components/ui/ContentImage'
 import { categoryHref } from './categories'
-import { browseApiParams, cardOccurrences, dateLabel, homeBrowseApiParams, homeEventSections, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
+import { browseApiParams, cardOccurrences, dateLabel, homeBrowseApiParams, homeEventSections, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type BrowseState, type Period } from './browse'
+import { HomeFeed, homeSectionRegion, homeSectionHref } from './homeFeed'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import { currentSiteCategory } from './site'
@@ -40,9 +41,10 @@ export function DiscoveryPage() {
   const { category } = state
   const [today, setToday] = useState(() => seoulToday())
   useEffect(() => { const id = window.setInterval(() => setToday(seoulToday()), 60_000); return () => window.clearInterval(id) }, [])
+  const homeFeed = useMemo(() => new HomeFeed(publicCatalogApi.browse), [category.code, today])
   const query = (isHome ? homeBrowseApiParams(state, today) : browseApiParams(state, today)).toString()
-  const data = useRemote(() => category.enabled && !state.dateError && !isCalendar ? publicCatalogApi.browse(query)
-    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError, isCalendar])
+  const data = useRemote(() => category.enabled && !state.dateError && !isCalendar ? isHome ? homeFeed.load(query) : publicCatalogApi.browse(query)
+    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError, isCalendar, isHome, homeFeed])
   const auth = useAuth()
   const viewer = useRecommendationViewer(auth)
   const personal = typeof viewer === 'number'
@@ -80,7 +82,8 @@ export function DiscoveryPage() {
   const range = periodRange(state.period, today, state.from, state.to)
   const returnTo = location.pathname + location.search
   const allEventsHref = searchResultsHref(params, category.key, '')
-  const homeSections = homeEventSections(rows, today)
+  const openingRegion = homeSectionRegion(params, 'openingRegion')
+  const closingRegion = homeSectionRegion(params, 'closingRegion')
   const hasFilter = Boolean(state.q || state.region || state.areas || state.subcategory || !isCalendar && state.period !== 'all')
   const dateLabel = dateFormatter.format(new Date(`${today}T12:00:00Z`)).replaceAll('.', '')
   const quickLinks = homeQuickLinks(category.key)
@@ -141,11 +144,11 @@ export function DiscoveryPage() {
 
     {isHome && <>
       <HomeRankingSection id="ranking-heading" title="곧 열리는 행사" description="아직 시작하지 않은 공개 행사를 가까운 일정부터 보여드려요."
-        empty="곧 열리는 행사가 없습니다." rows={homeSections.upcoming} loading={data.loading} error={!!data.error}
-        today={today} returnTo={returnTo} region={state.region} changeRegion={region => update({ region })} allEventsHref={allEventsHref}/>
+        empty="곧 열리는 행사가 없습니다." feed={homeFeed} state={state}
+        today={today} returnTo={returnTo} region={openingRegion} changeRegion={region => update({ openingRegion: region }, true)} allEventsHref={homeSectionHref(params, category.key, openingRegion)}/>
       <HomeRankingSection id="closing-heading" title="마감 임박한 행사" description="이미 시작했고, 운영 종료일까지 7일 이내인 행사예요. 예매 마감일과는 다를 수 있어요."
-        empty="지금 마감 임박한 행사가 없습니다." rows={homeSections.closing} loading={data.loading} error={!!data.error}
-        today={today} returnTo={returnTo} region={state.region} changeRegion={region => update({ region })} allEventsHref={allEventsHref} closing/>
+        empty="지금 마감 임박한 행사가 없습니다." feed={homeFeed} state={state}
+        today={today} returnTo={returnTo} region={closingRegion} changeRegion={region => update({ closingRegion: region }, true)} allEventsHref={homeSectionHref(params, category.key, closingRegion)} closing/>
     </>}
 
     {isHome && <div className="discovery-container"><PopularEvents categoryCode={category.code}/></div>}
@@ -177,10 +180,19 @@ export function DiscoveryPage() {
   </div>
 }
 
-function HomeRankingSection({ id, title, description, empty, rows, loading, error, today, returnTo, region, changeRegion, allEventsHref, closing = false }: {
-  id: string; title: string; description: string; empty: string; rows: PublicEventSummary[]; loading: boolean; error: boolean
+function HomeRankingSection({ id, title, description, empty, feed, state, today, returnTo, region, changeRegion, allEventsHref, closing = false }: {
+  id: string; title: string; description: string; empty: string; feed: HomeFeed; state: BrowseState
   today: string; returnTo: string; region: string; changeRegion: (region: string) => void; allEventsHref: string; closing?: boolean
 }) {
+  const query = homeBrowseApiParams({ ...state, region, areas: '' }, today).toString()
+  const remote = useRemote(() => state.category.enabled ? feed.load(query)
+    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 100, total: 0 }), [feed, query, state.category.enabled])
+  // Cached regions render immediately, including the frame before useRemote activates its new scope.
+  const data = feed.peek(query) ?? remote.data
+  const loading = !data && remote.loading
+  const error = !data && remote.error
+  const sections = homeEventSections(data?.items ?? [], today)
+  const rows = closing ? sections.closing : sections.upcoming
   return <section className="discovery-container home-ranking" aria-labelledby={id}>
     <div className="home-section-title"><div><h2 id={id}>{title}</h2><p>{description}</p></div><Link to={allEventsHref}>전체보기 <DiscoveryIcon name="arrow" size={16}/></Link></div>
     <div className="home-ranking-tabs" role="group" aria-label={`${title} 지역`}>
@@ -189,7 +201,7 @@ function HomeRankingSection({ id, title, description, empty, rows, loading, erro
       <button className={region === 'GYEONGGI' ? 'is-current' : ''} aria-pressed={region === 'GYEONGGI'} type="button" onClick={() => changeRegion('GYEONGGI')}>경기</button>
     </div>
     {loading ? <div className="home-ranking-grid" aria-busy="true">{[0,1,2,3,4].map(i => <div className="ranking-skeleton" key={i}/>)}</div>
-      : error ? <div className="ranking-empty" role="alert">행사 정보를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.</div>
+      : error ? <div className="ranking-empty" role="alert">행사 정보를 불러오지 못했습니다. <button type="button" onClick={() => void remote.reload()}>다시 불러오기</button></div>
       : rows.length ? <div className="home-ranking-grid">{rows.map((row, index) => <RankingEvent key={row.id} row={row} rank={index + 1} today={today} returnTo={returnTo} closing={closing}/>)}</div>
       : <div className="ranking-empty">{empty}</div>}
   </section>
