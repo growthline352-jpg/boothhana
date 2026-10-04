@@ -46,11 +46,13 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 
 관리자 기본 진입은 `/admin/subculture` 공개 행사 관리이며, 업체의 공개 정보 관리는 `/support/management`에서 시작합니다. `/admin/events`와 `/creator/*`의 예약·참가신청·POS 화면은 별도 기능입니다. 방문 안내 편집, 관심분야 연결, 운영일·전시장 묶음의 사용 방법은 [운영 화면 안내](../docs/OPERATIONS_CONSOLE_SYNC_KO.md)를 확인합니다.
 
-- 공개·팬: `/`, `/login`, `/onboarding`, `/account`, `/events`, `/events/:eventId`, `/booths/:boothId`, `/products/:productId`, `/booths/:boothId/reserve`, `/reservations`, `/reservations/:reservationId`
+- 공개·팬: `/`, `/login`, `/onboarding`, `/account`, `/itinerary`, `/events`, `/events/:eventId`, `/booths/:boothId`, `/products/:productId`, `/booths/:boothId/reserve`, `/reservations`, `/reservations/:reservationId`
 - 크리에이터: `/creator/events`, `/creator/booths`, `/creator/event-booths/:eventBoothId`, `/creator/event-booths/:eventBoothId/products`, `/creator/reservations`, `/creator/pos`, `/creator/notices`
 - 관리자: `/admin/events`, `/admin/events/:eventId`, `/admin/applications`
 
 모든 로그인 사용자는 팬·크리에이터 화면을 함께 사용할 수 있습니다. 관리자 화면은 백엔드가 `/api/me`에 `ADMIN` 권한을 반환하는 지정 카카오 계정만 접근할 수 있습니다.
+
+공통 메뉴 **내 일정**, 메인의 **일정 만들기**, 행사 상세·방문 준비의 **이 행사로 일정 만들기**에서 `/itinerary`를 엽니다. 행사 참여·데이트 목적과 날짜·동네를 선택해 코스를 만들고 Leaflet 지도에서 위치를 확인한 뒤 장소·시간·체류 시간·순서·메모와 고정을 수정합니다. 분야 사이트가 활성화된 운영에서는 행사 ID·방문일을 유지한 대표 도메인 `https://boothana.kr/itinerary`로 연결합니다. 저장·캘린더 내보내기와 구현 한계는 [일정 안내](../docs/ITINERARY_BUILDER_KO.md)를 확인합니다.
 
 공개 행사 상세의 **소개된 부스 N곳 보기**는 소개된 부스가 있을 때 표시합니다. 상단의 로그인 없이 둘러보기·공식 예매 안내 문구는 제거했습니다.
 
@@ -62,7 +64,9 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 
 서브컬처의 행사 유형 필터와 관심 설정에서 애니·게임·버추얼 공연, 애니·게임 행사, 아트북·독립출판, 보드게임, 캐릭터·아트, 일러스트 행사를 선택할 수 있습니다. 해당 유형의 공개 상세·canonical 주소는 서브컬처 분야로 연결됩니다. 유형 코드와 분야별 주소는 [분야별 사이트 안내](../docs/CATEGORY_SITES_KO.md), API·DB 적용 순서는 [관심분야 검증 및 배포 계획](../docs/CATEGORY_INTERESTS_TEST_PLAN.md)을 확인합니다.
 
-분야별 홈의 **캘린더로 보기**, 또는 전체보기의 **목록 / 캘린더**에서 월별 일정으로 전환합니다. `/discover?view=calendar&month=2026-10`처럼 월을 지정할 수 있으며 메인 도메인의 기존 분류 경로에서는 `category=subculture|exhibitions|festivals`를 함께 사용합니다. 이전 달·다음 달·오늘 이동과 검색어·지역·행사 유형 필터를 지원합니다.
+팝업스토어는 팝업 분야에서만 찾고 팝업 안의 캐릭터·애니·게임 등 취향 주제를 선택합니다. 이전 서브컬처 `POPUP_STORE` 관심 선택의 읽기 호환과 대표 주소는 [팝업 안내](../docs/POPUP_LAUNCH_KO.md)를 따릅니다.
+
+분야별 홈의 **캘린더로 보기**, 또는 전체보기의 **목록 / 캘린더**에서 월별 일정으로 전환합니다. `/discover?view=calendar&month=2026-10`처럼 월을 지정할 수 있으며 메인 도메인의 기존 분류 경로에서는 `category=popups|subculture|exhibitions|festivals`를 함께 사용합니다. 이전 달·다음 달·오늘 이동과 검색어·지역·행사 유형 필터를 지원합니다.
 
 여러 날 열리는 행사는 실제 연속 운영 기간을 하나의 막대로 표시하고, 주 경계에서는 나누어 이어짐 표시를 붙입니다. 일정 사이에 쉬는 날이 있으면 그 날짜는 비워 둡니다. 같은 날짜의 행사는 별도 줄에 쌓이며, 달력에는 최대 3줄을 표시합니다. 넘치는 날짜의 **+N개**를 누르면 보이는 행사와 숨겨진 행사를 모두 포함한 그날의 목록을 엽니다.
 
@@ -112,12 +116,14 @@ src/types.ts      API 응답과 화면에서 공유하는 TypeScript 타입
 - 전체 저장 순위가 빈 결과일 때만 세 분야의 공개 목록을 모든 페이지까지 읽고 가까운 실제 운영 일정순 상위 6개를 저장 수 0명으로 표시합니다. 취소·연기·일정 변경·종료된 개별 운영일을 제외한 뒤 디페스타 양일을 합치며, 남은 운영일이 하나면 원래 행사 ID를 유지합니다. 순위나 목록 조회가 실패하면 오류와 재시도를 표시하고 0명 목록으로 대체하지 않습니다.
 - 홈 캐러셀은 공개 `/api/public/catalog/events/featured` 또는 개인 `/api/me/interests/featured`에서 분야·지역·관심 조건을 먼저 적용한 상위 5개를 받습니다. 저장 인원이 같으면 가까운 일정순, 행사 ID순이며 저장된 행사가 없으면 같은 조건의 최근 공개 목록(`RECENT`)을 표시합니다. 조건에 맞는 행사 자체가 없으면 빈 결과를 유지합니다.
 - 관심 항목은 `/api/public/interests`의 서버 옵션을 사용하고 `GET /api/me/interests`·`PUT /api/me/interests`로 계정에 저장합니다. 분야별 행사 유형과 취향 주제는 독립적으로 선택하며 선택한 항목 중 하나에 해당하면 포함됩니다.
+- 운영 일정 화면의 장소·주변·주소 검색은 `/api/public/itinerary/places/{search,nearby,geocode}`를 사용합니다. `localhost`·`127.0.0.1`의 장소·주변 검색에만 Photon 데모 기본값을 사용하며 주소 좌표 조회는 서버 API를 사용합니다. 제공자 연결 실패 시 직접 입력·지도 위치 선택을 사용하고, 중심 행사 위치가 미확인이면 다른 동네의 주변 장소를 추천하지 않습니다.
 - 캘린더는 `/api/public/catalog/events`에 선택한 월 전체의 `from`·`to`를 전달하고 100개씩 모든 페이지를 읽은 뒤 같은 디페스타 회차를 합칩니다. 일부 페이지 조회가 실패하면 오류와 재시도를 표시합니다.
 - 비회원 의견은 `/api/public/support/options`의 `feedbackEnabled`를 확인하고 `POST /api/public/support/feedback`으로 전달합니다. 회원은 기존 `POST /api/me/support/tickets`를 사용합니다. 자세한 접수 범위는 [고객지원 안내](../docs/support/SUPPORT_AND_ROLES_V12_KO.md#5-고객문의답변비회원)를 확인합니다.
 
 ## Styling and state
 
 - 상태 관리는 페이지 로컬 state와 로그인 사용자용 `AuthContext`를 사용합니다. 크리에이터 폼 초안은 `AuthContext`의 계정·권한별 `ConsoleDraftStore`가 탭 메모리에 보관합니다.
+- 개인 일정은 회원·게스트별 `localStorage`에 최대 20개, 작성 중 초안은 `sessionStorage`에 보관합니다. 로그인한 회원의 일정도 이 브라우저에만 저장하며 서버 저장·다른 기기 동기화·공유·행사 변경 알림은 구현하지 않았습니다.
 - 폼은 controlled input과 HTML 기본 제약을 사용합니다.
 - 스타일은 외부 UI 프레임워크 없이 `tokens.css`, `global.css`에 작성합니다.
 - API 화면은 로딩, 빈 결과, 오류 상태를 공통 컴포넌트로 표시합니다.
