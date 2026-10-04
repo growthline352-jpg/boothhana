@@ -125,12 +125,18 @@
       },
       {
         "name": "성수 패션·뷰티 브랜드 공지",
+        "region": "서울",
+        "openingFocus": "UPCOMING",
         "seeds": [
+          "https://partnerlounge.kakaostyle.com/press",
+          "https://www.illycaffe.co.kr/",
+          "https://kr.rokid.com/",
           "https://www.instagram.com/superdrykor/",
           "https://www.instagram.com/skinnlab_official/"
         ],
         "queryTemplates": [
-          "성수 패션 뷰티 팝업 {year} {month} 공식 일정",
+          "서울 성수 여의도 한남 팝업 오픈 예정 {start_date} {end_date} 공식 브랜드",
+          "서울 팝업 사전예약 오픈 예정 {year} {month} 공식 주최",
           "site:instagram.com/superdrykor 팝업 {year}",
           "site:instagram.com/skinnlab_official 팝업 {year}"
         ]
@@ -159,16 +165,22 @@
       },
       {
         "name": "서울·경기 쇼핑몰·공공기관 팝업 공지",
+        "region": "경기",
+        "openingFocus": "UPCOMING",
         "seeds": [
+          "https://www.ehyundai.com/newPortal/DP/DP000000_V.do?branchCd=B00140000",
+          "https://www.lotteshopping.com/",
           "https://www.starfield.co.kr/",
           "https://www.sto.or.kr/press"
         ],
         "queryTemplates": [
-          "서울 경기 팝업 {year} {month} site:starfield.co.kr",
+          "경기 판교 하남 고양 수원 팝업 오픈 예정 {start_date} {end_date} 공식",
+          "팝업 오픈 예정 {year} {month} site:ehyundai.com",
+          "팝업 오픈 예정 {year} {month} site:starfield.co.kr",
           "팝업 {year} {month} site:sto.or.kr/press"
         ]
       }
     ],
-    "note": "운영 확인한 브랜드·주최 공지와 공간 공지를 순환 수집한다. 2차 목록은 발견 경로이며 일정·장소·회차는 공식 원문으로 확인한다. 상설 매장·박람회·축제를 팝업으로 분류하지 않는다."
+    "note": "서울·경기 공식 팝업 공지를 순환 수집한다. 매일 두 출처군 중 한 자리를 오픈 예정 조사에 배정하며, 서울 브랜드와 경기 쇼핑몰을 번갈아 확인한다. 2차 목록·언론 보도는 후보 발견 경로이며 일정·장소·회차는 공식 원문으로 확인한다. 상설 매장·박람회·축제를 팝업으로 분류하지 않는다."
   }
 }

@@ -107,7 +107,7 @@ def subculture_recent_jobs(profile: dict, scope: dict) -> list[dict]:
 
 def popup_jobs(profile:dict,scope:dict)->list[dict]:
     return [{'kind':'POPUP_SOURCE','category':'POPUP','subject':row['name'],'priority':0,'cadenceDays':1,'scope':dict(scope),
-             'payload':{'sourceType':'POPUP_OFFICIAL','region':'서울','seeds':row.get('seeds',[]),'queryTemplates':row['queryTemplates']},'origin':'POPUP_PILOT_SOURCE'}
+             'payload':{'sourceType':'POPUP_OFFICIAL','region':row.get('region','서울·경기'),'openingFocus':row.get('openingFocus','ALL'),'seeds':row.get('seeds',[]),'queryTemplates':row['queryTemplates']},'origin':'POPUP_PILOT_SOURCE'}
             for row in profile.get('popup',{}).get('sources',[])]
 
 class DiscoveryWorkQueue:

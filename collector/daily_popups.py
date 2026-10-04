@@ -5,6 +5,15 @@ from pathlib import Path
 from datetime import datetime,timedelta
 from weekly import Pipeline,load_config
 from run import SEOUL,run_lock,write_json,RunError
+
+def select_source_jobs(queue,limit):
+ """Reserve one daily slot for future openings; retain each source's retry order."""
+ due=queue.due('POPUP_SOURCE',len(queue.jobs))
+ future=[r for r in due if r.get('payload',{}).get('openingFocus')=='UPCOMING']
+ general=[r for r in due if r.get('payload',{}).get('openingFocus')!='UPCOMING']
+ if limit<2 or not future or not general:return due[:limit]
+ chosen=[future[0],general[0]]
+ return (chosen+[r for r in due if r['key'] not in {v['key'] for v in chosen}])[:limit]
 def main(argv=None):
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',type=Path);p.add_argument('--dry-run',action='store_true');args=p.parse_args(argv)
  cfg=load_config(args.config);cfg.update(maxPopupDiscoveryJobs=2,maxCliCalls=min(cfg['maxCliCalls'],7),maxRuntimeMinutes=min(cfg['maxRuntimeMinutes'],45))
@@ -15,7 +24,7 @@ def main(argv=None):
   if run.api:run.request('POST','/pipelines',{k:run.meta[k] for k in ('runId','weekKey','scope')})
   jobs=[]
   try:
-   jobs=run.discovery_work_queue.due('POPUP_SOURCE',min(2,cfg['maxPopupDiscoveryJobs']))
+   jobs=select_source_jobs(run.discovery_work_queue,min(2,cfg['maxPopupDiscoveryJobs']))
    names=set()
    for item in jobs:
     run.discovery_work_item(item);names.update(item.get('foundEventNames') or [])

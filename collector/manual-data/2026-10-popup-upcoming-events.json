@@ -1,0 +1,244 @@
+{
+  "schemaVersion": "1",
+  "searchStatus": "PARTIAL",
+  "summary": "2026-10-04 공식 원문에서 확인한 오픈 예정 팝업 4건. 전국 모든 예정 팝업을 확인한 결과는 아니며, 일정·장소의 공식 확인이 끝나지 않은 다른 후보는 제외.",
+  "queries": [
+    "서울 경기 2026년 10월 오픈 예정 팝업 공식 일정"
+  ],
+  "events": [
+    {
+      "name": "로키드 AI 글래스 더현대 서울 팝업스토어",
+      "subcategory": "POPUP_EXPERIENCE",
+      "organizer": "크레비티",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "더현대 서울 2층 팝업스토어",
+      "address": null,
+      "description": "로키드 AI 글래스를 직접 착용하고 상담·구매할 수 있는 체험 팝업입니다. 공식 홈페이지와 판매처 안내에서 운영 기간과 2층 위치를 확인했습니다. 상세 운영시간과 백화점 휴점일은 매장 안내를 확인하세요.",
+      "admission": null,
+      "subjects": [
+        "LIVING",
+        "AI 글래스",
+        "로키드"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-06",
+          "endDate": "2026-10-22",
+          "startTime": null,
+          "endTime": null
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://kr.rokid.com/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 브랜드·주최 공식 원문에서 이번 회차 2026-10-06~2026-10-22 일정과 장소를 직접 대조."
+        },
+        {
+          "url": "https://kr.rokid.com/official-retailers",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "운영 기간 10.06~10.22와 더현대 서울 2층 팝업스토어를 확인."
+        }
+      ],
+      "banners": [
+        {
+          "imageUrl": "https://megaeconomy.co.kr/news/data/20260928/p1065597506313776_269_thum.jpg",
+          "pageUrl": "https://megaeconomy.co.kr/news/newsview.php?ncode=1065597506313776",
+          "rights": "UNKNOWN",
+          "rightsEvidence": null,
+          "matchesEdition": true
+        }
+      ],
+      "warnings": [
+        "공식 홈페이지 시작일의 요일 표기가 실제 달력과 달라 날짜와 판매처 안내를 기준으로 적용."
+      ],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://kr.rokid.com/",
+          "status": "PUBLISHED",
+          "note": "브랜드·주최 공식 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "공식 개최 일정 확인",
+        "sourceUrl": "https://kr.rokid.com/",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "일리카페 Words of illy 한글날 성수 팝업",
+      "subcategory": "POPUP_EXPERIENCE",
+      "organizer": "일리카페·큐로홀딩스",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "성수 AK밸리",
+      "address": "서울특별시 성동구 연무장길 76",
+      "description": "한글날 하루 동안 한정 에디션을 소개하고 커피 체험과 주사위 이벤트를 진행하는 일리카페 팝업입니다. 행사 운영시간은 11:00~18:00입니다.",
+      "admission": null,
+      "subjects": [
+        "FOOD_DRINK",
+        "일리카페"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-09",
+          "endDate": "2026-10-09",
+          "startTime": "11:00",
+          "endTime": "18:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.illycaffe.co.kr/event/illy_seongsu.php",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 브랜드·주최 공식 원문에서 이번 회차 2026-10-09~2026-10-09 일정과 장소를 직접 대조."
+        }
+      ],
+      "banners": [
+        {
+          "imageUrl": "https://www.illycaffe.co.kr/images/hangeulday2026/hangeulday2026_popup.png",
+          "pageUrl": "https://www.illycaffe.co.kr/event/illy_seongsu.php",
+          "rights": "UNKNOWN",
+          "rightsEvidence": null,
+          "matchesEdition": true
+        }
+      ],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.illycaffe.co.kr/event/illy_seongsu.php",
+          "status": "PUBLISHED",
+          "note": "브랜드·주최 공식 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "공식 개최 일정 확인",
+        "sourceUrl": "https://www.illycaffe.co.kr/event/illy_seongsu.php",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "뷰익 엘렉트라 E7 스타필드 하남 팝업 전시",
+      "subcategory": "POPUP_EXPERIENCE",
+      "organizer": "뷰익 코리아",
+      "edition": "2026",
+      "region": "GYEONGGI",
+      "venueName": "스타필드 하남 1층 고메 아트리움",
+      "address": null,
+      "description": "뷰익 엘렉트라 E7을 소개하는 기간 한정 팝업 전시입니다. 공식 프로그램에는 도슨트 관람, 브랜드 퀴즈 및 상담 참여 이벤트가 안내돼 있습니다. 하남 회차 운영시간은 10:00~20:00입니다.",
+      "admission": null,
+      "subjects": [
+        "LIVING",
+        "자동차",
+        "뷰익"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-15",
+          "endDate": "2026-10-18",
+          "startTime": "10:00",
+          "endTime": "20:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.buickkorea.co.kr/events/launch-popup",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 브랜드·주최 공식 원문에서 이번 회차 2026-10-15~2026-10-18 일정과 장소를 직접 대조."
+        }
+      ],
+      "banners": [
+        {
+          "imageUrl": "https://www.buickkorea.co.kr/content/dam/buick/as/kr/ko/index/events/launch-popup/02-images/2026-e7cx-mastheadmo.jpg?imwidth=1920",
+          "pageUrl": "https://www.buickkorea.co.kr/events/launch-popup",
+          "rights": "UNKNOWN",
+          "rightsEvidence": null,
+          "matchesEdition": true
+        }
+      ],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.buickkorea.co.kr/events/launch-popup",
+          "status": "PUBLISHED",
+          "note": "브랜드·주최 공식 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "공식 개최 일정 확인",
+        "sourceUrl": "https://www.buickkorea.co.kr/events/launch-popup",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "지그재그 익스프레스 성수 팝업스토어",
+      "subcategory": "POPUP_MIXED",
+      "organizer": "카카오스타일",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "앤더슨씨 성수 신관",
+      "address": null,
+      "description": "여러 패션 쇼핑몰의 가을·겨울 상품을 선보이는 지그재그 팝업입니다. 공식 안내상 사전예약은 10월 7일 정오부터 지그재그 앱에서 시작하며 계정당 한 번 신청할 수 있습니다. 방문 시간은 예약 화면에서 확인할 수 있습니다.",
+      "admission": null,
+      "subjects": [
+        "FASHION",
+        "지그재그"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-16",
+          "endDate": "2026-10-18",
+          "startTime": null,
+          "endTime": null
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://partnerlounge.kakaostyle.com/press/1560",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 브랜드·주최 공식 원문에서 이번 회차 2026-10-16~2026-10-18 일정과 장소를 직접 대조."
+        }
+      ],
+      "banners": [
+        {
+          "imageUrl": "https://partnerlounge.kakaostyle.com/images/articles/3ed3dd4d-d5b1-80d0-9a92-c3f2b39af80b/3ed3dd4d-d5b1-8074-afb0-d99fc13ee261",
+          "pageUrl": "https://partnerlounge.kakaostyle.com/press/1560",
+          "rights": "UNKNOWN",
+          "rightsEvidence": null,
+          "matchesEdition": true
+        }
+      ],
+      "warnings": [],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://partnerlounge.kakaostyle.com/press/1560",
+          "status": "PUBLISHED",
+          "note": "브랜드·주최 공식 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "공식 개최 일정 확인",
+        "sourceUrl": "https://partnerlounge.kakaostyle.com/press/1560",
+        "checkedOn": "2026-10-04"
+      }
+    }
+  ]
+}
