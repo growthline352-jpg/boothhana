@@ -113,7 +113,7 @@ class ReleaseIntegrationTests {
  long count(String table){if(!Set.of("reservation","pos_sale").contains(table))throw new IllegalArgumentException();return db.queryForObject("select count(*) from "+table+" where event_booth_id=?",Long.class,boothId);}
  long receipts(){return db.queryForObject("select count(*) from trade_request where user_id=?",Long.class,owner.id);}
  @Test void schemaAndLeastPrivilegeRole() {
-  db.queryForList(SchemaContract.probeSql());assertThat(SchemaContract.TABLES).hasSize(57);
+  db.queryForList(SchemaContract.probeSql());assertThat(SchemaContract.TABLES).hasSize(58).containsKey("itinerary_share");
   for(String table:SchemaContract.TABLES.keySet()) {
    assertThat(db.queryForObject("select relrowsecurity from pg_class where oid=to_regclass(?)",Boolean.class,"public."+table)).as(table).isTrue();
    assertThat(db.queryForObject("select has_table_privilege('anon',?,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege('anon',?,'SELECT,INSERT,UPDATE')",Boolean.class,"public."+table,"public."+table)).as(table+" anon").isFalse();

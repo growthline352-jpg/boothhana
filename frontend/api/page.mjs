@@ -151,6 +151,7 @@ export function createHandler(loadTemplate = () => readFile(new URL('../seo-temp
       const raw = Array.isArray(req.query?.path) ? '' : req.query?.path
       const request = new URL(req.url || '/', 'https://request.invalid')
       const path = normalizePath(typeof raw === 'string' ? '/' + raw.replace(/^\//, '') : request.pathname)
+      if (path.startsWith('/itinerary/shared/')) { res.setHeader('Referrer-Policy', 'no-referrer'); res.setHeader('X-Robots-Tag', 'noindex, nofollow') }
       const search = new URLSearchParams(request.search)
       search.delete('path') // framework routing parameter is not a user-visible search filter
       const siteUrl = requestSiteOrigin(req.headers?.host, siteOrigin(process.env.PUBLIC_SITE_URL || ''))

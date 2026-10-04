@@ -2,6 +2,7 @@ import type {PublicEventSummary} from '../catalog/api'
 import type {Occurrence} from '../collection/api'
 import {categoryForType} from '../discovery/categories'
 import {includesDay, validDay} from '../visit/visit'
+import {matchesTopics,type TopicSelection} from './topics'
 
 export type Purpose = 'EVENT' | 'DATE'
 export type StopKind = 'EVENT' | 'FOOD' | 'CAFE' | 'PLACE'
@@ -13,7 +14,7 @@ export interface PlanStop {
 }
 export interface Plan {
  version:1;id:string;title:string;purpose:Purpose;day:string;start:string;end:string;area:string;
- style:string;stops:PlanStop[];updatedAt:string;
+ style:string;stops:PlanStop[];updatedAt:string;interests?:TopicSelection;
 }
 export interface Area {id:string;name:string;point:Point;words:string[]}
 // These are neighborhood search centers, never substituted for an event's venue.
@@ -38,11 +39,12 @@ export function operatingOn(row:PublicEventSummary,day:string){
  const choices=row.operatingPlaces?.length?row.operatingPlaces:[{eventId:row.id,event:row.event}]
  return choices.filter(c=>!['CANCELED','POSTPONED','RESCHEDULED'].includes(c.event.operationStatus?.state||'')&&c.event.occurrences.some(o=>includesDay(o,day)))
 }
-export function recommendedEvents(rows:PublicEventSummary[],day:string,area:string,anchor?:PublicEventSummary,purpose:Purpose='DATE',subjects:string[]=[]) {
+export function recommendedEvents(rows:PublicEventSummary[],day:string,area:string,anchor?:PublicEventSummary,purpose:Purpose='DATE',subjects:string[]=[],selection?:TopicSelection) {
  const district=areas.find(a=>a.id===area),anchorCategory=anchor?categoryForType(anchor.event.subcategory).code:''
  return rows.flatMap(row=>operatingOn(row,day).map(place=>({...row,id:place.eventId,event:place.event,operatingPlaces:undefined})))
  .filter(row=>row.id!==anchor?.id&&!!row.event.address&&(!district||district.words.some(w=>`${row.event.address} ${row.event.venueName||''}`.includes(w))))
  .filter(row=>purpose!=='EVENT'||!anchorCategory||categoryForType(row.event.subcategory).code===anchorCategory)
+ .filter(row=>purpose!=='EVENT'||anchorCategory!=='SUBCULTURE'||matchesTopics(row,selection))
  .map(row=>{
   const topics=anchor?.event.subjects.length?anchor.event.subjects:subjects
   const overlap=row.event.subjects.filter(s=>topics.includes(s)).length
@@ -84,6 +86,7 @@ export function validatePlan(value:unknown):value is Plan {
  const p=value as Plan
  return p.version===1&&typeof p.id==='string'&&!!p.id&&p.id.length<=128&&typeof p.title==='string'&&p.title.length<=120&&['EVENT','DATE'].includes(p.purpose)&&validDay(p.day)
  &&Number.isFinite(timeMinutes(p.start))&&Number.isFinite(timeMinutes(p.end))&&typeof p.area==='string'&&typeof p.style==='string'&&typeof p.updatedAt==='string'
+ &&(p.interests===undefined||p.interests&&['topics','subjects'].every(k=>Array.isArray(p.interests![k as keyof TopicSelection])&&p.interests![k as keyof TopicSelection].length<=10&&p.interests![k as keyof TopicSelection].every(s=>typeof s==='string'&&s.length>0&&s.length<=100)))
  &&Array.isArray(p.stops)&&p.stops.length<=20&&new Set(p.stops.map(s=>s?.id)).size===p.stops.length&&p.stops.every(s=>s&&typeof s.id==='string'&&!!s.id&&s.id.length<=128&&typeof s.name==='string'&&s.name.length<=200
  &&Object.hasOwn(kindNames,s.kind)&&typeof s.address==='string'&&s.address.length<=400&&typeof s.url==='string'&&s.url.length<=2048&&typeof s.note==='string'&&s.note.length<=2000
  &&Number.isFinite(timeMinutes(s.start))&&Number.isInteger(s.duration)&&s.duration>=15&&s.duration<=720&&typeof s.locked==='boolean'

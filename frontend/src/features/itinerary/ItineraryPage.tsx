@@ -12,6 +12,9 @@ import {defaultDay,validDay} from '../visit/visit'
 import {openCatalogDialog} from '../catalog/dialogLifecycle'
 import {ItineraryMap} from './ItineraryMap'
 import {ItineraryStop} from './ItineraryStop'
+import {TopicPicker} from './TopicPicker'
+import {ShareDialog} from './ShareDialog'
+import {emptyTopics,matchesTopics,upcomingMatches} from './topics'
 import {areas,distance,eventStop,kindNames,moveStop,nextStart,operatingOn,planCalendar,planIssueDetails,planIssues,readPlans,recommendedEvents,savedPlanSignature,timeMinutes,validPoint,writePlan,type Plan,type PlanStop,type Point,type Purpose,type StopKind} from './model'
 import {nearbyAvailable,nearbyPlaces,placeSearchAvailable,placeStop,resolveAddress,searchPlaces,type Place} from './places'
 import {eventArea,eventLocationMessage,manualPlaceStop,planNearbyCenter,resolveEventLocation} from './recommendation'
@@ -25,6 +28,7 @@ export function ItineraryPage(){
  const storageKey=`boothhana.itineraries.v1:${owner}`,draftKey=`${storageKey}:draft`
  const [plan,setPlan]=useState<Plan>(()=>initialPlan()),[step,setStep]=useState(0),[selected,setSelected]=useState(''),[view,setView]=useState('list')
  const [editingId,setEditingId]=useState('')
+ const [shareOpen,setShareOpen]=useState(false)
  const heading=useRef<HTMLHeadingElement>(null)
  const [saved,setSaved]=useState<Plan[]>([]),[draft,setDraft]=useState<Plan|null>(null),[savedSignature,setSavedSignature]=useState('')
  const [anchor,setAnchor]=useState<PublicEventSummary|null>(null),[field,setField]=useState('SUBCULTURE'),[eventQuery,setEventQuery]=useState(''),[anchorTime,setAnchorTime]=useState('10:00')
@@ -32,6 +36,7 @@ export function ItineraryPage(){
  const [addMode,setAddMode]=useState<AddMode|null>(null),[replaceId,setReplaceId]=useState(''),[locationId,setLocationId]=useState(''),[resetOpen,setResetOpen]=useState(false)
  const scope=useRef(''),job=useRef(0),ownerRef=useRef(owner);ownerRef.current=owner
  const requestedEvent=params.get('event')||'',requestedDay=params.get('day')||''
+ const requestedPlan=params.get('plan')||''
  const area=areas.find(a=>a.id===plan.area)||areas[0]
  const nearbyCenter=planNearbyCenter(plan,area.point),center=nearbyCenter||area.point
  const data=useRemote(async()=>{
@@ -41,6 +46,11 @@ export function ItineraryPage(){
   return result.flatMap(r=>r.status==='fulfilled'?r.value:[])
  },[plan.day])
  const rows=useMemo(()=>data.data||[],[data.data])
+ const topicData=useRemote(async()=>{
+  if(step!==1||plan.purpose!=='EVENT'||field!=='SUBCULTURE')return []
+  const from=seoulToday(),date=new Date(`${from}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+90)
+  return publicCatalogApi.calendar(new URLSearchParams({category:'SUBCULTURE',from,to:date.toISOString().slice(0,10),sort:'DATE_ASC'}).toString())
+ },[step===1,plan.purpose,field])
  const popup=useRemote(()=>validDay(plan.day)?publicRead<PopupData>(`/api/public/catalog/popups?from=${plan.day}&to=${plan.day}`).catch(()=>({places:[]})):Promise.resolve({places:[]}),[plan.day])
  const pointFor=(row:PublicEventSummary):Point|null=>{const p=popup.data?.places.find(p=>p.event_id===row.id&&p.address===row.event.address),point=p?{lat:p.latitude,lng:p.longitude}:null;return validPoint(point)?point:null}
  const resolvedAnchor=useMemo(()=>{
@@ -56,18 +66,24 @@ export function ItineraryPage(){
   return undefined
  },[resolvedAnchor,rows,plan.stops,plan.day])
  const recommendationArea=plan.purpose==='EVENT'?eventArea(recommendationAnchor?.event.address,recommendationAnchor?.event.venueName):plan.area
- const candidates=useMemo(()=>plan.purpose==='EVENT'&&(!recommendationAnchor||!recommendationArea)?[]:recommendedEvents(rows,plan.day,recommendationArea,recommendationAnchor||undefined,plan.purpose),[rows,plan.day,recommendationArea,plan.purpose,recommendationAnchor])
+ const candidates=useMemo(()=>plan.purpose==='EVENT'&&(!recommendationAnchor||!recommendationArea)?[]:recommendedEvents(rows,plan.day,recommendationArea,recommendationAnchor||undefined,plan.purpose,[],plan.interests),[rows,plan.day,recommendationArea,plan.purpose,recommendationAnchor,plan.interests])
  const visiblePlaces=(nearbyCenter?places:[]).map(p=>({...p,distance:distance(center,p.point)})).filter(p=>p.distance<=1.2).sort((a,b)=>a.distance-b.distance)
- const anchorRows=rows.flatMap(row=>operatingOn(row,plan.day).map(p=>({...row,id:p.eventId,event:p.event}))).filter((row,i,all)=>all.findIndex(r=>r.id===row.id)===i).filter(row=>categoryForType(row.event.subcategory).code===field&&row.event.name.toLocaleLowerCase().includes(eventQuery.toLocaleLowerCase()))
+ const anchorRows=rows.flatMap(row=>operatingOn(row,plan.day).map(p=>({...row,id:p.eventId,event:p.event,operatingPlaces:undefined}))).filter((row,i,all)=>all.findIndex(r=>r.id===row.id)===i).filter(row=>categoryForType(row.event.subcategory).code===field&&row.event.name.toLocaleLowerCase().includes(eventQuery.toLocaleLowerCase())&&(field!=='SUBCULTURE'||matchesTopics(row,plan.interests)))
+ const nextMatches=field==='SUBCULTURE'&&!anchorRows.length?upcomingMatches(topicData.data||[],plan.interests||emptyTopics(),plan.day).filter(x=>x.row.event.name.toLocaleLowerCase().includes(eventQuery.toLocaleLowerCase())).slice(0,3):[]
  const signature=JSON.stringify(plan),dirty=step===2&&signature!==savedSignature
  const issueDetails=planIssueDetails(plan),issues=planIssues(plan),focused=plan.stops.find(s=>s.id===selected)
  useEffect(()=>{setEditingId('');const frame=requestAnimationFrame(()=>{window.scrollTo({top:0,behavior:'auto'});heading.current?.focus({preventScroll:true})});return()=>cancelAnimationFrame(frame)},[step])
  useEffect(()=>{
-  if(!owner){scope.current='';job.current++;setBusy(false);setAddMode(null);setSaved([]);setDraft(null);setPlan(initialPlan());setStep(0);setSelected('');return}
+  if(!owner){setShareOpen(false);scope.current='';job.current++;setBusy(false);setAddMode(null);setSaved([]);setDraft(null);setPlan(initialPlan());setStep(0);setSelected('');return}
   if(scope.current===storageKey)return
-  scope.current=storageKey;job.current++;setBusy(false);setPlaces([]);setAddMode(null);setAnchor(null);setSavedSignature('');setPlan(initialPlan());setStep(0)
+  setShareOpen(false);scope.current=storageKey;job.current++;setBusy(false);setPlaces([]);setAddMode(null);setAnchor(null);setSavedSignature('');setPlan(initialPlan());setStep(0)
   setSaved(readPlans(localStorage,storageKey));setDraft(readPlans(sessionStorage,draftKey)[0]||null)
  },[owner,storageKey,draftKey])
+ useEffect(()=>{
+  if(!owner||!requestedPlan||scope.current!==storageKey)return
+  const p=readPlans(localStorage,storageKey).find(p=>p.id===requestedPlan)
+  if(p){setPlan(p);setAnchor(null);setStep(2);setSelected(p.stops[0]?.id||'');setSavedSignature(JSON.stringify(p));setParams({}, {replace:true})}
+ },[owner,requestedPlan,storageKey,setParams])
  useEffect(()=>{
   if(!owner||!/^[1-9]\d*$/.test(requestedEvent))return
   let active=true
@@ -135,7 +151,7 @@ export function ItineraryPage(){
    <h2 className="it-purpose-heading">어떤 일정으로 시작할까요?</h2>
    <div className="it-purpose-grid">
     <PurposeCard icon="ticket" title="행사 참여" text="가려는 행사부터 고르고, 근처 식사와 카페를 더해요." action="행사 선택하기" onClick={()=>{patch({purpose:'EVENT',start:'10:00',style:'VIEW'});setStep(1)}}/>
-    <PurposeCard icon="sparkles" title="데이트" text="날짜와 동네를 고르면 행사·식사·카페 코스를 만들어요." action="날짜·동네 정하기" onClick={()=>{patch({purpose:'DATE',start:'13:00',style:'CONTENT'});setStep(1)}}/>
+    <PurposeCard icon="sparkles" title="데이트" text="날짜와 동네를 고르면 행사·식사·카페 코스를 만들어요." action="날짜·동네 정하기" onClick={()=>{patch({purpose:'DATE',start:'13:00',style:'CONTENT',interests:undefined});setStep(1)}}/>
    </div>
    {draft&&<div className="it-resume"><div><strong>이어서 만들기</strong><p>{draft.title||'작성 중인 일정'} · {draft.day}</p></div><button className="btn secondary" onClick={()=>restore(draft)}>일정 열기</button></div>}
    <SavedPlans rows={saved} open={restore} remove={id=>{try{const next=saved.filter(p=>p.id!==id);localStorage.setItem(storageKey,JSON.stringify(next));setSaved(next)}catch{setMessage('일정을 삭제하지 못했어요.')}}}/>
@@ -148,9 +164,11 @@ export function ItineraryPage(){
     </div>
     {plan.purpose==='EVENT'&&<div className="it-anchor-picker">
      <div className="it-section-title"><h3>가려는 행사</h3><span>{anchor?'선택 완료':'한 곳을 선택해 주세요'}</span></div>
-     <div className="it-event-search"><label><span className="sr-only">중심 행사 분야</span><select className="select" aria-label="중심 행사 분야" value={field} onChange={e=>setField(e.target.value)}>{categories.map(c=><option value={c.code} key={c.code}>{c.label}</option>)}</select></label><label><span className="sr-only">행사 이름 검색</span><input className="input" aria-label="행사 이름 검색" placeholder="행사 이름으로 검색" value={eventQuery} onChange={e=>setEventQuery(e.target.value)}/></label></div>
-     {data.loading?<p role="status">이 날짜의 행사를 확인하고 있어요.</p>:data.error?<p role="alert">행사 목록을 불러오지 못했어요. <button className="btn secondary" onClick={()=>void data.reload()}>다시 불러오기</button></p>:<div className="it-anchor-list">{anchorRows.slice(0,30).map(row=><button key={row.id} className={`it-anchor${anchor?.id===row.id?' chosen':''}`} aria-pressed={anchor?.id===row.id} onClick={()=>{setAnchor(row);patch({area:eventArea(row.event.address,row.event.venueName)});const from=row.event.occurrences.find(o=>o.startDate<=plan.day&&o.endDate>=plan.day)?.startTime?.slice(0,5);if(from)setAnchorTime(from)}}><ContentImage url={row.banner?.url} kind="event" eventType={row.event.subcategory} alt=""/><span><strong>{row.event.name}</strong><small>{row.event.venueName||'장소 확인 필요'}</small></span><span className="it-anchor-check">{anchor?.id===row.id?<DiscoveryIcon name="check" size={18}/>:'선택'}</span></button>)}{!anchorRows.length&&<p>이 날짜에 공개된 행사가 없어요. 날짜나 분야를 바꿔 주세요.</p>}</div>}
+     <div className="it-event-search"><label><span className="sr-only">중심 행사 분야</span><select className="select" aria-label="중심 행사 분야" value={field} onChange={e=>{setField(e.target.value);setAnchor(null);patch({interests:undefined})}}>{categories.map(c=><option value={c.code} key={c.code}>{c.label}</option>)}</select></label><label><span className="sr-only">행사 이름 검색</span><input className="input" aria-label="행사 이름 검색" placeholder="행사 이름으로 검색" value={eventQuery} onChange={e=>{setEventQuery(e.target.value);setAnchor(null)}}/></label></div>
+     {field==='SUBCULTURE'&&<TopicPicker rows={topicData.data||[]} selection={plan.interests||emptyTopics()} change={interests=>{patch({interests});setAnchor(null)}} loading={topicData.loading} error={topicData.error?.message||null} retry={()=>void topicData.reload()}/>}
+     {data.loading?<p role="status">이 날짜의 행사를 확인하고 있어요.</p>:data.error?<p role="alert">행사 목록을 불러오지 못했어요. <button className="btn secondary" onClick={()=>void data.reload()}>다시 불러오기</button></p>:<div className="it-anchor-list">{anchorRows.slice(0,30).map(row=><button key={row.id} className={`it-anchor${anchor?.id===row.id?' chosen':''}`} aria-pressed={anchor?.id===row.id} onClick={()=>{setAnchor(row);patch({area:eventArea(row.event.address,row.event.venueName)});const from=row.event.occurrences.find(o=>o.startDate<=plan.day&&o.endDate>=plan.day)?.startTime?.slice(0,5);if(from)setAnchorTime(from)}}><ContentImage url={row.banner?.url} kind="event" eventType={row.event.subcategory} alt=""/><span><strong>{row.event.name}</strong><small>{row.event.venueName||'장소 확인 필요'}</small></span><span className="it-anchor-check">{anchor?.id===row.id?<DiscoveryIcon name="check" size={18}/>:'선택'}</span></button>)}{!anchorRows.length&&<p>이 날짜에 조건에 맞는 행사가 없어요. 날짜나 검색 조건을 바꿔 주세요.</p>}</div>}
      {anchor&&<label className="it-arrival"><span>행사 도착 예정 시간<small>추천 코스에서 이 시간을 고정해요.</small></span><input className="input" type="time" value={anchorTime} onInput={e=>setAnchorTime(e.currentTarget.value)}/></label>}
+     {!data.loading&&!data.error&&!anchorRows.length&&nextMatches.length>0&&<div className="it-next-matches"><h4>다른 날짜에 열리는 관련 행사</h4>{nextMatches.map(({row,day})=><button type="button" key={row.id} onClick={()=>{patch({day,area:eventArea(row.event.address,row.event.venueName)});setAnchor(row);setAnchorTime(row.event.occurrences.find(o=>o.startDate<=day&&o.endDate>=day)?.startTime?.slice(0,5)||'10:00')}}><span>{day.slice(5).replace('-','.')}</span><strong>{row.event.name}</strong><small>이 날짜로 선택 →</small></button>)}</div>}
     </div>}
     <fieldset className="it-choice"><legend>{plan.purpose==='EVENT'?'방문 목적':'어떤 코스가 좋으세요?'}</legend><div>{(plan.purpose==='EVENT'?[['VIEW','전시·행사 관람'],['GOODS','굿즈·상품 구매'],['PERFORMANCE','공연·프로그램'],['FAN','팬 이벤트']]:[['CONTENT','전시·팝업 구경'],['RELAXED','먹고 쉬기'],['WALK','가볍게 둘러보기']]).map(([id,label])=><button type="button" className={plan.style===id?'chosen':''} aria-pressed={plan.style===id} key={id} onClick={()=>patch({style:id})}>{label}</button>)}</div></fieldset>
     <details className="it-hours-settings"><summary>하루 시간 <strong>{plan.start}–{plan.end}</strong><span>변경</span></summary><div className="it-form-grid"><label>하루 시작<input className="input" type="time" value={plan.start} onInput={e=>patch({start:e.currentTarget.value})}/></label><label>하루 마무리<input className="input" type="time" value={plan.end} onInput={e=>patch({end:e.currentTarget.value})}/></label></div></details>
@@ -187,9 +205,10 @@ export function ItineraryPage(){
      {placeError&&<p className="it-place-error" role="status">{placeError}</p>}{!nearbyAvailable&&<p className="it-check-note">주변 장소 검색은 준비 중이에요. 가고 싶은 곳을 직접 입력할 수 있어요.</p>}
     </aside>
    </div>
-   <div className="it-save-bar"><div><strong>{dirty?'아직 저장하지 않은 변경사항이 있어요':savedSignature?'저장된 일정이에요':'아직 저장 전이에요'}</strong><span>이 브라우저에 저장 · 저장 후에도 수정 가능</span></div><button className="it-calendar" disabled={!plan.stops.length||!!issues.length} title={issues.length?'시간 확인 항목을 수정하면 내보낼 수 있어요':undefined} onClick={download}><DiscoveryIcon name="download" size={17}/><span>캘린더 내보내기</span></button><button className="btn primary" disabled={!plan.stops.length||!validDay(plan.day)|| (!!savedSignature&&!dirty)} onClick={save}>{savedSignature&&!dirty?'저장 완료':'일정 저장'}</button></div>
+   <div className="it-save-bar"><div><strong>{dirty?'아직 저장하지 않은 변경사항이 있어요':savedSignature?'저장된 일정이에요':'아직 저장 전이에요'}</strong><span>이 브라우저에 저장 · 저장 후에도 수정 가능</span></div><button className="it-calendar" aria-label="캘린더 내보내기" disabled={!plan.stops.length||!!issues.length} title={issues.length?'시간 확인 항목을 수정하면 내보낼 수 있어요':undefined} onClick={download}><DiscoveryIcon name="download" size={17}/><span>캘린더 내보내기</span></button><button className="btn secondary it-share-button" disabled={!plan.stops.length||!validDay(plan.day)} onClick={()=>setShareOpen(true)}>공유</button><button className="btn primary" disabled={!plan.stops.length||!validDay(plan.day)|| (!!savedSignature&&!dirty)} onClick={save}>{savedSignature&&!dirty?'저장 완료':'일정 저장'}</button></div>
   </>}
   {addMode&&<PlaceDialog replacing={!!replaceId} mode={addMode} setMode={setAddMode} close={()=>{setAddMode(null);setReplaceId('');setLocationId('')}} center={center} events={candidates.filter(c=>replaceId||!plan.stops.some(s=>s.eventId===c.row.id)).map(c=>c.row)} places={visiblePlaces} busy={busy} error={placeError} loadNearby={()=>void loadNearby()} addEvent={insertEvent} addPlace={insertPlace} addManual={addStop} locateStop={plan.stops.find(s=>s.id===locationId)} locatePoint={point=>{editStop(locationId,{point});setAddMode(null);setLocationId('');setMessage('선택한 위치를 지도에 표시했어요.')}}/>}
+  {shareOpen&&owner&&scope.current===storageKey&&<ShareDialog key={`${owner}:${plan.id}`} plan={plan} owner={owner} close={()=>setShareOpen(false)}/>}
   {resetOpen&&<Modal title="새 일정을 만들까요?" close={()=>setResetOpen(false)}><p>현재 수정사항은 저장하지 않았어요. 저장한 일정은 내 일정에 남아 있습니다.</p><div className="it-dialog-actions"><button className="btn secondary" onClick={()=>setResetOpen(false)}>계속 수정</button><button className="btn primary" onClick={()=>{setResetOpen(false);newPlan()}}>새로 만들기</button></div></Modal>}
  </section>
 }

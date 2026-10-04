@@ -195,6 +195,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     title = '예약 가능한 행사 | 부스하나'
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
     indexable = true
+  } else if (path.startsWith('/itinerary/shared/')) {
+    title = '공유된 하루 일정 | 부스하나'
+    description = '공유받은 일정과 지도를 확인하고 내 일정으로 복사하세요.'
   } else if (path === '/itinerary') {
     title = '내 일정 만들기 | 부스하나'
     description = '행사와 데이트 일정을 만들고 지도에서 방문할 장소와 시간을 편집하세요.'
@@ -215,7 +218,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   const canonicalPath = split && browse && (hostCategory || path === '/discover' || params.has('category')) && supported ? '/' : path
   // Queries remain usable but only the unfiltered category home is an index target.
   const canonical = origin ? origin + canonicalPath + (!split && browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
-  const robots = indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
+  const robots = path.startsWith('/itinerary/shared/') ? 'noindex,nofollow' : indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
   const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null, listing, path, category }) : null
   return { title, description, canonical, robots, image, schema, siteName: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', verification: verificationToken(verification), naverVerification: verificationToken(naverVerification) }
 }

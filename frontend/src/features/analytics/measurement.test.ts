@@ -6,6 +6,7 @@ it('only measures exact production hosts and public route shapes', () => {
   for (const host of ['boothana.kr','subculture.boothana.kr','expo.boothana.kr','festival.boothana.kr']) expect(publicPage(`https://${host}/`)).not.toBeNull()
 })
 it('drops search terms, fragments and user-controlled titles', () => {
+  expect(publicPage('https://boothana.kr/itinerary/shared/abcdefghijklmnopqrstuv')).toBeNull()
   expect(publicPage('https://expo.boothana.kr/discover?q=private-email&token=secret#private')).toEqual({page_location:'https://expo.boothana.kr/discover',page_title:'행사 검색',site_section:'expo'})
   expect(publicPage('https://subculture.boothana.kr/discover/1/booths/43?day=2026-10-03')?.page_title).toBe('부스 상세')
 })

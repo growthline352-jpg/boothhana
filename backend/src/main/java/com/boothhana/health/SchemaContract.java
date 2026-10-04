@@ -7,6 +7,7 @@ import java.util.Map;
 public final class SchemaContract {
     private SchemaContract() {}
     public static final Map<String,List<String>> TABLES=Map.ofEntries(
+        Map.entry("itinerary_share",List.of("id","view_token","management_hash","snapshot_hash","snapshot_json","created_at","expires_at","revoked_at")),
         Map.entry("catalog_source_check",List.of("event_id","checked_at","next_check_at","status","digest","details_json","failures")),
         Map.entry("catalog_event_observation",List.of("id","event_id","event_revision","fingerprint","observed_at","source_urls_json","changes_json","state","review_note","reviewed_at","review_seconds")),
         Map.entry("catalog_event_place",List.of("event_id","neighborhood","address","latitude","longitude","source_url","checked_on")),
@@ -75,6 +76,7 @@ public final class SchemaContract {
      * This guards same-named but incompatible columns, not just missing columns. */
     public record ColumnShape(String udt,Integer length,boolean notNull) {}
     private static final String COLUMN_SPEC = """
+        itinerary_share=id:uuid:0:1,view_token:varchar:22:1,management_hash:bpchar:64:1,snapshot_hash:bpchar:64:1,snapshot_json:jsonb:0:1,created_at:timestamptz:0:1,expires_at:timestamptz:0:1,revoked_at:timestamptz:0:0
         catalog_source_check=event_id:int8:0:1,checked_at:timestamptz:0:1,next_check_at:timestamptz:0:1,status:varchar:24:1,digest:bpchar:64:1,details_json:jsonb:0:1,failures:int4:0:1
         catalog_event_observation=id:uuid:0:1,event_id:int8:0:1,event_revision:int8:0:1,fingerprint:bpchar:64:1,observed_at:timestamptz:0:1,source_urls_json:jsonb:0:1,changes_json:jsonb:0:1,state:varchar:16:1,review_note:varchar:2000:1,reviewed_at:timestamptz:0:0,review_seconds:int4:0:0
         catalog_event_place=event_id:int8:0:1,neighborhood:varchar:24:1,address:text:0:1,latitude:float8:0:0,longitude:float8:0:0,source_url:text:0:1,checked_on:date:0:1

@@ -9,6 +9,16 @@ const template = '<html><head><!-- BOOTH_META_START --><!-- BOOTH_META_END --></
 const fixture = { id: 12, event: { name: '와인 박람회', subcategory: 'WINE', venueName: '전시장', occurrences: [{ startDate: '2026-10-01', endDate: '2026-10-03' }] }, participants: [{ id: 7, participant: { registrationName: '참가 브랜드' } }] }
 const json = value => new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } })
 
+test('shared itineraries stay on the portal, noindex, and never fetch private snapshots for metadata', async () => {
+  const path='/itinerary/shared/abcdefghijklmnopqrstuv'
+  for(const site of Object.values(CATEGORY_SITES)) assert.equal(categoryRedirect({origin:site.origin,path}),`https://boothana.kr${path}`)
+  const page=await renderPage({path,template,siteUrl:'https://boothana.kr',splitSites:true,fetcher:async()=>{throw new Error('Private snapshot must not be fetched for metadata')}})
+  assert.equal(page.status,200); assert.equal(page.meta.robots,'noindex,nofollow'); assert.equal(page.meta.title,'공유된 하루 일정 | 부스하나')
+  const headers=new Map(),res={setHeader:(k,v)=>headers.set(k,v),end:()=>{}}
+  await createHandler(async()=>template)({method:'GET',headers:{host:'boothana.kr'},url:path,query:{path}},res)
+  assert.equal(headers.get('Referrer-Policy'),'no-referrer'); assert.equal(headers.get('X-Robots-Tag'),'noindex,nofollow')
+})
+
 test('only exact known hosts can control public origin', () => {
   assert.equal(requestSiteOrigin('expo.boothana.kr', 'https://boothana.kr'), CATEGORY_SITES.exhibitions.origin)
   for (const host of ['expo.boothana.kr.evil.test', 'evil.test', 'expo.boothana.kr:443', 'expo.boothana.kr/path', ['expo.boothana.kr']]) {
