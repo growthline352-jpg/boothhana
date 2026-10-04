@@ -59,6 +59,7 @@ describe('booth tab availability', () => {
     for (const query of ['', '?section=booths', '?view=booths']) {
       const html = detailAt(query)
       expect(html).not.toContain('>부스</button>')
+      expect(html).not.toContain('>배치도</button>')
       expect(html).not.toContain('aria-label="참가 부스 목록"')
       expect(html).toContain('aria-current="page" class="is-current">행사 안내</button>')
       expect(html).toContain('운영 행사·전시장')

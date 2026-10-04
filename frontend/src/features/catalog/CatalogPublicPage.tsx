@@ -23,6 +23,8 @@ import { publicCatalogApi, type PublicEvent, type PublicParticipant } from './ap
 import { combineOperatingDetails, operatingEventsForDay, selectOperatingEvent, combineDfesta, isDfestaDay, DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID, DFESTA_SUNDAY } from './eventGroup'
 import { BoothDetail } from './BoothDetail'
 import { InteractiveFloorPlans } from '../floorplan/InteractiveFloorPlans'
+import { floorplanApi } from '../floorplan/api'
+import { hasFloorplanContent } from '../floorplan/availability'
 import { matchesPublicParticipant, participantFacets, matchesParticipantFacet } from './publicSearch'
 import { VisitorGuide } from './VisitorGuide'
 import { InformationRequestButton } from '../support/InformationRequestButton'
@@ -124,7 +126,10 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   const confirmedCount=dayParticipants.filter(row=>attendance(row,state.day)==='confirmed').length
   const e=alternate||members?{...currentValue.event,name:value.event.name,occurrences:value.event.occurrences}:value.event
   const hasBooths=currentValue.participants.length>0,requestedSection=eventSection(params)
-  const section=!hasBooths&&requestedSection==='booths'?'home':requestedSection,browsingBooths=section==='booths'||section==='map'
+  const floorplanState=useRemote(()=>floorplanApi.public(String(currentEventId)),[currentEventId])
+  const hasFloorplans=useMemo(()=>hasFloorplanContent(currentValue,floorplanState.data),[currentValue,floorplanState.data])
+    ||!!floorplanState.error||(floorplanState.loading&&requestedSection==='map')
+  const section=(!hasBooths&&requestedSection==='booths')||(!hasFloorplans&&requestedSection==='map')?'home':requestedSection,browsingBooths=section==='booths'||section==='map'
   const memoryMode=params.get('my')==='saved'?'saved':params.get('my')==='visited'?'visited':'all'
   const savedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null).map(x=>x.target.participantId!)),[library?.index,currentEventId])
   const visitedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null&&x.visitedDays.includes(state.day)).map(x=>x.target.participantId!)),[library?.index,currentEventId,state.day])
@@ -208,7 +213,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
       <div className="visit-utility-actions">{discoveryFeatures.comparison&&<Link to={compareHref([currentEventId])}>다른 행사와 비교</Link>}{usableAddress(e.address)&&<><SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(e.address!)}`}>장소 지도 ↗</SafeLink><button type="button" onClick={()=>void copyAddress()}>주소 복사</button></>}
         <SaveButton target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall}/><ShareQr target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall} title={e.name}/><ReportLink target={{namespace:'CATALOG',type:'EVENT',eventId:currentEventId,id:currentEventId,day:state.day,hall:state.hall}} viewedVersion={currentValue.publishedAt}/></div>
     </div></header>
-    <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths','부스'],['map','배치도'],['reviews','후기']] as const).filter(([key])=>key!=='booths'||hasBooths).map(([key,label])=><button key={key} type="button" aria-current={section===key?'page':undefined} className={section===key?'is-current':''} onClick={()=>chooseSection(key)}>{label}</button>)}</nav>
+    <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths','부스'],['map','배치도'],['reviews','후기']] as const).filter(([key])=>(key!=='booths'||hasBooths)&&(key!=='map'||hasFloorplans)).map(([key,label])=><button key={key} type="button" aria-current={section===key?'page':undefined} className={section===key?'is-current':''} onClick={()=>chooseSection(key)}>{label}</button>)}</nav>
     {browsingBooths&&<section id="visit-browse" className="visit-controls" aria-label="방문 조건 및 부스 검색"><div className="visit-controls-head"><div><p className="eyebrow">{section==='map'?'배치도':'참가 부스'}</p><h2>{section==='map'?'날짜별 배치도':'부스 찾기'}</h2></div></div>
     <div className="visit-condition-row">
       <label className="field"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(d=><option key={d} value={d}>{dateLabel(d)}{d===today?' · 오늘':''}</option>)}{!days.length&&<option value="">일정 미확인</option>}</select></label>
@@ -231,7 +236,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
       <div className="catalog-booth-grid">{list.map(p=><ParticipantCard key={p.id} eventId={currentEventId} row={p} day={state.day} hall={state.hall} assets={currentValue.assets} showMap={showMap}/>)}</div>
       {!list.length&&<div className="visit-empty"><h3>현재 소개된 부스 중에는 결과가 없어요.</h3><p>미수집·위치 미확인은 실제 미참가를 뜻하지 않아요.</p><div className="row-actions"><button className="btn secondary" onClick={resetFilters}>모든 부스 조건 해제</button><button className="btn secondary" onClick={()=>chooseSection('home')}>행사 안내 확인</button><InformationRequestButton kind="BOOTH" eventId={currentEventId} day={state.day} query={state.q}/></div></div>}
     </section>}
-    {section==='map'&&!memoryBlocked&&<div ref={mapHeading} tabIndex={-1} className="visit-map-section"><InteractiveFloorPlans eventId={String(currentEventId)} event={currentValue.event} assets={currentValue.assets} participants={currentValue.participants} day={state.day} hall={state.hall} query={state.q} focusParticipantId={state.focus} onOpen={open} onList={()=>chooseSection('booths')} onClear={()=>update({q:'',focus:null})} onlySaved={memoryMode!=='all'} savedParticipantIds={memoryReady?[...memoryFilter]:[]} facetParticipantIds={subject||category?currentValue.participants.filter(p=>matchesParticipantFacet(p,'subject',subject)&&matchesParticipantFacet(p,'category',category)).map(p=>p.id):undefined}/></div>}
+    {section==='map'&&!memoryBlocked&&<div ref={mapHeading} tabIndex={-1} className="visit-map-section"><InteractiveFloorPlans state={floorplanState} eventId={String(currentEventId)} event={currentValue.event} assets={currentValue.assets} participants={currentValue.participants} day={state.day} hall={state.hall} query={state.q} focusParticipantId={state.focus} onOpen={open} onList={()=>chooseSection('booths')} onClear={()=>update({q:'',focus:null})} onlySaved={memoryMode!=='all'} savedParticipantIds={memoryReady?[...memoryFilter]:[]} facetParticipantIds={subject||category?currentValue.participants.filter(p=>matchesParticipantFacet(p,'subject',subject)&&matchesParticipantFacet(p,'category',category)).map(p=>p.id):undefined}/></div>}
     <section hidden={section!=='home'} className="panel visit-info" aria-label="행사 안내"><h2>행사 안내</h2>{e.operationStatus?.sourceUrl&&<details><summary>개최 상태의 확인 근거</summary><p>{e.operationStatus.note}</p><SafeLink url={e.operationStatus.sourceUrl}>상태 공지 원문</SafeLink><small> · {e.operationStatus.checkedOn} 확인</small></details>}<p className="visit-long-copy">{e.description}</p><h3>전체 운영일</h3>{e.occurrences.map((o,i)=><p key={i}>{o.startDate}{o.startDate!==o.endDate?` – ${o.endDate}`:''} · {o.startTime||'시간 미확인'}{o.endTime?` – ${o.endTime}`:''}</p>)}
       {!!e.warnings.length&&<><h3>방문 전 확인사항</h3>{e.warnings.map((w,i)=><p key={i}>{w}</p>)}</>}
       <h3>공식·참고 안내</h3>{e.sources.map((s,i)=><p key={i}><SafeLink url={s.url}>{sourceLabel(s.kind,s.url)}</SafeLink>{s.access!=='ORIGINAL'&&<small> · 원문 직접 확인 필요</small>}</p>)}
