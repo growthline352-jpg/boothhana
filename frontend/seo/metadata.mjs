@@ -195,6 +195,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     title = '예약 가능한 행사 | 부스하나'
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
     indexable = true
+  } else if (path === '/itinerary') {
+    title = '내 일정 만들기 | 부스하나'
+    description = '행사와 데이트 일정을 만들고 지도에서 방문할 장소와 시간을 편집하세요.'
   } else if (path === '/compare' || path === '/popups') {
     title = path === '/compare' ? '행사 비교 | 부스하나' : '동네 팝업 | 부스하나'
     description = path === '/compare' ? '두 행사의 공개 일정과 장소, 입장 조건을 비교하세요.' : '날짜와 동네를 골라 공개된 서울 팝업을 살펴보세요.'

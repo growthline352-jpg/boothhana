@@ -1,4 +1,6 @@
 import {EventComparePage} from '../features/discovery/EventComparePage'
+import {lazy,Suspense} from 'react'
+const ItineraryPage=lazy(()=>import('../features/itinerary/ItineraryPage').then(module=>({default:module.ItineraryPage})))
 import {PopupExplorePage} from '../features/discovery/PopupExplorePage'
 import {discoveryFeatures} from '../features/discovery/features'
 import { AdminEventComments } from '../features/catalog/AdminEventComments'
@@ -33,6 +35,7 @@ export const router = createBrowserRouter([
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
+    { path: 'itinerary', element: <SupportBoundary><Suspense fallback={<p className="content-wrap section-pad" role="status">일정 화면을 열고 있어요.</p>}><ItineraryPage/></Suspense></SupportBoundary> },
     { path: 'onboarding', element: <SupportBoundary><OnboardingPage/></SupportBoundary> },
     { path: 'account', element: <SupportBoundary><AccountPage/></SupportBoundary> },
     { path: 'support', element: <SupportBoundary><SupportHome/></SupportBoundary> },

@@ -1,3 +1,4 @@
+import {itineraryHref} from '../itinerary/links'
 import {discoveryFeatures} from './features'
 import {compareIds,compareHref,toggleComparison,editionId} from './compare'
 import './explore.css'
@@ -129,7 +130,7 @@ export function DiscoveryPage() {
           <aside className="home-plan-card" aria-label="부스하나 이용 안내">
             <span className="home-plan-kicker">내 일정 만들기</span><div className="home-plan-icon"><DiscoveryIcon name="bookmark" size={25}/></div>
             <h2>마음에 든 행사를<br/>한곳에 모아보세요</h2><p>행사와 부스를 저장하고 현장에서 다시 확인할 수 있어요.</p>
-            <Link to="/library">내 보관함 열기 <DiscoveryIcon name="arrow" size={16}/></Link>
+            <Link to={itineraryHref()}>일정 만들기 <DiscoveryIcon name="arrow" size={16}/></Link>
             <div className="home-plan-steps" aria-hidden="true"><span className="is-current">찾기</span><span>저장</span><span>방문</span></div>
           </aside>
         </div>

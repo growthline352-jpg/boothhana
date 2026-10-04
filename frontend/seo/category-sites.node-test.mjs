@@ -40,6 +40,27 @@ test('home section tabs never redirect the current category page or turn clearin
   }
   assert.equal(categoryRedirect({ origin: 'https://boothana.kr', path: '/discover', search: 'category=exhibitions&openingRegion=SEOUL', enabled: true }), 'https://expo.boothana.kr/?openingRegion=SEOUL')
 })
+test('category itinerary aliases preserve the event and day at the shared browser-storage origin',async()=>{
+  const search='event=173&day=2026-10-09'
+  for(const site of Object.values(CATEGORY_SITES)){
+    const page=await renderPage({path:'/itinerary',search,template,siteUrl:site.origin,apiBase:'https://api.example',fetcher:async()=>{throw new Error('Schedule redirect must not fetch the catalog')}})
+    assert.equal(page.status,308)
+    assert.equal(page.location,`https://boothana.kr/itinerary?${search}`)
+  }
+  const root=await renderPage({path:'/itinerary',search,template,siteUrl:'https://boothana.kr',splitSites:true})
+  assert.equal(root.status,200)
+  assert.match(root.meta.robots,/^noindex/)
+  assert.equal(root.location,undefined)
+})
+test('GET and HEAD itinerary redirects keep context without serving a second storage origin',async()=>{
+  const handler=createHandler(async()=>template)
+  for(const method of ['GET','HEAD']){
+    const headers=new Map(),res={statusCode:0,setHeader:(key,value)=>headers.set(key,value),end:()=>{}}
+    await handler({method,headers:{host:'popup.boothana.kr'},url:'/itinerary?event=173&day=2026-10-09',query:{path:'/itinerary'}},res)
+    assert.equal(res.statusCode,308)
+    assert.equal(headers.get('Location'),'https://boothana.kr/itinerary?event=173&day=2026-10-09')
+  }
+})
 test('each category home has its own website identity, canonical and crawlable heading', async () => {
   for (const [key, site] of Object.entries(CATEGORY_SITES)) {
     const seen = []
@@ -75,7 +96,7 @@ test('event and booth wrong-domain requests redirect by public taxonomy, preserv
 test('category sitemap fetches only its own catalog and emits no duplicate category URLs', async () => {
   for (const [category, site] of Object.entries(CATEGORY_SITES)) {
     const seen = []
-    const eventTypes = { subculture: 'POPUP_STORE', exhibitions: 'WINE', festivals: 'MUSIC', popups: 'POPUP_EXPERIENCE' }
+    const eventTypes = { subculture: 'FAN_CAFE', exhibitions: 'WINE', festivals: 'MUSIC', popups: 'POPUP_EXPERIENCE' }
     const rows = await publishedEvents({ apiBase: 'https://api.example', category, fetcher: async url => { seen.push(url); return json({ items: [{ ...fixture, event: { ...fixture.event, subcategory: eventTypes[category] } }], total: 1 }) } })
     assert.equal(seen.length, 1)
     assert.equal(new URL(seen[0]).searchParams.get('category'), site.code)
@@ -86,14 +107,20 @@ test('category sitemap fetches only its own catalog and emits no duplicate categ
     assert.ok(renderRobots(site.origin).includes(`${site.origin}/sitemap.xml`))
   }
 })
-test('shared popup listings retain a single canonical URL and sitemap entry', async () => {
+test('legacy and fandom popups belong only to popup with redirects from old subculture links', async () => {
   const legacy = { ...fixture, event: { ...fixture.event, subcategory: 'POPUP_STORE' } }
   const popup = { ...fixture, event: { ...fixture.event, subcategory: 'POPUP_EXPERIENCE', subjects: ['CHARACTER_IP'] } }
-  const page = await renderPage({ path: '/', template, siteUrl: CATEGORY_SITES.subculture.origin, apiBase: 'https://api.example', fetcher: async () => json({ items: [popup], total: 1 }) })
+  const page = await renderPage({ path: '/', template, siteUrl: CATEGORY_SITES.popups.origin, apiBase: 'https://api.example', fetcher: async () => json({ items: [popup], total: 1 }) })
   assert.ok(page.html.includes('href="https://popup.boothana.kr/discover/12"'))
-  const redirect = await renderPage({ path: '/discover/12', template, siteUrl: CATEGORY_SITES.subculture.origin, apiBase: 'https://api.example', fetcher: async () => json(popup) })
-  assert.equal(redirect.location, 'https://popup.boothana.kr/discover/12')
-  for (const [category, row, count] of [['popups', legacy, 0], ['subculture', popup, 0], ['popups', popup, 1]]) {
+  for(const row of [legacy,popup])for(const path of ['/discover/12','/discover/12/booths/7']) {
+    const redirect = await renderPage({ path, search:'day=2026-10-01&view=map', template, siteUrl: CATEGORY_SITES.subculture.origin, apiBase: 'https://api.example', fetcher: async () => json(row) })
+    assert.equal(redirect.status,308)
+    assert.equal(redirect.location, `https://popup.boothana.kr${path}?day=2026-10-01&view=map`)
+    const own=await renderPage({path,template,siteUrl:CATEGORY_SITES.popups.origin,apiBase:'https://api.example',fetcher:async()=>json(row)})
+    assert.equal(own.status,200)
+    assert.equal(own.meta.canonical,`https://popup.boothana.kr${path}`)
+  }
+  for (const [category, row, count] of [['popups', legacy, 1], ['subculture', legacy, 0], ['subculture', popup, 0], ['popups', popup, 1]]) {
     assert.equal((await publishedEvents({ apiBase: 'https://api.example', category, fetcher: async () => json({ items: [row], total: 1 }) })).length, count)
   }
 })
