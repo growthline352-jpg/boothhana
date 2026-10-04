@@ -69,6 +69,31 @@ class ThumbnailResearchTests(unittest.TestCase):
             job = ThumbnailResearch(self.cfg, self.root, 3, self.executor(value))
             self.assertEqual(job.search(target(), [], 100)['state'], expected)
 
+    def test_valid_opened_source_survives_an_unopened_secondary_result(self):
+        value = result()
+        value['sources'].append(dict(url='https://organizer.example/another-page', kind='OFFICIAL',
+                                    evidence='unopened secondary result', imageUrls=[]))
+        job = ThumbnailResearch(self.cfg, self.root, 3, self.executor(value))
+        output = job.search(target(), [], 100)
+        self.assertEqual(output['state'], 'RESEARCH_FOUND')
+        self.assertEqual([s['url'] for s in output['sources']], [PAGE])
+        self.assertEqual(output['discardedSources'][0]['reason'], 'NOT_OPENED')
+        validated = json.loads((self.root/'7'/'1'/'validated-result.json').read_text())
+        self.assertEqual([s['url'] for s in validated['sources']], [PAGE])
+
+    def test_bad_or_blocked_secondary_source_cannot_discard_valid_evidence(self):
+        self.cfg['blockedSourceHosts'] = ['blocked.example']
+        for url, reason in [('https://127.0.0.1/private', 'UNSAFE_URL'),
+                            ('https://[unclosed/poster', 'UNSAFE_URL'),
+                            ('https://blocked.example/poster', 'BLOCKED_SOURCE')]:
+            with self.subTest(url=url):
+                value = result()
+                value['sources'].append(dict(url=url, kind='OFFICIAL', evidence='bad source', imageUrls=[]))
+                output = ThumbnailResearch(self.cfg, self.root, 3, self.executor(value)).search(target(), [], 100)
+                self.assertEqual(output['state'], 'RESEARCH_FOUND')
+                self.assertEqual([s['url'] for s in output['sources']], [PAGE])
+                self.assertEqual(output['discardedSources'][0]['reason'], reason)
+
     def test_budget_defers_next_event_and_never_runs_unbounded_calls(self):
         executor = self.executor()
         job = ThumbnailResearch(self.cfg, self.root, 1, executor)

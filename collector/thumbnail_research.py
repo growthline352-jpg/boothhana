@@ -53,21 +53,29 @@ class ThumbnailResearch:
             result = parse_schema(raw, 'event-thumbnail.schema.json')
             if result['eventId'] != target['id'] or result['eventName'] != event['name']:
                 raise RunError('Thumbnail research returned another event')
+            if result['searchStatus'] != 'FOUND' and result['sources']:
+                raise RunError('Unsuccessful thumbnail research contains sources')
             if not searched:
                 raise RunError('Thumbnail research has no web-search audit')
             opened = {canonical_audit_url(url) for url in audit_opened_urls(folder / 'codex.jsonl')}
-            sources = []
+            sources, discarded = [], []
             for row in result['sources']:
                 url = row['url']
-                host = urlsplit(url).hostname or ''
-                check_url(url, [host])
+                try:
+                    host = urlsplit(url).hostname or ''
+                    check_url(url, [host])
+                    for image in row['imageUrls']:
+                        check_url(image, [urlsplit(image).hostname or ''])
+                except ValueError:
+                    discarded.append(dict(url=url, reason='UNSAFE_URL'))
+                    continue
                 if any(host == entry.removeprefix('*.') or host.endswith('.' + entry.removeprefix('*.'))
                        for entry in self.cfg['blockedSourceHosts']):
-                    raise RunError('Thumbnail research returned a blocked source')
+                    discarded.append(dict(url=url, reason='BLOCKED_SOURCE'))
+                    continue
                 if canonical_audit_url(url) not in opened:
-                    raise RunError('Thumbnail source was not opened during research')
-                for image in row['imageUrls']:
-                    check_url(image, [urlsplit(image).hostname or ''])
+                    discarded.append(dict(url=url, reason='NOT_OPENED'))
+                    continue
                 sources.append(row)
             if result['searchStatus'] == 'FOUND' and not sources:
                 raise RunError('Thumbnail research found no source')
@@ -75,10 +83,10 @@ class ThumbnailResearch:
                 raise RunError('Unsuccessful thumbnail research contains sources')
             output = dict(state='RESEARCH_FOUND' if sources else
                           'RESEARCH_FAILED' if result['searchStatus'] == 'FAILED' else result['searchStatus'],
-                          sources=sources, queries=result['queries'], summary=result['summary'])
+                          sources=sources, queries=result['queries'], summary=result['summary'], discardedSources=discarded)
             write_json(folder / 'audit.json', dict(eventId=target['id'], webSearchObserved=searched,
-                       openedUrls=sorted(opened), usage=usage, state=output['state']))
-            write_json(folder / 'validated-result.json', result)
+                       openedUrls=sorted(opened), usage=usage, state=output['state'], discardedSources=discarded))
+            write_json(folder / 'validated-result.json', {**result, 'sources':sources})
             return output
         except CliUnavailable as error:
             self.blocked_reason = error.reason

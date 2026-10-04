@@ -28,7 +28,7 @@ cd backend
 
 비회원 개선 의견을 받으려면 `SUPPORT_RATE_SECRET`을 32자 이상의 무작위 값으로 설정합니다. `SUPPORT_GUEST_ENABLED=false`인 운영 설정에서도 개선 의견 접수는 독립적으로 활성화됩니다. 비밀값이 없거나 짧으면 `feedbackEnabled=false`이고 접수는 `FEEDBACK_DISABLED`(503)로 거절합니다. 이 기능은 기존 고객지원 테이블을 사용하며 추가 SQL 마이그레이션이 없습니다.
 
-일정 장소 검색은 서버의 `KAKAO_LOCAL_API_KEY`를 사용하며 없으면 `KAKAO_CLIENT_ID`를 사용합니다. 카카오 Local 제공 서비스 활성화 여부를 별도로 확인해야 하며 API 키를 프런트 환경변수에 넣지 않습니다. `ITINERARY_PLACE_DAILY_LIMIT`은 기본 2,000, 설정 범위 1~10,000입니다. 서버 인스턴스의 한국시간 일일·분당 요청 수를 제한하며 재시작 시 초기화됩니다. 제공 서비스 활성화 대기와 직접 입력 대안은 [일정 안내](../docs/ITINERARY_BUILDER_KO.md#장소와-지도)를 확인합니다.
+일정 장소 검색은 서버의 `KAKAO_LOCAL_API_KEY`를 사용하며 없으면 `KAKAO_CLIENT_ID`를 사용합니다. 2026-10-05 운영 카카오 앱 1588512의 Local 제공 서비스 ON 상태와 검색·주변·주소 조회의 200 응답을 확인했습니다. 새 개발 환경에서도 제공 서비스 활성화 여부를 확인하며 API 키를 프런트 환경변수에 넣지 않습니다. `ITINERARY_PLACE_DAILY_LIMIT`은 기본 2,000, 설정 범위 1~10,000입니다. 서버 인스턴스의 한국시간 일일·분당 요청 수를 제한하며 재시작 시 초기화됩니다. 운영 확인과 연결 실패 시 직접 입력 대안은 [일정 안내](../docs/ITINERARY_BUILDER_KO.md#장소와-지도)를 확인합니다.
 
 ## Tests
 
