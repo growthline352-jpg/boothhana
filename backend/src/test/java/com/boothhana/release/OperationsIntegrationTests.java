@@ -52,11 +52,17 @@ class OperationsIntegrationTests {
   http=MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build();
  }
  EventData data(String name,String category,String day) {
-  return new EventData(name,category,"[TEST] Organizer","2026","SEOUL","[TEST] Hall","서울","원래 소개","공식 안내 확인",List.of(),
+  return data(name,category,day,"서울");
+ }
+ EventData data(String name,String category,String day,String address) {
+  return new EventData(name,category,"[TEST] Organizer","2026","SEOUL","[TEST] Hall",address,"원래 소개","공식 안내 확인",List.of(),
    List.of(new Occurrence(day,day,null,null)),List.of(new Source("https://example.com/official","OFFICIAL","ORIGINAL","공식 행사 안내")),List.of(),List.of());
  }
  long event(String suffix,String category,String day) {
-  EventData data=data(label+" "+suffix,category,day);String encoded=json.writeValueAsString(data),key=UUID.randomUUID().toString().replace("-","").repeat(2);
+  return event(suffix,category,day,"서울");
+ }
+ long event(String suffix,String category,String day,String address) {
+  EventData data=data(label+" "+suffix,category,day,address);String encoded=json.writeValueAsString(data),key=UUID.randomUUID().toString().replace("-","").repeat(2);
   long id=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state,reviewed_payload_json) values(?,?,?,?,cast(? as date),cast(? as date),cast(? as jsonb),?,'[]','REVIEWED',cast(? as jsonb)) returning id",Long.class,key,key,data.name(),category,day,day,encoded,key,encoded);
   publications.publish(id,new PublishInput(1));return id;
  }
@@ -95,6 +101,33 @@ class OperationsIntegrationTests {
   var foreign=new CatalogObservationService.ObservationInput(1,"c".repeat(64),"CONFIRMED",List.of("https://other.example/event"),Map.of(),Map.of(),Map.of());
   assertThatThrownBy(()->observations.observe(a,foreign)).isInstanceOf(ApiException.class);
   assertThat(catalog.event(a).address()).isEqualTo("서울");
+ }
+ @Test void recheckQueueAdaptsToApproachingDatesAndNewRevisionsWithoutBypassingFailureBackoff(){
+  var observations=web.getBean(CatalogObservationService.class);
+  long dueBefore=((Number)observations.workload().get("due")).longValue();
+  long nearBefore=((Number)observations.workload().get("near")).longValue();
+  String nearDay=LocalDate.parse(today).plusDays(6).toString(),farDay=LocalDate.parse(today).plusDays(20).toString();
+  String address="서울 성동구 성수동";
+  long near=event("approaching-recheck","ONLY_EVENT",nearDay,address),distant=event("distant-recheck","ONLY_EVENT",firstDay,address);
+  long failed=event("backoff-recheck","ONLY_EVENT",nearDay,address),revised=event("revised-recheck","ONLY_EVENT",firstDay,address);
+  long sparse=event("sparse-recheck","ONLY_EVENT",farDay,address);
+  String pastDay=LocalDate.parse(today).minusDays(2).toString();
+  catalog.editEvent(sparse,new EditInput(1,"REVIEWED","떨어진 두 운영일 확인",Map.of("occurrences",List.of(new Occurrence(pastDay,pastDay,null,null),new Occurrence(farDay,farDay,null,null))),List.of()));
+  publications.publish(sparse,new PublishInput(2));
+  // Simulate a successful weekly check made before the first event entered its seven-day window.
+  for(long eventId:List.of(near,distant,failed,revised,sparse)){
+   assertThat(CollectionRules.event(catalog.event(eventId),new Scope("SEOUL_GYEONGGI","Asia/Seoul",pastDay,farDay)).errors()).isEmpty();
+   observations.observe(eventId,new CatalogObservationService.ObservationInput(eventId==sparse?2:1,"d".repeat(64),"CONFIRMED",List.of("https://example.com/official"),Map.of(),Map.of(),Map.of()));
+   db.update("update catalog_source_check set checked_at=now()-interval '48 hours',next_check_at=now()+interval '5 days' where event_id=?",eventId);
+  }
+  db.update("update catalog_source_check set failures=6,status='EXTRACTION_FAILED' where event_id=?",failed);
+  catalog.editEvent(revised,new EditInput(1,"REVIEWED","입장 조건 정정",Map.of("admission","수정된 입장 조건"),List.of()));
+  var queued=observations.due(100).stream().map(row->((Number)row.get("id")).longValue()).toList();
+  assertThat(queued).contains(near,revised).doesNotContain(distant,failed,sparse);
+  var workload=observations.workload();
+  assertThat(((Number)workload.get("due")).longValue()).isEqualTo(dueBefore+2);
+  // Past occurrences do not make an otherwise distant next operating day "near".
+  assertThat(((Number)workload.get("near")).longValue()).isEqualTo(nearBefore+2);
  }
  @Test @SuppressWarnings("unchecked") void comparisonDeduplicatesEditionsAndPreservesPublishedPlaceAdmissionByDay(){
   var discovery=web.getBean(CatalogDiscoveryService.class);long a=event("compare-east","ONLY_EVENT",firstDay),b=event("compare-west","ONLY_EVENT",secondDay);

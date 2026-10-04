@@ -18,6 +18,16 @@ import static com.boothhana.collection.CollectionModels.*;
 public class CatalogObservationService {
     static final Set<String> FIELDS=Set.of("venueName","address","admission","occurrences","operationStatus","visitorGuide","districts");
     static final Set<String> STATUSES=Set.of("CONFIRMED","SOURCE_UNPUBLISHED","ACCESS_FAILED","EXTRACTION_FAILED");
+    static final String NEAR_SQL="""
+        exists(select 1 from jsonb_array_elements((e.payload_json || e.overrides_json)->'occurrences') d
+          where (d->>'endDate')::date>=(now() at time zone 'Asia/Seoul')::date
+          and (d->>'startDate')::date<=(now() at time zone 'Asia/Seoul')::date+7)
+        """;
+    // A weekly check becomes due sooner when the event approaches or its facts change.
+    // Failed checks on an unchanged revision retain the configured retry backoff.
+    static final String DUE_SQL="(c.next_check_at is null or c.next_check_at<=now()"
+        +" or c.details_json->>'eventRevision' is distinct from e.revision::text"
+        +" or (coalesce(c.failures,0)=0 and "+NEAR_SQL+" and c.checked_at<=now()-interval '24 hours'))";
     private final JdbcTemplate db;private final JsonMapper json;private final CatalogService catalog;
     public CatalogObservationService(JdbcTemplate db,JsonMapper json,CatalogService catalog){this.db=db;this.json=json;this.catalog=catalog;}
     public record ObservationInput(long eventRevision,String digest,String status,List<String> sourceUrls,Map<String,Object> values,Map<String,String> fieldStates,Map<String,String> fieldEvidence){}
@@ -42,14 +52,14 @@ public class CatalogObservationService {
     public Map<String,Object> workload(){
         return db.queryForMap("""
             select count(*) eligible,
-              count(*) filter(where c.next_check_at is null or c.next_check_at<=now()) due,
-              count(*) filter(where e.starts_on<=(now() at time zone 'Asia/Seoul')::date+7) near,
-              count(*) filter(where e.starts_on<=(now() at time zone 'Asia/Seoul')::date+7 and c.checked_at>=now()-interval '24 hours' and c.failures=0 and c.details_json->>'eventRevision'=e.revision::text and c.status not in ('ACCESS_FAILED','EXTRACTION_FAILED')) near_checked
+              count(*) filter(where %s) due,
+              count(*) filter(where %s) near,
+              count(*) filter(where %s and c.checked_at>=now()-interval '24 hours' and c.failures=0 and c.details_json->>'eventRevision'=e.revision::text and c.status not in ('ACCESS_FAILED','EXTRACTION_FAILED')) near_checked
             from subculture_event_candidate e join subculture_catalog_publication p on p.event_id=e.id
             left join catalog_source_check c on c.event_id=e.id
             where e.review_state<>'EXCLUDED' and e.ends_on>=(now() at time zone 'Asia/Seoul')::date
             and exists(select 1 from jsonb_array_elements((e.payload_json || e.overrides_json)->'sources') s where s->>'kind' in ('OFFICIAL','VENUE','ORGANIZER_SOCIAL') and s->>'access'='ORIGINAL')
-            """);
+            """.formatted(DUE_SQL,NEAR_SQL,NEAR_SQL));
     }
     public List<Map<String,Object>> due(int limit){
         if(limit<1||limit>100)throw ApiException.badRequest("조회 한도 오류");
@@ -59,9 +69,9 @@ public class CatalogObservationService {
             left join catalog_source_check c on c.event_id=e.id
             where e.review_state<>'EXCLUDED' and e.ends_on>=(now() at time zone 'Asia/Seoul')::date
             and exists(select 1 from jsonb_array_elements((e.payload_json || e.overrides_json)->'sources') s where s->>'kind' in ('OFFICIAL','VENUE','ORGANIZER_SOCIAL') and s->>'access'='ORIGINAL')
-            and (c.next_check_at is null or c.next_check_at<=now())
-            order by (e.starts_on<=(now() at time zone 'Asia/Seoul')::date+7) desc,c.next_check_at asc nulls first,e.starts_on,e.id limit ?
-            """,limit).stream().map(row->{Map<String,Object> out=new LinkedHashMap<String,Object>(row);out.put("event",catalog.event(((Number)row.get("id")).longValue()));return out;}).toList();
+            and %s
+            order by (%s) desc,c.next_check_at asc nulls first,e.starts_on,e.id limit ?
+            """.formatted(DUE_SQL,NEAR_SQL),limit).stream().map(row->{Map<String,Object> out=new LinkedHashMap<String,Object>(row);out.put("event",catalog.event(((Number)row.get("id")).longValue()));return out;}).toList();
     }
     @Transactional public Map<String,Object> observe(long id,ObservationInput input){
         var row=eventRow(id);var current=catalog.event(id);
