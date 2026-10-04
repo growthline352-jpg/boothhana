@@ -152,13 +152,21 @@ def parse_tmm_product(raw: bytes, page_url: str, checked_on: str) -> dict:
         label = _label(heading+' '+following)
         priority = 0 if any(key in label for key in ('menu', '메뉴', '가격')) else 1 if any(key in label for key in ('table', 'takeout', '입장', '예약')) else 2
         images.append(dict(url=image['url'], nearbyText=(preceding + '\n' + following).strip(), priority=priority))
+    # The public product thumbnail is separate from contents. Reading only
+    # body/menu images can miss the event's actual cover despite a valid URL.
+    thumbnail=product.get('thumb_url')
+    try:check_url(thumbnail,IMAGE_HOSTS)
+    except (ValueError,TypeError,AttributeError):thumbnail=None
+    if thumbnail:
+        images=[image for image in images if image['url']!=thumbnail]
+        images.insert(0,dict(url=thumbnail,nearbyText=title[:500],priority=-1,role='PAGE_PREVIEW'))
     images.sort(key=lambda row: row['priority'])
     # This is a strict public-fact allowlist. Never retain the raw response or
     # seller_data/user_data/bank/account/phone/email/password fields.
     return dict(sourceUrl=canonical, checkedOn=checked_on, title=title[:500], bodyText=text[:MAX_TEXT],
         textTruncated=len(text) > MAX_TEXT, reservationOpenRaw=_scalar(product.get('open_date')),
         reservationCloseRaw=_scalar(product.get('close_date')), formStateRaw=_scalar(product.get('status')),
-        images=images, imagesTruncated=len(parser.images)>40, bodySha256=hashlib.sha256(html.encode('utf-8')).hexdigest())
+        images=images[:40], imagesTruncated=len(parser.images)>40 or len(images)>40, bodySha256=hashlib.sha256(html.encode('utf-8')).hexdigest())
 
 
 def _scalar(value):
@@ -219,7 +227,7 @@ def collect_detail_sources(event: dict, directory: Path, blocked_hosts: list[str
             try:
                 if not permitted(image['url'], hosts): image['analysisStatus'] = 'BLOCKED'; continue
                 trace=[]
-                options={'source_trace':trace} if image_fetcher is fetch_image else {}
+                options={'source_trace':trace,'url_guard':lambda url:permitted(url,hosts),'user_agent':AGENT} if image_fetcher is fetch_image else {}
                 raw_image, mime, digest = image_fetcher(image['url'], hosts, max(1, min(timeout, int(deadline-time.monotonic()))), **options)
                 if item.get('sourceType')=='OFFICIAL_POSTER_PAGE' and digest in PLACEHOLDER_SHA256:
                     image['analysisStatus']='PLACEHOLDER';continue

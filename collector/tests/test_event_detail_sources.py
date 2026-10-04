@@ -28,6 +28,27 @@ def event():
     return value
 
 class DetailSourceTests(unittest.TestCase):
+    def test_public_product_thumbnail_not_in_body_is_fetched_before_menu_images(self):
+        raw=json.loads(raw_product(''.join(f'<img src="https://image.takemm.com/menu{i}.jpg"><p>MENU 메뉴</p>' for i in range(7))))
+        thumbnail='https://formimage.takemm.com/2026-cover.jpeg'
+        raw['data']['prod_info']['thumb_url']=thumbnail
+        encoded=json.dumps(raw).encode();parsed=details.parse_tmm_product(encoded,URL,'2026-10-04')
+        self.assertEqual(parsed['images'][0]['url'],thumbnail)
+        self.assertEqual(parsed['images'][0]['role'],'PAGE_PREVIEW')
+        calls=[]
+        def image(url,*args):calls.append(url);return b'fixture','image/jpeg','a'*64
+        with tempfile.TemporaryDirectory() as tmp:
+            docs,files=details.collect_detail_sources(event(),Path(tmp),[],fetcher=lambda *args:encoded,
+                image_fetcher=image,robots_checker=lambda *args:True)
+        self.assertEqual(calls[0],thumbnail);self.assertEqual(len(files),4)
+        self.assertEqual(docs[0]['images'][0]['analysisStatus'],'ATTACHED')
+        self.assertNotIn('PRIVATE',json.dumps(docs))
+    def test_thumbnail_field_rejects_unapproved_hosts_and_deduplicates_body_cover(self):
+        for url,count in [('https://127.0.0.1/x',0),('https://evil.example/x',0),('https://image.takemm.com/menu.jpg',1)]:
+            raw=json.loads(raw_product());raw['data']['prod_info']['thumb_url']=url
+            doc=details.parse_tmm_product(json.dumps(raw).encode(),URL,'2026-10-04')
+            self.assertEqual(sum(i['role']=='PAGE_PREVIEW' for i in doc['images'] if 'role' in i),count)
+            self.assertEqual(sum(i['url']==url for i in doc['images']),count)
     def test_strict_public_fact_projection_and_hidden_html(self):
         value=details.parse_tmm_product(raw_product('<script>SECRET_SCRIPT</script><template>SECRET_TEMPLATE</template><p>QR 안내</p>'),URL,'2026-10-03')
         serialized=json.dumps(value)

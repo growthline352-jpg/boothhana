@@ -15,13 +15,15 @@ from event_detail_sources import AGENT,allowed_by_robots,collect_detail_sources,
 from official_site_sources import site_detail_url
 from official_poster_sources import parse_official_document,PLACEHOLDER_SHA256
 from detail_image_cache import approved_image,retain_images
+from thumbnail_research import ThumbnailResearch
 import uuid
 
 PATH='/api/internal/subculture/v4'
 class BudgetExpired(RunError):pass
 RETRY_HOURS={'VERIFIED':24,'WAITING_REVIEW':12,'WAITING_HOST':24,'NO_IMAGE_FOUND':72,
              'SOURCE_BLOCKED':168,'NO_SOURCE':168,'SELECTION_BLOCKED':24,'DISCOVERED_FOR_REVIEW':12,
-             'STORAGE_DISABLED':24,'APPROVED_WAIT_STORAGE':24}
+             'STORAGE_DISABLED':24,'APPROVED_WAIT_STORAGE':24,'RESEARCH_DEFERRED':2,
+             'RESEARCH_BLOCKED':6,'RESEARCH_FAILED':2}
 def now():return datetime.now(timezone.utc)
 def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()
 def blocked(url,hosts):
@@ -44,14 +46,17 @@ class RepairQueue:
         self.rows[str(target['id'])]=row;write_json(self.path,self.rows);return row
 
 class Repair:
-    def __init__(self,cfg,api,folder,apply=False,force=False,max_events=100,max_minutes=60,store_only=False):
+    def __init__(self,cfg,api,folder,apply=False,force=False,max_events=100,max_minutes=60,store_only=False,max_searches=None):
         self.cfg=cfg;self.api=api;self.folder=folder;self.apply=apply;self.force=force
         self.deadline=time.monotonic()+max_minutes*60;self.limit=max_events;self.store_only=store_only
         if folder.is_symlink():raise RunError('Image repair state directory is a symlink')
         folder.mkdir(parents=True,exist_ok=True);folder.chmod(0o700)
         self.queue=RepairQueue(folder/('queue.json' if apply else 'dry-queue.json'))
-        self.robots={};self.policy=[cfg['blockedSourceHosts'],cfg['imageAllowedHosts'],cfg.get('downloadApprovedImages',True),'detail-list-v2']
+        search_limit=cfg.get('maxThumbnailSearches',30) if max_searches is None else max_searches
+        if type(search_limit) is not int or not 0<=search_limit<=100:raise RunError('Thumbnail search budget outside allowed range')
+        self.robots={};self.policy=[cfg['blockedSourceHosts'],cfg['imageAllowedHosts'],cfg.get('downloadApprovedImages',True),search_limit,'event-thumbnail-v3']
         self.evidence=folder/'evidence'/uuid.uuid4().hex
+        self.research=ThumbnailResearch(cfg,self.evidence/'research',search_limit)
     def budget(self):
         if time.monotonic()>=self.deadline:raise BudgetExpired('Image repair budget exhausted')
     def timeout(self):
@@ -117,11 +122,16 @@ class Repair:
         if stored.get('storageState')!='STORED':raise RunError('Server did not confirm storage')
         updated={**target,'assets':[stored if a['id']==asset['id'] else a for a in target['assets']]}
         return self.verify(updated,sha)
-    def discover(self,target):
-        event=target['event'];urls=list(dict.fromkeys(row['url'] for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])]
+    def discover_sources(self,target,extra_sources=None,seen=(),remembered_sources=()):
+        event=target['event']
+        if extra_sources is not None:event={**event,'sources':extra_sources,'discoveryLinks':[]}
+        elif remembered_sources:event={**event,'sources':[*(event.get('sources') or []),*remembered_sources]}
+        urls=list(dict.fromkeys(row['url'] for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])]
             if row.get('kind') in ('OFFICIAL','VENUE','ORGANIZER_SOCIAL') and row.get('url') and row.get('access')!='INACCESSIBLE'))[:8]
+        for row in remembered_sources:
+            if row['url'] not in urls and len(urls)<12:urls.append(row['url'])
         if not urls:return 'NO_SOURCE',dict(reason='No associated official source; organizer research required')
-        existing={(a['imageUrl'],a['pageUrl']) for a in target['assets']};observations=[];candidates=[];index=0
+        existing={(a['imageUrl'],a['pageUrl']) for a in target['assets']}|set(seen);observations=[];candidates=[];index=0
         def register(image,page,state,sha=None):
             candidate=dict(url=image['url'],sourceUrl=page,role=image.get('role','CONTENT'),state=state)
             if sha:candidate['sha256']=sha
@@ -137,7 +147,10 @@ class Repair:
             return not self.apply or asset['rightsState']=='PENDING'
         if any(tmm_product_url(u) or site_detail_url(u) for u in urls):
             self.budget()
-            try:details,files=collect_detail_sources(event,self.evidence/str(target['id']),self.cfg['blockedSourceHosts'],timeout=self.timeout())
+            # A fallback source set must not reuse an earlier TMM/Sites
+            # checkpoint from another phase of this event's attempt.
+            detail_key=digest([event.get('sources'),event.get('discoveryLinks')])[:20]
+            try:details,files=collect_detail_sources(event,self.evidence/str(target['id'])/detail_key,self.cfg['blockedSourceHosts'],timeout=self.timeout())
             except BudgetExpired:raise
             except Exception as error:
                 observations.append(dict(state='FETCH_FAILED',error=type(error).__name__,sourceType='DETAIL_EXTRACTOR'))
@@ -148,20 +161,32 @@ class Repair:
                     key=(image['url'],page)
                     if image.get('analysisStatus')!='ATTACHED' or key in existing or len(candidates)>=8:continue
                     existing.add(key)
-                    pending=register(image,page,'VERIFIED_BYTES_NOT_EDITION',image.get('sha256'))
+                    try:
+                        check_url(image['url'],self.cfg['imageAllowedHosts'])
+                        image_state='VERIFIED_BYTES_NOT_EDITION'
+                    except ValueError:image_state='WAITING_HOST'
+                    pending=register(image,page,image_state,image.get('sha256'))
                     if self.apply and pending:
                         retain_images([{**doc,'images':[image]}],files,Path(self.cfg['stateDirectory']).expanduser().resolve()/'detail-image-cache-v1')
-        while index<len(urls) and index<8 and len(candidates)<8:
+        # Leave room for linked notice pages even with eight initial sources.
+        while index<len(urls) and index<12 and len(candidates)<8:
             page=urls[index];index+=1;self.budget();host=urlsplit(page).hostname or ''
             if blocked(page,self.cfg['blockedSourceHosts']):observations.append(dict(url=page,state='SOURCE_BLOCKED'));continue
             try:
                 if not self.permitted(page):observations.append(dict(url=page,state='SOURCE_BLOCKED'));continue
                 html,_=fetch_html(page,[host],min(15,max(1,int(self.deadline-time.monotonic()))))
                 doc=parse_official_document(html,page,now().date().isoformat(),event['name'])
-                for child in doc['childUrls']:
+                for child in [*doc.get('officialUrls',[]),*doc['childUrls']]:
                     if child not in urls and len(urls)<12:urls.append(child)
                 observations.append(dict(url=page,state='READ',images=len(doc['images'])))
-                for image in doc['images']:
+                hints=next((s.get('imageUrls',[]) for s in [*(extra_sources or []),*remembered_sources] if s['url']==page),[])
+                actual={image['url'] for image in doc['images']}
+                if any(url not in actual for url in hints):
+                    observations.append(dict(url=page,state='RESEARCH_IMAGE_NOT_IN_PAGE'))
+                # A researched poster must actually be in the fetched page.
+                # Do not replace a missing requested image with another ad.
+                images=[image for image in doc['images'] if not hints or image['url'] in hints]
+                for image in images:
                     key=(image['url'],page)
                     if key in existing:continue
                     if blocked(image['url'],self.cfg['blockedSourceHosts']):
@@ -193,7 +218,7 @@ class Repair:
                         retain_images([dict(sourceUrl=page,status='READ',images=[evidence])],[blob],Path(self.cfg['stateDirectory']).expanduser().resolve()/'detail-image-cache-v1')
             except BudgetExpired:raise
             except Exception as error:observations.append(dict(url=page,state='FETCH_FAILED',error=type(error).__name__))
-        note=dict(sources=observations,candidates=candidates,needsSourceResearch=not candidates,
+        note=dict(sources=observations,candidates=candidates,needsSourceResearch=not any(c.get('sha256') and c['state']=='VERIFIED_BYTES_NOT_EDITION' for c in candidates),
                   nextAction='회차·행사 일치와 사용 검토' if candidates else '다른 주최자 공식 원문 추가 조사')
         if candidates:
             if self.apply and not any(c['rightsState']=='PENDING' for c in candidates):
@@ -203,6 +228,42 @@ class Repair:
         if any(o['state']=='SOURCE_BLOCKED' for o in observations):return 'SOURCE_BLOCKED',note
         if any(o['state'] in ('FETCH_FAILED','IMAGE_FETCH_FAILED','INACCESSIBLE') for o in observations):return 'FETCH_FAILED',note
         return 'NO_IMAGE_FOUND',note
+    def discover(self,target):
+        event=target['event']
+        identity=digest([event.get(key) for key in ('name','organizer','edition','occurrences')])
+        previous=self.queue.rows.get(str(target['id']),{}).get('details') or {}
+        remembered=previous.get('sourceLeads',[]) if previous.get('researchTarget')==identity else []
+        state,note=self.discover_sources(target,remembered_sources=remembered)
+        note.update(researchTarget=identity,sourceLeads=remembered)
+        # Host-blocked candidates still have no usable bytes. Research another
+        # official source for this exact event, not a whole-event weekly job.
+        if any(c.get('sha256') and c['state']=='VERIFIED_BYTES_NOT_EDITION' for c in note.get('candidates',[])):return state,note
+        research=self.research.search(target,note.get('sources',[]),self.deadline-time.monotonic())
+        note['research']=research
+        if research['state']=='DISABLED':return state,note
+        if research['sources']:
+            leads={}
+            for row in [*research['sources'],*remembered]:
+                if row['url'] not in leads:leads[row['url']]=row
+            note['sourceLeads']=list(leads.values())[:4]
+            seen={(c['url'],c['sourceUrl']) for c in note.get('candidates',[])}
+            alternative_state,alternative=self.discover_sources(target,research['sources'],seen)
+            note['sources']=note.get('sources',[])+alternative.get('sources',[])
+            note['candidates']=note.get('candidates',[])+alternative.get('candidates',[])
+            note['needsSourceResearch']=not any(c.get('sha256') and c['state']=='VERIFIED_BYTES_NOT_EDITION' for c in note['candidates'])
+            note['nextAction']=alternative.get('nextAction','다른 공식 썸네일 출처 재조사')
+            if alternative.get('candidates'):return alternative_state,note
+            if note['candidates']:return state,note
+            # A found page that failed extraction/download is not NO_RESULT.
+            return alternative_state,note
+        if research['state'] in ('RESEARCH_DEFERRED','RESEARCH_BLOCKED','RESEARCH_FAILED'):
+            note['discoveryState']=state
+            note['nextAction']='썸네일 별도 조사 재시도 · 조사 예산/인증/실행 오류 확인'
+            return research['state'],note
+        if research['state']=='INACCESSIBLE':
+            note['nextAction']='접근 가능한 다른 공식 포스터 출처 재조사'
+            return 'SOURCE_BLOCKED',note
+        return state,note
     def repair(self,target):
         banner=target.get('banner')
         if banner:return self.verify(target)
@@ -241,6 +302,7 @@ class Repair:
             state,note=self.discover(target)
             action='기존·새 후보의 회차·행사 일치와 사용 검토'
             if state in ('SOURCE_BLOCKED','NO_SOURCE','NO_IMAGE_FOUND','FETCH_FAILED'):action='기존 후보 검토 · 수집 가능한 다른 공식 출처 추가'
+            if state in ('RESEARCH_DEFERRED','RESEARCH_BLOCKED','RESEARCH_FAILED'):action=note['nextAction']
             note.update(assetIds=[a['id'] for a in pending],discoveryState=state,nextAction=action)
             return 'WAITING_REVIEW',note
         return self.discover(target)
@@ -274,6 +336,7 @@ class Repair:
         unresolved.sort(key=lambda r:(priority.get(r['state'],4),r['eventId']))
         return dict(job=self.job_name(),counts=report['counts'],publishedEvents=report['publishedEvents'],
             processed=report['processed'],dueDeferred=report['dueDeferred'],unresolvedCount=len(unresolved),
+            thumbnailSearches=report.get('thumbnailSearches',0),researchBlockedReason=report.get('researchBlockedReason'),
             issues=[f'{r["state"]}: {r["eventId"]}' for r in unresolved[:20]],
             imageTasks=[dict(eventId=r['eventId'],name=r['name'][:120],state=r['state'],
                 nextAction=r.get('details',{}).get('nextAction','공개 대표 이미지·원문 확인')[:160]) for r in unresolved[:40]])
@@ -314,7 +377,8 @@ class Repair:
             else:records.append(dict(eventId=target['id'],name=target['event']['name'],state='NEEDS_RECHECK' if old else 'NOT_ATTEMPTED'))
         counts={state:sum(r['state']==state for r in records) for state in sorted({r['state'] for r in records})}
         report=dict(job=self.job_name(),mode='APPLY' if self.apply else 'READ_ONLY',publishedEvents=published_count,processed=processed,
-                    dueDeferred=max(0,len(eligible)-processed),counts=counts,events=records)
+                    dueDeferred=max(0,len(eligible)-processed),counts=counts,events=records,
+                    thumbnailSearches=self.research.calls,researchBlockedReason=self.research.blocked_reason)
         write_json(self.folder/('report.json' if self.apply else 'dry-report.json'),report)
         print(json.dumps({k:v for k,v in report.items() if k!='events'},ensure_ascii=False))
         return report
@@ -323,13 +387,14 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--config',type=Path)
     parser.add_argument('--apply',action='store_true');parser.add_argument('--force',action='store_true')
     parser.add_argument('--store-only',action='store_true',help='Store approved missing banners only; no discovery or approval')
+    parser.add_argument('--max-searches',type=int,help='Separate per-event thumbnail searches, 0..100 (default: config/30)')
     parser.add_argument('--max-events',type=int,default=100);parser.add_argument('--max-minutes',type=int,default=60)
     args=parser.parse_args(argv)
     if not 1<=args.max_events<=200 or not 1<=args.max_minutes<=180:raise RunError('Image repair budget outside allowed range')
     cfg=load_config(args.config);state=Path(cfg['stateDirectory']).expanduser().resolve()
     with run_lock(state):
         folder=state/('image-storage-v1' if args.store_only else 'image-repair-v1')
-        job=Repair(cfg,Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']),folder,args.apply,args.force,args.max_events,args.max_minutes,args.store_only)
+        job=Repair(cfg,Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']),folder,args.apply,args.force,args.max_events,args.max_minutes,args.store_only,args.max_searches)
         return job.run()
 if __name__=='__main__':
     try:raise SystemExit(main())

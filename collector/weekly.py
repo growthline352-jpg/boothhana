@@ -25,6 +25,7 @@ DISCOVERY_CHANNELS=('VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY','TICKE
 AUTHORITATIVE_CHANNELS={'VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY'}
 EXTRA={'maxEvents':50,'maxParticipantPages':10,'maxSales':100,'maxSalesPagesPerParticipant':5,'maxCliCalls':240,'maxRuntimeMinutes':240,
        'maxImages':100,'maxEventEnrichments':50,'maxEventNameJobs':50,'eventNameMaxAttempts':8,'eventNameRetryHours':24,'eventNameNotFoundRetryHours':168,'eventNameFailureRetryHours':6,
+       'maxThumbnailSearches':30,'thumbnailSearchTimeoutSeconds':180,
        'maxFestivalDiscoveryJobs':12,'maxSubcultureDiscoveryJobs':6,'maxPopupDiscoveryJobs':0,'discoveryWorkRetryHours':24,
        'xBearerTokenEnv':'X_BEARER_TOKEN','maxXRecentPages':2,
        'priorityEventKeywords':[],'discoveryEventNames':[],'discoveryLeadUrls':[],'discoverySourceSeeds':{},'imageAllowedHosts':[],'blockedSourceHosts':['witchform.com'],'downloadApprovedImages':True,'floorplanMaxEvents':30,'floorplanMaxSources':10,'floorplanMaxTiles':40,'floorplanMaxCliCalls':100,'floorplanMaxMinutes':180}
@@ -44,6 +45,8 @@ def load_config(path:Path|None):
     for key,max_ in limits.items():
         if type(cfg[key]) is not int or not 1<=cfg[key]<=max_: raise RunError(key+' outside allowed range')
     if type(cfg['maxEventEnrichments']) is not int or not 0<=cfg['maxEventEnrichments']<=100:raise RunError('maxEventEnrichments outside allowed range')
+    if type(cfg['maxThumbnailSearches']) is not int or not 0<=cfg['maxThumbnailSearches']<=100:raise RunError('maxThumbnailSearches outside allowed range')
+    if type(cfg['thumbnailSearchTimeoutSeconds']) is not int or not 30<=cfg['thumbnailSearchTimeoutSeconds']<=600:raise RunError('thumbnailSearchTimeoutSeconds outside allowed range')
     for key in ('maxFestivalDiscoveryJobs','maxSubcultureDiscoveryJobs','maxPopupDiscoveryJobs'):
         if type(cfg[key]) is not int or not 0<=cfg[key]<=100:raise RunError(key+' outside allowed range')
     if type(cfg['discoveryWorkRetryHours']) is not int or not 1<=cfg['discoveryWorkRetryHours']<=168:raise RunError('discoveryWorkRetryHours outside allowed range')
