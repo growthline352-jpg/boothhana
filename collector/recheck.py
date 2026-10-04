@@ -5,8 +5,8 @@ import argparse, hashlib, json, time, re
 from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlsplit
-from weekly import Pipeline, load_config
-from run import SEOUL, run_lock, write_json, RunError,execute_search
+from weekly import Pipeline, load_config, BudgetExceeded
+from run import SEOUL, run_lock, write_json, RunError,CliUnavailable,execute_search
 from catalog_rules import parse_schema
 from catalog_transport import Api
 from media_fetch import fetch_html
@@ -76,7 +76,8 @@ def extract_documents(pipeline,key,prompt,documents,images):
     pipeline.check_budget(cli=True);pipeline.calls+=1;pipeline.stats['cliCalls']+=1
     path=pipeline.job_dir(key);pipeline.progress(key,'EXTRACTING_FETCHED_DOCUMENTS')
     remaining=max(1,int(pipeline.cfg['maxRuntimeMinutes']*60-(time.monotonic()-pipeline.started)))
-    raw,observed,usage=execute_search({**pipeline.cfg,'timeoutSeconds':min(pipeline.cfg['timeoutSeconds'],remaining)},path,prompt,Path(__file__).parent/'schemas/event-recheck.schema.json',**({'images':images} if images else {}))
+    try:raw,observed,usage=execute_search({**pipeline.cfg,'timeoutSeconds':min(pipeline.cfg['timeoutSeconds'],remaining)},path,prompt,Path(__file__).parent/'schemas/event-recheck.schema.json',**({'images':images} if images else {}))
+    except CliUnavailable as exc:raise pipeline.block_cli(exc) from None
     result=parse_schema(raw,'event-recheck.schema.json')
     write_json(path/'audit.json',{'mode':'FETCHED_OFFICIAL_DOCUMENTS','digest':source_digest(documents),'fetchedSourceUrls':[d['url'] for d in documents],'webSearchObserved':observed,'usage':usage})
     write_json(path/'validated-result.json',result)
@@ -114,6 +115,10 @@ def main(argv=None):
                     result=extract_documents(pipeline,key,prompt,documents,images)
                     if result.get('searchStatus')=='FAILED':raise RunError('Source extraction failed')
                     payload=observation(target,result,documents);summary['confirmedValues']+=len(payload['values'])
+                except BudgetExceeded:
+                    # A provider/budget block is not evidence of a broken official
+                    # field. Keep this target and the rest due for the next run.
+                    summary['cliBlockedReason']=pipeline.cli_blocked_reason or 'BUDGET_EXHAUSTED';break
                 except Exception:
                     payload={**base,'status':'EXTRACTION_FAILED'};summary['extractionFailed']+=1
             write_json(pipeline.job_dir(key)/'observation.json',payload)
@@ -127,7 +132,7 @@ def main(argv=None):
         summary['cliCalls']=pipeline.calls;summary['elapsedSeconds']=round(time.monotonic()-began)
         summary['remaining']=max(0,int(workload['due'])-(summary['checked'] if args.dry_run else summary['saved']));summary['dryRun']=args.dry_run
         write_json(folder/'summary.json',summary);print(json.dumps(summary,ensure_ascii=False))
-        return 2 if summary['accessFailed'] or summary['extractionFailed'] or summary['ingestionFailed'] or summary['remaining'] else 0
+        return 2 if summary.get('cliBlockedReason') or summary['accessFailed'] or summary['extractionFailed'] or summary['ingestionFailed'] or summary['remaining'] else 0
 
 if __name__=='__main__':
     try:raise SystemExit(main())

@@ -30,6 +30,13 @@ except ZoneInfoNotFoundError: SEOUL=timezone(timedelta(hours=9),name='Asia/Seoul
 
 class RunError(RuntimeError): pass
 
+class CliUnavailable(RunError):
+    """A shared provider/configuration failure that another job cannot repair."""
+    def __init__(self,reason: str):
+        if reason not in ('INVALID_SCHEMA','USAGE_LIMIT','AUTH_REQUIRED'):raise ValueError('Unknown CLI block reason')
+        self.reason=reason
+        super().__init__('Codex CLI unavailable: '+reason+'; remaining research is deferred')
+
 def utcnow(): return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
 
 def write_json(path: Path, value: dict):
@@ -120,6 +127,42 @@ def audit_search(path: Path) -> tuple[bool,dict]:
         if e.get('type')=='turn.completed': usage=e.get('usage',{})
     return observed,usage
 
+def terminal_cli_failure(path: Path) -> str | None:
+    """Inspect only CLI error events; never classify fetched/source text as an error."""
+    if not path.is_file() or path.stat().st_size>20*1024*1024:return None
+    reasons={'invalid_json_schema':'INVALID_SCHEMA','usage_limit':'USAGE_LIMIT','usage_limit_reached':'USAGE_LIMIT',
+        'insufficient_quota':'USAGE_LIMIT','authentication_error':'AUTH_REQUIRED',
+        'invalid_api_key':'AUTH_REQUIRED','token_expired':'AUTH_REQUIRED',
+        'refresh_token_reused':'AUTH_REQUIRED','refresh_token_expired':'AUTH_REQUIRED'}
+    def inspect(value):
+        if isinstance(value,dict):
+            for key in ('code','type'):
+                code=value.get(key)
+                if isinstance(code,str) and code.lower() in reasons:return reasons[code.lower()]
+            for child in value.values():
+                reason=inspect(child)
+                if reason:return reason
+        elif isinstance(value,list):
+            for child in value:
+                reason=inspect(child)
+                if reason:return reason
+        elif isinstance(value,str):
+            # HTTP error bodies may be serialized inside the CLI's message field.
+            for code in re.findall(r'"(?:code|type)"\s*:\s*"([a-z_]+)"',value,re.I):
+                if code.lower() in reasons:return reasons[code.lower()]
+            message=value.lower().replace('\u2019',"'")
+            if "you've hit your usage limit" in message:return 'USAGE_LIMIT'
+            if any(text in message for text in ('refresh token has already been used','refresh token has expired',
+                    'refresh token was already used','not logged in','authentication required')):return 'AUTH_REQUIRED'
+        return None
+    for line in path.read_text(encoding='utf-8',errors='replace').splitlines():
+        try:event=json.loads(line)
+        except ValueError:continue
+        if not isinstance(event,dict) or event.get('type') not in ('error','turn.failed'):continue
+        reason=inspect(event)
+        if reason:return reason
+    return None
+
 def canonical_audit_url(value: str) -> str:
     try:
         parsed=urlsplit(value.strip())
@@ -179,6 +222,9 @@ def output_schema_for_cli(value: dict) -> dict:
     result=json.loads(json.dumps(value))
     def strict(node):
         if isinstance(node,dict):
+            # Structured output rejects this JSON Schema keyword. Keep it in the
+            # original ingestion schema so duplicate values are still rejected.
+            node.pop('uniqueItems',None)
             if 'properties' in node:
                 node['required']=list(node['properties'])
             for child in node.values():strict(child)
@@ -196,7 +242,7 @@ def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | No
     auth_file=auth_root/'auth.json'
     initial_auth=auth_file.read_bytes() if auth_file.is_file() else None
     if not os.getenv('CODEX_API_KEY') and not auth_file.is_file():
-        raise RunError('Codex 인증 파일 또는 CODEX_API_KEY가 필요합니다. 별도 CODEX_HOME에 파일 방식으로 로그인하세요.')
+        raise CliUnavailable('AUTH_REQUIRED')
     with tempfile.TemporaryDirectory(prefix='boothhana-search-') as temporary:
         home=Path(temporary); (home/'codex').mkdir(mode=0o700); (home/'work').mkdir(mode=0o700)
         # Copy only auth, never user's config.toml/hooks/MCP/skills/repository instructions.
@@ -232,7 +278,12 @@ def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | No
             except BaseException:
                 stop_process(p);raise
         persist_refreshed_auth(auth_file,initial_auth,home/'codex/auth.json')
-        if p.returncode: raise RunError(f'Codex 실행 실패(exit {p.returncode}). 로컬 stderr 로그를 확인하세요.')
+        if p.returncode:
+            reason=terminal_cli_failure(stdout)
+            if reason:
+                write_json(run_dir/'cli-failure.json',{'reason':reason,'exitCode':p.returncode})
+                raise CliUnavailable(reason)
+            raise RunError(f'Codex 실행 실패(exit {p.returncode}). 로컬 codex.jsonl 및 stderr 로그를 확인하세요.')
         if not output.is_file() or output.stat().st_size>MAX_JSON_BYTES: raise RunError('CLI 결과 파일 누락/크기 초과')
         observed,usage=audit_search(stdout)
         raw=output.read_bytes()

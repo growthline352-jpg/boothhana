@@ -7,7 +7,7 @@ import argparse,hashlib,json,os,sys,time,uuid
 from pathlib import Path
 from datetime import datetime
 import jsonschema
-from run import ROOT,SEOUL,RunError,run_lock,execute_search,utcnow,write_json
+from run import ROOT,SEOUL,RunError,CliUnavailable,run_lock,execute_search,utcnow,write_json
 from weekly import load_config
 from catalog_transport import Api
 from media_fetch import fetch_image,fetch_html
@@ -23,6 +23,7 @@ class FloorplanBatch:
         self.event_file=event_file;self.cfg=cfg;self.folder=folder;folder.mkdir(parents=True,exist_ok=True);self.dry=dry;self.fixtures=fixtures
         self.api=api if api is not None else (None if dry else Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']))
         self.started=time.monotonic();self.calls=0;self.issues=[];self.events=[]
+        self.cli_blocked_reason=None
         queue_path=(folder/'event-name-queue-v1.json') if dry else Path(cfg['stateDirectory']).expanduser().resolve()/'event-name-queue-v1.json'
         self.event_queue=EventNameQueue(queue_path)
         self.meta_path=folder/'floorplans.json';self.meta=json.loads(self.meta_path.read_text(encoding='utf-8')) if self.meta_path.exists() else {'version':8,'runId':str(uuid.uuid4()),'dryRun':dry,'startedAt':utcnow(),'state':'RUNNING'}
@@ -31,6 +32,7 @@ class FloorplanBatch:
     def request(self,method,path,data=None,**kw):return self.api.request(method,BASE+path,data,**kw)
     def budget(self,cli=False):
         if time.monotonic()-self.started>self.cfg['floorplanMaxMinutes']*60:raise RunError('Floorplan time budget exhausted; resume stored tiles in next batch')
+        if cli and self.cli_blocked_reason:raise CliUnavailable(self.cli_blocked_reason)
         if cli and self.calls>=self.cfg['floorplanMaxCliCalls']:raise RunError('Floorplan CLI call budget exhausted; completed tile results are retained')
     def heartbeat(self,event):
         if self.api:self.request('POST',f'/events/{event}/heartbeat',{'leaseId':self.lease})
@@ -60,7 +62,8 @@ class FloorplanBatch:
             raw=(self.fixtures/fixture).read_bytes();observed=False
         else:
             remaining=max(1,int(self.cfg['floorplanMaxMinutes']*60-(time.monotonic()-self.started)))
-            raw,observed,_=execute_search({**self.cfg,'timeoutSeconds':min(self.cfg['timeoutSeconds'],1200,remaining)},path,prompt,ROOT/'schemas'/schema,images=images,web_search=not bool(images))
+            try:raw,observed,_=execute_search({**self.cfg,'timeoutSeconds':min(self.cfg['timeoutSeconds'],1200,remaining)},path,prompt,ROOT/'schemas'/schema,images=images,web_search=not bool(images))
+            except CliUnavailable as exc:self.cli_blocked_reason=exc.reason;raise
         value=json.loads(raw);validate_payload(value,schema_path)
         if not self.dry and not images and value['status']!='ERROR' and not observed:raise RunError('No completed web search record')
         # Image attachments, not OCR and not a web-search substitute, are the vision input.
@@ -139,6 +142,8 @@ class FloorplanBatch:
                 try:
                     entry['discovery']=self.discover(target)['status']
                     if entry['discovery']=='ERROR':errors.append('Search returned ERROR; not a successful empty result')
+                except CliUnavailable as e:
+                    errors.append('CLI deferred: '+e.reason);entry['discovery']='DEFERRED'
                 except Exception as e:
                     errors.append(type(e).__name__);entry['discovery']='ERROR'
                     # A failed search must not prevent processing already-known and permitted maps.
@@ -151,6 +156,9 @@ class FloorplanBatch:
                     sources=[s for s in sources if s not in pending]
                     for source in sources[:self.cfg['floorplanMaxSources']]:
                         try:entry['sources'].append(self.process_source(event,source))
+                        except CliUnavailable as e:
+                            # Provider capacity says nothing about the permitted image.
+                            errors.append(f'asset-{source["asset"]["id"]}: CLI deferred: '+e.reason)
                         except Exception as e:
                             message=f'{type(e).__name__}: {str(e)[:120]}'
                             errors.append(f'asset-{source["asset"]["id"]}: '+message)
@@ -172,6 +180,8 @@ class FloorplanBatch:
         self.save(finished=True);print(json.dumps({'state':self.meta['state'],'cliCalls':self.calls,'events':len(self.events),'issues':self.issues,'folder':str(self.folder)},ensure_ascii=False,indent=2));return 2 if self.issues else 0
     def save(self,finished=False):
         self.meta.update({'state':('PARTIAL' if self.issues else 'SUCCESS') if finished else 'RUNNING','events':self.events,'issues':self.issues,'cliCalls':self.calls,'updatedAt':utcnow()})
+        if self.cli_blocked_reason:self.meta['cliBlockedReason']=self.cli_blocked_reason
+        else:self.meta.pop('cliBlockedReason',None)
         if finished:self.meta['finishedAt']=utcnow()
         write_json(self.meta_path,self.meta)
 
