@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "1",
+  "searchStatus": "PARTIAL",
+  "summary": "제공된 서울 축제 9건 대조 결과 기존 공개 8건, 미등록 허준축제 1건. 2026-10-04 같은 회차 주최 공식 일정·장소와 서울문화포털 교차 확인. 전체 축제 공급을 완전 조사한 결과는 아님.",
+  "queries": [
+    "2026 제24회 허준축제 공식 일정"
+  ],
+  "events": [
+    {
+      "name": "제24회 허준축제",
+      "subcategory": "CULTURE",
+      "organizer": "강서구·강서문화원",
+      "edition": "2026",
+      "region": "SEOUL",
+      "districts": [
+        "강서구"
+      ],
+      "venueName": "서울식물원 잔디마당·마곡광장·마곡중앙로 일대",
+      "address": "서울특별시 강서구 마곡동로 161",
+      "description": "허준과 동의보감의 정신을 바탕으로 의료·건강 체험, 무대공연, 전시와 지역 문화 프로그램을 선보이는 축제입니다. 축제장은 서울식물원 잔디마당·마곡광장·마곡중앙로에 걸쳐 있습니다. 프로그램별 시간과 참여 조건은 공식 시간표 및 공지를 확인할 수 있습니다.",
+      "admission": "무료",
+      "subjects": [
+        "HISTORY",
+        "FAMILY",
+        "MUSIC"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-10",
+          "endDate": "2026-10-11",
+          "startTime": "11:00",
+          "endTime": "21:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://xn--9y5b9p53i3tk.com/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "주최 공식 홈페이지가 제24회 허준축제, 2026.10.10~11, 서울식물원 잔디마당·마곡광장·마곡중앙로 개최를 안내한다."
+        },
+        {
+          "url": "https://xn--9y5b9p53i3tk.com/festival/timetable.html",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "같은 회차 공식 시간표가 10월10~11일의 공연·시민참여·의료건강 프로그램을 안내한다."
+        },
+        {
+          "url": "https://culture.seoul.go.kr/night/sub/program/view.do?pageIndex=6&pgmId=7132",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "서울문화포털이 이번 회차의 확정 운영기간 2026.10.10~11, 이용시간 11~21시, 무료, 주소를 안내한다."
+        }
+      ],
+      "banners": [
+        {
+          "imageUrl": "https://culture.seoul.go.kr/resources/culture/img/editor/funSeoul/editor_20260828141506_81969.png",
+          "pageUrl": "https://culture.seoul.go.kr/night/sub/program/view.do?pageIndex=6&pgmId=7132",
+          "rights": "UNKNOWN",
+          "rightsEvidence": null,
+          "matchesEdition": true
+        }
+      ],
+      "warnings": [
+        "FUN SEOUL 목록에는 예정 표시가 남아 있으나 2026-10-04 주최 공식 홈페이지·시간표와 서울문화포털 동일 회차 공지를 교차 확인했습니다."
+      ],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://xn--9y5b9p53i3tk.com/",
+          "status": "PUBLISHED",
+          "note": "공식 행사 홈페이지"
+        },
+        {
+          "kind": "OFFICIAL",
+          "url": "https://xn--9y5b9p53i3tk.com/festival/timetable.html",
+          "status": "PUBLISHED",
+          "note": "회차별 공식 시간표"
+        },
+        {
+          "kind": "FLOOR_PLAN",
+          "url": "https://xn--9y5b9p53i3tk.com/festival/place.html",
+          "status": "PUBLISHED",
+          "note": "공식 행사장 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "같은 회차 주최 공식 홈페이지·시간표와 공공기관 안내 교차 확인",
+        "sourceUrl": "https://xn--9y5b9p53i3tk.com/",
+        "checkedOn": "2026-10-04"
+      }
+    }
+  ]
+}

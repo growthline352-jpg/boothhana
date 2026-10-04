@@ -212,7 +212,7 @@ class OperationsIntegrationTests {
  }
  @Test void operatingGroupPaginationCountsEditionsAndScopesMatchingDays() {
   long a=event("first","ONLY_EVENT",firstDay),b=event("second","ONLY_EVENT",secondDay),c=event("standalone","ONLY_EVENT",secondDay);
-  event("festival","MUSIC",firstDay);String title="Unique-group-"+UUID.randomUUID();groups.save(a,input(-1,title,a,b),admin);
+  event("festival","MUSIC",firstDay);String title="Unique group "+UUID.randomUUID();groups.save(a,input(-1,title,a,b),admin);
   var first=publications.groupedList(query(0,1,"SUBCULTURE",label,"",""));
   var second=publications.groupedList(query(1,1,"SUBCULTURE",label,"",""));
   assertThat(first.total()).isEqualTo(2);assertThat(second.total()).isEqualTo(2);
@@ -225,6 +225,19 @@ class OperationsIntegrationTests {
   assertThat(publications.groupedList(query(0,20,"EXHIBITION",label,"","")).total()).isZero();
   assertThat(publications.groupedList(query(0,20,"SUBCULTURE",title,"","")).total()).isEqualTo(1);
   assertThat(publications.list(query(0,20,"SUBCULTURE",title,"","")).items()).extracting(row->id(row)).containsExactly(a,b);
+  assertThat(publications.groupedList(query(0,20,"SUBCULTURE",title.replace(" ",""),"","")).total()).isEqualTo(1);
+  assertThat(publications.list(query(0,20,"SUBCULTURE",title.replace(" ",""),"","")).items()).extracting(row->id(row)).containsExactly(a,b);
+ }
+ @Test void festivalSearchIgnoresSpacingWithoutChangingCategoryOrMatchingLiteralWildcards() {
+  long a=event("노원 달빛산책 100%_","LIGHT",firstDay);
+  event("노원달빛산책 100%_","ONLY_EVENT",firstDay);
+  for(String name:List.of("노원달빛산책","노원 달빛산책","노원\t달빛산책","노원\u00a0달빛산책","노원\u3000달빛산책")) {
+   assertThat(publications.list(query(0,20,"FESTIVAL",name,"","")).items()).extracting(row->id(row)).containsExactly(a);
+   assertThat(publications.groupedList(query(0,20,"FESTIVAL",name,"","")).items()).extracting(row->id(row)).containsExactly(a);
+  }
+  assertThat(publications.list(query(0,20,"FESTIVAL","100%_","","")).total()).isEqualTo(1);
+  assertThat(publications.list(query(0,20,"FESTIVAL","100XX","","")).total()).isZero();
+  assertThat(publications.list(query(0,20,"FESTIVAL","노원달빛산책",secondDay,secondDay)).total()).isZero();
  }
  @Test void operatingGroupWithdrawnMembersAreAbsentAndFixedLegacyLinksCannotChange() {
   long a=event("public","ONLY_EVENT",firstDay),b=event("hidden","ONLY_EVENT",secondDay);
