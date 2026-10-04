@@ -28,7 +28,7 @@ class GateReportingTests(unittest.TestCase):
                 'TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml':['groupedEventLimitSurvivesDifferentBaseAndPreventsConflictingMerge', 'concurrentDifferentBaseRegistrationsCommitExactlyOne', 'directRegistrationPublishesOnlyOwnBoothWithoutGrantAndEnforcesAccountLimit', 'claimApprovalRemainsRequiredAndCannotConflictWithDirectRegistration', 'approvedCollectedBoothBlocksNewBaseBoothInSameEvent', 'directProductsKeepIdentityEditsAndPublicStateThroughRepublication', 'registrationHttpRequiresLoginCsrfAndOwnedBase', 'platformRegistrationIsImmediateAndCannotUseAnotherBaseToRegisterTwice', 'endedUnpublishedAndOutOfPeriodRegistrationsAreRejected'],
                 'TEST-com.boothhana.release.LibraryIntegrationTests.xml':[
                     'seoulAreaFiltersApplyToCountsListsCalendarAndMultiVenueEvents',
-                    'popupDiscoverySharesIdentityAndSavesOnlyForConfirmedSubcultureTopics',
+                    'popupDiscoveryStaysSeparateRegardlessOfTopicsAndPreservesSaves',
                     'detachedProfileSaveCannotRevertCompletedOnboarding',
                     'memberInterestsArePrivateVersionedAndCategoryScoped',
                     'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback',
@@ -121,6 +121,16 @@ class GateReportingTests(unittest.TestCase):
         self.assertEqual(report['state'], 'NOT_READY')
         self.assertFalse(report['productionApproval'])
         self.assertIn('Required v24 test missing/failed/skipped', report['reason'])
+
+    def test_missing_popup_separation_case_blocks_success(self):
+        def remove_case(reports):
+            file=reports/'TEST-com.boothhana.release.LibraryIntegrationTests.xml'
+            file.write_text(file.read_text().replace(
+                '<testcase name="popupDiscoveryStaysSeparateRegardlessOfTopicsAndPreservesSaves()"/>', ''))
+        code, report = self.run_gate(lambda parent, out: None, lambda out: None, remove_case)
+        self.assertEqual(code, 2)
+        self.assertEqual(report['state'], 'NOT_READY')
+        self.assertIn('popupDiscoveryStaysSeparateRegardlessOfTopicsAndPreservesSaves', report['reason'])
 
 if __name__ == '__main__':
     unittest.main()
