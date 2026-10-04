@@ -238,6 +238,9 @@ class OperationsIntegrationTests {
   assertThat(publications.list(query(0,20,"FESTIVAL","100%_","","")).total()).isEqualTo(1);
   assertThat(publications.list(query(0,20,"FESTIVAL","100XX","","")).total()).isZero();
   assertThat(publications.list(query(0,20,"FESTIVAL","노원달빛산책",secondDay,secondDay)).total()).isZero();
+  long autumn=event("한강페스티벌-가을","CULTURE",firstDay);
+  for(String name:List.of("한강페스티벌 가을","한강페스티벌가을","한강페스티벌—가을"))
+   assertThat(publications.groupedList(query(0,20,"FESTIVAL",name,"","")).items()).extracting(row->id(row)).containsExactly(autumn);
  }
  @Test void operatingGroupWithdrawnMembersAreAbsentAndFixedLegacyLinksCannotChange() {
   long a=event("public","ONLY_EVENT",firstDay),b=event("hidden","ONLY_EVENT",secondDay);

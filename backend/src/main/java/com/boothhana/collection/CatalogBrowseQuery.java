@@ -31,7 +31,7 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
     private static String normalized(String v,String fallback){return v==null||v.isBlank()?fallback:v.trim();}
     /** SQL expression is an internal constant; the user's text remains a bound parameter. */
     static String searchSql(String expression){
-        return "strpos(regexp_replace(lower("+expression+"),'[[:space:]　 ]+','','g'),regexp_replace(lower(?),'[[:space:]　 ]+','','g'))>0";
+        return "strpos(regexp_replace(lower("+expression+"),'[[:space:]　 ‐‑‒–—−-]+','','g'),regexp_replace(lower(?),'[[:space:]　 ‐‑‒–—−-]+','','g'))>0";
     }
     private static void validateDate(String v){
         if(v.isEmpty())return;
