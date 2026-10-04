@@ -355,17 +355,18 @@ public class CatalogService {
     public PageData<Map<String,Object>> events(int page,int size) {return events(page,size,new CatalogAdminQuery("","","",""));}
     public PageData<Map<String,Object>> events(int page,int size,CatalogAdminQuery query) {
         paging(page,size);List<Object> args=new ArrayList<>();String where=query.where(args);
-        long total=Objects.requireNonNull(db.queryForObject("select count(*) from subculture_event_candidate e"+where,Long.class,args.toArray()));
+        long total=Objects.requireNonNull(db.queryForObject("select count(*) from subculture_event_candidate e "+CatalogBannerHealth.JOIN+where,Long.class,args.toArray()));
         args.add(size);args.add(page*size);
         var rows=db.queryForList("""
             select e.*,(select count(*) from subculture_participant p where p.event_id=e.id) participant_count,
             (select count(*) from subculture_sales s join subculture_participant p on p.id=s.participant_id where p.event_id=e.id) sales_count,
             (select count(*) from subculture_catalog_asset a where a.event_id=e.id and a.storage_state='STORED' and a.rights_state='APPROVED') image_count,
             exists(select 1 from subculture_catalog_publication pub where pub.event_id=e.id) published,
-            """+CatalogAdminQuery.PENDING+" has_pending_changes from subculture_event_candidate e"+where+" order by e.starts_on,e.id limit ? offset ?",args.toArray());
+            """+CatalogAdminQuery.PENDING+" has_pending_changes, "+CatalogBannerHealth.STATE+" banner_state,bh.pending pending_banners,bh.waiting waiting_banners,bh.failed failed_banners from subculture_event_candidate e "+CatalogBannerHealth.JOIN+where+" order by e.starts_on,e.id limit ? offset ?",args.toArray());
         List<Map<String,Object>> items=rows.stream().map(e->{var data=effective(e,EventData.class);Map<String,Object> item=new LinkedHashMap<>();
             item.put("id",num(e,"id"));item.put("name",data.name());item.put("subcategory",data.subcategory());item.put("reviewState",e.get("review_state"));
             item.put("participantCount",e.get("participant_count"));item.put("salesCount",e.get("sales_count"));item.put("storedImageCount",e.get("image_count"));
+            item.put("bannerState",e.get("banner_state"));item.put("pendingBannerCount",e.get("pending_banners"));item.put("waitingBannerCount",e.get("waiting_banners"));item.put("failedBannerCount",e.get("failed_banners"));
             item.put("taxonomyIssues",com.boothhana.interests.TaxonomyRegistry.reviewIssues(data.subcategory(),data.subjects()));
             item.put("published",e.get("published"));item.put("startDate",e.get("starts_on").toString());item.put("hasPendingChanges",e.get("has_pending_changes"));return item;}).toList();
         return new PageData<>(items,page,size,total);

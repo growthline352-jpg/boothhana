@@ -44,13 +44,13 @@ class RepairQueue:
         self.rows[str(target['id'])]=row;write_json(self.path,self.rows);return row
 
 class Repair:
-    def __init__(self,cfg,api,folder,apply=False,force=False,max_events=100,max_minutes=60):
+    def __init__(self,cfg,api,folder,apply=False,force=False,max_events=100,max_minutes=60,store_only=False):
         self.cfg=cfg;self.api=api;self.folder=folder;self.apply=apply;self.force=force
-        self.deadline=time.monotonic()+max_minutes*60;self.limit=max_events
+        self.deadline=time.monotonic()+max_minutes*60;self.limit=max_events;self.store_only=store_only
         if folder.is_symlink():raise RunError('Image repair state directory is a symlink')
         folder.mkdir(parents=True,exist_ok=True);folder.chmod(0o700)
         self.queue=RepairQueue(folder/('queue.json' if apply else 'dry-queue.json'))
-        self.robots={};self.policy=[cfg['blockedSourceHosts'],cfg['imageAllowedHosts'],cfg.get('downloadApprovedImages',True)]
+        self.robots={};self.policy=[cfg['blockedSourceHosts'],cfg['imageAllowedHosts'],cfg.get('downloadApprovedImages',True),'detail-list-v2']
         self.evidence=folder/'evidence'/uuid.uuid4().hex
     def budget(self):
         if time.monotonic()>=self.deadline:raise BudgetExpired('Image repair budget exhausted')
@@ -73,7 +73,10 @@ class Repair:
         host=urlsplit(url).hostname or '';check_url(url,[host])
         return allowed_by_robots(url,[host],min(15,max(1,int(self.deadline-time.monotonic()))),self.robots)
     def verify(self,target,expected=None):
-        self.budget();public=self.api.public_event(target['id']);banner=public.get('banner')
+        self.budget()
+        try:public=self.api.public_event(target['id'])
+        except Exception as error:return 'PUBLICATION_FAILED',dict(reason='Public detail is unreadable',error=type(error).__name__)
+        banner=public.get('banner')
         if not banner:
             return 'PUBLICATION_FAILED',dict(reason='No approved stored banner in public API')
         asset=next((a for a in target['assets'] if a['id']==banner['id']),None)
@@ -82,6 +85,12 @@ class Repair:
             return 'PUBLICATION_FAILED',dict(reason='Public banner differs from current verified asset')
         url=banner.get('url')
         if not url or url!=asset.get('storedUrl'):return 'PUBLICATION_FAILED',dict(reason='Public URL differs from stored asset URL')
+        self.budget()
+        try:listing=self.api.public_listing(target['event'],target['id'])
+        except Exception as error:return 'PUBLICATION_FAILED',dict(reason='Public listing is unreadable',error=type(error).__name__)
+        list_banner=(listing or {}).get('banner') or {}
+        if list_banner.get('id')!=banner['id'] or list_banner.get('url')!=url:
+            return 'PUBLICATION_FAILED',dict(reason='Public search/list banner differs from detail',assetId=banner['id'])
         try:
             raw,mime,sha=fetch_image(url,[urlsplit(url).hostname],self.timeout())
             if inspect_image(raw,mime)!=expected or sha!=expected:
@@ -89,7 +98,7 @@ class Repair:
         except BudgetExpired:raise
         except Exception as error:
             return 'PUBLICATION_FAILED',dict(reason='Public image is unreadable',assetId=banner['id'],error=type(error).__name__)
-        return 'VERIFIED',dict(assetId=banner['id'],sha256=sha,bytes=len(raw),publicUrl=url)
+        return 'VERIFIED',dict(assetId=banner['id'],sha256=sha,bytes=len(raw),publicUrl=url,detailVerified=True,listVerified=True)
     def store(self,target,asset):
         if asset['rightsState']!='APPROVED':raise RunError('Unapproved image cannot be stored')
         if self.apply and not self.cfg.get('downloadApprovedImages',True):
@@ -209,11 +218,16 @@ class Repair:
             for asset in approved[:8]:
                 try:state,note=self.store(target,asset)
                 except BudgetExpired:raise
-                except Exception as error:state,note='STORAGE_FAILED',dict(assetId=asset['id'],error=type(error).__name__)
+                except Exception as error:
+                    state,note='STORAGE_FAILED',dict(assetId=asset['id'],error=type(error).__name__)
+                    if self.apply:
+                        try:self.api.request('POST',f'{PATH}/assets/{asset["id"]}/failure',{'revision':asset['revision'],'reason':type(error).__name__})
+                        except Exception as delivery:note['failureReportError']=type(delivery).__name__
                 if state=='VERIFIED':return state,note
                 notes.append(dict(state=state,**note))
             if any(n['state']=='APPROVED_WAIT_STORAGE' for n in notes):return 'APPROVED_WAIT_STORAGE',dict(attempts=notes)
             if any(n['state']=='STORAGE_DISABLED' for n in notes):return 'STORAGE_DISABLED',dict(attempts=notes)
+            if self.store_only:return notes[-1]['state'],dict(attempts=notes)
             # A broken approved source does not stop research for a replacement.
             # Explicit selections and use rights stay unchanged; replacements are pending.
             state,note=self.discover(target)
@@ -221,10 +235,54 @@ class Repair:
             if state in ('NO_IMAGE_FOUND','NO_SOURCE'):return notes[-1]['state'],note
             return state,note
         pending=[a for a in target['assets'] if a['rightsState']=='PENDING']
-        if pending:return 'WAITING_REVIEW',dict(assetIds=[a['id'] for a in pending],nextAction='회차·행사 일치와 사용 검토')
+        if pending:
+            # A pending old/irrelevant candidate must not freeze source research.
+            # Existing candidates (including rejections) are never re-registered.
+            state,note=self.discover(target)
+            action='기존·새 후보의 회차·행사 일치와 사용 검토'
+            if state in ('SOURCE_BLOCKED','NO_SOURCE','NO_IMAGE_FOUND','FETCH_FAILED'):action='기존 후보 검토 · 수집 가능한 다른 공식 출처 추가'
+            note.update(assetIds=[a['id'] for a in pending],discoveryState=state,nextAction=action)
+            return 'WAITING_REVIEW',note
         return self.discover(target)
     def run(self):
-        targets=self.targets();at=now();eligible=[];stamps={}
+        run_id=None
+        targets=self.targets() if self.store_only else None
+        storage_due=not self.store_only or any(self.force or self.queue.due(t,self.policy,now())[1] for t in self.storage_targets(targets))
+        if self.apply and storage_due:
+            run_id=str(uuid.uuid4());today=now().astimezone(timezone(timedelta(hours=9))).date().isoformat()
+        try:
+            if run_id:self.api.request('POST',PATH+'/pipelines',dict(runId=run_id,weekKey=today,
+                scope=dict(region='SEOUL_GYEONGGI',timezone='Asia/Seoul',startDate=today,endDate=today)))
+            report=self.run_batch(run_id,targets)
+            result=0 if all(r['state']=='VERIFIED' for r in report['events']) else 2
+            if run_id:self.api.request('POST',f'{PATH}/pipelines/{run_id}/finish',dict(state='SUCCESS' if result==0 else 'PARTIAL',summary=self.summary(report)))
+            return result
+        except Exception as error:
+            if run_id:
+                try:self.api.request('POST',f'{PATH}/pipelines/{run_id}/finish',dict(state='FAILED',summary=dict(job=self.job_name(),issues=[type(error).__name__])))
+                except Exception:pass  # local log remains authoritative when API is unreachable
+            raise
+    def job_name(self):return 'IMAGE_STORAGE' if self.store_only else 'IMAGE_REPAIR'
+    def storage_targets(self,targets):
+        return [t for t in targets if not t.get('banner') and any(a['rightsState']=='APPROVED' and a['storageState']!='STORED'
+            and (t.get('selectedBannerAssetId') is None or a['id']==t['selectedBannerAssetId']) for a in t['assets'])]
+    def summary(self,report):
+        unresolved=[r for r in report['events'] if r['state']!='VERIFIED']
+        # Bound the payload below the server's 20,000-character ceiling. Do not
+        # upload signed source URLs, private evidence or full error messages.
+        priority={'PUBLICATION_FAILED':0,'STORAGE_FAILED':1,'REPAIR_FAILED':1,'SELECTION_BLOCKED':2,'WAITING_REVIEW':3}
+        unresolved.sort(key=lambda r:(priority.get(r['state'],4),r['eventId']))
+        return dict(job=self.job_name(),counts=report['counts'],publishedEvents=report['publishedEvents'],
+            processed=report['processed'],dueDeferred=report['dueDeferred'],unresolvedCount=len(unresolved),
+            issues=[f'{r["state"]}: {r["eventId"]}' for r in unresolved[:20]],
+            imageTasks=[dict(eventId=r['eventId'],name=r['name'][:120],state=r['state'],
+                nextAction=r.get('details',{}).get('nextAction','공개 대표 이미지·원문 확인')[:160]) for r in unresolved[:40]])
+    def run_batch(self,run_id=None,targets=None):
+        if targets is None:targets=self.targets()
+        at=now();eligible=[];stamps={}
+        published_count=len(targets)
+        if self.store_only:
+            targets=self.storage_targets(targets)
         for target in targets:
             stamp,due=self.queue.due(target,self.policy,at)
             stamps[str(target['id'])]=stamp
@@ -242,6 +300,7 @@ class Repair:
         processed=0
         for target,stamp in batch:
             if time.monotonic()>=self.deadline:break
+            if run_id:self.api.request('POST',f'{PATH}/pipelines/{run_id}/heartbeat',{})
             try:state,note=self.repair(target)
             except BudgetExpired:break
             except Exception as error:state,note='REPAIR_FAILED',dict(error=type(error).__name__)
@@ -254,21 +313,23 @@ class Repair:
                 records.append({**old,'state':'VERIFICATION_DUE'} if expired else old)
             else:records.append(dict(eventId=target['id'],name=target['event']['name'],state='NEEDS_RECHECK' if old else 'NOT_ATTEMPTED'))
         counts={state:sum(r['state']==state for r in records) for state in sorted({r['state'] for r in records})}
-        report=dict(mode='APPLY' if self.apply else 'READ_ONLY',publishedEvents=len(targets),processed=processed,
+        report=dict(job=self.job_name(),mode='APPLY' if self.apply else 'READ_ONLY',publishedEvents=published_count,processed=processed,
                     dueDeferred=max(0,len(eligible)-processed),counts=counts,events=records)
         write_json(self.folder/('report.json' if self.apply else 'dry-report.json'),report)
         print(json.dumps({k:v for k,v in report.items() if k!='events'},ensure_ascii=False))
-        return 0 if all(r['state']=='VERIFIED' for r in records) else 2
+        return report
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--config',type=Path)
     parser.add_argument('--apply',action='store_true');parser.add_argument('--force',action='store_true')
+    parser.add_argument('--store-only',action='store_true',help='Store approved missing banners only; no discovery or approval')
     parser.add_argument('--max-events',type=int,default=100);parser.add_argument('--max-minutes',type=int,default=60)
     args=parser.parse_args(argv)
     if not 1<=args.max_events<=200 or not 1<=args.max_minutes<=180:raise RunError('Image repair budget outside allowed range')
     cfg=load_config(args.config);state=Path(cfg['stateDirectory']).expanduser().resolve()
     with run_lock(state):
-        job=Repair(cfg,Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']),state/'image-repair-v1',args.apply,args.force,args.max_events,args.max_minutes)
+        folder=state/('image-storage-v1' if args.store_only else 'image-repair-v1')
+        job=Repair(cfg,Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']),folder,args.apply,args.force,args.max_events,args.max_minutes,args.store_only)
         return job.run()
 if __name__=='__main__':
     try:raise SystemExit(main())

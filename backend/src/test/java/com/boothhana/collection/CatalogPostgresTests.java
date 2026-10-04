@@ -428,4 +428,34 @@ class CatalogPostgresTests {
         assertThat(media.bannerSelection(eventId).revision()).isEqualTo(1);
     }
 
+    Map<String,Object> adminBannerRow() {return service.events(0,20,new CatalogAdminQuery("","","","")).items().getFirst();}
+    long imageFilterCount(String filter) {return service.events(0,20,new CatalogAdminQuery("","","","",filter)).total();}
+    @Test void adminPosterHealthDoesNotCountBoothOrProductImagesAsRepresentative() {
+        long booth=participant();var a=readyBanner("booth-image");
+        db.update("update subculture_catalog_asset set participant_id=? where id=?",booth,a.id());
+        assertThat(adminBannerRow().get("storedImageCount")).isEqualTo(1L);
+        assertThat(adminBannerRow().get("bannerState")).isEqualTo("MISSING");
+        assertThat(imageFilterCount("MISSING")).isEqualTo(1);assertThat(imageFilterCount("READY")).isZero();
+    }
+    @Test void adminPosterHealthTracksReviewStorageFailureAndRevokedExplicitSelection() {
+        tx.execute(s->{media.register(eventId,null,null,new Image("BANNER","https://example.com/current.png","https://example.com/current",null,"current"));return null;});
+        var a=media.assets(eventId,null).getFirst();
+        assertThat(adminBannerRow().get("bannerState")).isEqualTo("WAITING_REVIEW");
+        assertThat(imageFilterCount("WAITING_REVIEW")).isEqualTo(1);
+        tx.execute(s->media.rights(a.id(),new RightsInput(a.revision(),"APPROVED","test approval","test credit")));
+        assertThat(adminBannerRow().get("bannerState")).isEqualTo("WAITING_STORAGE");
+        assertThat(imageFilterCount("WAITING_STORAGE")).isEqualTo(1);
+        tx.execute(s->media.failed(a.id(),new AssetFailure(media.detail(a.id()).revision(),"failed test source")));
+        assertThat(adminBannerRow().get("bannerState")).isEqualTo("STORAGE_FAILED");
+        assertThat(imageFilterCount("STORAGE_FAILED")).isEqualTo(1);
+        db.update("update subculture_catalog_asset set storage_state='STORED',object_key='verified/catalog/current.png' where id=?",a.id());
+        var stored=media.detail(a.id());tx.execute(s->media.selectBanner(eventId,new BannerInput(stored.id(),0,stored.revision())));
+        readyBanner("alternate");
+        var chosen=media.detail(a.id());tx.execute(s->media.rights(chosen.id(),new RightsInput(chosen.revision(),"REJECTED","test revocation","")));
+        assertThat(adminBannerRow().get("bannerState")).isEqualTo("SELECTION_BLOCKED");
+        assertThat(imageFilterCount("SELECTION_BLOCKED")).isEqualTo(1);assertThat(imageFilterCount("MISSING")).isEqualTo(1);
+        assertThat(imageFilterCount("READY")).isZero();assertThat(media.publicBanners(List.of(eventId))).isEmpty();
+        assertThatThrownBy(()->new CatalogAdminQuery("","","","","x' or true --")).hasMessageContaining("이미지 검색");
+    }
+
 }
