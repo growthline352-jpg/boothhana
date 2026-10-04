@@ -1,5 +1,7 @@
 import {discoveryFeatures} from '../discovery/features'
 import {VisitPreparation} from './VisitPreparation'
+import {DiscoveryIcon} from '../discovery/DiscoveryIcon'
+import {compareHref} from '../discovery/compare'
 import { useEffect,useMemo,useRef,useState } from 'react'
 import { Link,useSearchParams } from 'react-router'
 import { useAuth } from '../../app/useAuth'
@@ -45,12 +47,14 @@ export function LibraryPage(){
   const timer=window.setInterval(()=>{if(document.visibilityState==='visible')library?.refreshPublic()},PUBLIC_MEMORY_TTL_MS)
   return()=>window.clearInterval(timer)
  },[ready,library?.refreshPublic])
+ // Guest storage arrives after the owner is known; retry a deep link once its item is loaded.
+ const hasGuestItem=guest&&!!library?.guest.some(g=>g.key===item)
  const selected=useRemote<MemoryEntry|null>(async()=>{
   if(!item||!ready)return null
   if(!guest){if(!/^[0-9a-f-]{36}$/i.test(item))throw Error('잘못된 보관함 주소예요.');return libraryApi.detail(item)}
   const g=library?.guest.find(g=>g.key===item);if(!g||!library)throw Error('이 기기에 저장한 항목이 없어요. 다른 기기에서는 계정 동기화 후 확인할 수 있어요.')
   const result=(await library.resolvePublic([g.target]))[0];return result?guestEntry(g,result):null
- },[owner,item])
+ },[owner,item,hasGuestItem])
  // Revalidate only public details in the open editor, without unmounting its private unsaved note.
  const editorTarget=selected.data?.target
  const editorPublic=useRemote<ResolvedMemory|null>(async()=>ready&&editorTarget&&library?(await library.resolvePublic([editorTarget]))[0]:null,[owner,item,editorTarget?.eventId,editorTarget?.type,editorTarget?.id,editorTarget?.participantId,library?.publicVersion])
@@ -117,21 +121,29 @@ export function MemoryEditor({entry:e,guest,trigger,close,publicLoading=false,pu
  const dismiss=()=>{if(busy)return;if(dirty&&!window.confirm('저장하지 않은 메모가 있어요. 저장하지 않고 닫을까요?'))return;clearDirty();close()}
  const run=async(action:()=>Promise<void>,closing=true)=>{if(guard.current)return;guard.current=true;setBusy(true);setError('');try{await action();if(closing){clearDirty();close()}}catch(x){setError(x instanceof Error?x.message:'처리하지 못했어요.')}finally{guard.current=false;setBusy(false)}}
  const dates=e.current?visitDays({occurrences:e.current.occurrences} as EventData):[],marked=e.visitedDays.includes(visitDay)
- return <dialog ref={ref} className="memory-editor" aria-labelledby="memory-editor-title" onCancel={ev=>{ev.preventDefault();dismiss()}}>
-  <header><div><p className="eyebrow">나만의 관심 기록</p><h2 id="memory-editor-title" tabIndex={-1} ref={heading}>{e.current?.memory.title||'현재 공개되지 않는 정보'}</h2></div><button className="btn secondary" disabled={busy} onClick={dismiss}>닫기</button></header>
-  <p className="item-meta">{guest?'기기 임시 기록이며 같은 기기의 다른 사용자가 볼 수 있어요.':'메모는 업체·관리자의 일반 화면이나 공유 링크에 나타나지 않아요.'}</p>
-  {(publicLoading||publicError)&&<p className="notice-banner" role="status">{publicError?'공개 안내를 확인하지 못해 이미지·설명을 잠시 숨겼어요. 메모는 그대로입니다.':'최신 공개 안내를 확인하고 있어요. 작성 중인 메모는 그대로입니다.'}<button type="button" className="btn secondary" onClick={()=>lib.refreshPublic()}>공개 안내 다시 확인</button></p>}
-  {error&&<p className="form-alert" role="alert">{error} <button type="button" className="btn secondary" disabled={busy} onClick={dismiss}>닫고 다시 확인</button></p>}
-  {discoveryFeatures.visitPreparation&&e.available&&e.target.type==='EVENT'&&<VisitPreparation eventId={e.target.eventId} day={day}/>}
-  <form onSubmit={ev=>{ev.preventDefault();void run(()=>lib.edit(e,note,day,hall))}}><fieldset disabled={busy}>
-   <label className="field"><span>왜 관심이 갔나요?</span><textarea className="textarea" rows={4} maxLength={1000} value={note} onChange={ev=>setNote(ev.target.value)} placeholder="선물 후보, 집 크기 확인, 소음 비교… 기억할 단서를 남겨보세요."/><small>{note.length}/1,000</small></label>
-   <div className="memory-filter-row"><label className="field"><span>방문할 날</span><select className="select" value={day} onChange={ev=>setDay(ev.target.value)}><option value="">정하지 않음</option>{dates.map(d=><option key={d} value={d}>{d}</option>)}{day&&!dates.includes(day)&&<option value={day}>{day} · 현재 일정과 다를 수 있음</option>}</select></label><label className="field"><span>전시관 메모</span><input className="input" value={hall} maxLength={150} onChange={ev=>setHall(ev.target.value)} placeholder="선택 사항"/></label></div><button className="btn primary" type="submit">{busy?'저장 중…':'메모·방문 계획 저장'}</button>
-  </fieldset></form>
-  <section className="memory-visit-section"><h3>다녀왔다면 직접 표시하세요</h3><p>저장·QR 열람·페이지 조회만으로 방문 표시하지 않습니다.</p><label className="field"><span>실제 방문일</span><input className="input" type="date" max={seoulToday()} value={visitDay} disabled={busy} onChange={ev=>setVisitDay(ev.target.value)}/></label><button className="btn secondary" disabled={busy||dirty||!validDay(visitDay)||visitDay>seoulToday()||(!marked&&!e.available)} onClick={()=>void run(()=>lib.visit(e,visitDay,!marked))}>{marked?'이 날짜의 방문 표시 해제':'이 날짜에 방문했어요'}</button>{dirty&&<small>메모를 먼저 저장한 뒤 방문을 표시해 주세요.</small>}{e.visitedDays.length>0&&<p>{e.visitedDays.join(' · ')}에 직접 방문 표시</p>}</section>
+ const planning=discoveryFeatures.visitPreparation&&e.available&&e.target.type==='EVENT'
+ const visitDate=<label className={planning?'field memory-plan-date':'field'}><span>방문할 날</span><select className="select" value={day} onChange={ev=>setDay(ev.target.value)}><option value="">{planning?'날짜 선택':'정하지 않음'}</option>{dates.map(d=><option key={d} value={d}>{planning?new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short',timeZone:'Asia/Seoul'}).format(new Date(`${d}T12:00:00+09:00`)):d}</option>)}{day&&!dates.includes(day)&&<option value={day}>{day} · 현재 일정과 다를 수 있음</option>}</select></label>
+ const hallField=<label className="field"><span>{planning?'전시관·위치 메모':'전시관 메모'}</span><input className="input" value={hall} maxLength={150} onChange={ev=>setHall(ev.target.value)} placeholder={planning?'예: 아트홀 1관, 입구 앞에서 만나기':'선택 사항'}/></label>
+ const extraContent=<><section className="memory-visit-section"><h3>다녀왔다면 직접 표시하세요</h3><p>{planning?'직접 방문한 날짜를 남겨 주세요.':'저장·QR 열람·페이지 조회만으로 방문 표시하지 않습니다.'}</p><label className="field"><span>실제 방문일</span><input className="input" type="date" max={seoulToday()} value={visitDay} disabled={busy} onChange={ev=>setVisitDay(ev.target.value)}/></label><button className="btn secondary" disabled={busy||dirty||!validDay(visitDay)||visitDay>seoulToday()||(!marked&&!e.available)} onClick={()=>void run(()=>lib.visit(e,visitDay,!marked))}>{marked?'이 날짜의 방문 표시 해제':'이 날짜에 방문했어요'}</button>{dirty&&<small>메모를 먼저 저장한 뒤 방문을 표시해 주세요.</small>}{e.visitedDays.length>0&&<p>{e.visitedDays.join(' · ')}에 직접 방문 표시</p>}</section>
   {e.available&&e.current&&<><section><h3>현재 확인되는 안내</h3>{e.target.type==='PRODUCT'&&<VerificationNotice verification={e.current.verification}/>}{e.current.notice&&<p className="visit-important-note">{e.current.notice}</p>}{e.current.warnings?.map((w,i)=><p className="visit-warning" key={i}>{w}</p>)}{e.current.price&&<p>{Number(e.current.price.amount).toLocaleString('ko-KR')} {e.current.price.currency} · 현재 공개된 표시금액</p>}{e.current.evidenceScope&&<p>{scopes[e.current.evidenceScope as EvidenceScope]||'행사 관련성 확인 필요'}</p>}{e.current.saleState&&<p className="visit-warning">{saleStates[e.current.saleState]||'판매 상태 미확인'}</p>}<p>지난 행사 가격·혜택은 지금 유효하지 않을 수 있어요. 공식 안내에서 확인해 주세요.</p><div className="row-actions">{e.current.links.map(l=><a className="btn secondary" key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer" onClick={()=>{if(!guest)void libraryApi.activity(e.id,'OUTBOUND').catch(()=>{})}}>{l.label} ↗</a>)}</div></section>
    {e.changed&&<details><summary>저장할 때와 이름·소개가 달라졌어요</summary><p>저장 당시: {e.saved?.title}</p><p>{e.saved?.summary}</p><p>현재: {e.current.memory.title}</p><p>{e.current.memory.summary}</p></details>}
-   <div className="row-actions"><Link className="btn secondary" to={memoryHref(e.target,day,hall)}>공개 안내 다시 보기</Link><ShareQr target={e.target} day={day} hall={hall} title={e.current.memory.title}/></div>
+   <div className="row-actions"><Link className="btn secondary" to={memoryHref(e.target,day,hall)}>{planning?'행사 상세 보기':'공개 안내 다시 보기'}</Link>{planning&&discoveryFeatures.comparison&&<Link className="btn secondary" to={compareHref([e.target.eventId])}>다른 행사와 비교</Link>}<ShareQr target={e.target} day={day} hall={hall} title={e.current.memory.title}/></div>
   </>}
-  <footer><button className="btn secondary memory-delete" disabled={busy} onClick={()=>{if(window.confirm('이 항목과 메모를 삭제할까요? 같은 부스의 다른 저장 항목이 없다면 방문 기록도 삭제됩니다.'))void run(()=>lib.remove(e))}}>저장 항목 삭제</button></footer>
+  <footer><button className="btn secondary memory-delete" disabled={busy} onClick={()=>{if(window.confirm('이 항목과 메모를 삭제할까요? 같은 부스의 다른 저장 항목이 없다면 방문 기록도 삭제됩니다.'))void run(()=>lib.remove(e))}}>저장 항목 삭제</button></footer></>
+ const editorContent=<>
+  {!planning&&<p className="item-meta">{guest?'기기 임시 기록이며 같은 기기의 다른 사용자가 볼 수 있어요.':'메모는 업체·관리자의 일반 화면이나 공유 링크에 나타나지 않아요.'}</p>}
+  {(publicLoading||publicError)&&<p className="notice-banner" role="status">{publicError?'공개 안내를 확인하지 못해 이미지·설명을 잠시 숨겼어요. 메모는 그대로입니다.':'최신 공개 안내를 확인하고 있어요. 작성 중인 메모는 그대로입니다.'}<button type="button" className="btn secondary" onClick={()=>lib.refreshPublic()}>공개 안내 다시 확인</button></p>}
+  {error&&<p className="form-alert" role="alert">{error} <button type="button" className="btn secondary" disabled={busy} onClick={dismiss}>닫고 다시 확인</button></p>}
+  <form id={planning?'memory-plan-form':undefined} onSubmit={ev=>{ev.preventDefault();void run(()=>lib.edit(e,note,day,hall))}}><fieldset disabled={busy} className={planning?'memory-plan-fields':undefined}>
+   {planning&&<>{visitDate}<VisitPreparation eventId={e.target.eventId} day={day}/></>}
+   <div className={planning?'memory-plan-note':undefined}><label className="field"><span>{planning?'방문 메모 (선택)':'왜 관심이 갔나요?'}</span><textarea className="textarea" rows={planning?2:4} maxLength={1000} value={note} onChange={ev=>setNote(ev.target.value)} placeholder={planning?'만날 장소, 챙길 것, 보고 싶은 부스를 적어두세요.':'선물 후보, 집 크기 확인, 소음 비교… 기억할 단서를 남겨보세요.'}/><small>{note.length}/1,000</small></label>
+   {planning?<details className="memory-plan-hall"><summary>전시관·위치 메모{hall?' · 작성됨':''}</summary>{hallField}</details>:<div className="memory-filter-row">{visitDate}{hallField}</div>}</div>
+   {!planning&&<div><button className="btn primary" type="submit">{busy?'저장 중…':'메모·방문 계획 저장'}</button></div>}
+  </fieldset></form>
+  {planning?<details className="memory-plan-more"><summary>방문 기록·공유·더보기</summary>{extraContent}</details>:extraContent}
+ </>
+ return <dialog ref={ref} className={`memory-editor${planning?' memory-editor--plan':''}`} aria-labelledby="memory-editor-title" onCancel={ev=>{ev.preventDefault();dismiss()}}>
+  <header><div><p className="eyebrow">{planning?'방문 준비':'나만의 관심 기록'}</p><h2 id="memory-editor-title" tabIndex={-1} ref={heading}>{e.current?.memory.title||'현재 공개되지 않는 정보'}</h2></div><button type="button" className={planning?'memory-plan-close':'btn secondary'} aria-label="닫기" disabled={busy} onClick={dismiss}>{planning?<DiscoveryIcon name="close" size={20}/>:'닫기'}</button></header>
+  {planning?<><div className="memory-plan-body">{editorContent}</div><footer className="memory-plan-save"><p className="memory-plan-privacy">{guest?'메모는 이 기기에 임시 저장돼요.':'메모는 나에게만 보여요.'}</p><button className="btn primary" type="submit" form="memory-plan-form" disabled={busy}>{busy?'저장 중…':'방문 계획 저장'}</button></footer></>:editorContent}
  </dialog>
 }
