@@ -9,13 +9,14 @@ case "${1:-}" in
   weekly) job=(python run_scheduled.py --config /etc/boothhana/collector.json); limit=22h ;;
   floorplans) job=(python floorplans.py --config /etc/boothhana/collector.json --imminent); limit=12h ;;
   images) job=(python image_repair.py --config /etc/boothhana/collector.json --apply); limit=2h ;;
+  popups) job=(python daily_popups.py --config /etc/boothhana/collector.json); limit=50m ;;
   doctor) job=(python doctor.py --config /etc/boothhana/collector.json); limit=3m ;;
-  *) echo 'Usage: run-tunnel-collector.sh weekly|floorplans|images|doctor' >&2; exit 1 ;;
+  *) echo 'Usage: run-tunnel-collector.sh weekly|floorplans|images|popups|doctor' >&2; exit 1 ;;
 esac
 exec 9>collector.lock
 if ! flock -n 9; then
-  if [[ "$1" == images ]]; then
-    printf '%s images 2 SKIPPED_LOCK\n' "$(date --iso-8601=seconds)" >logs/images.status
+  if [[ "$1" == images || "$1" == popups ]]; then
+    printf '%s %s 2 SKIPPED_LOCK\n' "$(date --iso-8601=seconds)" "$1" >"logs/$1.status"
     exit 2
   fi
   exit 0

@@ -114,15 +114,61 @@
       {
         "name": "연남 브랜드·지역 공지",
         "seeds": [
-          "https://www.mapo.go.kr/site/main/home"
+          "https://www.instagram.com/megabox.only/",
+          "https://www.instagram.com/madeby.official/"
         ],
         "queryTemplates": [
           "연남 팝업 {year} {month} 공식 브랜드 예약 일정",
-          "site:mapo.go.kr 연남 팝업 {year}"
+          "site:instagram.com/megabox.only 팝업 {year}",
+          "site:instagram.com/madeby.official 팝업 {year} 성수"
+        ]
+      },
+      {
+        "name": "성수 패션·뷰티 브랜드 공지",
+        "seeds": [
+          "https://www.instagram.com/superdrykor/",
+          "https://www.instagram.com/skinnlab_official/"
+        ],
+        "queryTemplates": [
+          "성수 패션 뷰티 팝업 {year} {month} 공식 일정",
+          "site:instagram.com/superdrykor 팝업 {year}",
+          "site:instagram.com/skinnlab_official 팝업 {year}"
+        ]
+      },
+      {
+        "name": "홍대 캐릭터·체험 공식 공지",
+        "seeds": [
+          "https://www.instagram.com/goodsmile_korean_info_pw/",
+          "https://www.instagram.com/high1_resort/"
+        ],
+        "queryTemplates": [
+          "홍대 팝업 {year} {month} 공식 주최 예약 일정",
+          "site:instagram.com/goodsmile_korean_info_pw 팝업 {year}",
+          "site:instagram.com/high1_resort 팝업 {year}"
+        ]
+      },
+      {
+        "name": "성수 소상공인 상생 팝업 공지",
+        "seeds": [
+          "https://kakaopaytogether.com/"
+        ],
+        "queryTemplates": [
+          "site:kakaopaytogether.com 팝업 {year}",
+          "오래오래 함께가게 {year} 성수 공식 일정"
+        ]
+      },
+      {
+        "name": "서울·경기 쇼핑몰·공공기관 팝업 공지",
+        "seeds": [
+          "https://www.starfield.co.kr/",
+          "https://www.sto.or.kr/press"
+        ],
+        "queryTemplates": [
+          "서울 경기 팝업 {year} {month} site:starfield.co.kr",
+          "팝업 {year} {month} site:sto.or.kr/press"
         ]
       }
     ],
-    "note": "시범 출처. 현재 일정 공급량과 접근 가능성을 14일간 확인한 뒤 출처를 확장한다."
+    "note": "운영 확인한 브랜드·주최 공지와 공간 공지를 순환 수집한다. 2차 목록은 발견 경로이며 일정·장소·회차는 공식 원문으로 확인한다. 상설 매장·박람회·축제를 팝업으로 분류하지 않는다."
   }
-
 }

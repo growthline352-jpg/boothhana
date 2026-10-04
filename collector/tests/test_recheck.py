@@ -35,7 +35,7 @@ class RecheckTests(unittest.TestCase):
   with self.assertRaises(Exception):observation(self.target,self.result,self.docs)
  def test_popup_sources_recur_independently_after_one_day(self):
   profile=load_profiles(Path(__file__).resolve().parents[1]/'discovery_profiles.json');scope={'region':'SEOUL_GYEONGGI','timezone':'Asia/Seoul','startDate':'2026-10-04','endDate':'2026-11-03'}
-  jobs=popup_jobs(profile,scope);self.assertEqual(len(jobs),2);self.assertTrue(all(j['cadenceDays']==1 for j in jobs))
+  jobs=popup_jobs(profile,scope);self.assertEqual(len(jobs),6);self.assertTrue(all(j['cadenceDays']==1 for j in jobs))
   with tempfile.TemporaryDirectory() as temp:
    queue=DiscoveryWorkQueue(Path(temp)/'jobs.json');queue.enqueue(jobs);self.assertEqual(len(queue.due('POPUP_SOURCE',2)),2);self.assertEqual(queue.due('FESTIVAL_SOURCE',2),[])
  def test_fetched_official_extraction_has_its_own_audit_and_cli_budget(self):
