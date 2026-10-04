@@ -62,7 +62,8 @@ test('event and booth wrong-domain requests redirect by public taxonomy, preserv
 test('category sitemap fetches only its own catalog and emits no duplicate category URLs', async () => {
   for (const [category, site] of Object.entries(CATEGORY_SITES)) {
     const seen = []
-    const rows = await publishedEvents({ apiBase: 'https://api.example', category, fetcher: async url => { seen.push(url); return json({ items: [fixture], total: 1 }) } })
+    const eventTypes = { subculture: 'POPUP_STORE', exhibitions: 'WINE', festivals: 'MUSIC', popups: 'POPUP_EXPERIENCE' }
+    const rows = await publishedEvents({ apiBase: 'https://api.example', category, fetcher: async url => { seen.push(url); return json({ items: [{ ...fixture, event: { ...fixture.event, subcategory: eventTypes[category] } }], total: 1 }) } })
     assert.equal(seen.length, 1)
     assert.equal(new URL(seen[0]).searchParams.get('category'), site.code)
     const sitemap = renderSitemap(site.origin, rows)
@@ -72,7 +73,18 @@ test('category sitemap fetches only its own catalog and emits no duplicate categ
     assert.ok(renderRobots(site.origin).includes(`${site.origin}/sitemap.xml`))
   }
 })
-test('portal exposes three crawlable destinations without duplicating category event feeds', async () => {
+test('shared popup listings retain a single canonical URL and sitemap entry', async () => {
+  const legacy = { ...fixture, event: { ...fixture.event, subcategory: 'POPUP_STORE' } }
+  const popup = { ...fixture, event: { ...fixture.event, subcategory: 'POPUP_EXPERIENCE', subjects: ['CHARACTER_IP'] } }
+  const page = await renderPage({ path: '/', template, siteUrl: CATEGORY_SITES.subculture.origin, apiBase: 'https://api.example', fetcher: async () => json({ items: [popup], total: 1 }) })
+  assert.ok(page.html.includes('href="https://popup.boothana.kr/discover/12"'))
+  const redirect = await renderPage({ path: '/discover/12', template, siteUrl: CATEGORY_SITES.subculture.origin, apiBase: 'https://api.example', fetcher: async () => json(popup) })
+  assert.equal(redirect.location, 'https://popup.boothana.kr/discover/12')
+  for (const [category, row, count] of [['popups', legacy, 0], ['subculture', popup, 0], ['popups', popup, 1]]) {
+    assert.equal((await publishedEvents({ apiBase: 'https://api.example', category, fetcher: async () => json({ items: [row], total: 1 }) })).length, count)
+  }
+})
+test('portal exposes four crawlable destinations without duplicating category event feeds', async () => {
   const page = await renderPage({ path: '/', template, siteUrl: 'https://boothana.kr', splitSites: true, apiBase: 'https://api.example', fetcher: async () => { throw new Error('Portal must not fetch mixed feed') } })
   assert.equal(page.status, 200)
   const content = renderCrawlableContent({ path: '/', siteUrl: 'https://boothana.kr', splitSites: true })

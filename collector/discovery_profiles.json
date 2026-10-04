@@ -94,5 +94,35 @@
         "queryTemplates": ["site:x.com (행사 OR 전시 OR 굿즈전) (서울 OR 경기 OR 수원 OR 일산) after:{published_since}", "(행사 OR 전시 OR 굿즈전) (서브컬처 OR 캐릭터 OR 굿즈) 서울 경기 after:{published_since}"]
       }
     ]
+  },
+  "popup": {
+    "pilotNeighborhoods": [
+      "SEONGSU",
+      "YEONNAM"
+    ],
+    "sources": [
+      {
+        "name": "성수·서울숲 공간 공지",
+        "seeds": [
+          "https://www.project-rent.com/"
+        ],
+        "queryTemplates": [
+          "성수 서울숲 팝업 {year} {month} 공식 주최 브랜드 일정",
+          "site:project-rent.com 팝업 {year} 성수"
+        ]
+      },
+      {
+        "name": "연남 브랜드·지역 공지",
+        "seeds": [
+          "https://www.mapo.go.kr/site/main/home"
+        ],
+        "queryTemplates": [
+          "연남 팝업 {year} {month} 공식 브랜드 예약 일정",
+          "site:mapo.go.kr 연남 팝업 {year}"
+        ]
+      }
+    ],
+    "note": "시범 출처. 현재 일정 공급량과 접근 가능성을 14일간 확인한 뒤 출처를 확장한다."
   }
+
 }

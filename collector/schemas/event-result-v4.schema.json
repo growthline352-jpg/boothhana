@@ -120,7 +120,11 @@
               "FOOD",
               "CULTURE",
               "CONCERT",
-              "MUSIC_FESTIVAL"
+              "MUSIC_FESTIVAL",
+              "POPUP_RETAIL",
+              "POPUP_EXPERIENCE",
+              "POPUP_EXHIBITION",
+              "POPUP_MIXED"
             ]
           },
           "organizer": {

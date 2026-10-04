@@ -25,7 +25,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** SQL001..022 on a fresh isolated localhost database; no mocks or production data. */
+/** SQL001..027 on a fresh isolated localhost database; no mocks or production data. */
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
 @EnabledIfEnvironmentVariable(named="BOOTH_FULL_TEST_URL",matches="jdbc:postgresql://(?:localhost|127\\.0\\.0\\.1):[0-9]{1,5}/boothhana_release_test")
@@ -35,6 +35,7 @@ class OperationsIntegrationTests {
   if(url==null||!url.matches("jdbc:postgresql://(?:localhost|127\\.0\\.0\\.1):[0-9]{1,5}/boothhana_release_test"))throw new IllegalStateException("Isolated localhost test DB only");
   p.add("spring.datasource.url",()->url);p.add("spring.datasource.username",()->System.getenv("BOOTH_FULL_TEST_USER"));p.add("spring.datasource.password",()->System.getenv("BOOTH_FULL_TEST_PASSWORD"));
   p.add("app.support.guest-enabled",()->false);p.add("app.support.attachments-enabled",()->false);
+  p.add("app.discovery.compare-enabled",()->true);p.add("app.discovery.popups-enabled",()->true);
   p.add("app.gcs.project-id",()->"");p.add("app.gcs.public-bucket",()->"");p.add("app.support.private-bucket",()->"");
  }
  @Autowired JdbcTemplate db;@Autowired JsonMapper json;@Autowired CatalogOperatingGroups groups;
@@ -51,11 +52,17 @@ class OperationsIntegrationTests {
   http=MockMvcBuilders.webAppContextSetup(web).apply(springSecurity()).build();
  }
  EventData data(String name,String category,String day) {
-  return new EventData(name,category,"[TEST] Organizer","2026","SEOUL","[TEST] Hall","서울","원래 소개","공식 안내 확인",List.of(),
+  return data(name,category,day,"서울");
+ }
+ EventData data(String name,String category,String day,String address) {
+  return new EventData(name,category,"[TEST] Organizer","2026","SEOUL","[TEST] Hall",address,"원래 소개","공식 안내 확인",List.of(),
    List.of(new Occurrence(day,day,null,null)),List.of(new Source("https://example.com/official","OFFICIAL","ORIGINAL","공식 행사 안내")),List.of(),List.of());
  }
  long event(String suffix,String category,String day) {
-  EventData data=data(label+" "+suffix,category,day);String encoded=json.writeValueAsString(data),key=UUID.randomUUID().toString().replace("-","").repeat(2);
+  return event(suffix,category,day,"서울");
+ }
+ long event(String suffix,String category,String day,String address) {
+  EventData data=data(label+" "+suffix,category,day,address);String encoded=json.writeValueAsString(data),key=UUID.randomUUID().toString().replace("-","").repeat(2);
   long id=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state,reviewed_payload_json) values(?,?,?,?,cast(? as date),cast(? as date),cast(? as jsonb),?,'[]','REVIEWED',cast(? as jsonb)) returning id",Long.class,key,key,data.name(),category,day,day,encoded,key,encoded);
   publications.publish(id,new PublishInput(1));return id;
  }
@@ -63,6 +70,106 @@ class OperationsIntegrationTests {
  CatalogBrowseQuery query(int page,int size,String category,String search,String from,String to) {return new CatalogBrowseQuery(page,size,category,search,"",from,to,"DATE_ASC");}
  long id(Map<String,Object> value){return ((Number)value.get("id")).longValue();}
  String snapshot(long id){return db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,id);}
+ @Test void rechecksPreservePublicFactsDeduplicateAndRequireFreshAdminReview(){
+  var observations=web.getBean(CatalogObservationService.class);long a=event("recheck","ONLY_EVENT",firstDay);String original=snapshot(a);
+  var input=new CatalogObservationService.ObservationInput(1,"a".repeat(64),"CONFIRMED",List.of("https://example.com/official"),Map.of("address","서울 성동구 성수동","occurrences",List.of(Map.of("startDate",secondDay,"endDate",secondDay))),Map.of("address","CONFIRMED","occurrences","CONFIRMED"),Map.of("address","공식 장소 변경 안내","occurrences","공식 일정 변경 안내"));
+  observations.observe(a,input);observations.observe(a,input);assertThat(snapshot(a)).isEqualTo(original);assertThat(catalog.event(a).address()).isEqualTo("서울");
+  assertThat(db.queryForObject("select changes_json->'address'->>'evidence' from catalog_event_observation where event_id=?",String.class,a)).isEqualTo("공식 장소 변경 안내");
+  assertThat(db.queryForObject("select count(*) from catalog_event_observation where event_id=?",Long.class,a)).isEqualTo(1);
+  UUID id=db.queryForObject("select id from catalog_event_observation where event_id=?",UUID.class,a);
+  observations.review(a,id,new CatalogObservationService.ReviewInput(1,List.of("address"),"공식 원문 주소 확인",20,false));
+  assertThat(catalog.event(a).address()).isEqualTo("서울 성동구 성수동");assertThat(snapshot(a)).isEqualTo(original);
+  assertThat(db.queryForObject("select review_state from subculture_event_candidate where id=?",String.class,a)).isEqualTo("PENDING");
+  assertThat(db.queryForObject("select count(*) from catalog_event_observation where event_id=? and state='PENDING'",Long.class,a)).isEqualTo(1);
+  assertThatThrownBy(()->observations.observe(a,input)).isInstanceOf(ApiException.class);
+  UUID remaining=db.queryForObject("select id from catalog_event_observation where event_id=? and state='PENDING'",UUID.class,a);
+  observations.review(a,remaining,new CatalogObservationService.ReviewInput(2,List.of("occurrences"),"공식 날짜 정정 확인",30,false));
+  assertThat(catalog.event(a).occurrences().getFirst().startDate()).isEqualTo(secondDay);assertThat(snapshot(a)).isEqualTo(original);
+ }
+ @Test void recheckFailuresBackOffAndCannotClearFactsOrUseUnregisteredSources(){
+  var observations=web.getBean(CatalogObservationService.class);long a=event("recheck-failure","ONLY_EVENT",today);
+  long checkedBefore=((Number)observations.workload().get("near_checked")).longValue();
+  var failed=new CatalogObservationService.ObservationInput(1,"b".repeat(64),"ACCESS_FAILED",List.of("https://example.com/official"),Map.of(),Map.of(),Map.of());
+  assertThat(observations.observe(a,failed).get("nextCheckHours")).isEqualTo(6);assertThat(observations.observe(a,failed).get("nextCheckHours")).isEqualTo(12);
+  assertThat(((Number)observations.workload().get("near_checked")).longValue()).isEqualTo(checkedBefore);
+  var confirmed=new CatalogObservationService.ObservationInput(1,"b".repeat(64),"CONFIRMED",List.of("https://example.com/official"),Map.of(),Map.of(),Map.of());
+  assertThat(observations.observe(a,confirmed).get("nextCheckHours")).isEqualTo(24);
+  assertThat(db.queryForObject("select failures from catalog_source_check where event_id=?",Integer.class,a)).isZero();
+  assertThat(((Number)observations.workload().get("near_checked")).longValue()).isEqualTo(checkedBefore+1);
+  var blank=new CatalogObservationService.ObservationInput(1,"c".repeat(64),"CONFIRMED",List.of("https://example.com/official"),Map.of("address",""),Map.of("address","CONFIRMED"),Map.of("address","삭제 공지 아님"));
+  assertThatThrownBy(()->observations.observe(a,blank)).isInstanceOf(ApiException.class);
+  var foreign=new CatalogObservationService.ObservationInput(1,"c".repeat(64),"CONFIRMED",List.of("https://other.example/event"),Map.of(),Map.of(),Map.of());
+  assertThatThrownBy(()->observations.observe(a,foreign)).isInstanceOf(ApiException.class);
+  assertThat(catalog.event(a).address()).isEqualTo("서울");
+ }
+ @Test void recheckQueueAdaptsToApproachingDatesAndNewRevisionsWithoutBypassingFailureBackoff(){
+  var observations=web.getBean(CatalogObservationService.class);
+  long dueBefore=((Number)observations.workload().get("due")).longValue();
+  long nearBefore=((Number)observations.workload().get("near")).longValue();
+  String nearDay=LocalDate.parse(today).plusDays(6).toString(),farDay=LocalDate.parse(today).plusDays(20).toString();
+  String address="서울 성동구 성수동";
+  long near=event("approaching-recheck","ONLY_EVENT",nearDay,address),distant=event("distant-recheck","ONLY_EVENT",firstDay,address);
+  long failed=event("backoff-recheck","ONLY_EVENT",nearDay,address),revised=event("revised-recheck","ONLY_EVENT",firstDay,address);
+  long sparse=event("sparse-recheck","ONLY_EVENT",farDay,address);
+  String pastDay=LocalDate.parse(today).minusDays(2).toString();
+  catalog.editEvent(sparse,new EditInput(1,"REVIEWED","떨어진 두 운영일 확인",Map.of("occurrences",List.of(new Occurrence(pastDay,pastDay,null,null),new Occurrence(farDay,farDay,null,null))),List.of()));
+  publications.publish(sparse,new PublishInput(2));
+  // Simulate a successful weekly check made before the first event entered its seven-day window.
+  for(long eventId:List.of(near,distant,failed,revised,sparse)){
+   assertThat(CollectionRules.event(catalog.event(eventId),new Scope("SEOUL_GYEONGGI","Asia/Seoul",pastDay,farDay)).errors()).isEmpty();
+   observations.observe(eventId,new CatalogObservationService.ObservationInput(eventId==sparse?2:1,"d".repeat(64),"CONFIRMED",List.of("https://example.com/official"),Map.of(),Map.of(),Map.of()));
+   db.update("update catalog_source_check set checked_at=now()-interval '48 hours',next_check_at=now()+interval '5 days' where event_id=?",eventId);
+  }
+  db.update("update catalog_source_check set failures=6,status='EXTRACTION_FAILED' where event_id=?",failed);
+  catalog.editEvent(revised,new EditInput(1,"REVIEWED","입장 조건 정정",Map.of("admission","수정된 입장 조건"),List.of()));
+  var queued=observations.due(100).stream().map(row->((Number)row.get("id")).longValue()).toList();
+  assertThat(queued).contains(near,revised).doesNotContain(distant,failed,sparse);
+  var workload=observations.workload();
+  assertThat(((Number)workload.get("due")).longValue()).isEqualTo(dueBefore+2);
+  // Past occurrences do not make an otherwise distant next operating day "near".
+  assertThat(((Number)workload.get("near")).longValue()).isEqualTo(nearBefore+2);
+ }
+ @Test @SuppressWarnings("unchecked") void comparisonDeduplicatesEditionsAndPreservesPublishedPlaceAdmissionByDay(){
+  var discovery=web.getBean(CatalogDiscoveryService.class);long a=event("compare-east","ONLY_EVENT",firstDay),b=event("compare-west","ONLY_EVENT",secondDay);
+  catalog.editEvent(b,new EditInput(1,"REVIEWED","다른 장소 입장 조건 확인",Map.of("venueName","서쪽 행사장","admission","둘째날 별도 예약","address","서울 마포구"),List.of()));publications.publish(b,new PublishInput(2));
+  groups.save(a,input(-1,"같은 회차",a,b),admin);
+  var compared=discovery.compare(a+","+b);assertThat(compared).hasSize(1);
+  var event=(EventData)compared.getFirst().get("event");assertThat(event.occurrences()).hasSize(2);
+  var places=(List<Map<String,Object>>)compared.getFirst().get("operatingPlaces");assertThat(places).hasSize(2);
+  assertThat(places.stream().map(p->(EventData)p.get("event")).filter(e->e.occurrences().getFirst().startDate().equals(secondDay)).findFirst().orElseThrow().admission()).isEqualTo("둘째날 별도 예약");
+  publications.unpublish(b);assertThat((List<?>)discovery.compare(Long.toString(a)).getFirst().get("operatingPlaces")).hasSize(1);
+ }
+ @Test void popupPlaceAndComparisonUseOnlyCurrentPublishedFactsAndDisappearAfterAddressChanges()throws Exception{
+  var observations=web.getBean(CatalogObservationService.class);var discovery=web.getBean(CatalogDiscoveryService.class);
+  long a=event("popup-place","POPUP_RETAIL",firstDay);
+  observations.place(a,new CatalogObservationService.PlaceInput(1,"SEONGSU","서울",37.544,127.055,"https://example.com/official",today));
+  assertThat(discovery.popups(firstDay,secondDay,"SEONGSU").get("total")).isEqualTo(1L);
+  assertThat(discovery.compare(Long.toString(a))).hasSize(1);
+  http.perform(get("/api/public/catalog/events/compare").param("ids",Long.toString(a))).andExpect(status().isOk()).andExpect(jsonPath("$[0].operatingPlaces[0].eventId").value(a));
+  http.perform(get("/api/public/catalog/popups").param("from",firstDay).param("to",secondDay).param("neighborhood","SEONGSU")).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+  catalog.editEvent(a,new EditInput(1,"REVIEWED","장소 정정",Map.of("address","서울 마포구 연남동"),List.of()));
+  assertThat(discovery.popups(firstDay,secondDay,"SEONGSU").get("total")).isEqualTo(1L);
+  publications.publish(a,new PublishInput(2));
+  assertThat(discovery.popups(firstDay,secondDay,"SEONGSU").get("total")).isEqualTo(0L);
+  publications.unpublish(a);assertThat(discovery.compare(Long.toString(a))).isEmpty();
+  assertThatThrownBy(()->discovery.compare(a+",2,3")).isInstanceOf(ApiException.class);
+  long east=event("popup-group-east","POPUP_RETAIL",firstDay),west=event("popup-group-west","POPUP_RETAIL",secondDay);
+  observations.place(east,new CatalogObservationService.PlaceInput(1,"SEONGSU","서울",null,null,"https://example.com/official",today));
+  observations.place(west,new CatalogObservationService.PlaceInput(1,"SEONGSU","서울",null,null,"https://example.com/official",today));
+  groups.save(east,input(-1,"같은 팝업 회차",east,west),admin);
+  var grouped=discovery.popups(firstDay,secondDay,"SEONGSU");assertThat(grouped.get("total")).isEqualTo(1L);assertThat((List<?>)grouped.get("items")).hasSize(1);
+  assertThat(discovery.popups(secondDay,secondDay,"SEONGSU").get("total")).isEqualTo(1L);
+ }
+ @Test void observationRoutesProtectPrivateSourcesAndRequireAdminCsrf()throws Exception{
+  long a=event("private-observation","ONLY_EVENT",firstDay);String route="/api/admin/subculture/v4/events/"+a+"/observations";
+  http.perform(get(route)).andExpect(status().isUnauthorized());http.perform(get(route).with(user(subject).roles("FAN"))).andExpect(status().isForbidden());
+  http.perform(get(route).with(user(subject+"-admin").roles("ADMIN"))).andExpect(status().isOk());
+  http.perform(put("/api/admin/subculture/v4/events/"+a+"/place").with(user(subject+"-admin").roles("ADMIN")).contentType("application/json").content("{}")).andExpect(status().isForbidden());
+  for(String table:List.of("catalog_source_check","catalog_event_observation","catalog_event_place")){
+   assertThat(db.queryForObject("select relrowsecurity from pg_class where oid=cast(? as regclass)",Boolean.class,table)).isTrue();
+   assertThat(db.queryForObject("select has_table_privilege('anon',?,'SELECT') or has_table_privilege('authenticated',?,'SELECT')",Boolean.class,table,table)).isFalse();
+  }
+ }
  void saveEvent(long user,long id){db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json,note) values(?,?,?,'EVENT',?,'{}','[TEST] private note')",UUID.randomUUID(),user,id,id);}
  void claimRoot(long id) {
   UUID ticket=UUID.randomUUID();

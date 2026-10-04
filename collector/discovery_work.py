@@ -10,7 +10,7 @@ import re
 import unicodedata
 
 
-WORK_KINDS = {"FESTIVAL_SOURCE", "SUBCULTURE_RECENT"}
+WORK_KINDS = {"FESTIVAL_SOURCE", "SUBCULTURE_RECENT", "POPUP_SOURCE"}
 WORK_STATES = {"PENDING", "COMPLETE", "NO_RESULTS", "PARTIAL", "FAILED"}
 
 
@@ -104,6 +104,11 @@ def subculture_recent_jobs(profile: dict, scope: dict) -> list[dict]:
         })
     return jobs
 
+
+def popup_jobs(profile:dict,scope:dict)->list[dict]:
+    return [{'kind':'POPUP_SOURCE','category':'POPUP','subject':row['name'],'priority':0,'cadenceDays':1,'scope':dict(scope),
+             'payload':{'sourceType':'POPUP_OFFICIAL','region':'서울','seeds':row.get('seeds',[]),'queryTemplates':row['queryTemplates']},'origin':'POPUP_PILOT_SOURCE'}
+            for row in profile.get('popup',{}).get('sources',[])]
 
 class DiscoveryWorkQueue:
     def __init__(self, path: Path):

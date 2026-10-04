@@ -1,0 +1,14 @@
+[Unit]
+Description=BoothHana private popup discovery pilot
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/boothhana/deploy/ubuntu
+ExecStart=/opt/boothhana/deploy/ubuntu/run-collector.sh popups
+TimeoutStartSec=55min
+SuccessExitStatus=2
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077

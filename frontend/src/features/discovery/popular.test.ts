@@ -18,7 +18,7 @@ const scheduled = (id: number, startDate: string, endDate = startDate, saveCount
 afterEach(() => vi.restoreAllMocks())
 
 describe('공통 인기 행사', () => {
-  it.each(['SUBCULTURE', 'EXHIBITION', 'FESTIVAL', undefined])('requests the shared save ranking for %s without interests', async category => {
+  it.each(['SUBCULTURE', 'EXHIBITION', 'FESTIVAL', 'POPUP', undefined])('requests the shared save ranking for %s without interests', async category => {
     const ranking = vi.spyOn(publicCatalogApi, 'popular').mockResolvedValue([scheduled(8, '2026-10-04', undefined, 2), scheduled(9, '2026-10-05', undefined, 7)])
     const interests = vi.spyOn(interestApi, 'get')
     const personal = vi.spyOn(interestApi, 'featured')
@@ -27,7 +27,7 @@ describe('공통 인기 행사', () => {
     expect(interests).not.toHaveBeenCalled()
     expect(personal).not.toHaveBeenCalled()
   })
-  it.each(['SUBCULTURE', 'EXHIBITION', 'FESTIVAL'])('keeps the zero-save fallback within %s', async category => {
+  it.each(['SUBCULTURE', 'EXHIBITION', 'FESTIVAL', 'POPUP'])('keeps the zero-save fallback within %s', async category => {
     vi.spyOn(publicCatalogApi, 'popular').mockResolvedValue([])
     const lists = vi.spyOn(publicCatalogApi, 'calendar').mockResolvedValue([scheduled(8, '2026-10-03')])
     expect((await loadPopularEvents(category, '2026-10-02')).items.map(item => [item.id, item.saveCount])).toEqual([[8, 0]])
@@ -39,7 +39,7 @@ describe('공통 인기 행사', () => {
     expect((await loadPopularEvents('FESTIVAL', '2026-10-02')).items).toEqual([])
     expect(lists).toHaveBeenCalledTimes(1)
   })
-  it('fills an empty save ranking from all three categories with honest zero counts', async () => {
+  it('fills an empty save ranking from all four categories and deduplicates shared events', async () => {
     vi.spyOn(publicCatalogApi, 'popular').mockResolvedValue([])
     const lists = vi.spyOn(publicCatalogApi, 'calendar').mockImplementation(async query => {
       const params = new URLSearchParams(query)
@@ -48,7 +48,7 @@ describe('공통 인기 행사', () => {
         : params.get('category') === 'EXHIBITION' ? [scheduled(9, '2026-10-03')] : [scheduled(10, '2026-10-01', '2026-10-04')]
     })
     const result = await loadPopularEvents(undefined, '2026-10-02')
-    expect(lists).toHaveBeenCalledTimes(3)
+    expect(lists).toHaveBeenCalledTimes(4)
     expect(lists.mock.calls.every(call => call[1] === false)).toBe(true)
     expect(result.items.map(item => [item.id, item.saveCount])).toEqual([[10, 0], [9, 0], [8, 0]])
   })

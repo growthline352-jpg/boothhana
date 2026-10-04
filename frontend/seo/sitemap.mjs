@@ -1,8 +1,8 @@
 import { apiOrigin, readBoundedJson } from '../api/page.mjs'
-import { siteOrigin } from './metadata.mjs'
+import { categoryFor, siteOrigin } from './metadata.mjs'
 import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite } from './category-sites.mjs'
 
-const CATEGORIES = ['SUBCULTURE', 'EXHIBITION', 'FESTIVAL']
+const CATEGORIES = Object.values(CATEGORY_SITES).map(site => site.code)
 const MAX_URLS = 50_000
 const xml = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c])
 const validPublishedAt = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value) ? value.slice(0, 10) : ''
@@ -37,6 +37,7 @@ export async function publishedEvents({ apiBase, fetcher = fetch, timeoutMs = 20
     for (const row of rows) {
       const id = Number(row?.id)
       if (!Number.isSafeInteger(id) || id < 1 || typeof row?.event?.name !== 'string' || !row.event.name.trim()) continue
+      if (category && categoryFor(row.event) !== category) continue // Shared listings keep one canonical event URL.
       unique.set(id, { id, publishedAt: validPublishedAt(row.publishedAt) })
     }
     return [...unique.values()].sort((left, right) => left.id - right.id)
@@ -62,6 +63,7 @@ export function renderSitemap(siteUrl, events, splitSites = false) {
     { loc: `${origin}/discover`, lastmod: newest },
     { loc: `${origin}/discover?category=exhibitions`, lastmod: newest },
     { loc: `${origin}/discover?category=festivals`, lastmod: newest },
+    { loc: `${origin}/discover?category=popups`, lastmod: newest },
     { loc: `${origin}/events`, lastmod: newest },
     ...events.map(event => ({ loc: `${origin}/discover/${event.id}`, lastmod: event.publishedAt })),
   ]

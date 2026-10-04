@@ -466,7 +466,7 @@ hr { border: 0; border-top: 1px solid var(--line); }
   .discovery-brand { grid-column: 1; grid-row: 1; }
   .discovery-brand .brand-logo { width: 124px; height: 41px; }
   .discovery-header-tools { grid-column: 2; grid-row: 1; gap: 6px; }
-  .discovery-category-nav { grid-column: 1/-1; grid-row: 2; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px !important; }
+  .discovery-category-nav { grid-column: 1/-1; grid-row: 2; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px !important; }
   .discovery-category-link { min-width: 0; padding: 7px 4px !important; font-size: 15px; gap: 6px; min-height: 54px; }
   .discovery-category-link > span { display: flex; align-items: center; gap: 4px; }
   .discovery-soon { display: inline-block; font-size: 12px; margin: 0; padding: 2px 4px; }

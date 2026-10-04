@@ -2,13 +2,13 @@ import { taxonomy } from './taxonomy.mjs'
 import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryOrigin, splitSitesEnabled } from './category-sites.mjs'
 /** Shared server/SPA metadata. Only PUBLIC catalog responses may be supplied here. */
 export const SITE_TITLE = '부스하나 | 서울·경기 행사·부스·상품 찾기'
-export const SITE_DESCRIPTION = '서울·경기 서브컬처·박람회·축제와 참가 부스, 상품을 찾아 저장하세요. 방문을 준비하고 다녀온 뒤에도 다시 찾을 수 있습니다.'
+export const SITE_DESCRIPTION = '서울·경기 서브컬처·박람회·축제·팝업과 참가 부스, 상품을 찾아 저장하세요. 방문을 준비하고 다녀온 뒤에도 다시 찾을 수 있습니다.'
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 const text = (value, max) => typeof value === 'string' ? value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : ''
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 const TIME = /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/
 const CATEGORY_BY_TYPE = Object.fromEntries(taxonomy.fields.flatMap(field => field.types.map(type => [type.code, field.key])))
-const CATEGORY_LABEL = { subculture: '서브컬처 행사', exhibitions: '박람회', festivals: '축제' }
+const CATEGORY_LABEL = { subculture: '서브컬처 행사', exhibitions: '박람회', festivals: '축제', popups: '팝업' }
 function verificationToken(raw) { return typeof raw === 'string' && /^[A-Za-z0-9_-]{20,200}$/.test(raw) ? raw : '' }
 
 export function siteOrigin(raw) {
@@ -85,6 +85,7 @@ function eventNode(catalog, canonical, image) {
   if (keywords.length) node.keywords = keywords.join(', ')
   return node
 }
+function listingHref(row, origin, absolute = true) { return categorySite(origin) && categoryOrigin(row.category) ? `${categoryOrigin(row.category)}${row.urlPath}` : absolute ? `${origin}${row.urlPath}` : row.urlPath }
 function listingRows(rows) {
   if (!Array.isArray(rows)) return []
   return rows.flatMap(row => {
@@ -99,7 +100,7 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
     if (rows.length) {
       const itemList = {
         '@type': 'ItemList', '@id': `${canonical}#events`, name: title, numberOfItems: rows.length,
-        itemListElement: rows.map((row, index) => ({ '@type': 'ListItem', position: index + 1, name: row.name, url: `${origin}${row.urlPath}` })),
+        itemListElement: rows.map((row, index) => ({ '@type': 'ListItem', position: index + 1, name: row.name, url: listingHref(row, origin) })),
       }
       webpage.mainEntity = { '@id': itemList['@id'] }
       graph.push(itemList)
@@ -150,7 +151,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   const detailMatch = /^\/discover\/([1-9]\d*)$/.exec(path)
   const boothMatch = /^\/discover\/([1-9]\d*)\/booths\/([1-9]\d*)$/.exec(path)
   const category = hostCategory || params.get('category') || 'subculture'
-  const supported = ['subculture', 'exhibitions', 'festivals'].includes(category) && (!params.has('category') || ['subculture', 'exhibitions', 'festivals'].includes(params.get('category')))
+  const supported = Object.hasOwn(CATEGORY_SITES, category) && (!params.has('category') || Object.hasOwn(CATEGORY_SITES, params.get('category')))
   const filtered = [...params.keys()].some(key => key !== 'category')
   let title = SITE_TITLE, description = SITE_DESCRIPTION, indexable = browse && supported && !filtered
   let image = origin ? `${origin}/assets/brand/logo.png` : ''
@@ -160,10 +161,10 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
 
   if (browse && !supported) {
     title = '행사 분야 확인 | 부스하나'
-    description = '서울·경기 서브컬처·박람회·축제 정보를 제공합니다. 지원하는 분야를 선택해 주세요.'
+    description = '서울·경기 서브컬처·박람회·축제·팝업 정보를 제공합니다. 지원하는 분야를 선택해 주세요.'
   } else if (browse && supported && category !== 'subculture') {
-    title = `${category === 'exhibitions' ? '서울·경기 박람회' : '서울·경기 축제'} | 부스하나`
-    description = `${category === 'exhibitions' ? '박람회 참가 브랜드·제품' : '축제와 공개된 참가·체험 부스'}를 찾고 방문을 준비하세요. 검토·공개된 정보만 제공합니다.`
+    title = `서울·경기 ${CATEGORY_SITES[category].label} | 부스하나`
+    description = CATEGORY_SITES[category].description
   } else if (boothMatch) {
     if (validParticipant) {
       const boothName = text(participant.participant.registrationName, 100)
@@ -194,6 +195,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     title = '예약 가능한 행사 | 부스하나'
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
     indexable = true
+  } else if (path === '/compare' || path === '/popups') {
+    title = path === '/compare' ? '행사 비교 | 부스하나' : '동네 팝업 | 부스하나'
+    description = path === '/compare' ? '두 행사의 공개 일정과 장소, 입장 조건을 비교하세요.' : '날짜와 동네를 골라 공개된 서울 팝업을 살펴보세요.'
   } else if (!browse) {
     title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
     description = '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'
@@ -243,12 +247,12 @@ export function renderCrawlableContent({ path = '/', search = '', catalog = null
       return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.name)}</a></h2><p>${esc(site.description)}</p></section>`).join('')}</main>`
     }
     const category = categorySite(siteUrl) || params.get('category') || 'subculture'
-    if ((path === '/' || path === '/discover') && !['subculture', 'exhibitions', 'festivals'].includes(category)) return ''
+    if ((path === '/' || path === '/discover') && !Object.hasOwn(CATEGORY_SITES, category)) return ''
     const rows = listingRows(listing)
     const heading = categorySite(siteUrl) && path !== '/events' ? CATEGORY_SITES[category].name : path === '/' ? '서울·경기 행사와 참가 부스 찾기' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category]
     const intro = path === '/events' ? '부스하나에 직접 등록된 예약 가능 행사입니다.' : '공개된 일정과 장소를 확인하고 행사별 참가 부스와 상품 정보를 찾아보세요.'
     return `<main class="content-wrap section-pad" data-seo-fallback><h1>${esc(heading)}</h1><p>${esc(intro)}</p>
-      ${rows.length ? `<h2>공개 행사</h2><ul>${rows.map(row => `<li><a href="${row.urlPath}">${esc(row.name)}</a>${row.startDate ? ` · <time datetime="${esc(text(row.startDate, 10))}">${esc(text(row.startDate, 10))}</time>` : ''}${row.venue ? ` · ${esc(text(row.venue, 160))}` : ''}</li>`).join('')}</ul>` : '<p>공개 행사 목록을 불러오고 있습니다.</p>'}</main>`
+      ${rows.length ? `<h2>공개 행사</h2><ul>${rows.map(row => `<li><a href="${esc(listingHref(row, siteOrigin(siteUrl), false))}">${esc(row.name)}</a>${row.startDate ? ` · <time datetime="${esc(text(row.startDate, 10))}">${esc(text(row.startDate, 10))}</time>` : ''}${row.venue ? ` · ${esc(text(row.venue, 160))}` : ''}</li>`).join('')}</ul>` : '<p>공개 행사 목록을 불러오고 있습니다.</p>'}</main>`
   }
   const event = catalog.event
   const eventPath = `/discover/${catalog.id}`

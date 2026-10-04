@@ -3,7 +3,7 @@ import { OwnershipPanel } from '../support/OwnershipPanels'
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
 import { dateLabel } from '../discovery/browse'
-import { attendance, relevantLocations } from '../visit/visit'
+import { attendance, relevantLocations, visitDays } from '../visit/visit'
 import type { EventData } from '../collection/api'
 import type { ProductRow, PublicAsset, PublicParticipant } from './api'
 import { hasMappableLocation } from './BoothDetail.utils'
@@ -50,7 +50,7 @@ function productPriceValue(row: ProductRow) {
   return Number.isFinite(value) ? value : null
 }
 
-export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotice, onMap, onClose, headingRef }: {
+export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotice, onMap, onVisitChange, onClose, headingRef }: {
   eventId: number
   event: EventData
   row: PublicParticipant
@@ -59,10 +59,13 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
   hall: string
   eventNotice?: string | null
   onMap: () => void
+  onVisitChange: (day: string, hall: string) => void
   onClose: () => void
   headingRef?: RefObject<HTMLHeadingElement | null>
 }) {
   const place = locationLabel(row, day, hall)
+  const days = visitDays(event)
+  const halls = unique(relevantLocations(row.participant.locations, day).map(location => location.hall))
   const canOpenMap = hasMappableLocation(row, day, hall)
   const state = attendance(row, day, hall)
   const images = detailImages(assets)
@@ -99,31 +102,32 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
       <p><strong>{event.name}</strong>의 참가 부스</p>
       <button className="btn secondary" type="button" onClick={onClose}>부스 목록으로</button>
     </div>
+    <div className="booth-visit-controls" aria-label="부스 방문 조건">
+      <label className="field"><span>방문일</span><select className="select" value={day} onChange={event => onVisitChange(event.target.value, '')}>{days.map(value => <option key={value} value={value}>{dateLabel(value)}{attendance(row, value) === 'confirmed' ? ' · 참가 확인' : ''}</option>)}{!days.length && <option value="">일정 미확인</option>}</select></label>
+      {(halls.length > 0 || hall) && <label className="field"><span>전시관</span><select className="select" value={hall} onChange={event => onVisitChange(day, event.target.value)}><option value="">전체 전시관</option>{unique([...halls, hall]).map(value => <option key={value} value={value}>{value}</option>)}</select></label>}
+    </div>
     <div className="booth-detail-hero">
       <div className="booth-detail-intro">
-        <div className="booth-detail-location">
+        <div className={`booth-detail-location${canOpenMap ? '' : ' is-unconfirmed'}`}>
           <span>부스 위치</span><strong>{place.code}</strong><small>{place.hall}{place.zone ? ` · ${place.zone}` : ''}</small>
         </div>
         <div className="booth-detail-copy">
-          <h2 id={`booth-detail-title-${row.id}`} ref={headingRef} tabIndex={-1}>{row.participant.registrationName}</h2>
+          <h1 id={`booth-detail-title-${row.id}`} ref={headingRef} tabIndex={-1}>{row.participant.registrationName}</h1>
           <p className="booth-detail-members">{members.length ? members.join(' · ') : '참가자명 미확인'}</p>
           {topics.length > 0 && <div className="booth-detail-tags">{topics.map(topic => <span key={topic}>{topic}</span>)}</div>}
           <p className="booth-detail-summary">{summary}</p>
           {eventNotice && <p className="visit-important-note">{eventNotice}</p>}
-          {state !== 'confirmed' && <p className="visit-warning">{state === 'other' ? '선택한 날짜·전시관에는 이 부스의 참가 위치가 등록되어 있지 않아요.' : '선택한 날짜·전시관의 참가 여부를 아직 확인하지 못했어요.'}</p>}
+          {(state !== 'confirmed' || !canOpenMap) && <p className="visit-warning" role="status">{state === 'other' ? '선택한 날짜·전시관에는 이 부스의 참가 위치가 등록되어 있지 않아요.' : state === 'unknown' ? '선택한 날짜·전시관의 참가 여부를 아직 확인하지 못했어요.' : '부스번호가 공개되면 배치도에서 위치를 확인할 수 있어요.'}</p>}
           <div className="row-actions booth-detail-actions">
-            {canOpenMap
-              ? <button type="button" className="btn primary" onClick={onMap}>배치도에서 위치 보기</button>
-              : <span className="visit-warning" role="status">부스번호가 공개되면 배치도에서 위치를 확인할 수 있어요.</span>}
+            {canOpenMap && <button type="button" className="btn primary" onClick={onMap}>배치도에서 위치 보기</button>}
             <SaveButton target={{ type: 'PARTICIPANT', eventId, id: row.id, participantId: row.id }} day={day} hall={hall}/>
             <ShareQr target={{ type: 'PARTICIPANT', eventId, id: row.id, participantId: row.id }} day={day} hall={hall} title={row.participant.registrationName}/>
           </div>
-          <OwnershipPanel eventId={eventId} participantId={row.id}/>
         </div>
       </div>
       <div className={`booth-detail-gallery count-${images.length}`}>
         {images.length > 0 ? images.map((asset, index) => <figure key={asset.id} className={index === 0 ? 'is-main' : ''}>
-          <ContentImage url={asset.url} kind="booth" alt={asset.caption || `${row.participant.registrationName} 홍보 이미지 ${index + 1}`} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'}/>
+          <SafeLink url={asset.url}><ContentImage url={asset.url} kind="booth" alt={`${asset.caption || `${row.participant.registrationName} 홍보 이미지 ${index + 1}`} · 크게 보기`} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'auto'}/></SafeLink>
           <figcaption>{asset.credit} · <SafeLink url={asset.url}>크게 보기</SafeLink> · <SafeLink url={asset.attribution}>출처</SafeLink></figcaption>
         </figure>) : <figure className="booth-detail-fallback"><ContentImage url={null} kind="booth" alt="" loading="eager"/></figure>}
       </div>
@@ -173,11 +177,10 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
           <div><dt>행사 운영시간</dt><dd>{occurrence?.startTime || '시간 미확인'}{occurrence?.endTime ? ` ~ ${occurrence.endTime}` : ''}</dd></div>
           <div><dt>입장</dt><dd>{event.admission || '조건 미확인'}</dd></div>
         </dl>
-        {canOpenMap
-          ? <button type="button" className="btn primary wide" onClick={onMap}>배치도에서 확인</button>
-          : <p className="visit-warning">현재는 공개된 부스번호가 없어 배치도에 연결하지 않았어요.</p>}
+        {canOpenMap && <button type="button" className="btn primary wide" onClick={onMap}>배치도에서 확인</button>}
         <p>공개된 등록 정보 기준이며 행사 당일 위치와 운영 여부가 달라질 수 있어요.</p>
       </aside>
     </div>
+    <OwnershipPanel eventId={eventId} participantId={row.id}/>
   </section>
 }

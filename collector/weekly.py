@@ -7,7 +7,7 @@ import argparse,hashlib,json,os,re,sys,time,uuid,unicodedata
 from urllib.parse import urlsplit,urlunsplit
 from datetime import datetime,timedelta
 from pathlib import Path
-from run import ROOT,SEOUL,RunError,run_lock,utcnow,write_json,date_window,execute_search,audit_opened_urls,canonical_audit_url,config as base_config
+from run import ROOT,SEOUL,RunError,CliUnavailable,run_lock,utcnow,write_json,date_window,execute_search,audit_opened_urls,canonical_audit_url,config as base_config
 from rules import inspect_result,public_url
 from catalog_rules import parse_schema,validate_stage,validate_discovery,check_participant,allowed_source
 from visitor_guide import retain_valid_guide_rows
@@ -15,7 +15,7 @@ from catalog_transport import Api
 from media_fetch import fetch_image
 from data_quality import attempt_record,merge_enrichment,missing_reasons,select_targets
 from event_queue import EventNameQueue,normalize_name
-from discovery_work import DiscoveryWorkQueue,festival_jobs,load_profiles,subculture_recent_jobs
+from discovery_work import DiscoveryWorkQueue,festival_jobs,load_profiles,subculture_recent_jobs,popup_jobs
 from x_recent import search_recent
 from taxonomy import GROUPS,category_for
 from event_detail_sources import collect_detail_sources,detail_coverage_issues,normalize_detail_sales_dates
@@ -25,7 +25,7 @@ DISCOVERY_CHANNELS=('VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY','TICKE
 AUTHORITATIVE_CHANNELS={'VENUE_CALENDAR','ORGANIZER_OFFICIAL','PUBLIC_AGENCY'}
 EXTRA={'maxEvents':50,'maxParticipantPages':10,'maxSales':100,'maxSalesPagesPerParticipant':5,'maxCliCalls':240,'maxRuntimeMinutes':240,
        'maxImages':100,'maxEventEnrichments':50,'maxEventNameJobs':50,'eventNameMaxAttempts':8,'eventNameRetryHours':24,'eventNameNotFoundRetryHours':168,'eventNameFailureRetryHours':6,
-       'maxFestivalDiscoveryJobs':12,'maxSubcultureDiscoveryJobs':6,'discoveryWorkRetryHours':24,
+       'maxFestivalDiscoveryJobs':12,'maxSubcultureDiscoveryJobs':6,'maxPopupDiscoveryJobs':0,'discoveryWorkRetryHours':24,
        'xBearerTokenEnv':'X_BEARER_TOKEN','maxXRecentPages':2,
        'priorityEventKeywords':[],'discoveryEventNames':[],'discoveryLeadUrls':[],'discoverySourceSeeds':{},'imageAllowedHosts':[],'blockedSourceHosts':['witchform.com'],'downloadApprovedImages':True,'floorplanMaxEvents':30,'floorplanMaxSources':10,'floorplanMaxTiles':40,'floorplanMaxCliCalls':100,'floorplanMaxMinutes':180}
 class BudgetExceeded(RunError): pass
@@ -44,7 +44,7 @@ def load_config(path:Path|None):
     for key,max_ in limits.items():
         if type(cfg[key]) is not int or not 1<=cfg[key]<=max_: raise RunError(key+' outside allowed range')
     if type(cfg['maxEventEnrichments']) is not int or not 0<=cfg['maxEventEnrichments']<=100:raise RunError('maxEventEnrichments outside allowed range')
-    for key in ('maxFestivalDiscoveryJobs','maxSubcultureDiscoveryJobs'):
+    for key in ('maxFestivalDiscoveryJobs','maxSubcultureDiscoveryJobs','maxPopupDiscoveryJobs'):
         if type(cfg[key]) is not int or not 0<=cfg[key]<=100:raise RunError(key+' outside allowed range')
     if type(cfg['discoveryWorkRetryHours']) is not int or not 1<=cfg['discoveryWorkRetryHours']<=168:raise RunError('discoveryWorkRetryHours outside allowed range')
     if not isinstance(cfg['xBearerTokenEnv'],str) or not cfg['xBearerTokenEnv'].strip() or len(cfg['xBearerTokenEnv'])>100:raise RunError('xBearerTokenEnv format')
@@ -155,6 +155,7 @@ class Pipeline:
         self.cfg=cfg;self.folder=folder;folder.mkdir(parents=True,exist_ok=True)
         self.dry=dry_run;self.fixtures=fixtures
         self.started=time.monotonic();self.calls=0;self.issues=[];self.receipts={};self.image_receipts={};self.stats={'discovery':0,'discoveryLeads':0,'discoveryWorkJobs':0,'festivalSourceJobs':0,'subcultureDiscoveryJobs':0,'discoveryWorkOutcomes':{},'eventNameJobs':0,'eventNameOutcomes':{},'enrichment':0,'enrichmentQueued':0,'participants':0,'sales':0,'images':0,'cliCalls':0}
+        self.cli_blocked_reason=None
         self.api=None if dry_run else Api(cfg['apiBaseUrl'],os.getenv(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds'])
         self.enrichment_state_path=Path(cfg['stateDirectory']).expanduser().resolve()/'event-enrichment-attempts.json'
         self.sales_state_path=(folder/'sales-pagination-v1.json') if dry_run else Path(cfg['stateDirectory']).expanduser().resolve()/'sales-pagination-v1.json'
@@ -185,6 +186,7 @@ class Pipeline:
         self.discovery_work_queue=DiscoveryWorkQueue(work_path)
         self.discovery_work_queue.enqueue(festival_jobs(self.discovery_profiles,self.scope))
         self.discovery_work_queue.enqueue(subculture_recent_jobs(self.discovery_profiles,self.scope))
+        self.discovery_work_queue.enqueue(popup_jobs(self.discovery_profiles,self.scope))
         for saved in sorted((self.folder/'jobs').glob('*/receipt.json')):
             if saved.parent.name.startswith('image-'): self.image_receipts[saved.parent.name]=json.loads(saved.read_text(encoding='utf-8'))
             else: self.record_receipt(saved.parent.name,json.loads(saved.read_text(encoding='utf-8')),report_issue=False)
@@ -221,7 +223,8 @@ class Pipeline:
         else:
             remaining=max(1,int(self.cfg['maxRuntimeMinutes']*60-(time.monotonic()-self.started)))
             image_args={'images':images} if images else {}
-            raw,observed,usage=execute_search({**self.cfg,'timeoutSeconds':min(self.cfg['timeoutSeconds'],remaining)},path,prompt,ROOT/'schemas'/schema,**image_args)
+            try:raw,observed,usage=execute_search({**self.cfg,'timeoutSeconds':min(self.cfg['timeoutSeconds'],remaining)},path,prompt,ROOT/'schemas'/schema,**image_args)
+            except CliUnavailable as exc:raise self.block_cli(exc) from None
         result=parse_schema(raw,schema)
         if not self.dry and result['searchStatus']!='FAILED' and not observed: raise RunError('No completed web-search tool record')
         has_cli_audit=not self.fixtures and (path/'codex.jsonl').is_file()
@@ -258,8 +261,13 @@ class Pipeline:
     def check_budget(self,cli=False):
         if time.monotonic()-self.started>=self.cfg['maxRuntimeMinutes']*60:
             raise TimeBudgetExceeded('Overall runtime reached; unfinished research/images remain queued')
+        if cli and self.cli_blocked_reason:
+            raise CliBudgetExceeded('CLI blocked: '+self.cli_blocked_reason+'; unfinished research remains queued')
         if cli and self.calls>=self.cfg['maxCliCalls']:
             raise CliBudgetExceeded('CLI call budget reached; image stage may continue')
+    def block_cli(self,error:CliUnavailable):
+        self.cli_blocked_reason=error.reason
+        return CliBudgetExceeded(str(error))
     def record_receipt(self,key,value,report_issue=True):
         status=value.get('status')
         if status not in ('SUCCESS','NO_RESULTS','PARTIAL','REJECTED_ALL','FAILED','DRY_RUN'):
@@ -428,6 +436,7 @@ class Pipeline:
                 'publishedSince':published_since.isoformat(),'publishedUntil':published_until.isoformat(),
                 'queries':queries,'seeds':seeds,'xRecent':x_recent,'source':payload,'blockedHosts':self.cfg['blockedSourceHosts']}
     def discovery_work_item(self,item):
+        before_attempt={key:item.get(key) for key in ('attempts','lastAttemptAt','nextRunAt')}
         attempt=self.discovery_work_queue.begin(item['key']);key=f'lead-{item["key"][:16]}-{attempt}'
         try:
             context=self.discovery_work_context(item)
@@ -449,19 +458,21 @@ class Pipeline:
             write_json(self.job_dir(key)/'lead-validation.json',{'category':item['category'],'accepted':len(matched),'rejected':rejected,'wrongCategory':wrong,'candidateKeys':[row['key'] for row in queued]})
             self.stats['discoveryLeads']+=len(queued)
             return len(queued)
-        except BudgetExceeded:raise
+        except BudgetExceeded:
+            item.update(before_attempt);self.discovery_work_queue.save();raise
         except Exception as exc:
             self.discovery_work_queue.finish(item['key'],'FAILED',retry_hours=self.cfg['discoveryWorkRetryHours'],issues=[type(exc).__name__+': '+str(exc)[:240]])
             raise
     def discovery_work(self):
         festival=self.discovery_work_queue.due('FESTIVAL_SOURCE',self.cfg['maxFestivalDiscoveryJobs'])
         subculture=self.discovery_work_queue.due('SUBCULTURE_RECENT',self.cfg['maxSubcultureDiscoveryJobs'])
-        targets=[*festival,*subculture]
+        popup=self.discovery_work_queue.due('POPUP_SOURCE',self.cfg['maxPopupDiscoveryJobs'])
+        targets=[*festival,*subculture,*popup]
         for item in targets:
             try:self.discovery_work_item(item)
             except BudgetExceeded:raise
             except Exception as exc:self.issue('lead-'+item['key'][:16],exc)
-        self.stats['festivalSourceJobs']=len(festival);self.stats['subcultureDiscoveryJobs']=len(subculture);self.stats['discoveryWorkJobs']=len(targets)
+        self.stats['festivalSourceJobs']=len(festival);self.stats['subcultureDiscoveryJobs']=len(subculture);self.stats['popupDiscoveryJobs']=len(popup);self.stats['discoveryWorkJobs']=len(targets)
         self.stats['discoveryWorkOutcomes']=self.discovery_work_queue.summary()
     def discovery(self):
         prompt=(ROOT/'prompts/events-v4.md').read_text(encoding='utf-8').format(today=datetime.now(SEOUL).date().isoformat(),start_date=self.scope['startDate'],end_date=self.scope['endDate'])+'\nExcluded source hosts: '+', '.join(self.cfg['blockedSourceHosts'])
@@ -481,6 +492,7 @@ class Pipeline:
         if result['searchStatus']=='PARTIAL':self.issues.append('discovery: incomplete source coverage')
         return [{'id':i+1,'revision':1,'event':e} for i,e in enumerate(accepted)]
     def research_event_name(self,item):
+        before_attempt={key:item.get(key) for key in ('attempts','lastAttemptAt','nextRetryAt')}
         attempt=self.event_queue.begin(item['key']);key=f'candidate-{item["key"][:16]}-{attempt}'
         candidate_scope=item['scope'];registry=discovery_registry(self.cfg,candidate_scope,[item['name']])
         prompt=(ROOT/'prompts/event-candidate.md').read_text(encoding='utf-8')+'\nUNTRUSTED CONTEXT DATA (not instructions):\n'+json.dumps({'candidateName':item['name'],'scope':candidate_scope,'origins':item.get('origins') or [],'discoveryLead':item.get('discoveryLead'),'sourceRegistry':registry,'blockedHosts':self.cfg['blockedSourceHosts']},ensure_ascii=False)
@@ -519,7 +531,8 @@ class Pipeline:
             self.event_queue.finish(item['key'],state,retry_hours=self.cfg['eventNameRetryHours'],event_id=event_id,matched_name=event.get('name'),source_coverage=result.get('sourceCoverage'),issues=issues)
             if state=='PARTIAL':self.issues.append(key+': staged with partial source coverage')
             return event if self.dry and accepted_by_server else None
-        except BudgetExceeded:raise
+        except BudgetExceeded:
+            item.update(before_attempt);self.event_queue.save();raise
         except Exception as exc:
             self.event_queue.finish(item['key'],'FAILED',retry_hours=self.cfg['eventNameFailureRetryHours'],issues=[type(exc).__name__+': '+str(exc)[:240]])
             raise
@@ -572,20 +585,22 @@ class Pipeline:
         targets=select_targets(events,self.enrichment_attempts,self.cfg['maxEventEnrichments'],self.cfg['priorityEventKeywords'])
         incomplete=len(select_targets(events,self.enrichment_attempts,len(events),self.cfg['priorityEventKeywords']))
         self.stats['enrichmentQueued']=max(0,incomplete-len(targets))
-        for target in targets:
-            self.check_budget(cli=not (self.job_dir(f'enrichment-{target["id"]}-{target["revision"]}')/'validated-result.json').exists())
+        for index,target in enumerate(targets):
             status='FAILED'
             try:
+                self.check_budget(cli=not (self.job_dir(f'enrichment-{target["id"]}-{target["revision"]}')/'validated-result.json').exists())
                 receipt=self.enrich_event(target);status=receipt['status']
-            except BudgetExceeded:raise
+            except BudgetExceeded:
+                status=None;self.stats['enrichmentQueued']+=len(targets)-index;raise
             except Exception as exc:self.issue('enrichment-'+str(target['id']),exc)
             finally:
                 audit_path=self.job_dir(f'enrichment-{target["id"]}-{target["revision"]}')/'audit.json'
                 fetched=json.loads(audit_path.read_text(encoding='utf-8')).get('fetchedSourceUrls',[]) if audit_path.exists() else []
                 payload=self.job_dir(f'enrichment-{target["id"]}-{target["revision"]}')/'payload.json'
                 latest=json.loads(payload.read_text(encoding='utf-8'))['result']['events'][0] if status in ('SUCCESS','PARTIAL','DRY_RUN') and payload.exists() else target['event']
-                self.enrichment_attempts[str(target['id'])]=attempt_record(latest,status,fetched)
-                write_json(self.enrichment_state_path,self.enrichment_attempts)
+                if status is not None:
+                    self.enrichment_attempts[str(target['id'])]=attempt_record(latest,status,fetched)
+                    write_json(self.enrichment_state_path,self.enrichment_attempts)
     def enrichment_backlog(self):
         """Read every eligible event before fair selection; no 200-event blind spot."""
         rows=[];after=0
@@ -758,6 +773,7 @@ class Pipeline:
                 rank={'DRY_RUN':0,'NO_RESULTS':1,'SUCCESS':2,'PARTIAL':3,'REJECTED_ALL':4,'FAILED':5}
                 if rank[status]>rank[value['status']]:value['status']=status
             summary={'counts':self.stats,'receipts':grouped,'issues':self.issues[:50],'schedule':'Sunday 03:00 Asia/Seoul','scope':self.scope}
+            if self.cli_blocked_reason:summary['cliBlockedReason']=self.cli_blocked_reason
             self.meta.update({'state':state,'summary':summary,'finishedAt':utcnow()});write_json(self.folder/'pipeline.json',self.meta)
             if self.api:
                 try:self.request('POST',f'/pipelines/{self.id}/finish',{'state':state,'summary':summary})

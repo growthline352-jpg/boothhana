@@ -1,4 +1,4 @@
-export type SiteCategory = 'subculture' | 'exhibitions' | 'festivals'
+export type SiteCategory = 'subculture' | 'exhibitions' | 'festivals' | 'popups'
 export const PORTAL_ORIGIN: string
 export const CATEGORY_SITES: Record<SiteCategory, { origin: string; label: string; code: string; name: string; description: string }>
 export function categorySite(origin: string): SiteCategory | null

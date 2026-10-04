@@ -111,7 +111,7 @@ export function PublicLayout() {
     </nav>
     <footer className="discovery-footer"><div className="discovery-container discovery-footer-inner">
       <div><Link to="/" className="discovery-footer-brand">부스하나<span>취향을 따라, 오프라인으로.</span></Link>
-        <p>서울·경기의 서브컬처·박람회·축제와 참가 부스·상품을 찾아보세요.</p>
+        <p>서울·경기의 서브컬처·박람회·축제·팝업과 참가 부스·상품을 찾아보세요.</p>
         <small>방문 전 주최 측의 최신 일정과 이용 조건을 확인해 주세요.</small></div>
       <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link><button type="button" className="feedback-footer-button" onClick={openFeedback}>이런 개선이 필요해요</button><AnalyticsConsent /></nav>
     </div></footer>

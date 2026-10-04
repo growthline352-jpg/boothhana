@@ -21,6 +21,12 @@ const categoryLinks: Record<CategoryKey, HomeQuickLink[]> = {
     { label: '생활·취미', detail: '라이프스타일', icon: 'ticket', to: '?category=exhibitions&type=LIFESTYLE&period=upcoming' },
     { label: '디자인·아트', detail: '창작과 브랜드', icon: 'building', to: '?category=exhibitions&type=DESIGN&period=upcoming' },
   ],
+  popups: [
+    { label: '팝업스토어', detail: '브랜드와 굿즈', icon: 'bookmark', to: '?category=popups&type=POPUP_RETAIL&period=upcoming' },
+    { label: '체험형', detail: '직접 즐기는 공간', icon: 'ticket', to: '?category=popups&type=POPUP_EXPERIENCE&period=upcoming' },
+    { label: '전시형', detail: '보고 만나는 공간', icon: 'building', to: '?category=popups&type=POPUP_EXHIBITION&period=upcoming' },
+    { label: '복합형', detail: '체험과 쇼핑', icon: 'sparkles', to: '?category=popups&type=POPUP_MIXED&period=upcoming' },
+  ],
   festivals: [
     { label: '걷기·거리', detail: '거리 행사', icon: 'pin', to: '?category=festivals&type=WALK&period=upcoming' },
     { label: '불꽃·빛', detail: '야간 축제', icon: 'sparkles', to: '?category=festivals&type=LIGHT&period=upcoming' },

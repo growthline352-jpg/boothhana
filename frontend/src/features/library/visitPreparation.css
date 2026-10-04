@@ -1,0 +1,78 @@
+/* The visit plan is a compact form; reference and history stay secondary. */
+.memory-editor.memory-editor--plan {
+ --plan-text:var(--text-primary,#243443);
+ --plan-muted:var(--text-muted,#596875);
+ --plan-line:var(--border,#dce2e8);
+ width:min(600px,calc(100vw - 32px));
+ padding:28px;
+ color:var(--plan-text);
+ overflow:hidden;
+}
+.memory-editor.memory-editor--plan[open]{display:flex;flex-direction:column}
+.memory-editor--plan>header{flex-shrink:0;margin:0;padding:0 0 18px;border:0;border-bottom:1px solid var(--plan-line)}
+.memory-plan-body{min-height:0;overflow:auto;padding:18px 4px 0 0;scrollbar-gutter:stable;overscroll-behavior:contain}
+.memory-editor--plan>header .eyebrow{margin:0 0 6px;font-size:13px;line-height:1.5;letter-spacing:0;color:var(--accent,#b54432)}
+.memory-editor--plan>header h2{font-size:22px;text-wrap:balance}
+.memory-editor--plan .memory-plan-close{flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--plan-line);border-radius:10px;display:grid;place-items:center;background:#fff;color:var(--plan-muted);cursor:pointer}
+.memory-editor--plan .memory-plan-close:hover{background:#f4f5f7;color:var(--plan-text)}
+.memory-editor--plan .memory-plan-fields{gap:0}
+.memory-plan-date{display:grid;gap:8px;margin:0 0 4px}
+.memory-plan-date>span{font-size:14px;font-weight:700}
+.memory-plan-date .select{width:100%;min-height:48px;background:#f7f8fa;font-weight:600;color:var(--plan-text);border-color:var(--plan-line);font-variant-numeric:tabular-nums}
+.visit-prep-information{margin:0;padding:0}
+.visit-prep-facts{margin:0}
+.visit-prep-facts>div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:16px;padding:16px 0;border-bottom:1px solid var(--plan-line,#dce2e8)}
+.visit-prep-facts dt{font-size:14px;line-height:1.65;color:var(--plan-muted,#596875)}
+.visit-prep-facts dd{margin:0;font-size:16px;line-height:1.6;overflow-wrap:anywhere}
+.visit-prep-time{font-weight:600;font-variant-numeric:tabular-nums}
+.visit-prep-facts dd strong{font-size:16px;font-weight:600;display:block}
+.visit-prep-facts dd p{margin:0;line-height:1.6}
+.visit-prep-address{display:block;margin-top:4px;font-size:14px;color:var(--plan-muted,#596875)}
+.visit-prep-facts .booking-badge{margin:0 0 8px;max-width:100%;width:fit-content}
+.visit-prep-official{display:grid;margin-top:4px}
+.visit-prep-official:empty{display:none}
+.visit-prep-official>.catalog-external-link{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:8px 0;color:var(--accent,#a13d2e);font-size:14px;font-weight:600;text-decoration:none;overflow-wrap:anywhere}
+.visit-prep-official svg{flex-shrink:0}
+.visit-prep-official>.catalog-external-link:hover{text-decoration:underline;text-underline-offset:3px}
+.visit-prep-official>.catalog-external-link:visited{color:#78514a}
+.visit-prep-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 8px}
+.visit-prep-tools>.catalog-external-link,.visit-prep-tools>.btn{display:flex;justify-content:center;align-items:center;gap:8px;min-height:46px;padding:10px 12px;border:1px solid var(--plan-line,#dce2e8);border-radius:10px;background:#fff;color:var(--plan-text,#243443);text-decoration:none;font-size:14px;line-height:1.5;text-align:center;white-space:normal}
+.visit-prep-tools>.catalog-external-link:hover,.visit-prep-tools>.btn:not(:disabled):hover{background:#f4f5f7;border-color:#9ba9b5}
+.visit-prep-tools>.catalog-external-link:visited{color:#78514a}
+.visit-prep-tools>.btn:disabled{opacity:.5;cursor:not-allowed}
+.visit-prep-tools>:only-child{grid-column:1/-1}
+.memory-editor--plan .visit-prep-calendar-note{font-size:12px;color:var(--plan-muted);margin:0;line-height:1.6}
+.memory-editor--plan .visit-prep-message{font-size:13px;color:#276044;background:#eff7f1;margin:10px 0 0;padding:10px 12px;border-radius:8px}
+.visit-prep-feedback{padding:20px 0;font-size:14px;color:var(--plan-muted,#596875)}
+.visit-prep-feedback .btn{display:block;margin-top:10px}
+.memory-editor--plan .memory-plan-note{display:grid;gap:8px;border-top:1px solid var(--plan-line);margin-top:22px;padding-top:20px}
+.memory-plan-note>.field>span{font-size:14px;font-weight:700}
+.memory-editor--plan .memory-plan-note .textarea{min-height:78px;resize:vertical;line-height:1.6}
+.memory-plan-note .field small{font-size:12px;color:var(--plan-muted);text-align:right}
+.memory-editor--plan .memory-plan-hall{padding:0;border:0;margin:0}
+.memory-editor--plan .memory-plan-hall summary{min-height:44px;display:flex;align-items:center;color:var(--plan-muted);font-size:13px}
+.memory-plan-hall summary::after{content:'+';margin-left:auto;font-size:18px}
+.memory-plan-hall[open] summary::after{content:'−'}
+.memory-plan-hall .field{margin:4px 0 8px}
+.memory-editor--plan>.memory-plan-save{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0 0;padding:16px 0 0;border-top:1px solid var(--plan-line)}
+.memory-plan-save .btn{min-height:46px;min-width:156px;justify-content:center}
+.memory-editor--plan .memory-plan-privacy{font-size:12px;color:var(--plan-muted);margin:0}
+.memory-editor--plan .memory-plan-more{border-top:1px solid var(--plan-line);margin-top:20px;padding:8px 0 0}
+.memory-editor--plan .memory-plan-more>summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--plan-muted)}
+.memory-plan-more>summary::after{content:'+';font-size:18px}
+.memory-plan-more[open]>summary::after{content:'−'}
+.memory-plan-more>section:first-of-type{border-top:0;margin-top:0;padding-top:12px}
+.memory-plan-more .row-actions{gap:10px}
+.memory-plan-close:focus-visible,.memory-plan-more>summary:focus-visible,.memory-plan-hall>summary:focus-visible,.visit-prep-official a:focus-visible,.visit-prep-tools>a:focus-visible{outline:2px solid var(--accent,#b54432);outline-offset:3px}
+@media(max-width:600px){
+ .memory-editor.memory-editor--plan{width:calc(100vw - 24px);padding:20px;max-height:calc(100dvh - 24px);border-radius:16px}
+ .memory-editor--plan>header{padding-bottom:16px}
+ .memory-editor--plan>header h2{font-size:20px}
+ .visit-prep-facts>div{grid-template-columns:68px minmax(0,1fr);gap:12px;padding:14px 0}
+ .visit-prep-facts dt{font-size:13px}
+ .visit-prep-tools{gap:8px;margin-top:16px}
+ .visit-prep-tools>.btn,.visit-prep-tools>.catalog-external-link{padding:10px 8px;font-size:14px}
+ .memory-plan-save .btn{width:100%;min-height:48px}
+ .memory-editor--plan>.memory-plan-save{flex-direction:column;align-items:stretch;gap:10px;margin-top:12px;padding-top:14px}
+ .memory-editor--plan .memory-plan-more{margin-top:16px}
+}

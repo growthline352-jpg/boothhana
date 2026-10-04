@@ -6,6 +6,7 @@ test('sitemap contains canonical category and event URLs with valid escaping', (
   const output = renderSitemap('https://boothhana.example', [{ id: 13, publishedAt: '2026-09-27' }])
   assert.match(output, /https:\/\/boothhana\.example\/discover\?category=exhibitions/)
   assert.match(output, /category=exhibitions<\/loc>/)
+  assert.match(output, /category=popups<\/loc>/)
   assert.match(output, /<loc>https:\/\/boothhana\.example\/discover\/13<\/loc><lastmod>2026-09-27<\/lastmod>/)
   assert.match(output, /<loc>https:\/\/boothhana\.example\/events<\/loc>/)
   assert.match(renderRobots('https://boothhana.example'), /Sitemap: https:\/\/boothhana\.example\/sitemap\.xml/)
@@ -32,5 +33,5 @@ test('published event discovery combines all public categories and removes dupli
   }
   const rows = await publishedEvents({ apiBase: 'https://api.example', fetcher })
   assert.deepEqual(rows.map(row => row.id), [1, 2, 3])
-  assert.equal(seen.length, 3)
+  assert.equal(seen.length, 4)
 })

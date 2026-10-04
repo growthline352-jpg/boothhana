@@ -5,7 +5,7 @@ Dynamic permission/RLS SQL and NOT VALID constraint validation remain real-DB ch
 from pathlib import Path
 import json,re,os
 ROOT=Path(os.environ.get('BOOTHHANA_REVIEW_BASELINE',Path(__file__).resolve().parents[2]))
-TYPES={'bigserial':'int8','bigint':'int8','integer':'int4','int':'int4','boolean':'bool','text':'text','uuid':'uuid','jsonb':'jsonb','timestamptz':'timestamptz','date':'date','varchar':'varchar','char':'bpchar','bytea':'bytea'}
+TYPES={'bigserial':'int8','bigint':'int8','integer':'int4','int':'int4','boolean':'bool','text':'text','uuid':'uuid','jsonb':'jsonb','timestamptz':'timestamptz','date':'date','varchar':'varchar','char':'bpchar','bytea':'bytea','double precision':'float8'}
 def pieces(text):
     out=[];start=0;depth=0;quote=False;i=0
     while i<len(text):
@@ -36,13 +36,13 @@ def close_paren(text,start):
     raise ValueError('Unterminated table definition')
 
 def column(part):
-    m=re.match(r'(\w+)\s+(bigserial|bigint|integer|int|boolean|text|uuid|jsonb|timestamptz|date|varchar|char|bytea)\b(?:\s*\(\s*(\d+)\s*\))?',part,re.I)
+    m=re.match(r'(\w+)\s+(bigserial|bigint|integer|int|boolean|text|uuid|jsonb|timestamptz|date|varchar|char|bytea|double precision)\b(?:\s*\(\s*(\d+)\s*\))?',part,re.I)
     if not m:raise ValueError('Unsupported column DDL: '+part)
     name,typ,size=m.groups();return name.lower(),{'udt':TYPES[typ.lower()],'length':int(size) if size else None,'notNull':bool(re.search(r'\bnot\s+null\b|\bprimary\s+key\b',part,re.I)),'definition':part}
 
 def inventory(root=ROOT):
     tables={};files=sorted((root/'database').glob('[0-9][0-9][0-9]_*.sql'))
-    if [p.name[:3] for p in files]!=[f'{i:03d}' for i in range(1,26)]:raise ValueError('Expected migration sequence 001..025')
+    if [p.name[:3] for p in files]!=[f'{i:03d}' for i in range(1,28)]:raise ValueError('Expected migration sequence 001..027')
     for path in files:
         text=re.sub(r'/\*.*?\*/','',path.read_text(),flags=re.S);text=re.sub(r'--[^\n]*','',text)
         # This extractor intentionally supports only CREATE and single ADD/DROP COLUMN.

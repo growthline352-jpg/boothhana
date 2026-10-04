@@ -28,6 +28,7 @@ class GateReportingTests(unittest.TestCase):
                 'TEST-com.boothhana.release.CreatorRegistrationIntegrationTests.xml':['groupedEventLimitSurvivesDifferentBaseAndPreventsConflictingMerge', 'concurrentDifferentBaseRegistrationsCommitExactlyOne', 'directRegistrationPublishesOnlyOwnBoothWithoutGrantAndEnforcesAccountLimit', 'claimApprovalRemainsRequiredAndCannotConflictWithDirectRegistration', 'approvedCollectedBoothBlocksNewBaseBoothInSameEvent', 'directProductsKeepIdentityEditsAndPublicStateThroughRepublication', 'registrationHttpRequiresLoginCsrfAndOwnedBase', 'platformRegistrationIsImmediateAndCannotUseAnotherBaseToRegisterTwice', 'endedUnpublishedAndOutOfPeriodRegistrationsAreRejected'],
                 'TEST-com.boothhana.release.LibraryIntegrationTests.xml':[
                     'seoulAreaFiltersApplyToCountsListsCalendarAndMultiVenueEvents',
+                    'popupDiscoverySharesIdentityAndSavesOnlyForConfirmedSubcultureTopics',
                     'detachedProfileSaveCannotRevertCompletedOnboarding',
                     'memberInterestsArePrivateVersionedAndCategoryScoped',
                     'interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback',
@@ -41,6 +42,11 @@ class GateReportingTests(unittest.TestCase):
                     'seriesLinkIsVersionedPublicOnlyAndDoesNotTransferOwnership',
                     'verifiedBoothProductEditPreservesPendingCollectionAndIdentityThroughRepublication'],
                 'TEST-com.boothhana.release.OperationsIntegrationTests.xml':[
+                    'rechecksPreservePublicFactsDeduplicateAndRequireFreshAdminReview',
+                    'recheckFailuresBackOffAndCannotClearFactsOrUseUnregisteredSources',
+                    'comparisonDeduplicatesEditionsAndPreservesPublishedPlaceAdmissionByDay',
+                    'popupPlaceAndComparisonUseOnlyCurrentPublishedFactsAndDisappearAfterAddressChanges',
+                    'observationRoutesProtectPrivateSourcesAndRequireAdminCsrf',
                     'operatingGroupPreservesSourceIdsSavesCommentsAndOwnership',
                     'operatingGroupRejectsStaleChangesDuplicateMembershipAndCrossCategory',
                     'operatingGroupPaginationCountsEditionsAndScopesMatchingDays',
