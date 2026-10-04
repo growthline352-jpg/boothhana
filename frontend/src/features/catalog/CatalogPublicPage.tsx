@@ -188,6 +188,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
     return()=>cancelAnimationFrame(frame)
   },[section,state.focus,state.booth])
   const visitChange=(day:string)=>{update({day,hall:'',focus:null,booth:null});setMessage('방문일 기준으로 참가 부스와 위치를 바꿨어요.')}
+  const operatingVenueSelect=operatingChoices.length>1&&<label className={section==='home'?'field event-visit-day':'field'}><span>운영 행사·전시장</span><select className="select" value={currentEventId} onChange={ev=>{const next=new URLSearchParams(params);next.set('operatingEvent',ev.target.value);next.delete('hall');next.delete('focus');setParams(next,{replace:true,preventScrollReset:true})}}>{operatingChoices.map(row=><option key={row.id} value={row.id}>{row.event.name} · {row.event.venueName||'장소 미확인'}</option>)}</select></label>
   const official=e.sources.find(s=>['OFFICIAL','ORGANIZER_SOCIAL'].includes(s.kind)&&s.access==='ORIGINAL'&&publicLink(s.url))
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page event-detail-redesign">
@@ -199,6 +200,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
         <div><dt>장소</dt><dd>{e.venueName||'장소 미공개·미확인'}{e.address&&<small>{e.address}</small>}</dd></div>
         <div><dt>입장</dt><dd>{e.admission||'입장 조건 미확인 · 무료 여부는 주최 공지를 확인하세요.'}</dd></div></dl>
       {section==='home'&&days.length>1&&<label className="field event-visit-day"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(day=><option key={day} value={day}>{dateLabel(day)}{day===today?' · 오늘':''}</option>)}</select></label>}
+      {section==='home'&&operatingVenueSelect}
       {section==='home'&&<FirstVisitSummary event={e}/>}
       <div className="visit-primary-actions">{currentValue.participants.length>0&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
       <div className="visit-utility-actions">{discoveryFeatures.comparison&&<Link to={compareHref([currentEventId])}>다른 행사와 비교</Link>}{usableAddress(e.address)&&<><SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(e.address!)}`}>장소 지도 ↗</SafeLink><button type="button" onClick={()=>void copyAddress()}>주소 복사</button></>}
@@ -208,7 +210,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
     {browsingBooths&&<section id="visit-browse" className="visit-controls" aria-label="방문 조건 및 부스 검색"><div className="visit-controls-head"><div><p className="eyebrow">{section==='map'?'배치도':'참가 부스'}</p><h2>{section==='map'?'날짜별 배치도':'부스 찾기'}</h2></div></div>
     <div className="visit-condition-row">
       <label className="field"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(d=><option key={d} value={d}>{dateLabel(d)}{d===today?' · 오늘':''}</option>)}{!days.length&&<option value="">일정 미확인</option>}</select></label>
-      {operatingChoices.length>1&&<label className="field"><span>운영 행사·전시장</span><select className="select" value={currentEventId} onChange={ev=>{const next=new URLSearchParams(params);next.set('operatingEvent',ev.target.value);next.delete('hall');next.delete('focus');setParams(next,{replace:true,preventScrollReset:true})}}>{operatingChoices.map(row=><option key={row.id} value={row.id}>{row.event.name} · {row.event.venueName||'장소 미확인'}</option>)}</select></label>}
+      {operatingVenueSelect}
 
       <label className="field"><span>전시관</span><select className="select" value={state.hall} onChange={ev=>{update({hall:ev.target.value,focus:null,booth:null});setMessage('선택한 전시관 기준으로 안내해요.')}}><option value="">전체 전시관</option>{halls.map(h=><option key={h} value={h}>{h}</option>)}{state.hall&&!halls.some(h=>normalizePlace(h)===normalizePlace(state.hall))&&<option value={state.hall}>{state.hall} · 등록 위치 미확인</option>}</select></label>
       <label className="field visit-search"><span>{section==='map'?'배치도에서 부스 찾기':'부스·번호·작가·상품 찾기'}</span><input className="input" type="search" value={state.q} maxLength={100} placeholder="B1, 작가명, 달토끼 키링" onChange={ev=>update({q:ev.target.value,focus:null})}/></label>

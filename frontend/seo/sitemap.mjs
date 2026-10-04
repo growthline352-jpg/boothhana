@@ -63,6 +63,7 @@ export function renderSitemap(siteUrl, events, splitSites = false) {
     { loc: `${origin}/discover`, lastmod: newest },
     { loc: `${origin}/discover?category=exhibitions`, lastmod: newest },
     { loc: `${origin}/discover?category=festivals`, lastmod: newest },
+    { loc: `${origin}/discover?category=popups`, lastmod: newest },
     { loc: `${origin}/events`, lastmod: newest },
     ...events.map(event => ({ loc: `${origin}/discover/${event.id}`, lastmod: event.publishedAt })),
   ]

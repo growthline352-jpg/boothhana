@@ -52,15 +52,15 @@ export function DiscoveryPage() {
   usePageScroll(!data.loading)
   const [draft, setDraft] = useState(state.q)
   useEffect(() => { setDraft(state.q) }, [state.q, category.key])
-  const update = (changes: Record<string, string>) => {
+  const update = (changes: Record<string, string>, preservePage = false) => {
     const next = new URLSearchParams(params)
     if (currentSiteCategory()) next.delete('category')
     else next.set('category', category.key)
-    if (!('page' in changes)) next.delete('page')
+    if (!preservePage && !('page' in changes)) next.delete('page')
     if ('region' in changes && changes.region!=='SEOUL') next.delete('areas')
     if ('areas' in changes || 'region' in changes) {next.delete('day');next.delete('calendarEvent')}
     Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key))
-    setParams(next)
+    setParams(next, {preventScrollReset: preservePage})
   }
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -71,7 +71,7 @@ export function DiscoveryPage() {
     ? update({ view: 'calendar', period: 'all', from: '', to: '', month: periodRange(state.period, today, state.from, state.to).from.slice(0, 7) || today.slice(0, 7), day: '', calendarEvent: '' })
     : update({ view: 'results', period: 'custom', ...monthRange(calendarMonth(params.get('month'), today)), month: '', day: '', calendarEvent: '' })
   const comparing=discoveryFeatures.comparison&&params.get('compare')==='1',selectedIds=compareIds(params.get('ids'))
-  const selectComparison=(id:number)=>update({ids:toggleComparison(selectedIds,id).join(',')})
+  const selectComparison=(id:number)=>update({ids:toggleComparison(selectedIds,id).join(',')},true)
   const rows = data.data?.items ?? []
   const featuredRows = featured.data?.items ?? []
   const featuredLabel = featured.data?.mode === 'POPULAR' ? '저장 인원순 인기 행사' : '새로 공개된 행사'
@@ -152,8 +152,8 @@ export function DiscoveryPage() {
 
     {!isHome && <section className="discovery-container discovery-feed" aria-labelledby="discovery-heading" id="discovery-results">
       <div className="discovery-feed-head"><div><h2 id="discovery-heading">{category.label} 전체보기</h2><p>날짜와 지역, 관심 분야로 원하는 행사를 좁혀보세요.</p></div><div className="discovery-view-toggle" role="group" aria-label="행사 보기 방식"><button type="button" aria-pressed={!isCalendar} onClick={() => isCalendar && toggleView(false)}>목록</button><button type="button" aria-pressed={isCalendar} onClick={() => !isCalendar && toggleView(true)}>캘린더</button></div></div>
-      <div className="row-actions">{discoveryFeatures.popupExplore&&category.key==='popups'&&<Link className="btn secondary" to="/popups">동네별 팝업 찾기</Link>}{discoveryFeatures.comparison&&!isCalendar&&<button className="btn secondary" aria-pressed={comparing} onClick={()=>update({compare:comparing?'':'1',ids:''})}>{comparing?'비교 선택 닫기':'행사 비교하기'}</button>}</div>
-      {comparing&&!isCalendar&&<div className="compare-selection" role="status"><strong>{selectedIds.length}/2개 선택</strong><span>두 행사를 선택해 일정과 입장 조건을 비교하세요.</span>{selectedIds.length>0&&<Link className="btn primary" to={compareHref(selectedIds)}>비교 보기</Link>}<button className="btn secondary" disabled={!selectedIds.length} onClick={()=>update({ids:''})}>선택 초기화</button></div>}
+      <div className="row-actions">{discoveryFeatures.popupExplore&&category.key==='popups'&&<Link className="btn secondary" to="/popups">동네별 팝업 찾기</Link>}{discoveryFeatures.comparison&&!isCalendar&&<button className="btn secondary" aria-pressed={comparing} onClick={()=>update({compare:comparing?'':'1',ids:''},true)}>{comparing?'비교 선택 닫기':'행사 비교하기'}</button>}</div>
+      {comparing&&!isCalendar&&<div className="compare-selection" role="status"><strong>{selectedIds.length}/2개 선택</strong><span>두 행사를 선택해 일정과 입장 조건을 비교하세요.</span>{selectedIds.length>0&&<Link className="btn primary" to={compareHref(selectedIds)}>비교 보기</Link>}<button className="btn secondary" disabled={!selectedIds.length} onClick={()=>update({ids:''},true)}>선택 초기화</button></div>}
       <div className="discovery-subcategories" role="group" aria-label={`${category.label} 세부 분류`}>
         {category.filters.map(filter => <button key={filter.value} type="button" disabled={!category.enabled} className={`discovery-filter-chip${state.subcategory === filter.value ? ' is-selected' : ''}`} aria-pressed={state.subcategory === filter.value} onClick={() => update({ type: filter.value })}>{filter.value === '' && <DiscoveryIcon name="grid" size={15}/>} {filter.label}</button>)}
       </div>
