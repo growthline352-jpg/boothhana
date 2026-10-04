@@ -123,7 +123,8 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   const dayParticipants=currentValue.participants.filter(row=>attendance(row,state.day)!=='other')
   const confirmedCount=dayParticipants.filter(row=>attendance(row,state.day)==='confirmed').length
   const e=alternate||members?{...currentValue.event,name:value.event.name,occurrences:value.event.occurrences}:value.event
-  const section=eventSection(params),browsingBooths=section==='booths'||section==='map'
+  const hasBooths=currentValue.participants.length>0,requestedSection=eventSection(params)
+  const section=!hasBooths&&requestedSection==='booths'?'home':requestedSection,browsingBooths=section==='booths'||section==='map'
   const memoryMode=params.get('my')==='saved'?'saved':params.get('my')==='visited'?'visited':'all'
   const savedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null).map(x=>x.target.participantId!)),[library?.index,currentEventId])
   const visitedParticipants=useMemo(()=>new Set((library?.index||[]).filter(x=>x.target.eventId===currentEventId&&x.target.participantId!==null&&x.visitedDays.includes(state.day)).map(x=>x.target.participantId!)),[library?.index,currentEventId,state.day])
@@ -203,11 +204,11 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
       {section==='home'&&days.length>1&&<label className="field event-visit-day"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(day=><option key={day} value={day}>{dateLabel(day)}{day===today?' · 오늘':''}</option>)}</select></label>}
       {section==='home'&&operatingVenueSelect}
       {section==='home'&&<FirstVisitSummary event={e}/>}
-      <div className="visit-primary-actions">{currentValue.participants.length>0&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}<Link className="btn secondary" to={itineraryHref(currentEventId,state.day)}>이 행사로 일정 만들기</Link>{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
+      <div className="visit-primary-actions">{hasBooths&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}<Link className="btn secondary" to={itineraryHref(currentEventId,state.day)}>이 행사로 일정 만들기</Link>{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
       <div className="visit-utility-actions">{discoveryFeatures.comparison&&<Link to={compareHref([currentEventId])}>다른 행사와 비교</Link>}{usableAddress(e.address)&&<><SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(e.address!)}`}>장소 지도 ↗</SafeLink><button type="button" onClick={()=>void copyAddress()}>주소 복사</button></>}
         <SaveButton target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall}/><ShareQr target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall} title={e.name}/><ReportLink target={{namespace:'CATALOG',type:'EVENT',eventId:currentEventId,id:currentEventId,day:state.day,hall:state.hall}} viewedVersion={currentValue.publishedAt}/></div>
     </div></header>
-    <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths','부스'],['map','배치도'],['reviews','후기']] as const).map(([key,label])=><button key={key} type="button" aria-current={section===key?'page':undefined} className={section===key?'is-current':''} onClick={()=>chooseSection(key)}>{label}</button>)}</nav>
+    <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths','부스'],['map','배치도'],['reviews','후기']] as const).filter(([key])=>key!=='booths'||hasBooths).map(([key,label])=><button key={key} type="button" aria-current={section===key?'page':undefined} className={section===key?'is-current':''} onClick={()=>chooseSection(key)}>{label}</button>)}</nav>
     {browsingBooths&&<section id="visit-browse" className="visit-controls" aria-label="방문 조건 및 부스 검색"><div className="visit-controls-head"><div><p className="eyebrow">{section==='map'?'배치도':'참가 부스'}</p><h2>{section==='map'?'날짜별 배치도':'부스 찾기'}</h2></div></div>
     <div className="visit-condition-row">
       <label className="field"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(d=><option key={d} value={d}>{dateLabel(d)}{d===today?' · 오늘':''}</option>)}{!days.length&&<option value="">일정 미확인</option>}</select></label>
