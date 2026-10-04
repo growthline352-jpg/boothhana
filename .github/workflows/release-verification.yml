@@ -37,9 +37,6 @@ jobs:
       BOOTH_SUPPORT_TEST_URL: jdbc:postgresql://127.0.0.1:5432/boothhana_support_test
       BOOTH_SUPPORT_TEST_USER: postgres
       BOOTH_SUPPORT_TEST_PASSWORD: isolated-ci-only
-      BOOTH_CATALOG_TEST_URL: jdbc:postgresql://127.0.0.1:5432/boothhana_catalog_test
-      BOOTH_CATALOG_TEST_USER: postgres
-      BOOTH_CATALOG_TEST_PASSWORD: isolated-ci-only
     steps:
       - uses: actions/checkout@v4
         with:
@@ -77,6 +74,16 @@ jobs:
           PGDATABASE=boothhana_release_test python verification/v18/prepare_test_db.py --confirm-isolated-empty-test-cluster
       - name: Required clean build and actual integration gate
         run: python verification/v24/release_gate.py
+      - name: Representative image lifecycle in dedicated catalog database
+        env:
+          BOOTH_CATALOG_TEST_URL: jdbc:postgresql://127.0.0.1:5432/boothhana_catalog_test
+          BOOTH_CATALOG_TEST_USER: postgres
+          BOOTH_CATALOG_TEST_PASSWORD: isolated-ci-only
+        run: |
+          cp -a backend/build/test-results/test backend/build/full-suite-test-results
+          cd backend
+          ./gradlew test --tests com.boothhana.collection.CatalogPostgresTests --rerun-tasks --no-daemon
+          python -c "import xml.etree.ElementTree as E; r=E.parse('build/test-results/test/TEST-com.boothhana.collection.CatalogPostgresTests.xml').getroot(); assert int(r.get('tests'))>0 and all(int(r.get(k,'0'))==0 for k in ('failures','errors','skipped'))"
       - name: Archive test reports (not deploy)
         if: always()
         uses: actions/upload-artifact@v4
@@ -84,6 +91,7 @@ jobs:
           name: verification-${{ github.sha }}
           path: |
             backend/build/test-results/test/
+            backend/build/full-suite-test-results/
             backend/build/reports/tests/test/
             verification/v17/results/*.json
             verification/v18/results/*.json
