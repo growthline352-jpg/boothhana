@@ -34,7 +34,11 @@ export function categoryRedirect({ origin, path, search = '', category = null, e
     const target = explicit || siteCategory || (path === '/discover' ? 'subculture' : null)
     if (!target) return '' // Portal remains an independent entry page.
     params.delete('category')
-    const targetPath = params.size ? '/discover' : '/'
+    const homeStateOnly = [...params.keys()].every(key => ['region', 'openingRegion', 'closingRegion'].includes(key))
+    // Local home tabs must retain the mounted page, including when the final tab is cleared.
+    // Canonical metadata still points home aliases at the category root.
+    if (siteCategory && !explicit && homeStateOnly) return ''
+    const targetPath = params.size && !homeStateOnly ? '/discover' : '/'
     const destination = `${categoryOrigin(target)}${targetPath}${params.size ? `?${params}` : ''}`
     const current = `${origin}${path}${search ? `?${new URLSearchParams(search)}` : ''}`
     return destination === current ? '' : destination

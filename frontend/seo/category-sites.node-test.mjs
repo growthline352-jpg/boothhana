@@ -27,6 +27,19 @@ test('legacy URLs are unchanged until rollout and redirect without losing filter
     assert.equal(categoryRedirect({ origin: 'https://expo.boothana.kr', path: '/', search: `category=${category}` }), '')
   }
 })
+
+test('home section tabs never redirect the current category page or turn clearing tabs into a document reload', () => {
+  for (const site of Object.values(CATEGORY_SITES)) {
+    for (const path of ['/', '/discover']) {
+      for (const search of ['', 'openingRegion=SEOUL', 'closingRegion=GYEONGGI', 'openingRegion=SEOUL&closingRegion=GYEONGGI', 'region=SEOUL&openingRegion=GYEONGGI']) {
+        assert.equal(categoryRedirect({ origin: site.origin, path, search }), '', `${site.origin}${path}?${search}`)
+      }
+    }
+    assert.equal(categoryRedirect({ origin: site.origin, path: '/', search: 'q=검색&openingRegion=SEOUL' }), `${site.origin}/discover?q=%EA%B2%80%EC%83%89&openingRegion=SEOUL`)
+    assert.equal(categoryRedirect({ origin: site.origin, path: '/', search: 'view=calendar' }), `${site.origin}/discover?view=calendar`)
+  }
+  assert.equal(categoryRedirect({ origin: 'https://boothana.kr', path: '/discover', search: 'category=exhibitions&openingRegion=SEOUL', enabled: true }), 'https://expo.boothana.kr/?openingRegion=SEOUL')
+})
 test('each category home has its own website identity, canonical and crawlable heading', async () => {
   for (const [key, site] of Object.entries(CATEGORY_SITES)) {
     const seen = []
