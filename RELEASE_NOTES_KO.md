@@ -1,6 +1,6 @@
 > **현재 코드와 운영 배포 · GitHub/Vercel/Ubuntu/GCS**
 >
-> v0.3.1.0은 운영 배포 승인을 받아 2026-10-05 일괄 반영을 준비 중입니다. 배포와 운영 수락검사 완료 여부는 해당 커밋의 CI·배포 기록으로 확인합니다. 목적별 행사·데이트 일정, 지도·최종 편집·브라우저 저장, 팝업 전용 분류와 공식 이미지 추가 조사는 [일정 안내](docs/ITINERARY_BUILDER_KO.md), [팝업 안내](docs/POPUP_LAUNCH_KO.md), [변경 내역](CHANGELOG.md)을 확인하세요.
+> v0.3.1.0(PR #51)의 API·수집기·프런트는 2026-10-05 운영에 반영했습니다. v0.3.1.1은 미확인 보조 출처를 개별 제외하고 확인한 썸네일 출처를 보존하는 수집기 수정입니다. 운영 API `dd9a64bd`와 호환되어 수집기만 교체하며, 적용 여부는 해당 커밋의 CI·운영 배포 기록으로 확인합니다. 목적별 행사·데이트 일정, 지도·최종 편집·브라우저 저장, 팝업 전용 분류와 공식 이미지 추가 조사는 [일정 안내](docs/ITINERARY_BUILDER_KO.md), [팝업 안내](docs/POPUP_LAUNCH_KO.md), [변경 내역](CHANGELOG.md)을 확인하세요.
 >
 > 현재 운영은 GitHub `main` 기반 Vercel 프런트와 Ubuntu API·Cloudflare Tunnel, Google Cloud Storage를 사용합니다. [Ubuntu 터널 배포 가이드](deploy/ubuntu/TUNNEL_KO.md)와 [이미지 보완 수락 절차](collector/IMAGE_REPAIR_KO.md)를 따르세요.
 > 아래 ZIP·manifest·해시는 `BoothHana2-full-v24-gcp-credit-notes-20260921.zip` 패키지에 관한 과거 기록입니다. 현재 Git 작업본의 파일 목록·무결성이나 배포 승인 근거를 나타내지 않습니다.
