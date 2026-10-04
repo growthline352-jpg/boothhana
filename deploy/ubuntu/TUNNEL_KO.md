@@ -57,20 +57,23 @@ sudo가 필요 없고 로그인 세션이 종료되어도 실행된다. 기존 �
 CLI 로그인이 만료되거나 사용량이 소진되면 인증/한도를 확인하고 재실행한다.
 서버가 꺼진 동안 놓친 cron은 자동 소급 실행하지 않는다. 전체 실제 수집 성공 여부는 첫 실행 로그로 확인해야 한다.
 
-## v0.2.9.0 이미지 보완 작업 배포 준비
+## 이미지 보완 작업과 v0.3.1.0 반영 준비
 
-2026-10-04 운영 배포 승인을 받아 일괄 반영을 준비 중이며 설치·첫 실행 완료는 아직 확인되지 않았다.
-해당 릴리스 커밋의 CI 확인, 같은 커밋의 API·수집기 배포와 API 준비 상태 확인 및
-`run-tunnel-collector.sh` 교체 후 bpdeploy crontab에 추가한다. 기존 주간·배치도 cron은 유지한다.
+기존 매일 18:30 이미지 보완과 15분 간격 승인 이미지 저장 작업은 운영 중이다. v0.3.1.0은 운영 배포 승인을 받아 공식 이미지 추가 조사 흐름 반영을 준비 중이며 새 릴리스의 배포·실행 완료는 해당 커밋의 CI·배포·로그로 확인한다.
+같은 커밋의 API·수집기 배포와 API 준비 상태를 확인하고 기존 bpdeploy crontab의 작업 진입점을 유지한다. 기존 주간·배치도 cron은 유지한다.
 
 ```cron
 30 18 * * * /bin/bash /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh images
 */15 * * * * /bin/bash /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh images-store
 ```
 
-이미지 작업은 LLM CLI 로그인/한도를 사용하지 않으며, 기존 collector 토큰과 호스트 정책을 사용한다.
+누락 이미지 추가 조사는 LLM CLI 로그인·사용량 한도를 사용한다. `images-store`는 이미 승인된 자산 저장만 수행하므로 CLI 웹 조사를 하지 않는다. 두 작업 모두 기존 collector 토큰과 호스트 정책을 사용한다.
 `logs/images.status`와 수집기 상태 디렉터리의 `image-repair-v1/report.json`에서 미완료 원인을 확인한다.
 잠금 생략은 `2 SKIPPED_LOCK`으로 기록한다. 적용·검토·첫 실행 수락 절차는 [공개 행사 이미지 누락 보완](../../collector/IMAGE_REPAIR_KO.md)을 참고한다.
+
+팝업 일일 수집은 기존 매일 17:10 작업을 유지한다. 동네 팝업 탐색 API·화면과 카카오 지도 SDK 공개, 공식 원문 재확인의 새 정기 실행은 공급·지도·수동 시범 검증 전까지 보류한다. [공개 조건](../../docs/DISCOVERY_IMPLEMENTATION_KO.md)을 확인한다.
+
+일정 장소 API는 `api.env`의 `KAKAO_LOCAL_API_KEY`를 사용하고 없으면 `KAKAO_CLIENT_ID`를 사용한다. 제공 서비스 활성화는 사용자 확인 전 보류하며 확인 후 장소 검색·주소 좌표·주변 조회를 수락검사한다. `ITINERARY_PLACE_DAILY_LIMIT`은 기본 2,000·최대 10,000이다. 키를 프런트로 전달하지 않으며 연결 실패 시 직접 입력을 사용할 수 있다. 개인 일정은 브라우저에 저장하고 이 기능에는 추가 SQL이 없다. [일정 안내](../../docs/ITINERARY_BUILDER_KO.md)를 따른다.
 
 ## 운영 전환 및 복구
 

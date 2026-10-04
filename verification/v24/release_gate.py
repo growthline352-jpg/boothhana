@@ -50,7 +50,7 @@ def main():
 
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','anonymousFeedbackIsPrivateIdempotentAndRequiresCsrf'),
             ('TEST-com.boothhana.release.ReleaseIntegrationTests.xml','memberFeatureRequestUsesExistingReplyHistory'),
-            ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','popupDiscoverySharesIdentityAndSavesOnlyForConfirmedSubcultureTopics'),
+            ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','popupDiscoveryStaysSeparateRegardlessOfTopicsAndPreservesSaves'),
             ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','detachedProfileSaveCannotRevertCompletedOnboarding'),
             ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','memberInterestsArePrivateVersionedAndCategoryScoped'),
             ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback'),

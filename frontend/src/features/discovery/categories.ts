@@ -1,4 +1,4 @@
-import { eventTypeOptions } from '../interests/taxonomy'
+import { eventTypeOptions, taxonomyFields } from '../interests/taxonomy'
 import { categoryHome } from '../../../seo/category-sites.mjs'
 import { categorySitesActive, currentSiteCategory, currentSiteOrigin, isLocalPreview } from './site'
 /** v18: explicit taxonomy shared with collector/backend. Do not classify by names. */
@@ -71,5 +71,6 @@ export function safeEventReturnTo(value: unknown, eventId: string, fallback: str
 }
 
 export function categoryForType(type: string): DiscoveryCategory {
-  return categories.find(c => c.filters.some(f=>f.value===type)) ?? categories[0]
+  const field=taxonomyFields.find(f=>f.types.some(t=>t.code===type))
+  return categories.find(c=>c.code===field?.code) ?? categories[0]
 }

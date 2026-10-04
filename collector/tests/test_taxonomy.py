@@ -9,12 +9,12 @@ class TaxonomyTests(unittest.TestCase):
  def test_popup_formats_and_topics_remain_independent(self):
   field=next(f for f in FIELDS if f['code']=='POPUP')
   for t in field['types']:self.assertEqual(category_for(t['code']),'POPUP')
-  self.assertEqual(category_for('POPUP_STORE'),'SUBCULTURE')
+  self.assertEqual(category_for('POPUP_STORE'),'POPUP')
   game=next(o for o in field['topics'] if o['code']=='GAME')
   self.assertTrue(matches_topic(game,'POPUP_EXPERIENCE',['GAME']))
   self.assertFalse(matches_topic(game,'POPUP_EXPERIENCE',['FASHION']))
  def test_new_types_stay_in_the_correct_field(self):
-  for code in ('FAN_CAFE','POPUP_STORE','CARD_COLLECTIBLES','FAN_CONVENTION'):
+  for code in ('FAN_CAFE','CARD_COLLECTIBLES','FAN_CONVENTION'):
    self.assertEqual(category_for(code),'SUBCULTURE')
   for code in ('CONCERT','MUSIC_FESTIVAL'):
    self.assertEqual(category_for(code),'FESTIVAL')

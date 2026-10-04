@@ -16,12 +16,14 @@
     "build:hosting": "pnpm run build && pnpm run test:seo && node scripts/prepare-hosting.mjs && node scripts/test-page-handler.mjs"
   },
   "dependencies": {
+    "leaflet": "1.9.4",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.3.0"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^24.13.3",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.17",

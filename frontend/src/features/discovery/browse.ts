@@ -3,6 +3,7 @@ import type { Occurrence } from '../collection/api'
 import type { PublicEventSummary } from '../catalog/api'
 import { getCategory, type DiscoveryCategory } from './categories'
 import { currentSiteCategory } from './site'
+import { canonicalEventType } from '../interests/taxonomy'
 export type Period = 'upcoming' | 'week' | 'month' | 'all' | 'weekend' | 'nextmonth' | 'custom'
 export interface BrowseState { category: DiscoveryCategory; q: string; region: string; areas?: string; subcategory: string; period: Period; sort: 'date' | 'recent'; page: number; from?: string; to?: string; dateError?: string }
 const RESULT_MODE_KEYS = ['q', 'type', 'period', 'sort', 'page', 'from', 'to', 'areas'] as const
@@ -24,7 +25,7 @@ export function searchResultsHref(current: URLSearchParams, category: string, ra
 }
 export function parseBrowse(params: URLSearchParams): BrowseState {
   const category = getCategory(currentSiteCategory() || params.get('category'))
-  const subcategory = params.get('type') || ''
+  const subcategory = canonicalEventType(params.get('type') || '')
   const rawPage = params.get('page') || '0'
   const p = params.get('period')
   return { category, region: ['SEOUL','GYEONGGI'].includes(params.get('region') || '') ? params.get('region')! : '', q: (params.get('q') || '').trim().slice(0, 100),

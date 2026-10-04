@@ -3,8 +3,13 @@ import type { InterestField } from './api'
 
 export const taxonomyFields = taxonomy.fields
 export const eventTypeLabels: Record<string, string> = Object.fromEntries(taxonomy.fields.flatMap(f => f.types.map(t => [t.code, t.label])))
-export function eventTypeOptions(category: string) {
-  return [{ value: '', label: '전체' }, ...taxonomy.fields.find(f => f.code === category)!.types.map(t => ({ value: t.code, label: t.label }))]
+export function eventTypeOptions(category: string, currentType?: string) {
+  return [{ value: '', label: '전체' }, ...taxonomy.fields.find(f => f.code === category)!.types
+    .filter(t => !t.aliasOf || t.code === currentType).map(t => ({ value: t.code, label: t.label }))]
+}
+export function canonicalEventType(type: string): string {
+  const entry=taxonomy.fields.flatMap(f=>f.types).find(t=>t.code===type)
+  return entry?.aliasOf || type
 }
 
 /** Display canonical codes in Korean while retaining original work/character names. */

@@ -16,6 +16,21 @@ public final class InterestTaxonomy {
     public static final List<Field> FIELDS=TaxonomyRegistry.FIELDS.stream()
         .map(f -> new Field(f.code(),f.label(),f.formats(),f.topics())).toList();
     public static Field field(String category){return FIELDS.stream().filter(f->f.code().equals(category)).findFirst().orElseThrow(()->ApiException.badRequest("행사 분야를 확인해 주세요."));}
+    /** Read compatibility for preferences saved before popup/subculture separation.
+     * Does not write to the DB or change the revision. New writes use current validation. */
+    public static Map<String,Selection> normalizeStoredFields(Map<String,Selection> fields){
+        Selection sub=fields.get("SUBCULTURE");
+        if(sub==null||!sub.formats().contains("POPUP_STORE"))return fields;
+        var result=new LinkedHashMap<>(fields);
+        var remaining=new Selection(sub.formats().stream().filter(code->!"POPUP_STORE".equals(code)).toList(),sub.topics());
+        if(remaining.empty())result.remove("SUBCULTURE");else result.put("SUBCULTURE",remaining);
+        Selection popup=result.getOrDefault("POPUP",new Selection(List.of(),List.of()));
+        var formats=new LinkedHashSet<>(popup.formats());
+        // The old popup option matched every popup format, not just retail.
+        field("POPUP").formats().stream().map(Option::code).forEach(formats::add);
+        result.put("POPUP",new Selection(new ArrayList<>(formats),popup.topics()));
+        return Collections.unmodifiableMap(result);
+    }
     public static Map<String,Selection> validate(Map<String,Selection> fields){
         if(fields==null||fields.size()>TaxonomyRegistry.FIELDS.size())throw ApiException.badRequest("관심 분야를 확인해 주세요.");
         Map<String,Selection> result=new LinkedHashMap<>();

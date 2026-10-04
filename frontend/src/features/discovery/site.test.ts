@@ -5,6 +5,14 @@ import { categorySitesActive, isLocalPreview } from './site'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('category site routing', () => {
+  it('separates fandom popups and maps old popup filters to retail within the popup field', () => {
+    for(const type of ['POPUP_STORE','POPUP_RETAIL','POPUP_EXPERIENCE','POPUP_EXHIBITION','POPUP_MIXED']) {
+      expect(categoryForType(type).key).toBe('popups')
+      expect(parseBrowse(new URLSearchParams(`category=subculture&type=${type}`)).subcategory).toBe('')
+    }
+    const legacy=parseBrowse(new URLSearchParams('category=popups&type=POPUP_STORE'))
+    expect(browseApiParams(legacy,'2026-10-04').get('subcategory')).toBe('POPUP_RETAIL')
+  })
   it('retains the corrected subculture format in browse filters and event routing', () => {
     for (const type of ['SUBCULTURE_MUSIC', 'ANIME_GAME_FESTIVAL', 'ART_BOOK', 'BOARD_GAME', 'CHARACTER_ART', 'ILLUSTRATION']) {
       const state = parseBrowse(new URLSearchParams(`category=subculture&type=${type}`))

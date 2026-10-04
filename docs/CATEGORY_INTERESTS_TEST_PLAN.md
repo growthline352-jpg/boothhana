@@ -1,7 +1,8 @@
 # Category interests and saved popularity — test plan
 
 ## Acceptance
-- Each of SUBCULTURE, EXHIBITION and FESTIVAL has independent formats and topics, defined by the backend registry exposed through the public options endpoint.
+- Each of POPUP, SUBCULTURE, EXHIBITION and FESTIVAL has independent formats and topics, defined by the backend registry exposed through the public options endpoint.
+- `POPUP_STORE` and `POPUP_*` stay in POPUP regardless of character, anime, game or virtual performer topics. Reading a legacy SUBCULTURE `POPUP_STORE` preference maps it to all four popup formats, preserves other selections and popup topics, and leaves the database revision unchanged until the next explicit save. This compatibility change requires no additional SQL.
 - SUBCULTURE includes `SUBCULTURE_MUSIC`, `ANIME_GAME_FESTIVAL`, `ART_BOOK`, `BOARD_GAME`, `CHARACTER_ART` and `ILLUSTRATION` alongside its five existing types. These types stay in subculture filters, interest options and public detail/canonical routing; general `MUSIC` stays in FESTIVAL and general `DESIGN` stays in EXHIBITION.
 - New Kakao members are PENDING and see onboarding before public or creator screens. Existing members are LEGACY and use optional account settings.
 - Save or skip persists server side; completed accounts return to the interrupted safe internal route. Authentication retry recovers a completed onboarding.
@@ -16,6 +17,7 @@
 - Featured SQL regression: unrelated popular rows do not suppress matching rows, guest/product saves do not count, repeat member saves count once, unsave switches to recent fallback, region and cancellation filters apply.
 - Existing popularity SQL tests cover publication withdrawal and D.Festa member deduplication before limit.
 - InterestTaxonomyTests reject foreign category codes, duplicates and null codes; all subject inputs use bound SQL values.
+- InterestTaxonomyTests and LibraryIntegrationTests cover popup isolation and reading then saving legacy popup selections without losing other interests or changing the stored revision on read.
 - ReleaseIntegrationTests cover review and publication for all six added subculture types. A reviewed edit leaves the existing public snapshot unchanged until publication; publishing retains unrelated event content and places the event in its explicit category.
 - Frontend tests verify category selection isolation and safe onboarding return destinations. `popular.test.ts` covers guest/skipped/unset-field global scope, category-only selections, portal personalization and tie ordering, account mismatch, zero-save fallback, canceled/ended edition-day filtering, limits and failed or partial requests.
 - Required release-verification full-schema-and-app applies actual migrations 001..021 and requires fresh, non-skipped interest and publication integration results. Frontend `site.test.ts` and SEO `metadata.node-test.mjs` cover the added types' filters and subculture detail routing.

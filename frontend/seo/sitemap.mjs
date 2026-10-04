@@ -37,7 +37,7 @@ export async function publishedEvents({ apiBase, fetcher = fetch, timeoutMs = 20
     for (const row of rows) {
       const id = Number(row?.id)
       if (!Number.isSafeInteger(id) || id < 1 || typeof row?.event?.name !== 'string' || !row.event.name.trim()) continue
-      if (category && categoryFor(row.event) !== category) continue // Shared listings keep one canonical event URL.
+      if (category && categoryFor(row.event) !== category) continue // Emit only events belonging to this field, including legacy popup types.
       unique.set(id, { id, publishedAt: validPublishedAt(row.publishedAt) })
     }
     return [...unique.values()].sort((left, right) => left.id - right.id)

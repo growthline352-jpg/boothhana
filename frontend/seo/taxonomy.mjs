@@ -115,19 +115,6 @@ export const taxonomy = {
           "works": []
         },
         {
-          "code": "POPUP_STORE",
-          "label": "팝업스토어",
-          "types": [
-            "POPUP_STORE",
-            "POPUP_RETAIL",
-            "POPUP_EXPERIENCE",
-            "POPUP_EXHIBITION",
-            "POPUP_MIXED"
-          ],
-          "subjects": [],
-          "works": []
-        },
-        {
           "code": "CARD_COLLECTIBLES",
           "label": "카드·수집 행사",
           "types": [
@@ -394,10 +381,6 @@ export const taxonomy = {
           "label": "팬카페·카페 이벤트"
         },
         {
-          "code": "POPUP_STORE",
-          "label": "팝업스토어"
-        },
-        {
           "code": "CARD_COLLECTIBLES",
           "label": "카드·수집 행사"
         },
@@ -405,12 +388,6 @@ export const taxonomy = {
           "code": "FAN_CONVENTION",
           "label": "팬 컨벤션"
         }
-      ],
-      "relatedTypes": [
-        "POPUP_RETAIL",
-        "POPUP_EXPERIENCE",
-        "POPUP_EXHIBITION",
-        "POPUP_MIXED"
       ]
     },
     {
@@ -937,10 +914,12 @@ export const taxonomy = {
         {
           "code": "POPUP_MIXED",
           "label": "복합형 팝업"
+        },
+        {
+          "code": "POPUP_STORE",
+          "label": "판매형 팝업",
+          "aliasOf": "POPUP_RETAIL"
         }
-      ],
-      "relatedTypes": [
-        "POPUP_STORE"
       ],
       "formats": [
         {

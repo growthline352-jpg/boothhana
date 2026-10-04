@@ -1,3 +1,4 @@
+import {itineraryHref} from '../../features/itinerary/links'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { OnboardingGate } from '../../features/interests/OnboardingPage'
@@ -60,6 +61,7 @@ export function PublicLayout() {
           </Link>)}
         </nav>
         <div className="discovery-header-tools">
+          <NavLink className="memory-header-link" aria-label="내 일정" to={itineraryHref()}><DiscoveryIcon name="calendar" size={18}/><span>내 일정</span></NavLink>
           <NavLink className="memory-header-link" aria-label="내 보관함" to="/library"><svg width="19" height="21" viewBox="0 0 18 20" aria-hidden="true"><path d="M4 2h10v16l-5-3-5 3Z" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>내 보관함</span></NavLink>
           <NavLink className="discovery-reservations" aria-label="내 예약" to="/reservations"><DiscoveryIcon name="ticket" size={18}/><span>내 예약</span></NavLink>
           
@@ -80,6 +82,7 @@ export function PublicLayout() {
                 <span className="discovery-menu-caption">내 활동</span>
                 <Link to="/account"><span>내 정보</span><small>계정·활동 관리</small></Link>
                 <Link to="/library"><span>내 보관함</span><small>메모·방문 기록</small></Link>
+                <Link to={itineraryHref()}><span>내 일정</span><small>행사·데이트 코스 만들기</small></Link>
                 <Link to="/reservations"><span>내 예약</span><small>예약·수령 확인</small></Link>
                 <Link to="/support/management"><span>내 행사·부스 관리</span><small>주최자·운영자 인증</small></Link>
                 <Link to="/support"><span>고객센터</span><small>문의·신고 내역</small></Link>

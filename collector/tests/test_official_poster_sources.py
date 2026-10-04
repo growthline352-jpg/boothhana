@@ -10,6 +10,18 @@ from event_detail_sources import collect_detail_sources
 PAGE='https://festival.seoul.go.kr/festival/main/festivalView.do?festacode=577'
 HTML='''<meta property="og:image" content="/resources/img/common/img_meta_festa2.png"><nav><img src="/other.jpg"></nav><h1>행사 2026</h1><div class="poster-img"><img src="/poster.jpg" alt="2026 포스터"></div><img data-src="/lazy.jpg" src="data:image/gif;base64,X"><picture><source srcset="/responsive.jpg 1200w"></picture><div style="background-image:url('/background.jpg')"></div>'''
 class PosterTests(unittest.TestCase):
+ def test_image_only_official_landing_page_is_not_rejected_as_empty(self):
+  doc=parse_poster_document('<img src="/poster.jpg">',PAGE,'2026-10-04')
+  self.assertEqual(doc['bodyText'],'');self.assertTrue(doc['images'][0]['url'].endswith('/poster.jpg'))
+ def test_structured_event_art_and_stylesheet_background_are_extracted_without_script_execution(self):
+  html='''<script type="application/ld+json">{"@type":"Event","name":"2026 행사","image":{"@type":"ImageObject","contentUrl":"/event.jpg"}}</script><script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"event":{"posterUrl":"/poster.jpg"}}}}</script><style>.hero {background-image:url('/hero.webp')}</style><script>throw Error("never execute");</script>'''
+  doc=parse_poster_document(html,PAGE,'2026-10-04')
+  self.assertEqual({i['url'].rsplit('/',1)[1] for i in doc['images']},{'event.jpg','poster.jpg','hero.webp'})
+  self.assertEqual({i['role'] for i in doc['images']},{'STRUCTURED_IMAGE','BACKGROUND'})
+ def test_venue_homepage_link_is_an_official_lead_but_generic_external_notice_is_not(self):
+  doc=parse_poster_document('<h1>행사</h1><a href="https://organizer.example/2026">공식 홈페이지</a><a href="https://other.example/notice">안내</a>',PAGE,'2026-10-04')
+  self.assertEqual(doc['officialUrls'],['https://organizer.example/2026'])
+  self.assertEqual(doc['childUrls'],[])
  def test_body_poster_precedes_other_art_and_common_metadata_is_excluded(self):
   value=parse_poster_document(HTML,PAGE,'2026-10-03');images=value['images']
   self.assertEqual(images[0]['url'],'https://festival.seoul.go.kr/poster.jpg')

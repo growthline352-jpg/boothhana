@@ -66,7 +66,7 @@ class RobotsTests(unittest.TestCase):
 class RepairTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
-        self.cfg=dict(blockedSourceHosts=[],imageAllowedHosts=['official.example'],stateDirectory=str(self.root))
+        self.cfg=dict(blockedSourceHosts=[],imageAllowedHosts=['official.example'],stateDirectory=str(self.root),maxThumbnailSearches=0)
     def job(self,rows=None,apply=False,**kwargs):return repair.Repair(self.cfg,FakeApi(rows or [target()]),self.root/'repair',apply=apply,**kwargs)
     def mock_network(self,html='<h1>2026 행사</h1><img src="/poster.png">'):
         stack=ExitStack();self.addCleanup(stack.close)
@@ -76,6 +76,120 @@ class RepairTests(unittest.TestCase):
             if source_trace is not None:source_trace.append(url)
             return RAW,'image/png',SHA
         return stack.enter_context(patch.object(repair,'fetch_image',side_effect=fetch))
+    def research_source(self,page='https://organizer.example/2026',image=URL):
+        return dict(state='RESEARCH_FOUND',sources=[dict(url=page,kind='OFFICIAL',evidence='이번 행사 공식 안내',imageUrls=[image])])
+    def test_missing_thumbnail_gets_its_own_search_and_fetches_new_official_page(self):
+        self.mock_network();job=self.job(apply=True)
+        with patch.object(job.research,'search',return_value=self.research_source()) as search,patch.object(repair,'fetch_html',side_effect=[('<h1>행사 일정</h1>',''),(f'<h1>2026 행사</h1><img src="{URL}">','')]):
+            state,note=job.discover(target())
+        self.assertEqual(state,'WAITING_REVIEW');search.assert_called_once()
+        self.assertEqual(search.call_args.args[0]['id'],1)
+        self.assertEqual(note['candidates'][0]['sourceUrl'],'https://organizer.example/2026')
+        self.assertEqual([c[1] for c in job.api.calls],[repair.PATH+'/events/1/assets'])
+    def test_research_image_url_without_fetched_page_evidence_is_never_registered(self):
+        fetch=self.mock_network('<h1>2026 행사 안내</h1>');job=self.job(apply=True)
+        with patch.object(job.research,'search',return_value=self.research_source()):state,note=job.discover(target())
+        self.assertEqual(state,'NO_IMAGE_FOUND');self.assertEqual(job.api.calls,[]);fetch.assert_not_called()
+        self.assertIn('RESEARCH_IMAGE_NOT_IN_PAGE',[s['state'] for s in note['sources']])
+    def test_discovered_official_source_survives_a_failed_download_for_next_attempt(self):
+        self.mock_network();job=self.job();value=target()
+        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>일정</h1>',''),(f'<h1>행사</h1><img src="{URL}">','')]),patch.object(repair,'fetch_image',side_effect=TimeoutError):
+            state,note=job.discover(value)
+        self.assertEqual(state,'FETCH_FAILED');self.assertEqual(len(note['sourceLeads']),1)
+        job.queue.rows['1']=dict(details=note)
+        with patch.object(job.research,'search',side_effect=AssertionError('remembered page should be retried first')),patch.object(repair,'fetch_html',side_effect=[('<h1>일정</h1>',''),(f'<h1>행사</h1><img src="{URL}">','')]):
+            self.assertEqual(job.discover(value)[0],'DISCOVERED_FOR_REVIEW')
+    def test_new_source_survives_full_failed_lead_cache_and_is_retried_before_research(self):
+        self.mock_network();job=self.job();value=target()
+        old=[dict(url=f'https://old{i}.example/2026',kind='OFFICIAL',evidence='기존 공식 안내',imageUrls=[]) for i in range(4)]
+        identity=repair.digest([value['event'].get(key) for key in ('name','organizer','edition','occurrences')])
+        job.queue.rows['1']=dict(details=dict(researchTarget=identity,sourceLeads=old))
+        new_page='https://new.example/2026';source=self.research_source(page=new_page)['sources'][0]
+        def page_html(page,*args):
+            return (f'<h1>행사</h1><img src="{URL}">','') if page==new_page else ('<h1>일정</h1>','')
+        with patch.object(job.research,'search',return_value=dict(state='RESEARCH_FOUND',sources=[source])) as search,patch.object(repair,'fetch_html',side_effect=page_html),patch.object(repair,'fetch_image',side_effect=TimeoutError):
+            state,note=job.discover(value)
+        self.assertEqual(state,'FETCH_FAILED');search.assert_called_once()
+        self.assertEqual(note['sourceLeads'][0],source);self.assertEqual(len(note['sourceLeads']),4)
+        stamp,_=job.queue.due(value,job.policy,repair.now());job.queue.record(value,stamp,state,note,repair.now())
+        retry=self.job()
+        with patch.object(retry.research,'search',side_effect=AssertionError('cached new source must be tried before another search')) as search,patch.object(repair,'fetch_html',side_effect=page_html) as pages:
+            state,note=retry.discover(value)
+        self.assertEqual(state,'DISCOVERED_FOR_REVIEW');search.assert_not_called()
+        self.assertEqual(pages.call_args_list[1].args[0],new_page)
+        self.assertEqual(note['candidates'][0]['sourceUrl'],new_page)
+    def test_source_leads_from_another_edition_are_not_reused(self):
+        self.mock_network('<h1>일정</h1>');job=self.job();value=target()
+        job.queue.rows['1']=dict(details=dict(researchTarget='old-edition',sourceLeads=self.research_source()['sources']))
+        with patch.object(job.research,'search',return_value=dict(state='NO_RESULT',sources=[])) as search,patch.object(repair,'fetch_html',return_value=('<h1>일정</h1>','')) as pages:
+            state,note=job.discover(value)
+        self.assertEqual(state,'NO_IMAGE_FOUND');pages.assert_called_once();search.assert_called_once()
+        self.assertEqual(note['sourceLeads'],[])
+    def test_fallback_google_source_uses_fresh_extractor_checkpoint_and_actual_signed_url(self):
+        self.mock_network('<h1>안내</h1>');job=self.job();value=target()
+        original='https://takemm.com/prod/view/71267'
+        page='https://sites.google.com/view/example/event'
+        value['event']['sources']=[dict(kind='OFFICIAL',url=original)]
+        source=dict(url=page,kind='OFFICIAL',evidence='공식 행사 안내',imageUrls=['https://official.example/expired-signed.jpg'])
+        docs=[dict(sourceUrl=page,status='READ',images=[dict(url=URL,role='PAGE_PREVIEW',analysisStatus='ATTACHED',sha256=SHA)])]
+        with patch.object(job.research,'search',return_value=dict(state='RESEARCH_FOUND',sources=[source])),patch.object(repair,'collect_detail_sources',side_effect=[([dict(sourceUrl=original,status='INACCESSIBLE',images=[])],[]),(docs,[])]) as extractor:
+            state,note=job.discover(value)
+        self.assertEqual(state,'DISCOVERED_FOR_REVIEW');self.assertEqual(note['candidates'][0]['url'],URL)
+        self.assertEqual(extractor.call_count,2)
+        self.assertNotEqual(extractor.call_args_list[0].args[1],extractor.call_args_list[1].args[1])
+        self.assertEqual(extractor.call_args_list[1].args[0]['sources'][0]['url'],page)
+    def test_remembered_google_source_is_provided_to_the_special_extractor(self):
+        self.mock_network('<h1>안내</h1>');job=self.job();value=target()
+        page='https://sites.google.com/view/example/event'
+        identity=repair.digest([value['event'].get(key) for key in ('name','organizer','edition','occurrences')])
+        source=dict(url=page,kind='OFFICIAL',evidence='공식 행사 안내',imageUrls=[])
+        job.queue.rows['1']=dict(details=dict(researchTarget=identity,sourceLeads=[source]))
+        docs=[dict(sourceUrl=page,status='READ',images=[dict(url=URL,role='PAGE_PREVIEW',analysisStatus='ATTACHED',sha256=SHA)])]
+        with patch.object(job.research,'search',side_effect=AssertionError('fresh signed thumbnail available')),patch.object(repair,'collect_detail_sources',return_value=(docs,[])) as extractor:
+            self.assertEqual(job.discover(value)[0],'DISCOVERED_FOR_REVIEW')
+        self.assertIn(page,[s['url'] for s in extractor.call_args.args[0]['sources']])
+    def test_missing_researched_poster_is_not_replaced_with_an_unrelated_page_image(self):
+        fetch=self.mock_network();job=self.job(apply=True)
+        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>행사 안내</h1>',''),('<h1>공식 안내</h1><img src="https://official.example/other-ad.png">','')]):
+            state,note=job.discover(target())
+        self.assertEqual(state,'NO_IMAGE_FOUND');self.assertEqual(job.api.calls,[]);fetch.assert_not_called()
+    def test_host_waiting_candidate_still_researches_another_official_source(self):
+        self.mock_network();job=self.job(apply=True)
+        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>행사</h1><img src="https://other-cdn.example/poster.png">',''),(f'<h1>행사</h1><img src="{URL}">','')]):
+            state,note=job.discover(target())
+        self.assertEqual(state,'WAITING_REVIEW')
+        self.assertEqual([c['state'] for c in note['candidates']],['WAITING_HOST','VERIFIED_BYTES_NOT_EDITION'])
+        self.assertFalse(note['needsSourceResearch']);self.assertEqual(len(job.api.calls),2)
+    def test_special_extractor_bytes_do_not_hide_a_storage_host_block(self):
+        self.mock_network('<h1>상품 안내</h1>');job=self.job();value=target()
+        page='https://takemm.com/prod/view/71267';value['event']['sources']=[dict(kind='OFFICIAL',url=page)]
+        image=dict(url='https://formimage.takemm.com/cover.jpg',analysisStatus='ATTACHED',sha256=SHA,role='PAGE_PREVIEW')
+        details=[dict(sourceUrl=page,status='READ',images=[image])]
+        with patch.object(repair,'collect_detail_sources',return_value=(details,[])),patch.object(job.research,'search',return_value=dict(state='NO_RESULT',sources=[])) as search:
+            state,note=job.discover(value)
+        self.assertEqual(state,'DISCOVERED_FOR_REVIEW');search.assert_called_once()
+        self.assertEqual(note['candidates'][0]['state'],'WAITING_HOST');self.assertTrue(note['needsSourceResearch'])
+    def test_research_budget_or_provider_failure_is_not_reported_as_missing_poster(self):
+        self.mock_network('<h1>행사 안내</h1>');job=self.job()
+        for state in ('RESEARCH_DEFERRED','RESEARCH_FAILED','RESEARCH_BLOCKED'):
+            with patch.object(job.research,'search',return_value=dict(state=state,sources=[])):
+                self.assertEqual(job.discover(target())[0],state)
+        self.assertEqual(job.api.calls,[])
+    def test_research_does_not_bypass_robots_or_image_host_policy(self):
+        fetch=self.mock_network('<h1>행사 안내</h1>');job=self.job(apply=True)
+        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>행사 안내</h1>',''),(f'<h1>행사</h1><img src="{URL}">','')]),patch.object(job,'permitted',side_effect=lambda url:url!=URL):
+            self.assertEqual(job.discover(target())[0],'SOURCE_BLOCKED')
+        fetch.assert_not_called();self.assertEqual(job.api.calls,[])
+    def test_verified_candidate_avoids_unnecessary_search(self):
+        self.mock_network();job=self.job()
+        with patch.object(job.research,'search',side_effect=AssertionError('already found')):
+            self.assertEqual(job.discover(target())[0],'DISCOVERED_FOR_REVIEW')
+    def test_full_initial_source_list_still_follows_linked_official_homepage(self):
+        self.mock_network();job=self.job();value=target()
+        value['event']['sources']=[dict(kind='VENUE',url=PAGE+'?p='+str(i)) for i in range(8)]
+        with patch.object(repair,'fetch_html',side_effect=lambda page,*args:('<h1>일정</h1><a href="https://organizer.example/2026">공식 홈페이지</a>','') if 'official.example' in page else (f'<h1>행사</h1><img src="{URL}">','')) as fetch:
+            self.assertEqual(job.discover(value)[0],'DISCOVERED_FOR_REVIEW')
+        self.assertEqual(fetch.call_count,9)
     def test_keyset_visits_every_published_event_after_first_100(self):
         rows=[target(i) for i in range(1,244)];job=self.job(rows);self.assertEqual(len(job.targets()),243)
         self.assertEqual([call[1].split('afterId=')[1] for call in job.api.calls],['0','100','200'])

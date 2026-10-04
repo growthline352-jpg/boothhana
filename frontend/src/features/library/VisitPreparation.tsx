@@ -1,4 +1,6 @@
+import {itineraryHref} from '../itinerary/links'
 import {useEffect,useState} from 'react'
+import {Link} from 'react-router'
 import {useRemote} from '../../app/useRemote'
 import {publicRead} from '../../api/client'
 import type {PublicEventSummary} from '../catalog/api'
@@ -29,6 +31,7 @@ export function VisitPreparation({eventId,day}:{eventId:number;day:string}){
    <div><dt>입장·예매</dt><dd><BookingBadge event={event} day={day}/><p>{event.admission||'입장 조건 확인 필요'}</p><div className="visit-prep-official">{tickets.map(t=><SafeLink key={t.id} url={t.reservationUrl}>{t.name} 예약 안내 <DiscoveryIcon name="arrow" size={16}/></SafeLink>)}{!tickets.length&&official&&<SafeLink url={official.url}>공식 입장 안내 <DiscoveryIcon name="arrow" size={16}/></SafeLink>}</div></dd></div>
   </dl>
   <div className="visit-prep-tools">
+   <Link className="btn secondary" to={itineraryHref(eventId,day)}>이 행사로 일정 만들기</Link>
    {event.address&&!ambiguous&&<SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(event.address)}`}><DiscoveryIcon name="pin" size={18}/>장소 지도</SafeLink>}
    <button className="btn secondary" type="button" disabled={!valid} onClick={exportNow}><DiscoveryIcon name="calendar" size={18}/>캘린더 추가</button>
   </div>

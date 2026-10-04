@@ -27,6 +27,8 @@ export function categoryRedirect({ origin, path, search = '', category = null, e
   if (!splitSitesEnabled(origin, enabled)) return ''
   const params = new URLSearchParams(search)
   const siteCategory = categorySite(origin)
+  // Browser-stored itineraries share one origin across all event fields.
+  if (siteCategory && path === '/itinerary') return `${PORTAL_ORIGIN}${path}${params.size ? `?${params}` : ''}`
   if (siteCategory && /^\/events(?:\/|$)/.test(path)) return `${PORTAL_ORIGIN}${path}${params.size ? `?${params}` : ''}`
   if (path === '/' || path === '/discover') {
     const explicit = params.get('category')
