@@ -1,6 +1,6 @@
 > **현재 코드와 운영 배포 · GitHub/Vercel/Ubuntu/GCS**
 >
-> v0.2.9.0은 2026-10-04 운영 배포 승인을 받아 일괄 반영을 준비 중입니다. 배포와 운영 수락검사 완료 여부는 아직 확인되지 않았습니다. [공개 행사 이미지 보완 절차](collector/IMAGE_REPAIR_KO.md), [부스 상세 화면 동작](frontend/README.md#routes), [변경 내역](CHANGELOG.md)을 확인하세요.
+> v0.3.0.0은 2026-10-04 운영 배포 승인을 받아 일괄 반영을 준비 중입니다. 배포와 운영 수락검사 완료 여부는 해당 커밋의 CI·배포 기록으로 확인합니다. 행사 비교·방문 준비, 상세 화면 개선과 수집기 오류 처리를 포함하며 동네 팝업 탐색과 새 자동 수집 일정은 공급 검증 후 공개합니다. [행사 탐색·방문 준비 및 공개 조건](docs/DISCOVERY_IMPLEMENTATION_KO.md), [팝업 출시 순서](docs/POPUP_LAUNCH_KO.md), [공개 행사 이미지 보완 절차](collector/IMAGE_REPAIR_KO.md), [부스 상세 화면 동작](frontend/README.md#routes), [변경 내역](CHANGELOG.md)을 확인하세요.
 >
 > v0.2.4.0 관리자·업체 화면의 공개 행사 관리, 방문 안내 편집, 운영일 묶음과 SQL022 적용 순서는 [운영 화면 안내](docs/OPERATIONS_CONSOLE_SYNC_KO.md)를 확인하세요.
 >
