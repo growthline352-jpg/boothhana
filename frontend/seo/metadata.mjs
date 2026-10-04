@@ -244,7 +244,7 @@ export function renderCrawlableContent({ path = '/', search = '', catalog = null
     const params = new URLSearchParams(search)
     if ((path === '/' || path === '/discover') && [...params.keys()].some(key => key !== 'category')) return ''
     if (path === '/' && siteUrl === PORTAL_ORIGIN && splitSites && !params.size) {
-      return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.name)}</a></h2><p>${esc(site.description)}</p></section>`).join('')}</main>`
+      return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.label)}</a></h2></section>`).join('')}</main>`
     }
     const category = categorySite(siteUrl) || params.get('category') || 'subculture'
     if ((path === '/' || path === '/discover') && !Object.hasOwn(CATEGORY_SITES, category)) return ''
