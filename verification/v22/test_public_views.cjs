@@ -6,7 +6,7 @@ const current={memory:{...memory,summary:'',tags:['공개 작품']},operationSta
 const entry={id:'11111111-1111-4111-8111-111111111111',target,revision:2,savedAt:'2026-09-01T00:00:00Z',updatedAt:'2026-09-01T00:00:00Z',day:'2026-10-03',hall:'내 전시관 메모',note:'PRIVATE_NOTE',visitedDays:['2026-09-01'],available:true,saved:memory,current:{...current,evidenceScope:'EVENT_SALE_CONFIRMED',memory},image:null,changed:true,lastOpenedAt:null};
 function setup(initial={}){let live={target,available:true,current,image:null},status={loading:false,error:null},remoteCall=0;const stored={...entry,...initial};
  const lib={owner:'member:1',index:[],guest:[],version:0,publicVersion:1,loading:false,error:'',refreshPublic(){},resolvePublic:async()=>[live]};
- const h=runtime({globals:{window:{setInterval,clearInterval,confirm:()=>true},document:{visibilityState:'visible'}},resolve:(name,file)=>{
+ const h=runtime({globals:{window:{location:{host:'subculture.boothana.kr'},setInterval,clearInterval,confirm:()=>true},document:{visibilityState:'visible'}},resolve:(name,file)=>{
   if(name==='react-router')return {Link:component('Link'),useSearchParams:()=>[new URLSearchParams({item:stored.id}),()=>{}]};
   if(name.endsWith('/useAuth'))return {useAuth:()=>({user:{id:1,displayName:'테스트'},refresh:async()=>{}})};
   if(name.endsWith('/useRemote'))return {useRemote:()=>{const call=++remoteCall;return {loading:false,error:null,reload:async()=>{},data:call===1?[]:call===2?{items:[],total:0,groups:[]}:call===3?stored:live,...(call===4?status:{})}}};
