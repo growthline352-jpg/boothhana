@@ -2,7 +2,7 @@ import type {EventData} from '../collection/api'
 import {validDay} from '../visit/visit'
 const escape=(value:string)=>value.replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,')
 const stamp=(value:Date)=>value.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')
-function fold(value:string){let line='',bytes=0;const lines=[];for(const char of value){const size=new TextEncoder().encode(char).length;if(bytes+size>75){lines.push(line);line=' ';bytes=1}line+=char;bytes+=size}lines.push(line);return lines.join('\r\n')}
+function fold(value:string){let line='',bytes=0;const lines:string[]=[];for(const char of value){const size=new TextEncoder().encode(char).length;if(bytes+size>75){lines.push(line);line=' ';bytes=1}line+=char;bytes+=size}lines.push(line);return lines.join('\r\n')}
 export function visitCalendar(event:EventData,id:number,day:string,now=new Date()):string{
  if(!validDay(day)||!event.occurrences.some(o=>o.startDate<=day&&o.endDate>=day))throw new Error('현재 행사 일정에 있는 방문일을 골라 주세요.')
  if(event.operationStatus?.state==='CANCELED'||event.operationStatus?.state==='POSTPONED')throw new Error('취소·연기된 행사의 현재 공지를 확인하세요.')
