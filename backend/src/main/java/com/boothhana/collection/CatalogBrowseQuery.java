@@ -29,6 +29,10 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
     }
     public boolean connected(){return CatalogTaxonomy.GROUPS.containsKey(category);}
     private static String normalized(String v,String fallback){return v==null||v.isBlank()?fallback:v.trim();}
+    /** SQL expression is an internal constant; the user's text remains a bound parameter. */
+    static String searchSql(String expression){
+        return "strpos(regexp_replace(lower("+expression+"),'[[:space:]　 ‐‑‒–—−-]+','','g'),regexp_replace(lower(?),'[[:space:]　 ‐‑‒–—−-]+','','g'))>0";
+    }
     private static void validateDate(String v){
         if(v.isEmpty())return;
         try{if(!v.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")||!LocalDate.parse(v).toString().equals(v))throw new IllegalArgumentException();}
@@ -41,7 +45,7 @@ public record CatalogBrowseQuery(int page,int size,String category,String q,Stri
         if(!region.isEmpty())sql.append(" and p.snapshot_json->'event'->>'region'=?");
         if(!areas.isEmpty())sql.append(" and ").append(CatalogAreas.filterSql("p.snapshot_json->'event'",CatalogAreas.selected(areas),new ArrayList<>()));
         if(!subcategory.isEmpty())sql.append(" and ").append(CatalogTaxonomy.subtypeSql(category,subcategory,"p.snapshot_json->'event'",args));
-        if(!q.isEmpty())sql.append(" and strpos(lower(concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')),lower(?))>0");
+        if(!q.isEmpty())sql.append(" and ").append(searchSql("concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')"));
         if(!from.isEmpty()||!to.isEmpty()){
             sql.append(" and exists(select 1 from jsonb_array_elements(coalesce(p.snapshot_json->'event'->'occurrences','[]'::jsonb)) d where true");
             if(!from.isEmpty())sql.append(" and d->>'endDate'>=?");

@@ -96,7 +96,7 @@ public class CatalogPublicationService {
         var filters=new CatalogBrowseQuery(query.page(),query.size(),query.category(),"",query.subcategory(),query.from(),query.to(),query.sort(),query.region(),query.areas());
         var args=filters.whereArgs();String where=filters.whereSql();
         if(!query.q().isEmpty()){
-            where+=" and (strpos(lower(concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')),lower(?))>0 or exists(select 1 from catalog_operating_group_member gm join catalog_operating_group gg on gg.root_event_id=gm.root_event_id where gm.event_id=p.event_id and strpos(lower(gg.name),lower(?))>0))";
+            where+=" and ("+CatalogBrowseQuery.searchSql("concat_ws(' ',p.snapshot_json->'event'->>'name',p.snapshot_json->'event'->>'venueName',p.snapshot_json->'event'->>'address',p.snapshot_json->'event'->>'organizer',p.snapshot_json->'event'->>'subjects')")+" or exists(select 1 from catalog_operating_group_member gm join catalog_operating_group gg on gg.root_event_id=gm.root_event_id where gm.event_id=p.event_id and "+CatalogBrowseQuery.searchSql("gg.name")+"))";
             args.add(query.q());args.add(query.q());
         }
         return new BrowseFilter(where,args);
