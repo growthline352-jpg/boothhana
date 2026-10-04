@@ -1,6 +1,7 @@
 import type { PublicEventSummary } from '../catalog/api'
 import type { BrowseState } from './browse'
 import { categories } from './categories'
+import { canonicalEventType } from '../interests/taxonomy'
 
 export function calendarMonth(value: string | null, today: string): string {
   return value && /^\d{4}-(0[1-9]|1[0-2])$/.test(value) && Number(value.slice(0, 4)) >= 1000 && Number(value.slice(0, 4)) <= 9998 ? value : today.slice(0, 7)
@@ -70,6 +71,7 @@ export function calendarEventRanges(row: PublicEventSummary): { from: string; to
 
 export const calendarTones = ['blue', 'lilac', 'sage', 'rose', 'amber'] as const
 export function calendarTone(subcategory: string): typeof calendarTones[number] | 'neutral' {
+  subcategory=canonicalEventType(subcategory)
   const category = categories.find(value => value.filters.some(filter => filter.value === subcategory && filter.value))
   const index = category?.filters.filter(filter => filter.value).findIndex(filter => filter.value === subcategory) ?? -1
   return index >= 0 ? calendarTones[index % calendarTones.length] : 'neutral'

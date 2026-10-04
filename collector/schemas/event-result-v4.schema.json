@@ -106,7 +106,6 @@
               "CHARACTER_ART",
               "ILLUSTRATION",
               "FAN_CAFE",
-              "POPUP_STORE",
               "CARD_COLLECTIBLES",
               "FAN_CONVENTION",
               "WINE",
@@ -124,7 +123,8 @@
               "POPUP_RETAIL",
               "POPUP_EXPERIENCE",
               "POPUP_EXHIBITION",
-              "POPUP_MIXED"
+              "POPUP_MIXED",
+              "POPUP_STORE"
             ]
           },
           "organizer": {

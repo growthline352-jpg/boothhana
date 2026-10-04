@@ -9,31 +9,19 @@ public final class CatalogTaxonomy {
  public static final Set<String> REGIONS=Set.of("SEOUL","GYEONGGI");
  public static final Set<String> SCOPES=Set.of("SEOUL","GYEONGGI","SEOUL_GYEONGGI");
  public static String category(String type){return GROUPS.entrySet().stream().filter(x->x.getValue().contains(type)).map(Map.Entry::getKey).findFirst().orElse(null);}
- /** Discovery can share an event without changing its canonical category or identity. */
+ /** One field per event; fandom topics do not expand the popup field into subculture. */
  public static List<String> browseTypes(String category){
-  var types=new ArrayList<>(GROUPS.get(category));
-  if("POPUP".equals(category))types.add("POPUP_STORE");
-  if("SUBCULTURE".equals(category))types.addAll(GROUPS.get("POPUP"));
-  return types;
+  return GROUPS.get(category);
  }
  public static String scopeSql(String category,String eventJson,List<Object> args){
   var types=category==null||category.isEmpty()?new ArrayList<>(TYPES):new ArrayList<>(GROUPS.get(category));
-  if("POPUP".equals(category))types.add("POPUP_STORE");
   args.addAll(types);
-  String direct=eventJson+"->>'subcategory' in ("+String.join(",",Collections.nCopies(types.size(),"?"))+")";
-  if(!"SUBCULTURE".equals(category))return direct;
-  var popupTypes=GROUPS.get("POPUP");args.addAll(popupTypes);
-  var topics=List.of("CHARACTER_IP","ANIME_MANGA","GAME","VTUBER","VOCALOID","ILLUSTRATION");args.addAll(topics);
-  return "("+direct+" or ("+eventJson+"->>'subcategory' in ("+String.join(",",Collections.nCopies(popupTypes.size(),"?"))+") and exists(select 1 from jsonb_array_elements_text(coalesce("+eventJson+"->'subjects','[]'::jsonb)) subject(value) where upper(trim(subject.value)) in ("+String.join(",",Collections.nCopies(topics.size(),"?"))+"))))";
+  return eventJson+"->>'subcategory' in ("+String.join(",",Collections.nCopies(types.size(),"?"))+")";
  }
  public static String subtypeSql(String category,String subtype,String eventJson,List<Object> args){
   args.add(subtype);
   if("POPUP".equals(category)&&"POPUP_RETAIL".equals(subtype)){
    args.add("POPUP_STORE");return eventJson+"->>'subcategory' in (?,?)";
-  }
-  if("SUBCULTURE".equals(category)&&"POPUP_STORE".equals(subtype)){
-   var popupTypes=GROUPS.get("POPUP");args.addAll(popupTypes);
-   return eventJson+"->>'subcategory' in ("+String.join(",",Collections.nCopies(1+popupTypes.size(),"?"))+")";
   }
   return eventJson+"->>'subcategory'=?";
  }

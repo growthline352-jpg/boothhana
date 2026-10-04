@@ -13,7 +13,7 @@ class InterestTaxonomyTests {
         assertThat(InterestTaxonomy.validate(selections)).hasSize(4);
         var args=new ArrayList<Object>();InterestTaxonomy.predicate("POPUP",selections.get("POPUP"),"p",args);
         assertThat(args).contains("POPUP_RETAIL","POPUP_STORE","character_ip");
-        assertThat(com.boothhana.collection.CatalogTaxonomy.category("POPUP_STORE")).isEqualTo("SUBCULTURE");
+        assertThat(com.boothhana.collection.CatalogTaxonomy.category("POPUP_STORE")).isEqualTo("POPUP");
         assertThat(com.boothhana.collection.CatalogTaxonomy.category("POPUP_EXPERIENCE")).isEqualTo("POPUP");
     }
     @Test void sharedRegistryRetainsSavedCodesAndAddsIndependentTopics() {
@@ -35,9 +35,35 @@ class InterestTaxonomyTests {
         assertThat(TaxonomyRegistry.reviewIssues("ONLY_EVENT",List.of("괴담출근"))).isEmpty();
     }
     @Test void categoryCodesCannotCrossFields() {
+        assertThatThrownBy(()->InterestTaxonomy.validate(Map.of("SUBCULTURE",new InterestTaxonomy.Selection(List.of("POPUP_STORE"),List.of())))).isInstanceOf(ApiException.class);
         assertThatThrownBy(()->InterestTaxonomy.validate(Map.of("FESTIVAL",new InterestTaxonomy.Selection(List.of(),List.of("VOCALOID"))))).isInstanceOf(ApiException.class);
         assertThatThrownBy(()->InterestTaxonomy.validate(Map.of("SUBCULTURE",new InterestTaxonomy.Selection(List.of("BIRTHDAY_CAFE","BIRTHDAY_CAFE"),List.of())))).isInstanceOf(ApiException.class);
         assertThatThrownBy(()->InterestTaxonomy.validate(Map.of("SUBCULTURE",new InterestTaxonomy.Selection(Arrays.asList((String)null),List.of())))).isInstanceOf(ApiException.class);
+    }
+    @Test void storedPopupPreferencesMoveWithoutLosingOtherChoicesOrMutatingInput(){
+        var old=Map.of("SUBCULTURE",new InterestTaxonomy.Selection(List.of("POPUP_STORE","BIRTHDAY_CAFE"),List.of("GAME")),
+            "POPUP",new InterestTaxonomy.Selection(List.of("POPUP_EXPERIENCE"),List.of("BEAUTY")),
+            "FESTIVAL",new InterestTaxonomy.Selection(List.of("LIVE"),List.of("JAZZ")));
+        var normalized=InterestTaxonomy.normalizeStoredFields(old);
+        assertThat(normalized.get("SUBCULTURE")).isEqualTo(new InterestTaxonomy.Selection(List.of("BIRTHDAY_CAFE"),List.of("GAME")));
+        assertThat(normalized.get("POPUP").formats()).containsExactly("POPUP_EXPERIENCE","POPUP_RETAIL","POPUP_EXHIBITION","POPUP_MIXED");
+        assertThat(normalized.get("POPUP").topics()).containsExactly("BEAUTY");
+        assertThat(normalized.get("FESTIVAL")).isEqualTo(old.get("FESTIVAL"));
+        assertThat(old.get("SUBCULTURE").formats()).contains("POPUP_STORE");
+        assertThat(InterestTaxonomy.validate(normalized)).isEqualTo(normalized);
+        assertThat(InterestTaxonomy.normalizeStoredFields(normalized)).isEqualTo(normalized);
+        var popupOnly=InterestTaxonomy.normalizeStoredFields(Map.of("SUBCULTURE",new InterestTaxonomy.Selection(List.of("POPUP_STORE"),List.of())));
+        assertThat(popupOnly).containsOnlyKeys("POPUP");
+    }
+    @Test void browseScopesRejectCrossFieldPopupTypesButAcceptLegacyPopupFilter(){
+        for(String type:com.boothhana.collection.CatalogTaxonomy.browseTypes("POPUP")){
+            assertThatThrownBy(()->new com.boothhana.collection.CatalogBrowseQuery(0,20,"SUBCULTURE","",type,"","","RECENT"))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
+        var popup=new com.boothhana.collection.CatalogBrowseQuery(0,20,"POPUP","","POPUP_RETAIL","","","RECENT");
+        assertThat(popup.whereArgs()).contains("POPUP_STORE");
+        var sub=new com.boothhana.collection.CatalogBrowseQuery(0,20,"SUBCULTURE","","","","","RECENT");
+        assertThat(sub.whereArgs()).doesNotContain("POPUP_STORE","POPUP_RETAIL","POPUP_EXPERIENCE","POPUP_EXHIBITION","POPUP_MIXED");
     }
     @Test void emptySelectedCategoryMeansAllAndSubjectsAreBound() {
         var args=new ArrayList<Object>();

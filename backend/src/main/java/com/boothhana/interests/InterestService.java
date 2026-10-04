@@ -19,7 +19,8 @@ public class InterestService {
         var rows=db.queryForList("select revision,fields_json from member_interest_preferences where user_id=?",user.id);
         if(rows.isEmpty())return new View(user.id,0,user.onboardingStatus,Map.of());
         var row=rows.getFirst();var type=json.getTypeFactory().constructMapType(LinkedHashMap.class,String.class,Selection.class);
-        return new View(user.id,((Number)row.get("revision")).longValue(),user.onboardingStatus,json.readValue(row.get("fields_json").toString(),type));
+        Map<String,Selection> fields=json.readValue(row.get("fields_json").toString(),type);
+        return new View(user.id,((Number)row.get("revision")).longValue(),user.onboardingStatus,normalizeStoredFields(fields));
     }
     @Transactional public View save(UserAccount user,Input input){
         if(input==null||input.expectedUserId()!=user.id||input.revision()<0)throw ApiException.conflict("로그인 계정과 수정 상태를 다시 확인해 주세요.");

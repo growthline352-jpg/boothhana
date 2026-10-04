@@ -65,27 +65,44 @@ class LibraryIntegrationTests {
   assertThat(publications.list(new com.boothhana.collection.CatalogBrowseQuery(0,20,"SUBCULTURE","[TEST] areas "+event,"",day,day,"DATE_ASC","SEOUL")).total()).isEqualTo(1);
  }
  @Test @org.springframework.transaction.annotation.Transactional @SuppressWarnings("unchecked")
- void popupDiscoverySharesIdentityAndSavesOnlyForConfirmedSubcultureTopics(){
+ void popupDiscoveryStaysSeparateRegardlessOfTopicsAndPreservesSaves(){
   var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
   var e=new LinkedHashMap<>((Map<String,Object>)snapshot.get("event"));
   String future=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(2).toString(),name="[TEST] popup "+event;
   e.put("name",name);e.put("region","SEOUL");e.put("occurrences",List.of(Map.of("startDate",future,"endDate",future)));
   for(long owner:List.of(user,other))db.update("insert into memory_item(id,user_id,event_id,target_type,target_id,saved_json) values(?,?,?,'EVENT',?,'{}'::jsonb)",UUID.randomUUID(),owner,event,event);
-  for(var sample:List.of(List.of("POPUP_STORE","GAME","true"),List.of("POPUP_RETAIL"," game ","true"),List.of("POPUP_EXPERIENCE","CHARACTER_IP","true"),List.of("POPUP_EXHIBITION","FASHION","false"),List.of("POPUP_MIXED","BEAUTY","false"))){
-   String type=sample.get(0);boolean subculture=Boolean.parseBoolean(sample.get(2));
+  for(var sample:List.of(List.of("POPUP_STORE","GAME"),List.of("POPUP_RETAIL"," game "),List.of("POPUP_EXPERIENCE","CHARACTER_IP"),List.of("POPUP_EXHIBITION","ANIME_MANGA"),List.of("POPUP_MIXED","VTUBER"),List.of("POPUP_RETAIL","VOCALOID"),List.of("POPUP_EXPERIENCE","ILLUSTRATION"),List.of("POPUP_EXHIBITION","FASHION"),List.of("POPUP_MIXED","BEAUTY"))){
+   String type=sample.get(0);
    db.update("update subculture_event_candidate set subcategory=? where id=?",type,event);
    e.put("subcategory",type);e.put("subjects",List.of(sample.get(1)));snapshot.put("event",e);publish();
    for(String category:List.of("POPUP","SUBCULTURE","EXHIBITION","FESTIVAL")){
-    boolean shown=category.equals("POPUP")||category.equals("SUBCULTURE")&&subculture;
+    boolean shown=category.equals("POPUP");
     var query=new com.boothhana.collection.CatalogBrowseQuery(0,20,category,name,"",future,future,"DATE_ASC","SEOUL");
     assertThat(publications.list(query).total()).isEqualTo(shown?1:0);
     assertThat(publications.groupedList(query).total()).isEqualTo(shown?1:0);
     assertThat(publications.popular(12,category).stream().anyMatch(row->((Number)row.get("id")).longValue()==event)).isEqualTo(shown);
    }
+   var featured=(List<Map<String,Object>>)publications.featured("SUBCULTURE","SEOUL",null).get("items");
+   assertThat(featured.stream().anyMatch(row->((Number)row.get("id")).longValue()==event)).isFalse();
+   String topic=sample.get(1).trim().toUpperCase(Locale.ROOT);
+   if(com.boothhana.interests.InterestTaxonomy.field("SUBCULTURE").topics().stream().anyMatch(option->option.code().equals(topic))){
+    var selected=new com.boothhana.interests.InterestTaxonomy.Selection(List.of(),List.of(topic));
+    var personal=(List<Map<String,Object>>)publications.featured("SUBCULTURE","SEOUL",selected).get("items");
+    assertThat(personal.stream().anyMatch(row->((Number)row.get("id")).longValue()==event)).isFalse();
+   }
    var ranked=publications.popular(12,"POPUP").stream().filter(row->((Number)row.get("id")).longValue()==event).findFirst().orElseThrow();
    assertThat(((Number)ranked.get("saveCount")).longValue()).isEqualTo(2);
    if(type.equals("POPUP_STORE")||type.equals("POPUP_RETAIL"))assertThat(publications.list(new com.boothhana.collection.CatalogBrowseQuery(0,20,"POPUP",name,"POPUP_RETAIL",future,future,"RECENT")).total()).isEqualTo(1);
   }
+  db.update("delete from memory_item where event_id=?",event);
+  var recent=(List<Map<String,Object>>)publications.featured("SUBCULTURE","SEOUL",null).get("items");
+  assertThat(recent.stream().anyMatch(row->((Number)row.get("id")).longValue()==event)).isFalse();
+  var popupRecent=(List<Map<String,Object>>)publications.featured("POPUP","SEOUL",null).get("items");
+  assertThat(popupRecent.stream().anyMatch(row->((Number)row.get("id")).longValue()==event)).isTrue();
+  // Fan cafes remain in subculture even with the same character topic.
+  e.put("subcategory","FAN_CAFE");e.put("subjects",List.of("CHARACTER_IP"));snapshot.put("event",e);publish();
+  assertThat(publications.list(new com.boothhana.collection.CatalogBrowseQuery(0,20,"SUBCULTURE",name,"",future,future,"RECENT")).total()).isEqualTo(1);
+  assertThat(publications.list(new com.boothhana.collection.CatalogBrowseQuery(0,20,"POPUP",name,"",future,future,"RECENT")).total()).isZero();
  }
  void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
  Save input(){return new Save(new Target("PRODUCT",event,product,participant),day,"1관");}
@@ -265,6 +282,22 @@ class LibraryIntegrationTests {
   assertThat(db.queryForObject("select relrowsecurity from pg_class where oid='member_interest_preferences'::regclass",Boolean.class)).isTrue();
   assertThat(db.queryForObject("select has_table_privilege('anon','member_interest_preferences','SELECT') or has_table_privilege('authenticated','member_interest_preferences','SELECT')",Boolean.class)).isFalse();
   http.perform(get("/api/public/interests")).andExpect(status().isOk()).andExpect(jsonPath("$[0].code").value("SUBCULTURE"));
+ }
+ @Test @org.springframework.transaction.annotation.Transactional void oldPopupInterestReadsAndNextSaveUseTheSeparatedField()throws Exception{
+  var interests=web.getBean(com.boothhana.interests.InterestService.class);
+  var current=web.getBean(com.boothhana.repository.UserAccountRepository.class).findById(user).orElseThrow();
+  String legacy="{\"SUBCULTURE\":{\"formats\":[\"POPUP_STORE\"],\"topics\":[]}}";
+  db.update("insert into member_interest_preferences(user_id,fields_json,revision) values(?,cast(? as jsonb),7)",user,legacy);
+  var before=interests.get(current);
+  assertThat(before.revision()).isEqualTo(7);assertThat(before.fields()).containsOnlyKeys("POPUP");
+  assertThat(before.fields().get("POPUP").formats()).hasSize(4);
+  http.perform(get("/api/me/interests").with(user(subject).roles("FAN"))).andExpect(status().isOk())
+    .andExpect(jsonPath("$.revision").value(7)).andExpect(jsonPath("$.fields.SUBCULTURE").doesNotExist())
+    .andExpect(jsonPath("$.fields.POPUP.formats.length()").value(4));
+  assertThat(db.queryForObject("select fields_json->'SUBCULTURE'->'formats'->>0 from member_interest_preferences where user_id=?",String.class,user)).isEqualTo("POPUP_STORE");
+  var after=interests.save(current,new com.boothhana.interests.InterestService.Input(user,7,"DONE",before.fields()));
+  assertThat(after.revision()).isEqualTo(8);assertThat(after.fields()).isEqualTo(before.fields());
+  assertThat(db.queryForObject("select jsonb_exists(fields_json,'SUBCULTURE') from member_interest_preferences where user_id=?",Boolean.class,user)).isFalse();
  }
  @Test @SuppressWarnings("unchecked") void interestFeaturedFiltersBeforeLimitAndSaveRemovalChangesFallback(){
   var publications=web.getBean(com.boothhana.collection.CatalogPublicationService.class);
