@@ -1,0 +1,367 @@
+{
+  "schemaVersion": "1",
+  "searchStatus": "PARTIAL",
+  "summary": "2026-10-04 주최 공식 안내에서 직접 확인한 서울 팝업 7건. 전체 공급량을 모두 확인한 결과는 아니며, 상설 센녹 매장은 제외. 스킨앤랩은 2차 목록의 10/2 대신 공식 시작일 10/3을 적용.",
+  "queries": [
+    "2026 10월 서울 팝업스토어 공식 일정"
+  ],
+  "events": [
+    {
+      "name": "고길동의 낯선 강원랜드 팝업스토어",
+      "subcategory": "POPUP_EXPERIENCE",
+      "organizer": "강원랜드·하이원리조트",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "홍대 스타스퀘어 1·2층",
+      "address": "서울특별시 마포구 어울마당로 68",
+      "description": "고길동 캐릭터와 함께 강원랜드·하이원의 여행 콘텐츠를 체험하는 한정 팝업입니다.",
+      "admission": null,
+      "subjects": [
+        "CHARACTER_IP",
+        "둘리"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-03",
+          "endDate": "2026-10-11",
+          "startTime": "14:00",
+          "endTime": "21:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.instagram.com/high1_resort/p/DdQj6XXpVgc/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 주최 공식 안내에서 이번 회차 일정 2026-10-03~2026-10-11 및 개최 장소를 직접 확인."
+        }
+      ],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.instagram.com/high1_resort/p/DdQj6XXpVgc/",
+          "status": "PUBLISHED",
+          "note": "주최 공식 행사 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "주최 공식 일정 기준",
+        "sourceUrl": "https://www.instagram.com/high1_resort/p/DdQj6XXpVgc/",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "굿스마일컴퍼니 팝업스토어 by PW",
+      "subcategory": "POPUP_RETAIL",
+      "organizer": "굿스마일컴퍼니 PW",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "AK플라자 홍대 1층",
+      "address": null,
+      "description": "굿스마일컴퍼니 PW의 한정 팝업입니다. 공식 운영시간은 평일 11:00~22:00, 주말·공휴일 10:30~22:00입니다. 오픈 전 현장예약 대기 위치는 홍대입구역 4번 출구 앞 AK플라자 입구 옆 1층입니다.",
+      "admission": null,
+      "subjects": [
+        "CHARACTER_IP",
+        "ANIME_MANGA",
+        "피규어"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-02",
+          "endDate": "2026-10-15",
+          "startTime": null,
+          "endTime": null
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.instagram.com/p/Dd5wAhBFPa9/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 주최 공식 안내에서 이번 회차 일정 2026-10-02~2026-10-15 및 개최 장소를 직접 확인."
+        }
+      ],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.instagram.com/p/Dd5wAhBFPa9/",
+          "status": "PUBLISHED",
+          "note": "주최 공식 행사 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "주최 공식 일정 기준",
+        "sourceUrl": "https://www.instagram.com/p/Dd5wAhBFPa9/",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "영화 룩백 팝업스토어",
+      "subcategory": "POPUP_EXPERIENCE",
+      "organizer": "메가박스",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "홍대 연남동 스페이스비",
+      "address": null,
+      "description": "메가박스가 안내하는 영화 룩백 팝업입니다. 공식 계정의 프로필 예약 링크에서 사전 신청이 안내돼 있습니다. 선착순 굿즈 이벤트는 매일 100명이 아닌 전체 관람객 중 선착순 100명 기준입니다.",
+      "admission": null,
+      "subjects": [
+        "ANIME_MANGA",
+        "룩백"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-03",
+          "endDate": "2026-10-17",
+          "startTime": "11:30",
+          "endTime": "19:30"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.instagram.com/megabox.only/p/DdzvcjdlIUM/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 주최 공식 안내에서 이번 회차 일정 2026-10-03~2026-10-17 및 개최 장소를 직접 확인."
+        }
+      ],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.instagram.com/megabox.only/p/DdzvcjdlIUM/",
+          "status": "PUBLISHED",
+          "note": "주최 공식 행사 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "주최 공식 일정 기준",
+        "sourceUrl": "https://www.instagram.com/megabox.only/p/DdzvcjdlIUM/",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "슈퍼드라이 X 박지훈 성수 팝업스토어",
+      "subcategory": "POPUP_RETAIL",
+      "organizer": "슈퍼드라이 코리아",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "슈퍼드라이 성수점·스토리칸 성수",
+      "address": "서울특별시 성동구 연무장길 17",
+      "description": "슈퍼드라이와 박지훈의 협업 상품, 26FW 화보 포토존을 만나는 한정 팝업입니다. 구매 금액별 증정품과 이벤트 조건은 공식 공지를 확인할 수 있습니다.",
+      "admission": null,
+      "subjects": [
+        "FASHION",
+        "박지훈"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-09-30",
+          "endDate": "2026-10-12",
+          "startTime": null,
+          "endTime": null
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.instagram.com/superdrykor/p/DdVfCXzGvyC/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 주최 공식 안내에서 이번 회차 일정 2026-09-30~2026-10-12 및 개최 장소를 직접 확인."
+        }
+      ],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.instagram.com/superdrykor/p/DdVfCXzGvyC/",
+          "status": "PUBLISHED",
+          "note": "주최 공식 행사 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "주최 공식 일정 기준",
+        "sourceUrl": "https://www.instagram.com/superdrykor/p/DdVfCXzGvyC/",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "스킨앤랩 링거 팩토리 성수 팝업스토어",
+      "subcategory": "POPUP_EXPERIENCE",
+      "organizer": "스킨앤랩",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "성수포탈",
+      "address": "서울특별시 성동구 연무장7길 16",
+      "description": "스킨앤랩의 링거 팩토리 체험 팝업입니다. 공식 예약 안내는 1인 1예약이며, 동반인도 개별 예약이 필요하고 예약 시각보다 10분 이상 늦으면 입장이 제한될 수 있습니다.",
+      "admission": null,
+      "subjects": [
+        "BEAUTY"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-10-03",
+          "endDate": "2026-10-19",
+          "startTime": "11:00",
+          "endTime": "20:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.instagram.com/p/DdbFTZ0E5hK/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 주최 공식 안내에서 이번 회차 일정 2026-10-03~2026-10-19 및 개최 장소를 직접 확인."
+        }
+      ],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.instagram.com/p/DdbFTZ0E5hK/",
+          "status": "PUBLISHED",
+          "note": "주최 공식 행사 안내"
+        },
+        {
+          "kind": "OFFICIAL",
+          "url": "https://booking.naver.com/booking/13/bizes/1739573/items/8067644",
+          "status": "PUBLISHED",
+          "note": "공식 사전 예약 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "주최 공식 일정 기준",
+        "sourceUrl": "https://www.instagram.com/p/DdbFTZ0E5hK/",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "메이드바이 X 맘마 햄스토어 성수 팝업",
+      "subcategory": "POPUP_RETAIL",
+      "organizer": "메이드바이·맘마",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "메이드바이 성수점",
+      "address": null,
+      "description": "햄스터 캐릭터와 메이드바이의 협업 굿즈를 소개하는 햄스토어 팝업입니다. 종료일에는 팝업이 매장 마감 3시간 전에 끝납니다.",
+      "admission": null,
+      "subjects": [
+        "CHARACTER_IP",
+        "맘마"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-09-08",
+          "endDate": "2026-11-03",
+          "startTime": "12:00",
+          "endTime": "20:00"
+        },
+        {
+          "startDate": "2026-11-04",
+          "endDate": "2026-11-04",
+          "startTime": "12:00",
+          "endTime": "17:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.instagram.com/p/DdArLlWEuw_/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 주최 공식 안내에서 이번 회차 일정 2026-09-08~2026-11-04 및 개최 장소를 직접 확인."
+        }
+      ],
+      "banners": [],
+      "warnings": [],
+      "eventFormat": "UNKNOWN",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://www.instagram.com/p/DdArLlWEuw_/",
+          "status": "PUBLISHED",
+          "note": "주최 공식 행사 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "주최 공식 일정 기준",
+        "sourceUrl": "https://www.instagram.com/p/DdArLlWEuw_/",
+        "checkedOn": "2026-10-04"
+      }
+    },
+    {
+      "name": "오래오래 함께가게 성수 팝업",
+      "subcategory": "POPUP_MIXED",
+      "organizer": "카카오페이·함께일하는재단",
+      "edition": "2026",
+      "region": "SEOUL",
+      "venueName": "오래오래 함께가게 성수",
+      "address": "서울특별시 성동구 연무장3길 8-27",
+      "description": "카카오페이와 함께일하는재단의 소상공인 상생 팝업입니다. 100개 브랜드의 제품과 브랜드 이야기, 시식·DIY 체험을 소개합니다. 오래이용권 등 개별 체험 조건은 공식 안내를 확인하세요.",
+      "admission": null,
+      "subjects": [
+        "LIVING",
+        "FOOD_DRINK",
+        "ART_DESIGN"
+      ],
+      "occurrences": [
+        {
+          "startDate": "2026-09-01",
+          "endDate": "2026-10-31",
+          "startTime": "11:00",
+          "endTime": "20:00"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://longtogether.cafe24.com/article/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/1/723785/",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "2026-10-04 주최 공식 안내에서 이번 회차 일정 2026-09-01~2026-10-31 및 개최 장소를 직접 확인."
+        }
+      ],
+      "banners": [
+        {
+          "imageUrl": "https://ecimg.cafe24img.com/pg964b86331718002/longtogether/web/upload/NNEditor/20260826/1_EAB3B5ECA780EC82ACED95AD.png",
+          "pageUrl": "https://longtogether.cafe24.com/article/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/1/723785/",
+          "rights": "UNKNOWN",
+          "rightsEvidence": null,
+          "matchesEdition": true
+        }
+      ],
+      "warnings": [],
+      "eventFormat": "MULTI_BOOTH",
+      "discoveryLinks": [
+        {
+          "kind": "OFFICIAL",
+          "url": "https://longtogether.cafe24.com/article/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/1/723785/",
+          "status": "PUBLISHED",
+          "note": "주최 공식 행사 안내"
+        }
+      ],
+      "operationStatus": {
+        "state": "SCHEDULED",
+        "note": "주최 공식 일정 기준",
+        "sourceUrl": "https://longtogether.cafe24.com/article/%EA%B3%B5%EC%A7%80%EC%82%AC%ED%95%AD/1/723785/",
+        "checkedOn": "2026-10-04"
+      }
+    }
+  ]
+}

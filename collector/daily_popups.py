@@ -26,7 +26,7 @@ def main(argv=None):
    for item in [r for r in due if 'POPUP_DAILY' in r.get('origins',[])][:5]:run.research_event_name(item)
   except Exception as exc:run.issue('popup-pilot',exc)
   finally:
-   summary={'counts':{**run.stats,'cliCalls':run.calls,'sourceJobs':len(jobs),'elapsedSeconds':round(time.monotonic()-began)},'issues':run.issues[:30],'schedule':'Daily popup pilot; activation pending','receipts':{}}
+   summary={'counts':{**run.stats,'cliCalls':run.calls,'sourceJobs':len(jobs),'elapsedSeconds':round(time.monotonic()-began)},'issues':run.issues[:30],'schedule':'Daily popup discovery; publication requires source review','receipts':run.receipts}
    if run.cli_blocked_reason:summary['cliBlockedReason']=run.cli_blocked_reason
    write_json(folder/'summary.json',summary)
    if run.api:run.request('POST',f'/pipelines/{run.id}/finish',{'state':'PARTIAL' if run.issues else 'SUCCESS','summary':summary})
