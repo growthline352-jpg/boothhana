@@ -19,10 +19,12 @@ describe('itinerary location and saved draft recovery',()=>{
   expect(savedPlanSignature(readPlans(storage,'saved'),restored.id)).toBe(JSON.stringify(restored))
   expect(savedPlanSignature(readPlans(storage,'saved'),'new-plan')).toBe('')
  })
- it('does not label an unmatched event address as Seongsu or the previously selected neighborhood',()=>{
-  expect(eventArea('경기 수원시 영통구 광교중앙로 140','수원컨벤션센터')).toBe('')
-  expect(eventArea('경기 안양시 동안구 평촌대로 76')).toBe('')
-  expect(eventArea('서울 성동구 연무장길 76')).toBe('SEONGSU')
+ it('recognizes new districts without reusing the previously selected neighborhood',()=>{
+  expect(eventArea('경기 수원시 영통구 광교중앙로 140','수원컨벤션센터')).toBe('GYEONGGI_31010')
+  expect(eventArea('경기 안양시 동안구 평촌대로 76')).toBe('GYEONGGI_31040')
+  expect(eventArea('서울 성동구 연무장길 76')).toBe('SEOUL_11040')
+  expect(eventArea('대전 유성구 엑스포로 1')).toBe('')
+  expect(eventArea('부산광역시 중구 중앙대로 1')).toBe('')
  })
  it('resolves the actual event address and uses that point for nearby search outside preset neighborhoods',async()=>{
   const resolve=vi.fn().mockResolvedValue(suwon)
@@ -51,6 +53,10 @@ describe('itinerary location and saved draft recovery',()=>{
  })
  it('continues using the chosen neighborhood when a date has no event location',()=>{
   expect(planNearbyCenter(plan({purpose:'DATE',stops:[]}),seongsu)).toEqual(seongsu)
+ })
+ it('keeps a date centered on the chosen event and blocks an unrelated area fallback when its position is unknown',()=>{
+  expect(planNearbyCenter(plan({purpose:'DATE',stops:[stop({point:null})]}),seongsu)).toBeNull()
+  expect(planNearbyCenter(plan({purpose:'DATE',stops:[stop({point:suwon}),stop({id:'meal',kind:'FOOD',locked:true,point:seongsu})]}),seongsu)).toEqual(suwon)
  })
  it('preserves a selected Kakao place source and original link through save and recovery',()=>{
   const selected:Place={id:'KAKAO/123',name:'수원 카페',address:stop().address,point:suwon,kind:'CAFE',url:'https://place.map.kakao.com/123',provider:'KAKAO'}

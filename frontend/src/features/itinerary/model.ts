@@ -3,6 +3,7 @@ import type {Occurrence} from '../collection/api'
 import {categoryForType} from '../discovery/categories'
 import {includesDay, validDay} from '../visit/visit'
 import {matchesTopics,type TopicSelection} from './topics'
+import {itineraryRegions,regionArea,regionForEvent} from './regionCatalog'
 
 export type Purpose = 'EVENT' | 'DATE'
 export type StopKind = 'EVENT' | 'FOOD' | 'CAFE' | 'PLACE'
@@ -26,6 +27,7 @@ export const areas:Area[]=[
  {id:'JONGNO',name:'종로·을지로',point:{lat:37.5703,lng:126.992},words:['종로','을지로','인사동','광화문','중구']},
  {id:'ILSAN',name:'일산·킨텍스',point:{lat:37.6688,lng:126.7457},words:['일산','킨텍스','고양','킨텍스로']},
  {id:'HANAM',name:'하남·스타필드',point:{lat:37.5452,lng:127.2238},words:['하남','미사','스타필드 하남']},
+ ...itineraryRegions.map(r=>({id:r.id,name:r.name,point:r.point,words:[r.name]})),
 ]
 export const kindNames:Record<StopKind,string>={EVENT:'행사',FOOD:'식사',CAFE:'카페',PLACE:'장소'}
 export const timeMinutes=(time:string)=>/^([01]\d|2[0-3]):[0-5]\d$/.test(time)?Number(time.slice(0,2))*60+Number(time.slice(3)):NaN
@@ -42,7 +44,7 @@ export function operatingOn(row:PublicEventSummary,day:string){
 export function recommendedEvents(rows:PublicEventSummary[],day:string,area:string,anchor?:PublicEventSummary,purpose:Purpose='DATE',subjects:string[]=[],selection?:TopicSelection) {
  const district=areas.find(a=>a.id===area),anchorCategory=anchor?categoryForType(anchor.event.subcategory).code:''
  return rows.flatMap(row=>operatingOn(row,day).map(place=>({...row,id:place.eventId,event:place.event,operatingPlaces:undefined})))
- .filter(row=>row.id!==anchor?.id&&!!row.event.address&&(!district||district.words.some(w=>`${row.event.address} ${row.event.venueName||''}`.includes(w))))
+ .filter(row=>row.id!==anchor?.id&&!!row.event.address&&(!district||(regionArea(area)?regionForEvent(row.event)?.id===area:district.words.some(w=>`${row.event.address} ${row.event.venueName||''}`.includes(w)))))
  .filter(row=>purpose!=='EVENT'||!anchorCategory||categoryForType(row.event.subcategory).code===anchorCategory)
  .filter(row=>purpose!=='EVENT'||anchorCategory!=='SUBCULTURE'||matchesTopics(row,selection))
  .map(row=>{
