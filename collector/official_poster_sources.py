@@ -61,21 +61,27 @@ class PosterHTML(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.page=page;self.stack=[];self.images=[];self.parts=[];self.links=[];self.official_links=[];self.anchor=None
         self.embedded=None;self.embedded_parts=[]
+        self.titles=[];self.title_tag=None;self.title_parts=[]
     def add_image(self,value,role,alt,priority):
         if not value:return
         url=urljoin(self.page,value)
         try:check_url(url,[urlsplit(url).hostname or ''])
         except (ValueError,TypeError):return
+        parsed=urlsplit(url)
+        if parsed.path.lower().endswith('.svg') or (parsed.hostname in ('www.facebook.com','facebook.com') and parsed.path.rstrip('/')=='/tr'):return
+        if re.search(r'(?:^|/)(?:venue[-_]?map|left[-_]?map|sns-event-popup|food_noimg)(?:[._-]|$)|/resources/images/(?:main/(?:m?ttr[-_])|meta/og-img)',parsed.path,re.I):return
         # Site chrome never becomes an event poster merely through og:image.
         if re.search(r'(?:logo|icon|loading|spacer|img_meta_festa|/common/|/calender/|/_static/|/resources/front/img/|fallfst26_(?:keyvisual|title|deco|ic_|map|altTitle|bg_))',urlsplit(url).path,re.I):return
         old=next((x for x in self.images if x['url']==url),None)
-        row=dict(url=url,role=role,nearbyText=alt[:500],priority=priority)
+        row=dict(url=url,role=role,nearbyText=(alt or '')[:500],priority=priority)
         if old:
             if priority<old['priority']:self.images[self.images.index(old)]=row
         elif len(self.images)<400:self.images.append(row)
     def handle_starttag(self,tag,attrs):
-        a=dict(attrs);context=' '.join(x[1] for x in self.stack)+' '+a.get('class','')+' '+a.get('id','')
+        a={key:value or '' for key,value in attrs};context=' '.join(x[1] for x in self.stack)+' '+a.get('class','')+' '+a.get('id','')
         hidden=any(x[0] in ('script','style','template','iframe','nav','footer','header') for x in self.stack)
+        if tag in ('title','h1') and not hidden:self.title_tag=tag;self.title_parts=[]
+        if tag=='meta' and (a.get('property') or a.get('name','')).lower()=='og:title':self.titles.append(a.get('content','')[:2048])
         if tag=='meta' and (a.get('property') or a.get('name','')).lower() in ('og:image','og:image:secure_url','twitter:image','twitter:image:src'):
             self.add_image(a.get('content'),'PAGE_PREVIEW','',1)
         if tag=='script' and (a.get('type','').lower() in ('application/ld+json','application/json') or a.get('id')=='__NEXT_DATA__'):
@@ -99,6 +105,9 @@ class PosterHTML(HTMLParser):
             self.stack.append((tag,a.get('class','')+' '+a.get('id','')))
         if tag in ('p','div','li','br','h1','h2','h3'):self.parts.append('\n')
     def handle_endtag(self,tag):
+        if tag==self.title_tag:
+            if len(self.titles)<20:self.titles.append(''.join(self.title_parts)[:2048])
+            self.title_tag=None;self.title_parts=[]
         if self.embedded and tag in ('script','style'):
             raw=''.join(self.embedded_parts)
             if self.embedded=='json':
@@ -120,6 +129,7 @@ class PosterHTML(HTMLParser):
         for i in range(len(self.stack)-1,-1,-1):
             if self.stack[i][0]==tag:del self.stack[i:];break
     def handle_data(self,value):
+        if self.title_tag:self.title_parts.append(value[:2048])
         if self.embedded:self.embedded_parts.append(value)
         if self.anchor:self.anchor[1]=(self.anchor[1]+value)[:500]
         if not any(x[0] in ('script','style','template','iframe','nav','footer','header') for x in self.stack):self.parts.append(value)
@@ -177,7 +187,9 @@ def parse_official_document(html,page,checked_on,event_name=None):
         norm=lambda s:re.sub(r'[^가-힣a-z0-9]','',s.casefold()).removeprefix('제')
         target=norm(event_name or '')
         images=[row for row in images if target and norm(row['nearbyText'])==target]
-    return dict(sourceUrl=page,sourceType='OFFICIAL_POSTER_PAGE',sourceScope=scope,checkedOn=checked_on,bodyText=text[:32000],
+    target=event_label(event_name or '')
+    title_matches=bool(len(target)>=4 and any(target in event_label(title) for title in parser.titles))
+    return dict(sourceUrl=page,sourceType='OFFICIAL_POSTER_PAGE',sourceScope=scope,sourceTitleMatchesEvent=title_matches,checkedOn=checked_on,bodyText=text[:32000],
                 textTruncated=len(text)>32000,images=images[:40],imagesTruncated=len(images)>40,
                 bodySha256=hashlib.sha256(html.encode()).hexdigest(),childUrls=list(dict.fromkeys(parser.links))[:8],
                 officialUrls=list(dict.fromkeys(parser.official_links))[:4])

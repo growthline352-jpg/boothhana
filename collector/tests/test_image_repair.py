@@ -144,7 +144,7 @@ class RepairTests(unittest.TestCase):
         identity=repair.digest([value['event'].get(key) for key in ('name','organizer','edition','occurrences')])
         source=dict(url=page,kind='OFFICIAL',evidence='공식 행사 안내',imageUrls=[])
         job.queue.rows['1']=dict(details=dict(researchTarget=identity,sourceLeads=[source]))
-        docs=[dict(sourceUrl=page,status='READ',images=[dict(url=URL,role='PAGE_PREVIEW',analysisStatus='ATTACHED',sha256=SHA)])]
+        docs=[dict(sourceUrl=page,status='READ',sourceType='GOOGLE_SITES',bodyText='2026 테스트 행사',images=[dict(url=URL,role='PAGE_PREVIEW',analysisStatus='ATTACHED',sha256=SHA)])]
         with patch.object(job.research,'search',side_effect=AssertionError('fresh signed thumbnail available')),patch.object(repair,'collect_detail_sources',return_value=(docs,[])) as extractor:
             self.assertEqual(job.discover(value)[0],'DISCOVERED_FOR_REVIEW')
         self.assertIn(page,[s['url'] for s in extractor.call_args.args[0]['sources']])
@@ -181,9 +181,47 @@ class RepairTests(unittest.TestCase):
             self.assertEqual(job.discover(target())[0],'SOURCE_BLOCKED')
         fetch.assert_not_called();self.assertEqual(job.api.calls,[])
     def test_verified_candidate_avoids_unnecessary_search(self):
-        self.mock_network();job=self.job()
+        self.mock_network('<h1>2026 테스트 행사</h1><div class="poster"><img src="/poster.png"></div>');job=self.job()
         with patch.object(job.research,'search',side_effect=AssertionError('already found')):
             self.assertEqual(job.discover(target())[0],'DISCOVERED_FOR_REVIEW')
+    def test_unrelated_venue_poster_bytes_do_not_stop_event_thumbnail_research(self):
+        self.mock_network('<h1>전시장 상시대관</h1><div class="poster"><img src="/rental-2027.png"></div>')
+        job=self.job(apply=True)
+        with patch.object(job.research,'search',return_value=dict(state='RESEARCH_DEFERRED',sources=[])) as search:
+            state,note=job.discover(target())
+        search.assert_called_once()
+        self.assertTrue(note['needsSourceResearch'])
+        self.assertFalse(note['candidates'][0]['posterEvidence'])
+        self.assertEqual(note['candidates'][0]['rightsState'],'PENDING')
+    def test_tracking_chrome_and_missing_attributes_do_not_hide_actual_poster(self):
+        html='''<h1>2026 테스트 행사</h1><img src="https://www.facebook.com/tr?id=1"><img src="/ico/loding.svg"><img src="/venue-map.png"><div class="poster" id><img alt src="/poster.png"></div>'''
+        self.mock_network(html);job=self.job(apply=True)
+        with patch.object(job.research,'search',side_effect=AssertionError('Actual poster found')):
+            state,note=job.discover(target())
+        self.assertEqual(state,'WAITING_REVIEW')
+        self.assertEqual([c['url'] for c in note['candidates']],[URL])
+        self.assertTrue(note['candidates'][0]['posterEvidence'])
+    def test_existing_pending_poster_reuses_verified_cache_without_search_or_approval(self):
+        from detail_image_cache import retain_images
+        self.mock_network('<h1>2026 테스트 행사</h1><div class="poster"><img src="/poster.png"></div>')
+        value=target();value['assets']=[asset(rights='PENDING',state='CANDIDATE')]
+        blob=self.root/'pending.png';blob.write_bytes(RAW)
+        retain_images([dict(sourceUrl=PAGE,status='READ',images=[dict(url=URL,analysisStatus='ATTACHED',imageFile=blob.name,
+            contentType='image/png',sha256=SHA,fetchedUrls=[URL])])],[blob],self.root/'detail-image-cache-v1')
+        job=self.job(apply=True)
+        with patch.object(job.research,'search',side_effect=AssertionError('Pending poster already verified')),patch.object(repair,'fetch_image',side_effect=AssertionError('Cached bytes should be used')):
+            state,note=job.discover(value)
+        self.assertEqual(state,'WAITING_REVIEW');self.assertEqual(job.api.calls,[])
+        self.assertEqual(note['candidates'][0]['assetId'],10)
+        self.assertEqual(note['candidates'][0]['rightsState'],'PENDING')
+        self.assertEqual(note['candidates'][0]['sha256'],SHA)
+    def test_existing_pending_host_candidate_gets_bytes_when_host_becomes_allowed(self):
+        fetch=self.mock_network('<h1>2026 테스트 행사</h1><div class="poster"><img src="/poster.png"></div>')
+        value=target();value['assets']=[asset(rights='PENDING',state='CANDIDATE')];job=self.job(apply=True)
+        with patch.object(job.research,'search',side_effect=AssertionError('Poster bytes now available')):
+            state,note=job.discover(value)
+        self.assertEqual(state,'WAITING_REVIEW');fetch.assert_called_once();self.assertEqual(job.api.calls,[])
+        self.assertEqual(note['candidates'][0]['assetId'],10);self.assertEqual(note['candidates'][0]['rightsState'],'PENDING')
     def test_full_initial_source_list_still_follows_linked_official_homepage(self):
         self.mock_network();job=self.job();value=target()
         value['event']['sources']=[dict(kind='VENUE',url=PAGE+'?p='+str(i)) for i in range(8)]
