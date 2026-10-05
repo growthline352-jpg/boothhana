@@ -14,6 +14,20 @@ from media_fetch import check_url
 from run import ROOT, CliUnavailable, RunError, audit_opened_urls, canonical_audit_url, execute_search, write_json
 
 
+def opaque_completed_web_actions(path):
+    """A CLI tool action occurred, but this CLI version omitted its opened URL."""
+    if not path.is_file() or path.stat().st_size>20*1024*1024:return False
+    for line in path.read_text(encoding='utf-8',errors='replace').splitlines():
+        try:event=json.loads(line)
+        except ValueError:continue
+        if not isinstance(event,dict):continue
+        item=event.get('item')
+        if (event.get('type')=='item.completed' and isinstance(item,dict)
+            and item.get('type') in ('web_search','web_search_call') and item.get('action')=={'type':'other'}):
+            return True
+    return False
+
+
 class ThumbnailResearch:
     def __init__(self, cfg, folder: Path, max_calls: int, executor=None):
         self.cfg = cfg
@@ -58,6 +72,7 @@ class ThumbnailResearch:
             if not searched:
                 raise RunError('Thumbnail research has no web-search audit')
             opened = {canonical_audit_url(url) for url in audit_opened_urls(folder / 'codex.jsonl')}
+            opaque = not opened and opaque_completed_web_actions(folder / 'codex.jsonl')
             sources, discarded = [], []
             for row in result['sources']:
                 url = row['url']
@@ -73,7 +88,7 @@ class ThumbnailResearch:
                        for entry in self.cfg['blockedSourceHosts']):
                     discarded.append(dict(url=url, reason='BLOCKED_SOURCE'))
                     continue
-                if canonical_audit_url(url) not in opened:
+                if canonical_audit_url(url) not in opened and not opaque:
                     discarded.append(dict(url=url, reason='NOT_OPENED'))
                     continue
                 sources.append(row)
@@ -81,12 +96,18 @@ class ThumbnailResearch:
                 raise RunError('Thumbnail research found no source')
             if result['searchStatus'] != 'FOUND' and sources:
                 raise RunError('Unsuccessful thumbnail research contains sources')
-            output = dict(state='RESEARCH_FOUND' if sources else
+            output = dict(state=('UNVERIFIED_SEARCH_LEADS' if opaque else 'RESEARCH_FOUND') if sources else
                           'RESEARCH_FAILED' if result['searchStatus'] == 'FAILED' else result['searchStatus'],
                           sources=sources, queries=result['queries'], summary=result['summary'], discardedSources=discarded)
+            if opaque and sources:
+                output.update(requiresDirectHtmlRefetch=True,openedUrlAuditAvailable=False)
             write_json(folder / 'audit.json', dict(eventId=target['id'], webSearchObserved=searched,
-                       openedUrls=sorted(opened), usage=usage, state=output['state'], discardedSources=discarded))
-            write_json(folder / 'validated-result.json', {**result, 'sources':sources})
+                       openedUrls=sorted(opened), openedUrlAuditAvailable=not opaque, usage=usage,
+                       requiresDirectHtmlRefetch=bool(opaque and sources),state=output['state'], discardedSources=discarded))
+            # The downstream repair fetches HTML and verified bytes itself.
+            # Never persist these leads as audited/opened or approved sources.
+            write_json(folder / ('unverified-leads.json' if opaque and sources else 'validated-result.json'),
+                       {**result, 'sources':sources})
             return output
         except CliUnavailable as error:
             self.blocked_reason = error.reason

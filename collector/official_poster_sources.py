@@ -3,6 +3,7 @@
 Body artwork is retained ahead of common site previews. Candidates still need
 edition verification and the existing approval/storage steps before publication.
 """
+from html import unescape
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 import hashlib,json,re
@@ -12,6 +13,42 @@ SUPPORTED_HOSTS = ['festival.seoul.go.kr','www.coex.co.kr','web1.gg.go.kr',
                    'www.kintex.com','www.setec.or.kr','setec.or.kr',
                    'www.jvcmusic.co.jp','www.kh.or.kr','takemm.com']
 PLACEHOLDER_SHA256 = {'51bab8b001f832dfe2bd37f2f8dfa5f49fe34754403f5112590e50fb5f1473f2'}
+AGGREGATE_HOSTS = {'web1.gg.go.kr', 'www.gg.go.kr', 'gg.go.kr'}
+VOID_TAGS = {'img','meta','link','input','br','hr','source','area','wbr','embed','param'}
+
+def event_label(value):
+    return re.sub(r'[^가-힣a-z0-9]', '', value.casefold()).removeprefix('2026')
+
+class FestivalSections(HTMLParser):
+    """Capture each GG festival dialog before extracting any images or links."""
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.sections=[];self.active=None;self.tags=[]
+    def handle_starttag(self, tag, attrs):
+        if self.active is None and tag=='section' and re.fullmatch(r'mdftv_\d+',dict(attrs).get('id','')):
+            self.active=dict(id=dict(attrs)['id'],html=[],heading=[])
+        if self.active is not None:
+            self.active['html'].append(self.get_starttag_text())
+            if tag not in VOID_TAGS:self.tags.append(tag)
+    def handle_startendtag(self, tag, attrs):
+        if self.active is not None:self.active['html'].append(self.get_starttag_text())
+    def handle_endtag(self, tag):
+        if self.active is None:return
+        self.active['html'].append('</'+tag+'>')
+        for index in range(len(self.tags)-1,-1,-1):
+            if self.tags[index]==tag:
+                del self.tags[index:]
+                if not self.tags:
+                    self.sections.append(dict(id=self.active['id'],html=''.join(self.active['html']),
+                                              heading=unescape(''.join(self.active['heading']))))
+                    self.active=None
+                break
+    def handle_data(self, value):
+        if self.active is not None:
+            self.active['html'].append(value)
+            if 'h5' in self.tags:self.active['heading'].append(value)
+    def handle_entityref(self, name):self.handle_data('&'+name+';')
+    def handle_charref(self, name):self.handle_data('&#'+name+';')
 
 def poster_detail_url(value):
     try:
@@ -109,21 +146,38 @@ def parse_official_document(html,page,checked_on,event_name=None):
     """Unverified candidates from an already associated official source only."""
     check_url(page,[urlsplit(page).hostname or ''])
     if not isinstance(html,str) or len(html.encode())>MAX_HTML_BYTES:raise ValueError('Invalid official document')
+    aggregate=urlsplit(page).hostname in AGGREGATE_HOSTS
+    scope='OFFICIAL_PAGE'
+    if aggregate:
+        sections=FestivalSections();sections.feed(html)
+        if sections.sections:
+            target=event_label(event_name or '')
+            fragment=urlsplit(page).fragment
+            matches=[row for row in sections.sections if target and event_label(row['heading'])==target
+                     and (not fragment or row['id']==fragment)]
+            # A conflicting anchor or ambiguous title cannot identify the event.
+            html=matches[0]['html'] if len(matches)==1 else ''
+            scope='EVENT_SECTION' if len(matches)==1 else 'UNMATCHED_AGGREGATE'
+        else:scope='IMAGE_LABEL_ONLY'
     parser=PosterHTML(page);parser.feed(html)
     text=re.sub(r'\n\s*\n+','\n',re.sub(r'[ \t]+',' ',''.join(parser.parts))).strip()
-    if not text and not parser.images:raise ValueError('Empty official poster document')
+    if not text and not parser.images and scope!='UNMATCHED_AGGREGATE':raise ValueError('Empty official poster document')
     images=sorted(parser.images,key=lambda x:x['priority'])
-    if urlsplit(page).hostname=='web1.gg.go.kr':
+    if aggregate:
         # This is an aggregate festival map: never give another festival's art
         # to the model just because it occurs earlier in the page.
-        norm=lambda s:re.sub(r'[^가-힣a-z0-9]','',s.casefold()).removeprefix('2026')
-        target=norm(event_name or '')
-        images=[row for row in images if target and norm(row['nearbyText'])==target]
+        target=event_label(event_name or '')
+        images=[row for row in images if target and event_label(row['nearbyText'])==target]
+        if scope=='IMAGE_LABEL_ONLY':
+            # Legacy/changed markup supplies image leads only. Global links and
+            # other festivals' text must never become this event's evidence.
+            parser.links=[];parser.official_links=[]
+            text='\n'.join(row['nearbyText'] for row in images)
     if urlsplit(page).hostname in ('setec.or.kr','www.setec.or.kr'):
         norm=lambda s:re.sub(r'[^가-힣a-z0-9]','',s.casefold()).removeprefix('제')
         target=norm(event_name or '')
         images=[row for row in images if target and norm(row['nearbyText'])==target]
-    return dict(sourceUrl=page,sourceType='OFFICIAL_POSTER_PAGE',checkedOn=checked_on,bodyText=text[:32000],
+    return dict(sourceUrl=page,sourceType='OFFICIAL_POSTER_PAGE',sourceScope=scope,checkedOn=checked_on,bodyText=text[:32000],
                 textTruncated=len(text)>32000,images=images[:40],imagesTruncated=len(images)>40,
                 bodySha256=hashlib.sha256(html.encode()).hexdigest(),childUrls=list(dict.fromkeys(parser.links))[:8],
                 officialUrls=list(dict.fromkeys(parser.official_links))[:4])

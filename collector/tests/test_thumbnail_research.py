@@ -81,6 +81,41 @@ class ThumbnailResearchTests(unittest.TestCase):
         validated = json.loads((self.root/'7'/'1'/'validated-result.json').read_text())
         self.assertEqual([s['url'] for s in validated['sources']], [PAGE])
 
+    def test_opaque_completed_web_actions_preserve_only_unverified_source_leads(self):
+        def execute(cfg, folder, prompt, schema):
+            log=dict(type='item.completed',item=dict(type='web_search',action=dict(type='other'),query=''))
+            (folder/'codex.jsonl').write_text(json.dumps(log)+'\n',encoding='utf-8')
+            return json.dumps(result(),ensure_ascii=False).encode(),True,{}
+        value=ThumbnailResearch(self.cfg,self.root,3,execute).search(target(),[],100)
+        self.assertEqual(value['state'],'UNVERIFIED_SEARCH_LEADS')
+        self.assertTrue(value['requiresDirectHtmlRefetch'])
+        self.assertEqual(value['sources'][0]['url'],PAGE)
+        self.assertFalse((self.root/'7'/'1'/'validated-result.json').exists())
+        audit=json.loads((self.root/'7'/'1'/'audit.json').read_text(encoding='utf-8'))
+        self.assertEqual(audit['openedUrls'],[])
+        self.assertFalse(audit['openedUrlAuditAvailable'])
+
+    def test_opaque_mode_still_rejects_unobserved_wrong_event_blocked_and_private_sources(self):
+        self.cfg['blockedSourceHosts']=['blocked.example']
+        cases=[({**result(),'eventId':8},True),(result(),False)]
+        for url in ('https://127.0.0.1/private','https://blocked.example/poster'):
+            value=result();value['sources'][0]['url']=url;cases.append((value,True))
+        for index,(value,searched) in enumerate(cases):
+            def execute(cfg,folder,prompt,schema):
+                log=dict(type='item.completed',item=dict(type='web_search',action=dict(type='other')))
+                (folder/'codex.jsonl').write_text(json.dumps(log)+'\n',encoding='utf-8')
+                return json.dumps(value,ensure_ascii=False).encode(),searched,{}
+            output=ThumbnailResearch(self.cfg,self.root/str(index),3,execute).search(target(),[],100)
+            self.assertEqual(output['state'],'RESEARCH_FAILED');self.assertEqual(output['sources'],[])
+
+    def test_uncompleted_or_non_web_other_actions_do_not_enable_fallback(self):
+        for state,kind in [('item.started','web_search'),('item.completed','command_execution')]:
+            def execute(cfg,folder,prompt,schema):
+                log=dict(type=state,item=dict(type=kind,action=dict(type='other')))
+                (folder/'codex.jsonl').write_text(json.dumps(log)+'\n',encoding='utf-8')
+                return json.dumps(result(),ensure_ascii=False).encode(),True,{}
+            self.assertEqual(ThumbnailResearch(self.cfg,self.root,3,execute).search(target(),[],100)['state'],'RESEARCH_FAILED')
+
     def test_bad_or_blocked_secondary_source_cannot_discard_valid_evidence(self):
         self.cfg['blockedSourceHosts'] = ['blocked.example']
         for url, reason in [('https://127.0.0.1/private', 'UNSAFE_URL'),
