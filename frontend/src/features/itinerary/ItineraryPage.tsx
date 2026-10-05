@@ -131,7 +131,7 @@ export function ItineraryPage(){
  const addStop=(stop:PlanStop)=>{
   if(step===6)setUndoPlan(plan)
   if(replaceId){setPlan(p=>({...p,stops:p.stops.map(s=>s.id===replaceId?{...stop,start:s.start,duration:s.duration,locked:s.locked}:s)}))}
-  else{if(plan.stops.length>=20){setMessage('한 일정에는 최대 20곳까지 추가할 수 있어요.');return}if(stop.source==='MANUAL'||step<6)stop={...stop,start:nextStart(plan,stop.duration)||plan.start};setPlan(p=>({...p,stops:[...p.stops,stop]}))}
+  else{const mainCount=step<6&&anchor&&!plan.stops.some(s=>s.eventId===anchor.id)?1:0;if(plan.stops.length+mainCount>=20){setMessage('중심 행사를 포함해 한 일정에는 최대 20곳까지 추가할 수 있어요.');return}if(stop.source==='MANUAL'||step<6)stop={...stop,start:nextStart(plan,stop.duration)||plan.start};setPlan(p=>({...p,stops:[...p.stops,stop]}))}
   setSelected(stop.id);setEditingId(stop.id);setView('list');setAddMode(null);setReplaceId('');setMessage(replaceId?'장소를 바꿨어요. 기존 방문 시간은 유지했어요.':'장소를 추가했어요. 방문 시간을 확인해 주세요.')
  }
  const insertEvent=(row:PublicEventSummary)=>{if(plan.stops.some(s=>s.id!==replaceId&&s.eventId===row.id)){setMessage('이미 일정에 있는 행사예요.');return}const time=nextStart(plan,60)||plan.start;addStop(eventStop(row,plan.day,time,pointFor(row)||nearbyEventPoints.data?.[row.id]||null))}
