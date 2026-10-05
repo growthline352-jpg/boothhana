@@ -592,7 +592,7 @@
  .it-list-add { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
  .it-list-add button { min-height:44px; font-size:12px; }
  .it-timeline-top { flex-wrap:wrap; gap:8px; }
- .it-event-preview { margin:auto 0 0; height:85dvh; max-height:85dvh; width:100%; border-radius:20px 20px 0 0; }
+ .it-event-preview { margin:auto 0 0; height:85dvh; max-height:85dvh; width:100%; max-width:100vw; border-radius:20px 20px 0 0; }
  .it-mobile-editor { position:fixed; inset:auto 0 0; margin:0; width:100%; max-width:none; max-height:85dvh; border:0; border-radius:20px 20px 0 0; padding:20px; box-sizing:border-box; background:white; overflow:auto; z-index:100; }
  .it-mobile-editor::backdrop { background:#172b4270; }
  .it-edit-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:20px; }
