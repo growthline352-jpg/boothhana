@@ -3,13 +3,11 @@ import { BoothContent } from '../catalog/BoothContent'
 import { eventStatus } from '../visit/eventStatus'
 import { seoulToday } from '../discovery/browse'
 import { useEffect, useMemo, useState } from 'react'
-import { useRemote } from '../../app/useRemote'
 import type { EventData, PublicAsset, PublicParticipant } from '../catalog/api'
 import { FloorPlans } from '../catalog/FloorPlans'
 import { SafeLink } from '../catalog/Shared'
 import { defaultDay, normalizePlace } from '../visit/visit'
-import { floorplanApi } from './api'
-import type { PlanLink, PublicPlan, PublicShape } from './api'
+import type { PlanLink, PublicPlan, PublicPlans, PublicShape } from './api'
 import { PlanCanvas } from './PlanCanvas'
 import { generateSchematicPlan } from './schematic'
 import { matchesFloorplanSearch } from './mapSearch'
@@ -24,10 +22,10 @@ export function planApplies(plan:PublicPlan,day:string,hall:string,participants:
   const hallParticipants=new Set(participants.filter(p=>p.participant.locations.some(l=>normalizePlace(l.hall)===normalizePlace(hall))).map(p=>p.id))
   return plan.shapes.some(shape=>shape.links.some(link=>hallParticipants.has(link.participantId)&&(!day||link.dates.includes(day))))
 }
-export function InteractiveFloorPlans({eventId,event,assets,participants,onOpen,day:providedDay,hall='',query='',focusParticipantId=null,onList,onClear,onlySaved=false,savedParticipantIds=[],facetParticipantIds}:{onlySaved?:boolean;savedParticipantIds?:number[];facetParticipantIds?:number[];eventId:string;event:EventData;assets:PublicAsset[];participants:PublicParticipant[];onOpen:(id:number,trigger:HTMLElement)=>void;day?:string;hall?:string;query?:string;focusParticipantId?:number|null;onList?:()=>void;onClear?:()=>void}) {
+export function InteractiveFloorPlans({state,eventId,event,assets,participants,onOpen,day:providedDay,hall='',query='',focusParticipantId=null,onList,onClear,onlySaved=false,savedParticipantIds=[],facetParticipantIds}:{state:{data:PublicPlans|null;loading:boolean;error:Error|null;reload:()=>Promise<void>};onlySaved?:boolean;savedParticipantIds?:number[];facetParticipantIds?:number[];eventId:string;event:EventData;assets:PublicAsset[];participants:PublicParticipant[];onOpen:(id:number,trigger:HTMLElement)=>void;day?:string;hall?:string;query?:string;focusParticipantId?:number|null;onList?:()=>void;onClear?:()=>void}) {
   const day=providedDay??defaultDay(event)
-  const state=useRemote(()=>floorplanApi.public(eventId),[eventId]),[chosen,setChosen]=useState('')
-  useEffect(()=>{setChosen('')},[focusParticipantId,day,hall])
+  const [chosen,setChosen]=useState('')
+  useEffect(()=>{setChosen('')},[eventId,focusParticipantId,day,hall])
   const floorplanLinks=event.discoveryLinks?.filter(link=>link.kind==='FLOOR_PLAN'&&link.url)||[]
   const officialUrl=event.discoveryLinks?.find(link=>link.kind==='OFFICIAL'&&link.url)?.url
     || event.sources.find(source=>source.kind==='OFFICIAL')?.url

@@ -109,6 +109,7 @@ export function PublicLayout() {
     <main id="public-main" tabIndex={-1}><Outlet /></main>
     <nav className="public-mobile-nav" aria-label="자주 쓰는 메뉴">
       <Link to={categoryHref(current ?? 'subculture')} aria-current={location.pathname==='/'||location.pathname.startsWith('/discover')?'page':undefined}><DiscoveryIcon name="search"/><span>행사 찾기</span></Link>
+      <NavLink to={itineraryHref()}><DiscoveryIcon name="calendar"/><span>일정 만들기</span></NavLink>
       <NavLink to="/library"><DiscoveryIcon name="bookmark"/><span>내 보관함</span></NavLink>
       <NavLink to="/account"><DiscoveryIcon name="menu"/><span>내 정보</span></NavLink>
     </nav>

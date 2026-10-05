@@ -38,8 +38,9 @@ export function ItineraryMap({stops,selected,center,onSelect,onPick,picking=fals
  useEffect(()=>{
   if(!container.current)return
   const current=L.map(container.current,{center:[center.lat,center.lng],zoom:14,scrollWheelZoom:false});map.current=current
-  const tiles=L.tileLayer(import.meta.env.VITE_ITINERARY_TILE_URL||'https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'})
-  tiles.on('tileerror',()=>setError(true));tiles.on('load',()=>setError(false));tiles.addTo(current);markers.current=L.layerGroup().addTo(current)
+  // Identify the site to the tile provider without leaking a private share token in the URL.
+  const tiles=L.tileLayer(import.meta.env.VITE_ITINERARY_TILE_URL||'https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'origin',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'})
+  tiles.on('loading',()=>setError(false));tiles.on('tileerror',()=>setError(true));tiles.addTo(current);markers.current=L.layerGroup().addTo(current)
   current.on('click',(e:L.LeafletMouseEvent)=>{if(actions.current.picking)actions.current.onPick?.({lat:e.latlng.lat,lng:e.latlng.lng})})
   current.on('zoomend',()=>draw.current())
   const observer=new ResizeObserver(()=>{current.invalidateSize({pan:false});fitMap(current,extent.current.points,extent.current.center);draw.current()});observer.observe(container.current)

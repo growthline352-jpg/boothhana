@@ -5,7 +5,7 @@ const participant={id:20,participant:{registrationName:'[가상] 달빛 문구',
 const value={id:1,event,participants:[participant],assets:[],banner:null,publishedAt:'2026-09-18T00:00:00Z'};
 const cards=[{id:1,event,banner:null,participantCount:26},{id:2,event:{...event,name:'[가상] 작은 작가들의 온리전',subcategory:'ONLY_EVENT',region:'SEOUL',venueName:'가상 서울 행사장'},banner:null,participantCount:18},{id:3,event:{...event,name:'[가상] 종이와 색의 주말',subcategory:'STATIONERY_GOODS',venueName:'가상 수원 전시장'},banner:null,participantCount:40}];
 const defaultLibrary={owner:'guest',loading:false,error:'',index:[],guest:[],publicVersion:1,version:0,refresh:async()=>{},refreshPublic(){},resolvePublic:async()=>[]};
-function setup({search='',kind='discovery',routePath='',library=defaultLibrary,response={items:cards,total:3,page:0,size:20},error=null,loading=false}={}){
+function setup({search='',kind='discovery',routePath='',library=defaultLibrary,response={items:cards,total:3,page:0,size:20},maps={plans:[],managedAssetIds:[]},error=null,loading=false}={}){
  let params=new URLSearchParams(search);const changes=[];const calls=[];
  const h=runtime({globals:{window:{location:{origin:'https://preview.invalid'},setInterval,clearInterval,scrollTo(){},matchMedia:()=>({matches:false}),confirm:()=>true},document:{visibilityState:'visible',addEventListener(){},removeEventListener(){}},requestAnimationFrame:fn=>0,cancelAnimationFrame(){},navigator:{clipboard:{writeText:async()=>{}}}},resolve:(name,file)=>{
   if(name==='react-router')return {Link:p=>jsx('a',{...p,href:p.to}),NavLink:p=>{const active=(routePath||(kind==='catalog'?'/discover/1':kind==='library'?'/library':'/discover')).startsWith(p.to);return jsx('a',{...p,href:p.to,'aria-current':active?'page':undefined,className:[p.className,active?'active':''].filter(Boolean).join(' ')})},Outlet:component('Outlet'),useLocation:()=>({pathname:routePath||(kind==='catalog'?'/discover/1':kind==='library'?'/library':'/discover'),search:params.toString()?'?'+params:'',state:null}),useSearchParams:()=>[params,(next,options)=>{params=new URLSearchParams(next);changes.push({params:params.toString(),options})}],useParams:()=>({eventId:'1'}),useNavigate:()=>()=>{}};
@@ -13,7 +13,7 @@ function setup({search='',kind='discovery',routePath='',library=defaultLibrary,r
   if(name.endsWith('/useAuth'))return {useAuth:()=>({user:null,status:'anonymous',loading:false,loginUrl:'/login',logout:async()=>{},refresh:async()=>{}})};
   if(name.endsWith('/AuthStatusNotice'))return {AuthStatusNotice:()=>null};
   if(name.endsWith('/PageMetadata'))return {PageMetadata:()=>null,RouteMetadata:()=>null};
-  if(name.endsWith('/useRemote'))return {useRemote:fn=>{calls.push(fn);return {data:kind==='library'?(calls.length%4===2?{items:[],total:0,groups:[]}:null):response,loading,error,reload:async()=>{}}}};
+  if(name.endsWith('/useRemote'))return {useRemote:fn=>{calls.push(fn);return {data:kind==='catalog'?maps:kind==='library'?(calls.length%4===2?{items:[],total:0,groups:[]}:null):response,loading,error,reload:async()=>{}}}};
   if(name.endsWith('/ScrollMemory'))return {usePageScroll(){}};
   if(name.endsWith('/BestsellerCarousel'))return {BestsellerSection:()=>null};
   if(name.endsWith('/SaveButton'))return {SaveButton:()=>jsx('button',{type:'button',className:'btn secondary memory-save-button',children:'♡ 저장'})};

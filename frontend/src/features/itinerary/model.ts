@@ -2,6 +2,8 @@ import type {PublicEventSummary} from '../catalog/api'
 import type {Occurrence} from '../collection/api'
 import {categoryForType} from '../discovery/categories'
 import {includesDay, validDay} from '../visit/visit'
+import {matchesTopics,type TopicSelection} from './topics'
+import {itineraryRegions,regionArea,regionForEvent} from './regionCatalog'
 
 export type Purpose = 'EVENT' | 'DATE'
 export type StopKind = 'EVENT' | 'FOOD' | 'CAFE' | 'PLACE'
@@ -13,7 +15,7 @@ export interface PlanStop {
 }
 export interface Plan {
  version:1;id:string;title:string;purpose:Purpose;day:string;start:string;end:string;area:string;
- style:string;stops:PlanStop[];updatedAt:string;
+ style:string;stops:PlanStop[];updatedAt:string;interests?:TopicSelection;
 }
 export interface Area {id:string;name:string;point:Point;words:string[]}
 // These are neighborhood search centers, never substituted for an event's venue.
@@ -25,6 +27,7 @@ export const areas:Area[]=[
  {id:'JONGNO',name:'종로·을지로',point:{lat:37.5703,lng:126.992},words:['종로','을지로','인사동','광화문','중구']},
  {id:'ILSAN',name:'일산·킨텍스',point:{lat:37.6688,lng:126.7457},words:['일산','킨텍스','고양','킨텍스로']},
  {id:'HANAM',name:'하남·스타필드',point:{lat:37.5452,lng:127.2238},words:['하남','미사','스타필드 하남']},
+ ...itineraryRegions.map(r=>({id:r.id,name:r.name,point:r.point,words:[r.name]})),
 ]
 export const kindNames:Record<StopKind,string>={EVENT:'행사',FOOD:'식사',CAFE:'카페',PLACE:'장소'}
 export const timeMinutes=(time:string)=>/^([01]\d|2[0-3]):[0-5]\d$/.test(time)?Number(time.slice(0,2))*60+Number(time.slice(3)):NaN
@@ -38,16 +41,18 @@ export function operatingOn(row:PublicEventSummary,day:string){
  const choices=row.operatingPlaces?.length?row.operatingPlaces:[{eventId:row.id,event:row.event}]
  return choices.filter(c=>!['CANCELED','POSTPONED','RESCHEDULED'].includes(c.event.operationStatus?.state||'')&&c.event.occurrences.some(o=>includesDay(o,day)))
 }
-export function recommendedEvents(rows:PublicEventSummary[],day:string,area:string,anchor?:PublicEventSummary,purpose:Purpose='DATE',subjects:string[]=[]) {
+export function recommendedEvents(rows:PublicEventSummary[],day:string,area:string,anchor?:PublicEventSummary,purpose:Purpose='DATE',subjects:string[]=[],selection?:TopicSelection,nearby?:{center:Point;points:Record<number,Point>}) {
  const district=areas.find(a=>a.id===area),anchorCategory=anchor?categoryForType(anchor.event.subcategory).code:''
  return rows.flatMap(row=>operatingOn(row,day).map(place=>({...row,id:place.eventId,event:place.event,operatingPlaces:undefined})))
- .filter(row=>row.id!==anchor?.id&&!!row.event.address&&(!district||district.words.some(w=>`${row.event.address} ${row.event.venueName||''}`.includes(w))))
+ .filter(row=>row.id!==anchor?.id&&!!row.event.address&&(nearby?.points[row.id]?distance(nearby.center,nearby.points[row.id])<=3:!district||(regionArea(area)?regionForEvent(row.event)?.id===area:district.words.some(w=>`${row.event.address} ${row.event.venueName||''}`.includes(w)))))
  .filter(row=>purpose!=='EVENT'||!anchorCategory||categoryForType(row.event.subcategory).code===anchorCategory)
+ .filter(row=>purpose!=='EVENT'||anchorCategory!=='SUBCULTURE'||matchesTopics(row,selection))
  .map(row=>{
   const topics=anchor?.event.subjects.length?anchor.event.subjects:subjects
   const overlap=row.event.subjects.filter(s=>topics.includes(s)).length
-  return {row,score:overlap*10+(row.event.subcategory===anchor?.event.subcategory?3:0),reason:overlap?'선택한 관심 주제가 겹쳐요':purpose==='EVENT'?'같은 분야 · 선택한 동네에서 열려요':'선택한 날짜 · 이 동네에서 열려요'}
- }).sort((a,b)=>b.score-a.score||a.row.event.name.localeCompare(b.row.event.name,'ko')).filter((x,i,all)=>all.findIndex(y=>y.row.id===x.row.id)===i)
+  const km=nearby?.points[row.id]?distance(nearby.center,nearby.points[row.id]):null
+  return {row,score:overlap*10+(row.event.subcategory===anchor?.event.subcategory?3:0),distance:km,reason:km!==null?`${overlap?'관심 주제 일치 · ':''}직선거리 ${km<1?`${Math.round(km*1000)}m`:`${km.toFixed(1)}km`}`:overlap?'선택한 관심 주제가 겹쳐요':purpose==='EVENT'?'같은 분야 · 선택한 동네에서 열려요':'선택한 날짜 · 이 동네에서 열려요'}
+ }).sort((a,b)=>b.score-a.score||(a.distance??Infinity)-(b.distance??Infinity)||a.row.event.name.localeCompare(b.row.event.name,'ko')).filter((x,i,all)=>all.findIndex(y=>y.row.id===x.row.id)===i)
 }
 export function eventStop(row:PublicEventSummary,day:string,start:string,point:Point|null=null):PlanStop {
  const occurrence=row.event.occurrences.find(o=>includesDay(o,day))
@@ -84,6 +89,7 @@ export function validatePlan(value:unknown):value is Plan {
  const p=value as Plan
  return p.version===1&&typeof p.id==='string'&&!!p.id&&p.id.length<=128&&typeof p.title==='string'&&p.title.length<=120&&['EVENT','DATE'].includes(p.purpose)&&validDay(p.day)
  &&Number.isFinite(timeMinutes(p.start))&&Number.isFinite(timeMinutes(p.end))&&typeof p.area==='string'&&typeof p.style==='string'&&typeof p.updatedAt==='string'
+ &&(p.interests===undefined||p.interests&&['topics','subjects'].every(k=>Array.isArray(p.interests![k as keyof TopicSelection])&&p.interests![k as keyof TopicSelection].length<=10&&p.interests![k as keyof TopicSelection].every(s=>typeof s==='string'&&s.length>0&&s.length<=100)))
  &&Array.isArray(p.stops)&&p.stops.length<=20&&new Set(p.stops.map(s=>s?.id)).size===p.stops.length&&p.stops.every(s=>s&&typeof s.id==='string'&&!!s.id&&s.id.length<=128&&typeof s.name==='string'&&s.name.length<=200
  &&Object.hasOwn(kindNames,s.kind)&&typeof s.address==='string'&&s.address.length<=400&&typeof s.url==='string'&&s.url.length<=2048&&typeof s.note==='string'&&s.note.length<=2000
  &&Number.isFinite(timeMinutes(s.start))&&Number.isInteger(s.duration)&&s.duration>=15&&s.duration<=720&&typeof s.locked==='boolean'
