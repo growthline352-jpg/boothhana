@@ -208,13 +208,13 @@ export function ItineraryPage(){
     {plan.purpose==='DATE'&&regionArea(plan.area)&&<button className="it-skip-event" onClick={()=>{setAnchor(null);patch({style:'RELAXED'});go(4)}}>행사 없이 식사·카페로 만들기 <DiscoveryIcon name="arrow" size={15}/></button>}
 
    </>:step===4?<>
-    <div className="it-wizard-title"><h2>같이 갈 곳을 골라볼까요?</h2><p>식사·카페를 고르거나, 가고 싶은 곳을 직접 넣으세요. 추가하지 않고 넘어가도 좋아요.</p></div>
+    <div className="it-wizard-title"><h2>같이 갈 곳을 골라볼까요?</h2><p>식사·카페를 고르거나, 가고 싶은 곳을 직접 넣으세요. {anchor?'추가하지 않고 넘어가도 좋아요.':'한 곳 이상 골라 코스를 시작하세요.'}</p></div>
     {anchor&&<div className="it-course-anchor"><ContentImage url={anchor.banner?.url} kind="event" eventType={anchor.event.subcategory} alt=""/><div><small>중심 행사</small><strong>{anchor.event.name}</strong></div><button onClick={()=>go(3)}>변경</button></div>}
     <div className="it-add-choices"><button onClick={()=>{setPlaceKind('FOOD');beginAdd('PLACES')}}>＋ 식사</button><button onClick={()=>{setPlaceKind('CAFE');beginAdd('PLACES')}}>＋ 카페</button><button onClick={()=>beginAdd('MANUAL')}>＋ 직접 입력</button></div>
     {anchorPoint.loading&&<p role="status">행사장 위치를 확인하고 있어요…</p>}{anchor&&!anchorPoint.loading&&!nearbyCenter&&<p className="it-check-note">행사장 위치를 확인하지 못했어요. 주변 장소 대신 직접 가고 싶은 곳을 입력할 수 있어요.</p>}
     {busy&&!anchor&&<p role="status">선택한 행사를 불러오고 있어요…</p>}
     <div className="it-companions">{plan.stops.map(stop=><article key={stop.id}><span className="it-badge">{kindNames[stop.kind]}</span><div><strong>{stop.name}</strong><p>{stop.address||'주소 확인 필요'}</p></div><button aria-label={`${stop.name} 선택 취소`} onClick={()=>patch({stops:plan.stops.filter(s=>s.id!==stop.id)})}>×</button></article>)}</div>
-    <div className="it-setup-actions"><button className="btn secondary" onClick={()=>go(3)}>이전</button><button className="btn primary" disabled={busy||(!anchor&&!plan.stops.length)} onClick={()=>go(5)}>{plan.stops.length?'시간 확인하기':'행사만으로 진행'} <DiscoveryIcon name="arrow" size={17}/></button></div>
+    <div className="it-setup-actions"><button className="btn secondary" onClick={()=>go(3)}>이전</button><button className="btn primary" disabled={busy||(!anchor&&!plan.stops.length)} onClick={()=>go(5)}>{plan.stops.length?'시간 확인하기':anchor?'행사만으로 진행':'장소를 먼저 골라주세요'} <DiscoveryIcon name="arrow" size={17}/></button></div>
    </>:<>
     <div className="it-wizard-title"><h2>시간을 맞춰볼까요?</h2><p>머무를 시간과 하루의 시작·마무리를 정하세요.</p></div>
     <fieldset className="it-setup-fields" disabled={busy}>
