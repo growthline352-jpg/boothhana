@@ -232,7 +232,7 @@ class RepairTests(unittest.TestCase):
         self.mock_network();job=self.job(apply=True);value=target()
         page='https://web1.gg.go.kr/a#mdftv_2';value['event']['sources']=[dict(kind='OFFICIAL',url=page)]
         wrong='https://wrong.example/2026';right='https://right.example/2026'
-        html=f'<section id="mdftv_1"><h5>자라섬 꽃 페스타</h5><a href="{wrong}">공식 홈페이지</a></section><section id="mdftv_2"><h5>2026 테스트 행사</h5><a href="{right}">공식 홈페이지</a></section>'
+        html=f'<section id><h5>메뉴</h5></section><section id="mdftv_1"><h5>자라섬 꽃 페스타</h5><a href="{wrong}">공식 홈페이지</a></section><section id="mdftv_2"><h5>2026 테스트 행사</h5><a href="{right}">공식 홈페이지</a></section>'
         def document(url,*args):
             if url==page:return html,''
             if url==right:return f'<h1>2026 테스트 행사</h1><img src="{URL}">',''

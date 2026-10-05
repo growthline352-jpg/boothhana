@@ -25,7 +25,7 @@ class FestivalSections(HTMLParser):
         super().__init__(convert_charrefs=False)
         self.sections=[];self.active=None;self.tags=[]
     def handle_starttag(self, tag, attrs):
-        if self.active is None and tag=='section' and re.fullmatch(r'mdftv_\d+',dict(attrs).get('id','')):
+        if self.active is None and tag=='section' and re.fullmatch(r'mdftv_\d+',dict(attrs).get('id') or ''):
             self.active=dict(id=dict(attrs)['id'],html=[],heading=[])
         if self.active is not None:
             self.active['html'].append(self.get_starttag_text())
