@@ -24,6 +24,7 @@ export function RegionPicker({value,counts,choose}:{value:string;counts:Record<s
    <span className="it-region-map-hint"><DiscoveryIcon name="pin" size={14}/> {zoom?'가로·세로로 움직여 지역을 선택하세요':'지역 이름을 눌러보세요'}</span>
   </div>
   <div className="it-region-selection" role="status">{selected?<><DiscoveryIcon name="check" size={16}/><strong>{selected.name}</strong><span>행사 {counts[selected.id]||0}개</span></>:<><DiscoveryIcon name="pin" size={16}/><span>가보고 싶은 지역을 선택하세요</span></>}</div>
+  {rows.some(r=>counts[r.id])&&<div className="it-active-regions"><strong>선택 날짜에 행사가 있는 지역</strong><div>{rows.filter(r=>counts[r.id]).sort((a,b)=>counts[b.id]-counts[a.id]).map(r=><button type="button" key={r.id} onClick={()=>choose(r.id)}>{r.short}<span>{counts[r.id]}개</span></button>)}</div></div>}
   <details className="it-region-list"><summary>지역 목록으로 선택하기 <span>{rows.length}곳</span></summary><div>{rows.map(r=><button type="button" key={r.id} aria-pressed={value===r.id} onClick={()=>choose(r.id)}>{r.name}<span>{counts[r.id]||0}</span></button>)}</div></details>
   <small className="it-region-credit">지도: <a href="https://github.com/southkorea/southkorea-maps/tree/master/kostat/2018/json" target="_blank" rel="noopener noreferrer">통계청 SGIS(2018) · 공공누리 제1유형</a> · 지역 선택용 간략 지도</small>
  </div>

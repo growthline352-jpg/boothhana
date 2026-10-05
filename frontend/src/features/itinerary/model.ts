@@ -41,17 +41,18 @@ export function operatingOn(row:PublicEventSummary,day:string){
  const choices=row.operatingPlaces?.length?row.operatingPlaces:[{eventId:row.id,event:row.event}]
  return choices.filter(c=>!['CANCELED','POSTPONED','RESCHEDULED'].includes(c.event.operationStatus?.state||'')&&c.event.occurrences.some(o=>includesDay(o,day)))
 }
-export function recommendedEvents(rows:PublicEventSummary[],day:string,area:string,anchor?:PublicEventSummary,purpose:Purpose='DATE',subjects:string[]=[],selection?:TopicSelection) {
+export function recommendedEvents(rows:PublicEventSummary[],day:string,area:string,anchor?:PublicEventSummary,purpose:Purpose='DATE',subjects:string[]=[],selection?:TopicSelection,nearby?:{center:Point;points:Record<number,Point>}) {
  const district=areas.find(a=>a.id===area),anchorCategory=anchor?categoryForType(anchor.event.subcategory).code:''
  return rows.flatMap(row=>operatingOn(row,day).map(place=>({...row,id:place.eventId,event:place.event,operatingPlaces:undefined})))
- .filter(row=>row.id!==anchor?.id&&!!row.event.address&&(!district||(regionArea(area)?regionForEvent(row.event)?.id===area:district.words.some(w=>`${row.event.address} ${row.event.venueName||''}`.includes(w)))))
+ .filter(row=>row.id!==anchor?.id&&!!row.event.address&&(nearby?.points[row.id]?distance(nearby.center,nearby.points[row.id])<=3:!district||(regionArea(area)?regionForEvent(row.event)?.id===area:district.words.some(w=>`${row.event.address} ${row.event.venueName||''}`.includes(w)))))
  .filter(row=>purpose!=='EVENT'||!anchorCategory||categoryForType(row.event.subcategory).code===anchorCategory)
  .filter(row=>purpose!=='EVENT'||anchorCategory!=='SUBCULTURE'||matchesTopics(row,selection))
  .map(row=>{
   const topics=anchor?.event.subjects.length?anchor.event.subjects:subjects
   const overlap=row.event.subjects.filter(s=>topics.includes(s)).length
-  return {row,score:overlap*10+(row.event.subcategory===anchor?.event.subcategory?3:0),reason:overlap?'선택한 관심 주제가 겹쳐요':purpose==='EVENT'?'같은 분야 · 선택한 동네에서 열려요':'선택한 날짜 · 이 동네에서 열려요'}
- }).sort((a,b)=>b.score-a.score||a.row.event.name.localeCompare(b.row.event.name,'ko')).filter((x,i,all)=>all.findIndex(y=>y.row.id===x.row.id)===i)
+  const km=nearby?.points[row.id]?distance(nearby.center,nearby.points[row.id]):null
+  return {row,score:overlap*10+(row.event.subcategory===anchor?.event.subcategory?3:0),distance:km,reason:km!==null?`${overlap?'관심 주제 일치 · ':''}직선거리 ${km<1?`${Math.round(km*1000)}m`:`${km.toFixed(1)}km`}`:overlap?'선택한 관심 주제가 겹쳐요':purpose==='EVENT'?'같은 분야 · 선택한 동네에서 열려요':'선택한 날짜 · 이 동네에서 열려요'}
+ }).sort((a,b)=>b.score-a.score||(a.distance??Infinity)-(b.distance??Infinity)||a.row.event.name.localeCompare(b.row.event.name,'ko')).filter((x,i,all)=>all.findIndex(y=>y.row.id===x.row.id)===i)
 }
 export function eventStop(row:PublicEventSummary,day:string,start:string,point:Point|null=null):PlanStop {
  const occurrence=row.event.occurrences.find(o=>includesDay(o,day))

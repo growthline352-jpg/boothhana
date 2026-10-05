@@ -16,6 +16,11 @@ describe('private day itinerary rules',()=>{
  it('prioritizes shared topics while preserving the event purpose field',()=>{const anchor=row(1),same=row(2),other=row(3,{subjects:['ANIME_MANGA']}),popup=row(4,{subcategory:'POPUP_RETAIL'}),legacy=row(5,{subcategory:'POPUP_STORE'});expect(recommendedEvents([other,popup,legacy,same],day,'SEONGSU',anchor,'EVENT').map(c=>c.row.id)).toEqual([2,3])})
  it('keeps different event fields available for a date',()=>{expect(recommendedEvents([row(1),row(2,{subcategory:'POPUP_RETAIL'})],day,'SEONGSU',undefined,'DATE')).toHaveLength(2)})
  it('does not replace an unknown event location with a neighborhood center',()=>{expect(eventStop(row(1),day,'13:00').point).toBeNull()})
+ it('includes verified nearby events across district borders and excludes distant same-district events',()=>{
+  const anchor=row(1),neighbor=row(2,{address:'서울 광진구 자양동'}),far=row(3),center={lat:37.54,lng:127.06}
+  const results=recommendedEvents([neighbor,far],day,'SEONGSU',anchor,'EVENT',[],undefined,{center,points:{2:{lat:37.54,lng:127.065},3:{lat:37.59,lng:127.09}}})
+  expect(results.map(c=>c.row.id)).toEqual([2]);expect(results[0].reason).toContain('직선거리')
+ })
  it('never moves fixed times when changing visit order',()=>{const first=stop(),last=stop({id:'b',start:'15:00',locked:false});const result=moveStop([first,last],'a',1);expect(result.map(s=>s.id)).toEqual(['b','a']);expect(result[1]).toEqual(first);expect(planIssues(plan({stops:result})).join(' ')).toContain('겹쳐요')})
  it('detects overlaps, day limits and venue hours independently',()=>{const p=plan({stops:[stop({start:'12:00',duration:90,occurrences:row(1,{occurrences:[{startDate:day,endDate:day,startTime:'13:00',endTime:'14:00'}]}).event.occurrences}),stop({id:'b',start:'13:00',duration:480})]});const errors=planIssues(p).join(' ');expect(errors).toContain('운영 시간');expect(errors).toContain('겹쳐요');expect(errors).toContain('하루 일정')})
  it('marks an event invalid after the itinerary date changes',()=>{expect(planIssues(plan({day:'2026-10-10',stops:[stop({occurrences:row(1).event.occurrences})]})).join(' ')).toContain('열리지 않아요')})
