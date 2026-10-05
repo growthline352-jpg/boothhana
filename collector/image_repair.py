@@ -13,8 +13,8 @@ from catalog_transport import Api
 from media_fetch import fetch_html,fetch_image,check_url,inspect_image
 from event_detail_sources import AGENT,allowed_by_robots,collect_detail_sources,tmm_product_url
 from official_site_sources import site_detail_url
-from official_poster_sources import parse_official_document,PLACEHOLDER_SHA256
-from detail_image_cache import approved_image,retain_images
+from official_poster_sources import parse_official_document,PLACEHOLDER_SHA256,event_label
+from detail_image_cache import approved_image,pending_image,retain_images
 from thumbnail_research import ThumbnailResearch
 import uuid
 
@@ -29,6 +29,19 @@ def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,ensure_a
 def blocked(url,hosts):
     host=urlsplit(url).hostname or ''
     return any(host==h.removeprefix('*.') or host.endswith('.'+h.removeprefix('*.')) for h in hosts)
+
+def poster_evidence(image,document,event_name,hints=()):
+    """An event poster lead, still requiring edition/use review before publication."""
+    if image['url'] in hints or document.get('sourceScope')=='EVENT_SECTION':return True
+    target=event_label(event_name)
+    if len(target)>=4 and event_label(image.get('nearbyText') or '')==target:return True
+    identity_text=document.get('title') or ''
+    if document.get('sourceType') in ('GOOGLE_SITES','TMM_PUBLIC_PRODUCT'):identity_text+=' '+(document.get('bodyText') or '')[:2000]
+    title_matches=document.get('sourceTitleMatchesEvent') or (len(target)>=4 and target in event_label(identity_text))
+    return bool(title_matches and (image.get('role') in ('POSTER','PAGE_PREVIEW','STRUCTURED_IMAGE') or 'poster' in urlsplit(image['url']).path.rsplit('/',1)[-1].casefold()))
+
+def has_poster_bytes(candidates):
+    return any(c.get('sha256') and c['state']=='VERIFIED_BYTES_NOT_EDITION' and c.get('posterEvidence') for c in candidates)
 
 class RepairQueue:
     def __init__(self,path):
@@ -54,7 +67,7 @@ class Repair:
         self.queue=RepairQueue(folder/('queue.json' if apply else 'dry-queue.json'))
         search_limit=cfg.get('maxThumbnailSearches',30) if max_searches is None else max_searches
         if type(search_limit) is not int or not 0<=search_limit<=100:raise RunError('Thumbnail search budget outside allowed range')
-        self.robots={};self.policy=[cfg['blockedSourceHosts'],cfg['imageAllowedHosts'],cfg.get('downloadApprovedImages',True),search_limit,'event-thumbnail-v3']
+        self.robots={};self.policy=[cfg['blockedSourceHosts'],cfg['imageAllowedHosts'],cfg.get('downloadApprovedImages',True),search_limit,'event-thumbnail-v4']
         self.evidence=folder/'evidence'/uuid.uuid4().hex
         self.research=ThumbnailResearch(cfg,self.evidence/'research',search_limit)
     def budget(self):
@@ -131,13 +144,14 @@ class Repair:
         for row in remembered_sources:
             if row['url'] not in urls and len(urls)<12:urls.append(row['url'])
         if not urls:return 'NO_SOURCE',dict(reason='No associated official source; organizer research required')
-        existing={(a['imageUrl'],a['pageUrl']) for a in target['assets']}|set(seen);observations=[];candidates=[];index=0
-        def register(image,page,state,sha=None):
-            candidate=dict(url=image['url'],sourceUrl=page,role=image.get('role','CONTENT'),state=state)
+        known={(a['imageUrl'],a['pageUrl']):a for a in target['assets']}
+        existing=set(known)|set(seen);observations=[];candidates=[];index=0
+        def register(image,page,state,sha=None,evidence=False):
+            candidate=dict(url=image['url'],sourceUrl=page,role=image.get('role','CONTENT'),state=state,posterEvidence=evidence)
             if sha:candidate['sha256']=sha
             if self.apply:
                 self.budget()
-                asset=self.api.request('POST',f'{PATH}/events/{target["id"]}/assets',{
+                asset=known.get((image['url'],page)) or self.api.request('POST',f'{PATH}/events/{target["id"]}/assets',{
                     'participantId':None,'productId':None,'image':{'type':'BANNER','imageUrl':image['url'],
                     'pageUrl':page,'rightsEvidence':'공식 원문 이미지 후보. 해당 회차·사용 승인 별도 검토.',
                     'caption':event['name'][:1000]}})
@@ -159,14 +173,18 @@ class Repair:
                 page=doc['sourceUrl'];observations.append(dict(url=page,state=doc['status']))
                 for image in doc.get('images',[]):
                     key=(image['url'],page)
-                    if image.get('analysisStatus')!='ATTACHED' or key in existing or len(candidates)>=8:continue
+                    hints=next((s.get('imageUrls',[]) for s in [*(extra_sources or []),*remembered_sources] if s['url']==page),[])
+                    evidence=poster_evidence(image,doc,event['name'],hints)
+                    prior=known.get(key)
+                    if image.get('analysisStatus')!='ATTACHED' or len(candidates)>=8:continue
+                    if key in existing and (key in seen or not prior or prior['rightsState']!='PENDING' or not evidence):continue
                     existing.add(key)
                     try:
                         check_url(image['url'],self.cfg['imageAllowedHosts'])
                         image_state='VERIFIED_BYTES_NOT_EDITION'
                     except ValueError:image_state='WAITING_HOST'
-                    pending=register(image,page,image_state,image.get('sha256'))
-                    if self.apply and pending:
+                    pending=register(image,page,image_state,image.get('sha256'),evidence)
+                    if self.apply and pending and not prior:
                         retain_images([{**doc,'images':[image]}],files,Path(self.cfg['stateDirectory']).expanduser().resolve()/'detail-image-cache-v1')
         # Leave room for linked notice pages even with eight initial sources.
         while index<len(urls) and index<12 and len(candidates)<8:
@@ -188,7 +206,11 @@ class Repair:
                 images=[image for image in doc['images'] if not hints or image['url'] in hints]
                 for image in images:
                     key=(image['url'],page)
-                    if key in existing:continue
+                    evidence=poster_evidence(image,doc,event['name'],hints)
+                    prior=known.get(key)
+                    # Rejections and approvals are immutable here. A pending
+                    # poster must be able to gain bytes after host approval.
+                    if key in existing and (key in seen or not prior or prior['rightsState']!='PENDING' or not evidence):continue
                     if blocked(image['url'],self.cfg['blockedSourceHosts']):
                         observations.append(dict(url=image['url'],state='SOURCE_BLOCKED'));continue
                     existing.add(key)
@@ -196,19 +218,24 @@ class Repair:
                     try:
                         check_url(image['url'],self.cfg['imageAllowedHosts'])
                     except ValueError:
-                        register(image,page,'WAITING_HOST');continue
+                        if not prior:register(image,page,'WAITING_HOST',evidence=evidence)
+                        continue
                     try:
                         if not self.permitted(image['url']):
                             observations.append(dict(url=image['url'],state='SOURCE_BLOCKED'));continue
                         trace=[]
-                        raw,mime,sha=fetch_image(image['url'],self.cfg['imageAllowedHosts'],self.timeout(),source_trace=trace,url_guard=self.permitted,user_agent=AGENT)
+                        cached=None
+                        if prior:
+                            try:cached=pending_image(prior,Path(self.cfg['stateDirectory']).expanduser().resolve()/'detail-image-cache-v1',self.cfg['imageAllowedHosts'],self.cfg['blockedSourceHosts'])
+                            except ValueError:pass  # Corrupt analysis bytes require a fresh source fetch.
+                        raw,mime,sha=cached or fetch_image(image['url'],self.cfg['imageAllowedHosts'],self.timeout(),source_trace=trace,url_guard=self.permitted,user_agent=AGENT)
                         if inspect_image(raw,mime)!=sha:raise RunError('Candidate bytes mismatch')
                         if sha in PLACEHOLDER_SHA256:continue
                     except BudgetExpired:raise
                     except Exception as error:
                         observations.append(dict(url=image['url'],state='IMAGE_FETCH_FAILED',error=type(error).__name__));continue
-                    pending=register(image,page,'VERIFIED_BYTES_NOT_EDITION',sha)
-                    if self.apply and pending:
+                    pending=register(image,page,'VERIFIED_BYTES_NOT_EDITION',sha,evidence)
+                    if self.apply and pending and not prior:
                         # Keep exact source bytes privately while review is pending;
                         # later storage need not depend on a signed URL staying alive.
                         root=self.evidence/str(target['id']);root.mkdir(parents=True,exist_ok=True);root.chmod(0o700)
@@ -218,7 +245,7 @@ class Repair:
                         retain_images([dict(sourceUrl=page,status='READ',images=[evidence])],[blob],Path(self.cfg['stateDirectory']).expanduser().resolve()/'detail-image-cache-v1')
             except BudgetExpired:raise
             except Exception as error:observations.append(dict(url=page,state='FETCH_FAILED',error=type(error).__name__))
-        note=dict(sources=observations,candidates=candidates,needsSourceResearch=not any(c.get('sha256') and c['state']=='VERIFIED_BYTES_NOT_EDITION' for c in candidates),
+        note=dict(sources=observations,candidates=candidates,needsSourceResearch=not has_poster_bytes(candidates),
                   nextAction='회차·행사 일치와 사용 검토' if candidates else '다른 주최자 공식 원문 추가 조사')
         if candidates:
             if self.apply and not any(c['rightsState']=='PENDING' for c in candidates):
@@ -237,7 +264,7 @@ class Repair:
         note.update(researchTarget=identity,sourceLeads=remembered)
         # Host-blocked candidates still have no usable bytes. Research another
         # official source for this exact event, not a whole-event weekly job.
-        if any(c.get('sha256') and c['state']=='VERIFIED_BYTES_NOT_EDITION' for c in note.get('candidates',[])):return state,note
+        if has_poster_bytes(note.get('candidates',[])):return state,note
         research=self.research.search(target,note.get('sources',[]),self.deadline-time.monotonic())
         note['research']=research
         if research['state']=='DISABLED':return state,note
@@ -250,7 +277,7 @@ class Repair:
             alternative_state,alternative=self.discover_sources(target,research['sources'],seen)
             note['sources']=note.get('sources',[])+alternative.get('sources',[])
             note['candidates']=note.get('candidates',[])+alternative.get('candidates',[])
-            note['needsSourceResearch']=not any(c.get('sha256') and c['state']=='VERIFIED_BYTES_NOT_EDITION' for c in note['candidates'])
+            note['needsSourceResearch']=not has_poster_bytes(note['candidates'])
             note['nextAction']=alternative.get('nextAction','다른 공식 썸네일 출처 재조사')
             if alternative.get('candidates'):return alternative_state,note
             if note['candidates']:return state,note

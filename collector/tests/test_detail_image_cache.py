@@ -18,6 +18,14 @@ def packet(root):
  return rows,[path],raw,digest
 
 class CachedImageTests(unittest.TestCase):
+ def test_pending_analysis_can_read_bytes_but_cannot_use_approved_upload_path(self):
+  import detail_image_cache
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp);rows,files,raw,digest=packet(root);cache=root/'cache';retain_images(rows,files,cache)
+   asset=dict(pageUrl=PAGE,imageUrl=URL,rightsState='PENDING')
+   self.assertEqual(detail_image_cache.pending_image(asset,cache,HOSTS),(raw,'image/png',digest))
+   self.assertIsNone(approved_image(asset,cache,HOSTS))
+   asset['rightsState']='REJECTED';self.assertIsNone(detail_image_cache.pending_image(asset,cache,HOSTS))
  def test_approved_exact_image_uses_verified_bytes_after_source_expiry(self):
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp);rows,files,raw,digest=packet(root);cache=root/'cache';retain_images(rows,files,cache)

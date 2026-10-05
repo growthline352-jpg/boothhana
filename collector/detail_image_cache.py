@@ -34,6 +34,14 @@ def retain_images(observations,files,directory):
 
 def approved_image(asset,directory,hosts,blocked_hosts=()):
     if asset.get('rightsState')!='APPROVED':return None
+    return _verified_image(asset,directory,hosts,blocked_hosts)
+
+def pending_image(asset,directory,hosts,blocked_hosts=()):
+    """Private analysis only; this does not authorize the storage/upload path."""
+    if asset.get('rightsState')!='PENDING':return None
+    return _verified_image(asset,directory,hosts,blocked_hosts)
+
+def _verified_image(asset,directory,hosts,blocked_hosts):
     page,image=asset.get('pageUrl'),asset.get('imageUrl')
     if not isinstance(page,str) or not isinstance(image,str):return None
     if directory.is_symlink():raise MediaError('Detail image cache is a symlink')
