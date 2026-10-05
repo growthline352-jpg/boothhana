@@ -68,6 +68,28 @@ class PosterTests(unittest.TestCase):
   html='<h1>2026 가을축제</h1>'+''.join(f'<img src="/p{x}.png" alt="다른 행사{x}">' for x in range(120))+'<img src="/target.jpg" alt="제3회 화성 루나 빛 축제">'
   doc=parse_poster_document(html,'https://web1.gg.go.kr/a','2026-10-03','제3회 화성 루나 빛 축제')
   self.assertEqual(len(doc['images']),1);self.assertTrue(doc['images'][0]['url'].endswith('/target.jpg'))
+ def test_aggregate_links_and_body_are_scoped_to_the_named_event_section(self):
+  html='''<h1>2026 가을축제 모음</h1><section id="mdftv_1"><h5>자라섬 꽃 페스타</h5><img src="/wrong.jpg" alt="자라섬 꽃 페스타"><a href="https://wrong.example/2026">공식 홈페이지</a></section><section id="mdftv_44"><article><h5>제5회 연천율무축제</h5></article><article><img src="/target.jpg" alt="제5회 연천율무축제"><p>10월 23일</p><a href="https://target.example/2026"><span>공식 홈페이지</span></a><a href="/notice/target">안내</a></article></section>'''
+  doc=parse_poster_document(html,'https://web1.gg.go.kr/a#mdftv_44','2026-10-06','제5회 연천율무축제')
+  self.assertEqual(doc['officialUrls'],['https://target.example/2026'])
+  self.assertEqual(doc['childUrls'],['https://web1.gg.go.kr/notice/target'])
+  self.assertNotIn('자라섬',doc['bodyText']);self.assertIn('10월 23일',doc['bodyText'])
+  self.assertEqual([i['url'] for i in doc['images']],['https://web1.gg.go.kr/target.jpg'])
+ def test_aggregate_fragment_conflicts_and_ambiguous_titles_do_not_follow_links(self):
+  row='<section id="mdftv_{}"><h5>2026 테스트 행사</h5><img src="/{}.png" alt="2026 테스트 행사"><a href="https://{}.example/2026">공식 홈페이지</a></section>'
+  html=row.format(1,'one','one')+row.format(2,'two','two')
+  for page,name in [('https://web1.gg.go.kr/a','2026 테스트 행사'),('https://web1.gg.go.kr/a#mdftv_9','2026 테스트 행사'),('https://web1.gg.go.kr/a#mdftv_1','다른 행사')]:
+   with self.subTest(page=page,name=name):
+    doc=parse_poster_document(html,page,'2026-10-06',name)
+    self.assertEqual(doc['images'],[]);self.assertEqual(doc['officialUrls'],[]);self.assertEqual(doc['childUrls'],[])
+    self.assertEqual(doc['bodyText'],'')
+  doc=parse_poster_document(html,'https://web1.gg.go.kr/a#mdftv_2','2026-10-06','2026 테스트 행사')
+  self.assertEqual(doc['officialUrls'],['https://two.example/2026'])
+ def test_aggregate_image_label_fallback_never_follows_global_links(self):
+  html='<h1>축제 모음</h1><img src="/target.jpg" alt="2026 테스트 행사"><a href="https://wrong.example/2026">공식 홈페이지</a>'
+  doc=parse_poster_document(html,'https://web1.gg.go.kr/a','2026-10-06','2026 테스트 행사')
+  self.assertEqual(len(doc['images']),1);self.assertEqual(doc['officialUrls'],[])
+  self.assertNotIn('축제 모음',doc['bodyText'])
  def test_venue_source_and_known_placeholder_dont_become_poster_evidence(self):
   page='https://www.setec.or.kr/front/schedule/view.do?sIdx=1';html='<h1>제38회 플래툰 컨벤션</h1><img src="/default.jpg" alt="38회 플래툰 컨벤션">'
   from official_poster_sources import PLACEHOLDER_SHA256

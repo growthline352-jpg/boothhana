@@ -190,6 +190,40 @@ class RepairTests(unittest.TestCase):
         with patch.object(repair,'fetch_html',side_effect=lambda page,*args:('<h1>일정</h1><a href="https://organizer.example/2026">공식 홈페이지</a>','') if 'official.example' in page else (f'<h1>행사</h1><img src="{URL}">','')) as fetch:
             self.assertEqual(job.discover(value)[0],'DISCOVERED_FOR_REVIEW')
         self.assertEqual(fetch.call_count,9)
+    def test_aggregate_source_follows_only_the_target_events_homepage(self):
+        self.mock_network();job=self.job(apply=True);value=target()
+        page='https://web1.gg.go.kr/a#mdftv_2';value['event']['sources']=[dict(kind='OFFICIAL',url=page)]
+        wrong='https://wrong.example/2026';right='https://right.example/2026'
+        html=f'<section id="mdftv_1"><h5>자라섬 꽃 페스타</h5><a href="{wrong}">공식 홈페이지</a></section><section id="mdftv_2"><h5>2026 테스트 행사</h5><a href="{right}">공식 홈페이지</a></section>'
+        def document(url,*args):
+            if url==page:return html,''
+            if url==right:return f'<h1>2026 테스트 행사</h1><img src="{URL}">',''
+            self.fail('An unrelated event homepage was fetched')
+        with patch.object(repair,'fetch_html',side_effect=document) as pages:
+            state,note=job.discover(value)
+        self.assertEqual(state,'WAITING_REVIEW')
+        self.assertEqual([c.args[0] for c in pages.call_args_list],[page,right])
+        self.assertEqual(note['candidates'][0]['sourceUrl'],right)
+        self.assertEqual(note['candidates'][0]['rightsState'],'PENDING')
+    def test_opaque_search_leads_require_actual_fetched_image_evidence(self):
+        from thumbnail_research import ThumbnailResearch
+        for present in (True,False):
+            with self.subTest(present=present):
+                self.mock_network('<h1>행사 안내</h1>');job=self.job(apply=True)
+                result=dict(eventId=1,eventName='2026 테스트 행사',searchStatus='FOUND',queries=['테스트 포스터'],summary='공식 출처 후보',sources=self.research_source()['sources'])
+                def executor(cfg,folder,prompt,schema):
+                    log=dict(type='item.completed',item=dict(type='web_search',action=dict(type='other')))
+                    (folder/'codex.jsonl').write_text(json.dumps(log)+'\n',encoding='utf-8')
+                    return json.dumps(result,ensure_ascii=False).encode(),True,{}
+                cfg={**self.cfg,'timeoutSeconds':180}
+                job.research=ThumbnailResearch(cfg,self.root/'opaque',1,executor)
+                actual=f'<img src="{URL}">' if present else '<img src="https://official.example/unrelated-ad.png">'
+                with patch.object(repair,'fetch_html',side_effect=[('<h1>일정</h1>',''),(actual,'')]):
+                    state,note=job.discover(target())
+                self.assertEqual(state,'WAITING_REVIEW' if present else 'NO_IMAGE_FOUND')
+                self.assertEqual(len(job.api.calls),1 if present else 0)
+                self.assertEqual(note['research']['state'],'UNVERIFIED_SEARCH_LEADS')
+                if present:self.assertEqual(note['candidates'][0]['rightsState'],'PENDING')
     def test_keyset_visits_every_published_event_after_first_100(self):
         rows=[target(i) for i in range(1,244)];job=self.job(rows);self.assertEqual(len(job.targets()),243)
         self.assertEqual([call[1].split('afterId=')[1] for call in job.api.calls],['0','100','200'])
