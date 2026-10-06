@@ -11,6 +11,9 @@ function runtime(options={}){
  const cache=new Map(),slots=[],pending=[];let cursor=0,fn,props;
  const same=(a,b)=>!!a&&!!b&&a.length===b.length&&a.every((x,i)=>Object.is(x,b[i]));
  const hooks={
+  // Async lazy loading is covered by real React browser gates; this source
+  // harness keeps the lazy node without resolving browser-only dependencies.
+  lazy:()=>component('LazySourcePlaceholder'),Suspense:props=>jsx('Fragment',{children:props.children}),
   useState(init){const i=cursor++;if(!slots[i])slots[i]={value:typeof init==='function'?init():init};return[slots[i].value,v=>slots[i].value=typeof v==='function'?v(slots[i].value):v]},
   useRef(init){const i=cursor++;if(!slots[i])slots[i]={value:{current:init}};return slots[i].value},
   useMemo(f,deps){const i=cursor++;if(!slots[i]||!same(slots[i].deps,deps))slots[i]={value:f(),deps};return slots[i].value},
