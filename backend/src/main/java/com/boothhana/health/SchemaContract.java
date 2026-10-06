@@ -7,6 +7,8 @@ import java.util.Map;
 public final class SchemaContract {
     private SchemaContract() {}
     public static final Map<String,List<String>> TABLES=Map.ofEntries(
+        Map.entry("personal_itinerary",List.of("user_id","id","plan_json","revision","deleted","created_at","updated_at")),
+        Map.entry("purchase_plan",List.of("user_id","event_id","plan_json","revision","deleted","created_at","updated_at")),
         Map.entry("itinerary_share",List.of("id","view_token","management_hash","snapshot_hash","snapshot_json","created_at","expires_at","revoked_at")),
         Map.entry("catalog_source_check",List.of("event_id","checked_at","next_check_at","status","digest","details_json","failures")),
         Map.entry("catalog_event_observation",List.of("id","event_id","event_revision","fingerprint","observed_at","source_urls_json","changes_json","state","review_note","reviewed_at","review_seconds")),
@@ -33,7 +35,7 @@ public final class SchemaContract {
         Map.entry("pos_sale_item",List.of("id","pos_sale_id","event_product_id","quantity","unit_price")),
         Map.entry("image_upload",List.of("id","owner_id","target","content_type","file_size","sha256","object_key","state","created_at","expires_at","completed_at")),
         Map.entry("subculture_collection_run",List.of("id","request_hash","execution_mode","web_search_observed","scope_json","request_json","receipt_json","status","summary","started_at","finished_at","received_at")),
-        Map.entry("subculture_event_candidate",List.of("id","identity_key","match_key","name","subcategory","venue_name","starts_on","ends_on","payload_json","payload_hash","warnings_json","review_state","reviewed_payload_json","review_note","reviewed_at","revision","possible_duplicate_of","first_seen_at","last_seen_at","overrides_json")),
+        Map.entry("subculture_event_candidate",List.of("id","identity_key","match_key","name","subcategory","venue_name","starts_on","ends_on","payload_json","payload_hash","warnings_json","review_state","reviewed_payload_json","review_note","reviewed_at","revision","possible_duplicate_of","first_seen_at","last_seen_at","overrides_json","publication_withdrawn")),
         Map.entry("subculture_collection_observation",List.of("run_id","candidate_id","payload_json","warnings_json","observed_at")),
         Map.entry("subculture_pipeline_run",List.of("id","week_key","scope_json","state","summary_json","started_at","heartbeat_at","finished_at")),
         Map.entry("subculture_exhibitor",List.of("id","identity_key","name","profile_json","updated_at")),
@@ -72,10 +74,12 @@ public final class SchemaContract {
             .collect(java.util.stream.Collectors.joining(" union all "));
     }
 
-    /** Derived from SQL001..027; verification/v24 compares every entry to the DDL.
+    /** Derived from SQL001..030; verification/v24 compares every entry to the DDL.
      * This guards same-named but incompatible columns, not just missing columns. */
     public record ColumnShape(String udt,Integer length,boolean notNull) {}
     private static final String COLUMN_SPEC = """
+        personal_itinerary=user_id:int8:0:1,id:uuid:0:1,plan_json:jsonb:0:1,revision:int8:0:1,deleted:bool:0:1,created_at:timestamptz:0:1,updated_at:timestamptz:0:1
+        purchase_plan=user_id:int8:0:1,event_id:int8:0:1,plan_json:jsonb:0:1,revision:int8:0:1,deleted:bool:0:1,created_at:timestamptz:0:1,updated_at:timestamptz:0:1
         itinerary_share=id:uuid:0:1,view_token:varchar:22:1,management_hash:bpchar:64:1,snapshot_hash:bpchar:64:1,snapshot_json:jsonb:0:1,created_at:timestamptz:0:1,expires_at:timestamptz:0:1,revoked_at:timestamptz:0:0
         catalog_source_check=event_id:int8:0:1,checked_at:timestamptz:0:1,next_check_at:timestamptz:0:1,status:varchar:24:1,digest:bpchar:64:1,details_json:jsonb:0:1,failures:int4:0:1
         catalog_event_observation=id:uuid:0:1,event_id:int8:0:1,event_revision:int8:0:1,fingerprint:bpchar:64:1,observed_at:timestamptz:0:1,source_urls_json:jsonb:0:1,changes_json:jsonb:0:1,state:varchar:16:1,review_note:varchar:2000:1,reviewed_at:timestamptz:0:0,review_seconds:int4:0:0
@@ -115,7 +119,7 @@ public final class SchemaContract {
         subculture_catalog_review_history=id:int8:0:1,target_type:varchar:20:1,target_id:int8:0:1,before_json:jsonb:0:1,after_json:jsonb:0:1,created_at:timestamptz:0:1,actor_id:int8:0:0
         subculture_collection_observation=run_id:uuid:0:1,candidate_id:int8:0:1,payload_json:jsonb:0:1,warnings_json:jsonb:0:1,observed_at:timestamptz:0:1
         subculture_collection_run=id:uuid:0:1,request_hash:bpchar:64:1,execution_mode:varchar:20:1,web_search_observed:bool:0:1,scope_json:jsonb:0:1,request_json:jsonb:0:1,receipt_json:jsonb:0:1,status:varchar:20:1,summary:text:0:1,started_at:timestamptz:0:1,finished_at:timestamptz:0:1,received_at:timestamptz:0:1
-        subculture_event_candidate=id:int8:0:1,identity_key:bpchar:64:1,match_key:bpchar:64:1,name:varchar:255:1,subcategory:varchar:30:1,venue_name:varchar:255:0,starts_on:date:0:1,ends_on:date:0:1,payload_json:jsonb:0:1,payload_hash:bpchar:64:1,warnings_json:jsonb:0:1,review_state:varchar:20:1,reviewed_payload_json:jsonb:0:0,review_note:text:0:1,reviewed_at:timestamptz:0:0,revision:int8:0:1,possible_duplicate_of:int8:0:0,first_seen_at:timestamptz:0:1,last_seen_at:timestamptz:0:1,overrides_json:jsonb:0:1
+        subculture_event_candidate=id:int8:0:1,identity_key:bpchar:64:1,match_key:bpchar:64:1,name:varchar:255:1,subcategory:varchar:30:1,venue_name:varchar:255:0,starts_on:date:0:1,ends_on:date:0:1,payload_json:jsonb:0:1,payload_hash:bpchar:64:1,warnings_json:jsonb:0:1,review_state:varchar:20:1,reviewed_payload_json:jsonb:0:0,review_note:text:0:1,reviewed_at:timestamptz:0:0,revision:int8:0:1,possible_duplicate_of:int8:0:0,first_seen_at:timestamptz:0:1,last_seen_at:timestamptz:0:1,overrides_json:jsonb:0:1,publication_withdrawn:bool:0:1
         subculture_exhibitor=id:int8:0:1,identity_key:bpchar:64:1,name:varchar:255:1,profile_json:jsonb:0:1,updated_at:timestamptz:0:1
         subculture_floorplan_publication=event_id:int8:0:1,scope_key:bpchar:64:1,version_id:uuid:0:1,snapshot_json:jsonb:0:1,published_at:timestamptz:0:1
         subculture_floorplan_receipt=request_id:uuid:0:1,event_id:int8:0:1,request_hash:bpchar:64:1,response_json:jsonb:0:1,created_at:timestamptz:0:1

@@ -9,6 +9,7 @@ from copy import deepcopy
 from taxonomy import GROUPS, topic_review_reasons
 from datetime import date, datetime, timezone, timedelta
 import re
+from repair_completion import fingerprint, enrichment_due
 
 IDENTITY_FIELDS = ('name', 'subcategory', 'organizer', 'edition', 'region', 'venueName')
 
@@ -166,7 +167,8 @@ def target_priority(target: dict, attempts: dict, priority_keywords: list[str]):
     return (not target.get('informationRequested',False), bool(last), last, priority, start, int(target['id']))
 
 def select_targets(targets: list[dict], attempts: dict, limit: int, priority_keywords: list[str]) -> list[dict]:
-    candidates = [target for target in targets if target.get('informationRequested') or missing_reasons(target.get('event') or {}) or needs_public_details(target.get('event') or {},attempts.get(str(target['id'])) or {})]
+    candidates = [target for target in targets if enrichment_due(target, attempts.get(str(target['id'])) or {}) and
+                  (target.get('informationRequested') or target.get('repairSourceFailure') or missing_reasons(target.get('event') or {}) or needs_public_details(target.get('event') or {},attempts.get(str(target['id'])) or {}))]
     return sorted(candidates, key=lambda target: target_priority(target, attempts, priority_keywords))[:limit]
 
 def needs_public_details(event: dict, attempt: dict) -> bool:
@@ -176,10 +178,16 @@ def needs_public_details(event: dict, attempt: dict) -> bool:
     urls={url for row in [*(event.get('sources') or []),*(event.get('discoveryLinks') or [])] if (url:=tmm_product_url(row.get('url')) or (site_detail_url(row.get('url')) if row.get('kind')=='OFFICIAL' else None) or (poster_detail_url(row.get('url')) if row.get('kind') in ('OFFICIAL','VENUE') else None))}
     return bool(urls and not urls.issubset(set(attempt.get('detailSourceUrls') or [])))
 
-def attempt_record(event: dict, status: str, fetched_urls=None) -> dict:
+def attempt_record(event: dict, status: str, fetched_urls=None, *, requested=False, resolution=None, methods=None,source_failed=False) -> dict:
     from datetime import datetime
     from zoneinfo import ZoneInfo
-    record={'checkedAt': datetime.now(ZoneInfo('Asia/Seoul')).date().isoformat(), 'status': status, 'reasons': missing_reasons(event)}
+    checked=datetime.now(ZoneInfo('Asia/Seoul')).isoformat()
+    reasons=missing_reasons(event)
+    if resolution is None and status=='SUCCESS':resolution='UNAVAILABLE' if reasons else 'COMPLETE'
+    record={'checkedAt': checked, 'status': status, 'reasons': reasons,
+            'fingerprint':fingerprint(event,requested=requested), 'resolution':resolution or 'DEFERRED',
+            'methods':list(methods or []),'sourceFailureChecked':bool(source_failed)}
+    if record['resolution'] in ('COMPLETE','UNAVAILABLE','EXHAUSTED'):record['completedAt']=checked
     if status in ('SUCCESS','PARTIAL','DRY_RUN') and fetched_urls:
         record['detailSourceUrls']=list(dict.fromkeys(fetched_urls))
     return record

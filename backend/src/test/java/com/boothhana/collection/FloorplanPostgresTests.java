@@ -24,7 +24,7 @@ class FloorplanPostgresTests {
   String url=System.getenv("BOOTH_FLOORPLAN_TEST_URL");if(!url.matches("jdbc:postgresql://(?:localhost|127\\.0\\.0\\.1)(?::[0-9]{1,5})?/boothhana_floorplan_test"))throw new IllegalArgumentException("Dedicated local DB only");
   String user=System.getenv("BOOTH_FLOORPLAN_TEST_USER"),password=System.getenv("BOOTH_FLOORPLAN_TEST_PASSWORD");root=new JdbcTemplate(new DriverManagerDataSource(url,user,password));schema="floorplan_test_"+UUID.randomUUID().toString().replace("-","");root.execute("create schema "+schema);
   var ds=new DriverManagerDataSource(url+"?currentSchema="+schema,user,password);db=new JdbcTemplate(ds);tx=new TransactionTemplate(new DataSourceTransactionManager(ds));json=JsonMapper.builder().build();
-  for(String sql:List.of("005_subculture_collection.sql","006_subculture_catalog.sql","007_catalog_review_fixes.sql","008_catalog_presentation.sql","009_floorplan_automation.sql"))db.execute(Files.readString(Path.of("../database/"+sql)));
+  for(String sql:List.of("005_subculture_collection.sql","006_subculture_catalog.sql","007_catalog_review_fixes.sql","008_catalog_presentation.sql","009_floorplan_automation.sql","030_catalog_publication_withdrawal.sql"))db.execute(Files.readString(Path.of("../database/"+sql)));
   db.execute("create table catalog_operating_group(root_event_id bigint primary key,name text)");
   db.execute("create table catalog_operating_group_member(event_id bigint primary key,root_event_id bigint,position integer)");
   var data=json.readValue(Files.readString(Path.of("../collector/examples/v4/events.json")),SearchResult.class);

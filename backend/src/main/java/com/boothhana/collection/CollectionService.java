@@ -13,18 +13,22 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 
-/** All writes are private inbox writes. Never inserts/updates the existing event table. */
+/** Validated external catalogue intake. Commerce event tables are separate. */
 @Service
 @Transactional(readOnly = true)
 public class CollectionService {
     private final JdbcTemplate jdbc;
     private final JsonMapper json;
-    public CollectionService(JdbcTemplate jdbc, JsonMapper json) { this.jdbc=jdbc;this.json=json; }
+    private final CatalogAutoApproval approval;
+    public CollectionService(JdbcTemplate jdbc,JsonMapper json){this(jdbc,json,null);}
+    @org.springframework.beans.factory.annotation.Autowired
+    public CollectionService(JdbcTemplate jdbc,JsonMapper json,CatalogAutoApproval approval) { this.jdbc=jdbc;this.json=json;this.approval=approval; }
 
     @Transactional(timeout = 30)
     public Receipt ingest(Batch batch) {
         try { CollectionRules.batch(batch); }
         catch(RuntimeException e) { throw ApiException.badRequest("수집 배치 형식/기간/검색 기록을 확인해 주세요."); }
+        if(approval!=null)approval.lock();
         String request=json.writeValueAsString(batch), hash=CollectionRules.sha(request);
         UUID runId=UUID.fromString(batch.runId());
         // A small daily ingestion workload: serialize writers instead of racing unique inserts.
@@ -96,6 +100,7 @@ public class CollectionService {
                 values(?,?,cast(? as jsonb),cast(? as jsonb))
                 """,runId,id,payload,warnings);
             candidateRefs.add(new CandidateRef(index,id,event.name()));
+            if(approval!=null)approval.approve(id);
         }
         String status;
         if("FAILED".equals(batch.result().searchStatus())) status="FAILED";

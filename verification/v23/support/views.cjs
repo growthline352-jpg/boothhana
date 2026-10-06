@@ -13,7 +13,7 @@ function setup({search='',kind='discovery',routePath='',library=defaultLibrary,r
   if(name.endsWith('/useAuth'))return {useAuth:()=>({user:null,status:'anonymous',loading:false,loginUrl:'/login',logout:async()=>{},refresh:async()=>{}})};
   if(name.endsWith('/AuthStatusNotice'))return {AuthStatusNotice:()=>null};
   if(name.endsWith('/PageMetadata'))return {PageMetadata:()=>null,RouteMetadata:()=>null};
-  if(name.endsWith('/useRemote'))return {useRemote:fn=>{calls.push(fn);return {data:kind==='catalog'?maps:kind==='library'?(calls.length%4===2?{items:[],total:0,groups:[]}:null):response,loading,error,reload:async()=>{}}}};
+  if(name.endsWith('/useRemote'))return {useRemote:fn=>{if(fn.toString().includes('purchaseApi.list'))return {data:[],loading:false,error:null,reload:async()=>{}};calls.push(fn);return {data:kind==='catalog'?maps:kind==='library'?(calls.length%4===2?{items:[],total:0,groups:[]}:null):response,loading,error,reload:async()=>{}}}};
   if(name.endsWith('/ScrollMemory'))return {usePageScroll(){}};
   if(name.endsWith('/BestsellerCarousel'))return {BestsellerSection:()=>null};
   if(name.endsWith('/SaveButton'))return {SaveButton:()=>jsx('button',{type:'button',className:'btn secondary memory-save-button',children:'♡ 저장'})};

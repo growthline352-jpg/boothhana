@@ -41,6 +41,7 @@ export function categoryEventHref(key: CategoryKey, eventId: number) {
   return home.startsWith('https://') ? `${new URL(home).origin}/discover/${eventId}` : `/discover/${eventId}`
 }
 export function activeCategory(pathname: string, search: string): CategoryKey | null {
+  if (pathname === '/popups' || pathname === '/popups/') return 'popups'
   if (pathname === '/' || pathname === '/discover' || pathname === '/discover/')
     return currentSiteCategory() || (categorySitesActive() && pathname === '/' && !search ? null : getCategory(new URLSearchParams(search).get('category')).key)
   // Detail category comes from the published event, never a user-supplied query.

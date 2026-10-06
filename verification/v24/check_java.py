@@ -6,6 +6,8 @@ s=importlib.util.spec_from_file_location('stubs_v24',ROOT/'verification/v5/check
 stubs.pop('com/boothhana/collection/CatalogMediaService.java')
 stubs['org/springframework/jdbc/core/JdbcTemplate.java']=stubs['org/springframework/jdbc/core/JdbcTemplate.java'].replace('public int update(','public Map<String,Object> queryForMap(String s,Object...args){return null;} public int update(')
 stubs['org/springframework/beans/factory/annotation/Value.java']='package org.springframework.beans.factory.annotation; public @interface Value {String value();}'
+stubs['org/springframework/beans/factory/annotation/Autowired.java']='package org.springframework.beans.factory.annotation; public @interface Autowired {}'
+stubs['com/boothhana/collection/CatalogPublicationService.java']='package com.boothhana.collection; public class CatalogPublicationService {public void lockForPublication(){} public java.util.Map<String,Object> publish(long id,CatalogModels.PublishInput input){return java.util.Map.of();}}'
 stubs['org/springframework/transaction/annotation/Transactional.java']='package org.springframework.transaction.annotation; public @interface Transactional {boolean readOnly() default false; int timeout() default -1;}'
 stubs['org/slf4j/Logger.java']='package org.slf4j;public interface Logger {default void error(String s,Object...args){} default void warn(String s,Object...args){}}'
 stubs['org/slf4j/LoggerFactory.java']='package org.slf4j;public final class LoggerFactory {public static Logger getLogger(Class<?> c){return new Logger(){};}}'
@@ -17,6 +19,7 @@ with tempfile.TemporaryDirectory(prefix='booth-v24-java-') as folder:
  src=ROOT/'backend/src/main/java/com/boothhana'
  rel=['api/ApiException.java','api/FailureDiagnostics.java','upload/ImageUploadRules.java','upload/VerifiedImageStorage.java','collection/CollectionModels.java','collection/CollectionRules.java','collection/CatalogAreas.java','collection/VisitorGuideRules.java','collection/CatalogTaxonomy.java','interests/InterestTaxonomy.java','interests/TaxonomyRegistry.java','interests/TaxonomyRegistryData.java','collection/CatalogModels.java','collection/CatalogRules.java','collection/CatalogIdentity.java','collection/CatalogMediaService.java','floorplan/FloorplanModels.java','floorplan/FloorplanRules.java','floorplan/FloorplanImageInfo.java','floorplan/FloorplanService.java','health/SchemaContract.java','health/ReadinessService.java']
  files += [src/p for p in rel]+[HERE/'CrossLayerTest.java']
+ files.append(src/'collection/CatalogAutoApproval.java')
  subprocess.run(['javac','-encoding','UTF-8','-d',str(d/'out'),*map(str,files)],check=True)
  f=d/'columns.tsv';rows=[]
  for table,columns in schema.inventory(ROOT)['tables'].items():

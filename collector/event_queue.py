@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import re
 import unicodedata
+from state_files import replace_with_retry
 
 
 TERMINAL_DISCOVERY = {"FOUND"}
@@ -49,6 +50,10 @@ def discovered_candidate_key(event: dict, scope: dict) -> str:
             for row in event.get("occurrences") or []
         ],
     }
+    # A date-less clue cannot identify an edition. Preserve separate source clues
+    # until individual research can establish the actual dates and venue.
+    if not identity['occurrences']:
+        identity['leadUrls'] = sorted({row.get('url') for row in event.get('sources') or [] if row.get('url')})
     material = "\x1f".join((
         normalize_name(event.get("name") or ""),
         scope["startDate"][:4] + ":" + scope["endDate"][:4],
@@ -76,7 +81,7 @@ def _write(path: Path, value: dict) -> None:
         temporary.chmod(0o600)
     except OSError:
         pass
-    os.replace(temporary, path)
+    replace_with_retry(temporary,path)
 
 
 class EventNameQueue:
@@ -143,7 +148,7 @@ class EventNameQueue:
             self.save()
         return queued
 
-    def enqueue_discovered(self, events: list[dict], scope: dict) -> list[dict]:
+    def enqueue_discovered(self, events: list[dict], scope: dict, *, origin: str = "MONTHLY_DISCOVERY") -> list[dict]:
         """Persist broad-discovery output as leads; it is not trusted event data yet."""
         queued = []
         for event in events:
@@ -152,9 +157,9 @@ class EventNameQueue:
                 continue
             lead = {
                 key: event.get(key)
-                for key in ("name", "edition", "organizer", "venueName", "region", "occurrences", "sources")
+                for key in ("name", "edition", "organizer", "venueName", "region", "occurrences", "sources", "subcategory", "banners", "subjects", "verificationRequired", "validationIssues")
             }
-            queued.append(self._enqueue(name, scope, discovered_candidate_key(event, scope), "MONTHLY_DISCOVERY", lead))
+            queued.append(self._enqueue(name, scope, discovered_candidate_key(event, scope), origin, lead))
         if queued:
             self.save()
         return queued

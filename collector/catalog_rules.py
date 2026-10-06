@@ -100,7 +100,7 @@ def validate_discovery(result: dict,start,end,blocked):
     for coverage in result.get('sourceCoverage',[]):
         for url in coverage['checkedUrls']: allowed_source(url,blocked)
     accepted=[];rejected=[]
-    for e in result['events']:
+    for index,e in enumerate(result['events']):
         errors,warnings=check_event(e,start,end)
         try:
             sources(e['sources'],blocked)
@@ -109,7 +109,7 @@ def validate_discovery(result: dict,start,end,blocked):
             for link in e['discoveryLinks']:
                 if link['url']: allowed_source(link['url'],blocked)
         except ValueError as exc: errors.append(str(exc))
-        if errors: rejected.append({'name':e['name'],'reasons':errors})
+        if errors: rejected.append({'index':index,'name':e['name'],'reasons':errors})
         else: accepted.append(e)
     return accepted,rejected
 

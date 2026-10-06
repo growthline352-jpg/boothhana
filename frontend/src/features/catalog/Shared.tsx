@@ -41,7 +41,7 @@ export function ProductCard({product,images=[],verification,reportTarget,memoryT
     <p>{product.subjects.join(' · ')}</p><small>수집 당시 안내이며 현장·실시간 재고를 보장하지 않습니다.</small>
     {product.warnings.length>0&&<div className="catalog-product-warnings">{product.warnings.map((warning,i)=><p key={i}>{warning}</p>)}</div>}
     {product.sources.map((source,i)=><p key={i}><SafeLink url={source.url}>판매 정보 출처 {i+1}</SafeLink></p>)}
-   </details>{reportTarget&&<ReportLink target={reportTarget} label="상품 정보 신고"/>}{reportTarget&&images[0]&&<ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:reportTarget.eventId,id:images[0].id}} label="이미지 문제 신고"/>}{images[0]&&<small>{images[0].credit} · <SafeLink url={images[0].attribution}>이미지 출처</SafeLink></small>}
+   </details>{reportTarget&&<ReportLink target={reportTarget} label="상품 정보 신고"/>}{reportTarget&&images[0]&&<ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:reportTarget.eventId,id:images[0].id}} label="이미지 문제 신고"/>}
   </div></article>
 }
 export function StoredImage({url,alt,loading='lazy',fetchPriority='auto'}:{url:string;alt:string;loading?:'eager'|'lazy';fetchPriority?:'high'|'low'|'auto'}){try{const u=new URL(url);if(!['https:','http:'].includes(u.protocol))return null}catch{return null}return <img src={url} alt={alt} loading={loading} fetchPriority={fetchPriority} referrerPolicy="no-referrer"/>}

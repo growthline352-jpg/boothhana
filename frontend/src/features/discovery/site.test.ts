@@ -5,6 +5,13 @@ import { categorySitesActive, isLocalPreview } from './site'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 describe('category site routing', () => {
+  it('keeps popup exploration highlighted as the popup field on root and category hosts',()=>{
+    for(const host of ['boothana.kr','popup.boothana.kr']){
+      vi.stubGlobal('window',{location:{host}})
+      expect(activeCategory('/popups','')).toBe('popups')
+      expect(activeCategory('/popups/','?neighborhood=SEONGSU')).toBe('popups')
+    }
+  })
   it('separates fandom popups and maps old popup filters to retail within the popup field', () => {
     for(const type of ['POPUP_STORE','POPUP_RETAIL','POPUP_EXPERIENCE','POPUP_EXHIBITION','POPUP_MIXED']) {
       expect(categoryForType(type).key).toBe('popups')

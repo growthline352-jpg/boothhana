@@ -24,6 +24,7 @@ public class SecurityConfig {
         csrf.setCookiePath("/");
         csrf.setCookieCustomizer(cookie -> cookie.secure(cookieSecure).sameSite(cookieSameSite));
         http.addFilterAfter(new KakaoSessionRefreshFilter(sessionCookies),org.springframework.security.web.context.SecurityContextHolderFilter.class)
+            .addFilterBefore(new com.boothhana.itinerary.PrivatePlanRequestFilter(),org.springframework.security.web.csrf.CsrfFilter.class)
             .addFilterBefore(new com.boothhana.library.LibraryRequestFilter(),org.springframework.security.web.csrf.CsrfFilter.class).addFilterBefore(new com.boothhana.support.SupportRequestFilter(),org.springframework.security.web.csrf.CsrfFilter.class).cors(cors -> cors.configurationSource(corsSource)).csrf(config -> config.csrfTokenRepository(csrf))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

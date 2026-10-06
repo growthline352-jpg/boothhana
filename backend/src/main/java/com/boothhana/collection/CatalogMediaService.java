@@ -13,12 +13,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import static com.boothhana.collection.CatalogModels.*;
 
-/** No arbitrary remote URL is fetched by the server. Only reviewed assets accept bounded worker bytes. */
+/** The server accepts verified worker bytes and never fetches remote URLs itself. */
 @Service
 @Transactional(readOnly=true)
 public class CatalogMediaService {
     private final JdbcTemplate db;private final VerifiedImageStorage storage;private final String base;
-    public CatalogMediaService(JdbcTemplate db,VerifiedImageStorage storage,@Value("${app.storage.public-url:}") String base) {this.db=db;this.storage=storage;this.base=base.replaceAll("/$","");}
+    private final boolean autoApprove;
+    public CatalogMediaService(JdbcTemplate db,VerifiedImageStorage storage,String base){this(db,storage,base,false);}
+    @org.springframework.beans.factory.annotation.Autowired
+    public CatalogMediaService(JdbcTemplate db,VerifiedImageStorage storage,@Value("${app.storage.public-url:}") String base,
+        @Value("${app.collection.auto-approve:true}") boolean autoApprove) {this.db=db;this.storage=storage;this.base=base.replaceAll("/$","");this.autoApprove=autoApprove;}
     @Transactional public AssetView register(long event,Long participant,Long product,Image image) {
         CatalogRules.images(List.of(image));
         String identity=CollectionRules.sha(event+":"+participant+":"+product+":"+image.type()+":"+image.imageUrl()+":"+image.pageUrl());
@@ -26,6 +30,7 @@ public class CatalogMediaService {
             insert into subculture_catalog_asset(event_id,participant_id,product_id,identity_key,type,image_url,page_url,caption,reported_rights)
             values(?,?,?,?,?,?,?,?,?) on conflict(identity_key) do nothing
             """,event,participant,product,identity,image.type(),image.imageUrl(),image.pageUrl(),image.caption(),image.rightsEvidence());
+        if(autoApprove)db.update("update subculture_catalog_asset set rights_state='APPROVED',rights_note=?,credit=case when credit='' then page_url else credit end,revision=revision+1 where identity_key=? and rights_state='PENDING'",CatalogAutoApproval.NOTE,identity);
         return db.query("select * from subculture_catalog_asset where identity_key=?",this::asset,identity).getFirst();
     }
     /** Register a reviewed association without allowing cross-event participant/product links. */

@@ -44,9 +44,19 @@ class ScopeTests(unittest.TestCase):
    with self.assertRaises(weekly.RunError):weekly.main(['--resume',str(p),'--dry-run'])
  def test_actual_dry_pipeline_combined_scope(self):
   with tempfile.TemporaryDirectory() as temp:
-   cfg=weekly.load_config(None);scope={'region':'SEOUL_GYEONGGI','timezone':'Asia/Seoul','startDate':'2026-10-01','endDate':'2026-10-31'}
+   cfg=weekly.load_config(None)
+   # This frozen v5 example covers the combined region pipeline, not the new
+   # source-specific discovery/research queues (covered by collector tests).
+   cfg.update(maxFestivalDiscoveryJobs=0,maxSubcultureDiscoveryJobs=0,maxPopupDiscoveryJobs=0)
+   scope={'region':'SEOUL_GYEONGGI','timezone':'Asia/Seoul','startDate':'2026-10-01','endDate':'2026-10-31'}
    with patch.object(weekly,'execute_search',side_effect=AssertionError('No live CLI')):
-    pipeline=weekly.Pipeline(cfg,Path(temp),scope,True,ROOT/'collector/examples/v5');self.assertEqual(pipeline.run(),0)
+    pipeline=weekly.Pipeline(cfg,Path(temp),scope,True,ROOT/'collector/examples/v5')
+    # Legacy fixture lacks the current candidate research fact evidence. It
+    # must retain that lead as incomplete rather than falsely mark it complete.
+    self.assertEqual(pipeline.run(),2)
+    self.assertEqual(len(pipeline.issues),1)
+    self.assertTrue(pipeline.issues[0].startswith('candidate-'))
+    self.assertTrue(pipeline.issues[0].endswith(': incomplete candidate research'))
    self.assertEqual(pipeline.scope['region'],'SEOUL_GYEONGGI')
  def test_sql_is_additive_and_permission_defaults_false(self):
   sql=(ROOT/'database/016_catalog_scope_offline.sql').read_text()

@@ -69,6 +69,8 @@ class MemoryServer:
 
 class ReviewV5PipelineTests(unittest.TestCase):
  def setUp(self):
+  from fact_fixtures import read_documents
+  self.fact_reader=patch.object(weekly,'read_fact_documents',side_effect=read_documents);self.fact_reader.start();self.addCleanup(self.fact_reader.stop)
   self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name);self.server=MemoryServer();self.cfg=weekly.load_config(None);self.cfg.update(maxEventEnrichments=0,stateDirectory=str(self.root/'state'),maxFestivalDiscoveryJobs=0,maxSubcultureDiscoveryJobs=0)
   self.env=patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':'t'*40});self.env.start()
  def tearDown(self):self.env.stop();self.temp.cleanup()

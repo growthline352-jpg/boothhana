@@ -14,6 +14,7 @@ from catalog_rules import parse_schema, validate_discovery
 from catalog_transport import Api
 from rules import parse_date
 from weekly import load_config
+from event_banner_validation import guard_batch_banners
 
 
 def month_bounds(month: str) -> tuple[str, str]:
@@ -59,6 +60,10 @@ def ingest(config_path: Path, input_path: Path, month: str | None, token: str, s
     config = load_config(config_path)
     result = parse_schema(input_path.read_bytes(), "event-result-v4.schema.json")
     batch = build_batch(result, month, config["blockedSourceHosts"], start, end)
+    evidence = Path(config['stateDirectory']).expanduser().resolve() / 'manual-imports' / batch['runId']
+    batch, _ = guard_batch_banners(batch, config, evidence)
+    from run import write_json
+    write_json(evidence / 'payload.json', batch)
     return Api(config["apiBaseUrl"], token, config["httpTimeoutSeconds"]).request(
         "POST", "/api/internal/subculture/batches", batch
     )

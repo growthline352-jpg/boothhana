@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from html.parser import HTMLParser
-import hashlib
+import hashlib,json
 from pathlib import Path
 import re
 import time
@@ -108,7 +108,24 @@ def parse_page(html, page):
     return cards, has_next, total
 
 
-def parse_detail(html, card, first, last):
+def detail_version(html, card):
+    """Version the native facts used by classification, not volatile page chrome."""
+    root=Tree(html).root
+    meta={n.attrs.get('property'):n.attrs.get('content','').strip() for n in root.walk() if n.tag=='meta'}
+    canonical=urlsplit(meta.get('og:url',''))
+    if canonical.scheme!='https' or canonical.hostname!='m.lotteshopping.com' or canonical.port not in (None,443) or canonical.username or canonical.path!='/shpgnews/shpgnewsDetail' or parse_qs(canonical.query).get('shpgNewsNo')!=[card['id']]:
+        raise ValueError('Shopping-news detail version identity mismatch')
+    fields={key:class_text(root,key) for key in ('__detail-title','__date','__place','__location','__txt-desc','__txt-caption')}
+    fields.update(policy='lotte-native-detail-v1',source=DETAIL_BASE+card['id'],image=meta.get('og:image',''),
+                  exactDates={key:sorted(set(re.findall(r'lddi\.ShareLink\.appData\.'+key+r"\s*=\s*['\"](\d{14})['\"]\s*;",html)))
+                              for key in ('cntsStDtm','cntsEndDtm')})
+    return hashlib.sha256(json.dumps(fields,ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
+
+def parse_detail(html, card, first, last, branch=None, *, include_outside=False):
+    branch=branch or dict(code='0002', name='잠실점', officialName='백화점 잠실점',
+                         venue='롯데월드몰', locationContains='월드몰', region='SEOUL',
+                         address='서울특별시 송파구 올림픽로 300')
     root = Tree(html).root
     meta = {n.attrs.get('property'): n.attrs.get('content', '').strip() for n in root.walk() if n.tag == 'meta'}
     source = DETAIL_BASE + card['id']
@@ -117,11 +134,15 @@ def parse_detail(html, card, first, last):
         raise ValueError('Shopping-news detail identity mismatch')
     titles, dates, places = [class_text(root, key) for key in ('__detail-title', '__date', '__place')]
     locations = class_text(root, '__location')
-    if len(titles) != 1 or len(dates) != 1 or len(places) != 1 or not locations or locations[0] != '백화점 잠실점' or not ('월드몰' in locations[:2] or '월드몰' in places[0]):
-        raise ValueError('Detail location/title/date missing or not Jamsil World Mall')
+    official_names=branch.get('officialNames') or [branch['officialName']]
+    if len(titles) != 1 or len(dates) != 1 or len(places) != 1 or not locations or locations[0] not in official_names:
+        raise ValueError('Detail location/title/date missing or branch mismatch')
+    location=branch.get('locationContains')
+    if location and not (location in locations[:2] or location in places[0]):
+        raise ValueError('Detail building does not match requested branch')
     title = titles[0]
     # A popup in a department-store card cannot silently become a World Mall row.
-    if '잠실점' not in card['location'] or '월드몰' not in card['location']:
+    if branch['name'] not in card['location'] or location and location not in card['location']:
         raise ValueError('Listing/detail branch mismatch')
     body = ' '.join(class_text(root, '__txt-desc'))
     if PERMANENT.search(title) or not POPUP.search(title + ' ' + places[0] + ' ' + body):
@@ -136,7 +157,7 @@ def parse_detail(html, card, first, last):
     visible = re.fullmatch(r'\s*(\d{1,2})\.(\d{1,2})\([^)]*\)\s*~\s*(\d{1,2})\.(\d{1,2})\([^)]*\)\s*', dates[0])
     if not visible or tuple(map(int, visible.groups())) != (start.month, start.day, end.month, end.day) or end < start:
         raise ValueError('Explicit dates conflict with visible event range')
-    if end < first or start > last:
+    if not include_outside and (end < first or start > last):
         return None
     image = meta.get('og:image', '')
     image_url = urlsplit(image)
@@ -158,11 +179,13 @@ def parse_detail(html, card, first, last):
     subjects = [key for key, pattern in topic_patterns.items() if re.search(pattern, text, re.I)]
     retail_topics = {'FASHION', 'BEAUTY', 'FOOD_DRINK', 'CHARACTER_IP'}
     kind = 'POPUP_EXPERIENCE' if not retail_topics.intersection(subjects) and re.search(r'직접\s*경험|직접\s*만년필|체험형', body) and not re.search(r'판매|구매|굿즈', body) else 'POPUP_RETAIL'
-    return dict(name=title + ' · 롯데월드몰', subcategory=kind, organizer='롯데백화점 잠실점', edition=str(start.year), region='SEOUL',
-                venueName=places[0] if '월드몰' in places[0] else '롯데월드몰 ' + places[0], address='서울특별시 송파구 올림픽로 300',
+    venue='롯데월드몰' if branch['code']=='0002' and ('월드몰' in locations or '월드몰' in places[0]) else '롯데'+locations[0]
+    address='서울특별시 송파구 올림픽로 300' if venue=='롯데월드몰' else branch.get('address')
+    return dict(name=title + ' · '+venue, subcategory=kind, organizer='롯데'+locations[0], edition=str(start.year), region=branch['region'],
+                venueName=places[0] if venue in places[0] else venue+' '+places[0], address=address,
                 description=(body or title)[:2000], admission=None, subjects=subjects,
                 occurrences=[dict(startDate=start.isoformat(), endDate=end.isoformat(), startTime=None, endTime=None)],
-                sources=[dict(url=source, kind='OFFICIAL', access='ORIGINAL', evidence=(title + ' / '+dates[0]+' / 월드몰 '+places[0])[:240])],
+                sources=[dict(url=source, kind='OFFICIAL', access='ORIGINAL', evidence=(title + ' / '+dates[0]+' / '+venue+' '+places[0])[:240])],
                 banners=banners, warnings=warnings, eventFormat='SINGLE_HOST',
                 discoveryLinks=[dict(kind='OFFICIAL', url=source, status='PUBLISHED', note='주최 쇼핑뉴스 원문')],
                 operationStatus=dict(state='SCHEDULED', note='공식 쇼핑뉴스에 안내된 행사 일정', sourceUrl=source, checkedOn=first.isoformat()))

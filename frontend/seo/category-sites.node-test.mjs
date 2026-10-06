@@ -153,3 +153,9 @@ test('HTTP handler issues permanent redirect for category aliases including HEAD
     assert.equal(body, undefined)
   }
 })
+
+test('private purchase planning stays noindex on the portal without fetching account data', async () => {
+ const page=await renderPage({path:'/purchase-plan',search:'?event=173',template,siteUrl:'https://boothana.kr',splitSites:true,fetcher:async()=>{throw new Error('Private data must not be read for HTML metadata')}})
+ assert.equal(page.meta.title,'부스 구매 계획 | 부스하나');assert.match(page.meta.robots,/^noindex/)
+ assert.equal(categoryRedirect({origin:'https://subculture.boothana.kr',path:'/purchase-plan',search:'?event=173',enabled:true}),'https://boothana.kr/purchase-plan?event=173')
+})

@@ -19,7 +19,6 @@ export function FloorPlans({ event, assets, participants,eventId }: { eventId?:n
         <SafeLink url={plan.url}><StoredImage url={plan.url} alt={plan.caption || `${event.name} 배치도`}/></SafeLink>
         <figcaption><strong>{plan.caption || '행사 배치도'}</strong>
           <p>{contexts.length ? contexts.join(' / ') : '적용 전시관·날짜: 원문 확인 필요'}</p>
-          <p>{plan.credit} · <SafeLink url={plan.attribution}>배치도 게시 원문</SafeLink></p>
           <SafeLink url={plan.url}>배치도 크게 보기 · 새 창</SafeLink>{eventId&&<ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId,id:plan.id}} label="이미지 문제 신고"/>}</figcaption>
       </figure>
     })}</div>

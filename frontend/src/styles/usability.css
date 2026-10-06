@@ -31,7 +31,7 @@
 .public-shell .discovery-event-meta { color: var(--u-muted); font-size: 14px; }
 .public-shell .discovery-event-bottom { font-size: 13px; color: var(--u-muted); }
 .public-shell .discovery-event-type { font-size: 12px; }
-.public-shell .discovery-poster-credit { font-size: 12px; color: var(--u-muted); }
+
 .public-shell .discovery-date-empty { border-style: solid; }
 .public-shell [aria-invalid="true"] { border-color: #ad3c30; }
 .public-shell .visit-task-nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 0 24px; }
@@ -183,3 +183,5 @@
 }
 
 .public-shell .discovery-menu > summary { min-width: 44px; min-height: 44px; }
+
+.memory-event-views{display:flex;gap:8px;margin-top:18px}.memory-group-actions{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-top:24px}.memory-group-actions h2{margin:0}@media(max-width:700px){.memory-group-actions{align-items:flex-start;flex-direction:column}.memory-event-views .btn{font-size:13px}}

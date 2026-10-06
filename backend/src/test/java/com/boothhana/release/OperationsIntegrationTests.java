@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** SQL001..027 on a fresh isolated localhost database; no mocks or production data. */
-@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,properties="app.collection.auto-approve=false")
 @Transactional
 @EnabledIfEnvironmentVariable(named="BOOTH_FULL_TEST_URL",matches="jdbc:postgresql://(?:localhost|127\\.0\\.0\\.1):[0-9]{1,5}/boothhana_release_test")
 class OperationsIntegrationTests {
@@ -35,7 +35,7 @@ class OperationsIntegrationTests {
   if(url==null||!url.matches("jdbc:postgresql://(?:localhost|127\\.0\\.0\\.1):[0-9]{1,5}/boothhana_release_test"))throw new IllegalStateException("Isolated localhost test DB only");
   p.add("spring.datasource.url",()->url);p.add("spring.datasource.username",()->System.getenv("BOOTH_FULL_TEST_USER"));p.add("spring.datasource.password",()->System.getenv("BOOTH_FULL_TEST_PASSWORD"));
   p.add("app.support.guest-enabled",()->false);p.add("app.support.attachments-enabled",()->false);
-  p.add("app.discovery.compare-enabled",()->true);p.add("app.discovery.popups-enabled",()->true);
+  p.add("app.discovery.compare-enabled",()->true);
   p.add("app.gcs.project-id",()->"");p.add("app.gcs.public-bucket",()->"");p.add("app.support.private-bucket",()->"");
  }
  @Autowired JdbcTemplate db;@Autowired JsonMapper json;@Autowired CatalogOperatingGroups groups;
@@ -151,6 +151,10 @@ class OperationsIntegrationTests {
   assertThat(discovery.popups(firstDay,secondDay,"SEONGSU").get("total")).isEqualTo(1L);
   publications.publish(a,new PublishInput(2));
   assertThat(discovery.popups(firstDay,secondDay,"SEONGSU").get("total")).isEqualTo(0L);
+  var moved=discovery.popups(firstDay,secondDay,"YEONNAM");
+  assertThat(moved.get("total")).isEqualTo(1L);
+  var movedPlace=(Map<?,?>)((List<?>)moved.get("places")).getFirst();
+  assertThat(movedPlace.get("latitude")).isNull();assertThat(movedPlace.get("address")).isEqualTo("서울 마포구 연남동");
   publications.unpublish(a);assertThat(discovery.compare(Long.toString(a))).isEmpty();
   assertThatThrownBy(()->discovery.compare(a+",2,3")).isInstanceOf(ApiException.class);
   long east=event("popup-group-east","POPUP_RETAIL",firstDay),west=event("popup-group-west","POPUP_RETAIL",secondDay);
@@ -158,7 +162,27 @@ class OperationsIntegrationTests {
   observations.place(west,new CatalogObservationService.PlaceInput(1,"SEONGSU","서울",null,null,"https://example.com/official",today));
   groups.save(east,input(-1,"같은 팝업 회차",east,west),admin);
   var grouped=discovery.popups(firstDay,secondDay,"SEONGSU");assertThat(grouped.get("total")).isEqualTo(1L);assertThat((List<?>)grouped.get("items")).hasSize(1);
+  var groupedPlaces=(List<?>)grouped.get("places");assertThat(groupedPlaces).hasSize(2);
+  assertThat(groupedPlaces.stream().map(p->((Number)((Map<?,?>)p).get("display_event_id")).longValue()).toList()).containsExactly(east,east);
   assertThat(discovery.popups(secondDay,secondDay,"SEONGSU").get("total")).isEqualTo(1L);
+ }
+ @Test void popupNeighborhoodsDeriveFromPublishedAddressesWithoutManualPlaceRows()throws Exception{
+  var discovery=web.getBean(CatalogDiscoveryService.class);
+  long a=event("address-only-popup","POPUP_RETAIL",firstDay,"서울특별시 성동구 연무장3길 8-27");
+  long b=event("forest-popup","POPUP_EXPERIENCE",firstDay,"서울특별시 성동구 서울숲2길 43");
+  long c=event("yeonnam-popup","POPUP_RETAIL",firstDay,"서울특별시 마포구 동교로 30 (연남동)");
+  long uncertain=event("district-only-popup","POPUP_RETAIL",firstDay,"서울 성동구");
+  long ambiguous=event("ambiguous-road-popup","POPUP_RETAIL",firstDay,"서울 마포구 성미산로 20");
+  long other=event("non-popup","ONLY_EVENT",firstDay,"서울특별시 성동구 연무장길 10");
+  long excluded=event("excluded-popup","POPUP_RETAIL",firstDay,"서울 성동구 성수이로 20");
+  db.update("update subculture_event_candidate set review_state='EXCLUDED' where id=?",excluded);
+  assertThat(discovery.popups(firstDay,secondDay,"SEONGSU").get("total")).isEqualTo(2L);
+  assertThat(discovery.popups(firstDay,secondDay,"YEONNAM").get("total")).isEqualTo(1L);
+  var all=discovery.popups(firstDay,secondDay,"");assertThat(all.get("total")).isEqualTo(5L);
+  assertThat(((List<?>)all.get("items")).stream().map(p->((Number)((Map<?,?>)p).get("id")).longValue()).toList()).contains(a,b,c,uncertain,ambiguous).doesNotContain(other,excluded);
+  http.perform(get("/api/public/catalog/popups").param("from",firstDay).param("to",secondDay).param("neighborhood","SEONGSU")).andExpect(status().isOk()).andExpect(jsonPath("$.places.length()").value(2)).andExpect(jsonPath("$.places[0].latitude").isEmpty());
+  assertThatThrownBy(()->discovery.popups(firstDay,LocalDate.parse(firstDay).plusDays(32).toString(),"")).isInstanceOf(ApiException.class);
+  assertThatThrownBy(()->discovery.popups(firstDay,secondDay,"INVALID")).isInstanceOf(ApiException.class);
  }
  @Test void observationRoutesProtectPrivateSourcesAndRequireAdminCsrf()throws Exception{
   long a=event("private-observation","ONLY_EVENT",firstDay);String route="/api/admin/subculture/v4/events/"+a+"/observations";
