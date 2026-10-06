@@ -17,6 +17,9 @@ import {EventPicker} from './EventPicker'
 import {regionArea,regionForEvent} from './regionCatalog'
 import {regionCounts,regionEvents} from './regions'
 import {ShareDialog} from './ShareDialog'
+import {SaveComplete} from './SaveComplete'
+import {usePersonalPlans} from './usePersonalPlans'
+import type {ImportOutcome} from './PersonalPlanStore'
 import {EventPreview} from './EventPreview'
 import {fitTimes,readWizardDraft,type WizardDraft} from './wizard'
 import {emptyTopics,matchesTopics,upcomingMatches} from './topics'
@@ -28,6 +31,7 @@ import './itinerary.css'
 const initialPlan=(purpose:Purpose='DATE'):Plan=>({version:1,id:crypto.randomUUID(),title:'',purpose,day:seoulToday(),start:purpose==='DATE'?'13:00':'10:00',end:'19:00',area:'',style:purpose==='DATE'?'CONTENT':'VIEW',stops:[],updatedAt:new Date().toISOString()})
 type AddMode='EVENT'|'PLACES'|'MANUAL'|'LOCATE'
 interface PopupData {places:{event_id:number;address:string;latitude:number|null;longitude:number|null}[]}
+interface ImportIssue {message:string;deleted:boolean}
 export function ItineraryPage(){
  const [params,setParams]=useSearchParams(),auth=useAuth(),owner=auth.status==='authenticated'&&auth.user?`member:${auth.user.id}`:auth.status==='anonymous'?'guest':''
  const storageKey=`boothhana.itineraries.v1:${owner}`,draftKey=`${storageKey}:draft`
@@ -35,13 +39,18 @@ export function ItineraryPage(){
  const [editingId,setEditingId]=useState(''),[undoPlan,setUndoPlan]=useState<Plan|null>(null),[wizardDraft,setWizardDraft]=useState<WizardDraft|null>(null),[duration,setDuration]=useState(60),[preview,setPreview]=useState<PublicEventSummary|null>(null),[placeKind,setPlaceKind]=useState<StopKind>('FOOD')
  const [shareOpen,setShareOpen]=useState(false)
  const heading=useRef<HTMLHeadingElement>(null)
- const [saved,setSaved]=useState<Plan[]>([]),[draft,setDraft]=useState<Plan|null>(null),[savedSignature,setSavedSignature]=useState('')
+ const personal=usePersonalPlans(owner),saved=useMemo(()=>personal.state.records.map(r=>r.plan),[personal.state.records])
+ const [planRevision,setPlanRevision]=useState(0),[saveConflict,setSaveConflict]=useState(false),[importing,setImporting]=useState(false)
+ const [importIssues,setImportIssues]=useState<Record<string,ImportIssue>>({}),[discardingLocal,setDiscardingLocal]=useState<Plan|null>(null)
+ const [latestOpen,setLatestOpen]=useState(false)
+ const [draft,setDraft]=useState<Plan|null>(null),[savedSignature,setSavedSignature]=useState('')
  const [anchor,setAnchor]=useState<PublicEventSummary|null>(null),[field,setField]=useState('ALL'),[eventQuery,setEventQuery]=useState(''),[anchorTime,setAnchorTime]=useState('10:00')
  const [message,setMessage]=useState(''),[busy,setBusy]=useState(false),[places,setPlaces]=useState<Place[]>([]),[placeError,setPlaceError]=useState('')
  const [addMode,setAddMode]=useState<AddMode|null>(null),[replaceId,setReplaceId]=useState(''),[locationId,setLocationId]=useState(''),[resetOpen,setResetOpen]=useState(false)
  const scope=useRef(''),job=useRef(0),ownerRef=useRef(owner),pendingStep=useRef<number|null>(null);ownerRef.current=owner
  const requestedEvent=params.get('event')||'',requestedDay=params.get('day')||''
  const requestedPlan=params.get('plan')||''
+ const requestedSaved=params.get('saved')||''
  const area=areas.find(a=>a.id===plan.area)||areas[0]
  const areaName=regionArea(plan.area)?.name||(plan.area==='UNLOCATED'?'지역 확인 중':plan.area?area.name:'행사장 위치 기준')
 
@@ -96,22 +105,31 @@ export function ItineraryPage(){
  const signature=JSON.stringify(plan),dirty=step===6&&signature!==savedSignature
  const go=useCallback((next:number,replace=false)=>{pendingStep.current=next;setStep(next);setParams(next<0?{}:{step:String(next)},{replace})},[setParams])
  const resumeWizard=useCallback((value:WizardDraft)=>{const token=++job.current;setPlan(value.plan);setField(value.field);setEventQuery(value.query);setDuration(value.duration);setAnchorTime(value.anchorTime);setAnchor(null);setUndoPlan(null);go(value.step,true);if(value.anchorId){setBusy(true);void publicCatalogApi.event(String(value.anchorId)).then(row=>{if(token===job.current&&scope.current===storageKey)setAnchor({...row,participantCount:row.participants.length})}).catch(()=>{if(token===job.current){setMessage('선택했던 행사를 확인하지 못했어요. 다시 골라 주세요.');go(3,true)}}).finally(()=>{if(token===job.current)setBusy(false)})}}, [storageKey,go])
- useEffect(()=>{if(scope.current!==storageKey||requestedEvent||requestedPlan)return;const value=params.get('step'),n=value===null?-1:Number(value);if(pendingStep.current!==null){if(n!==pendingStep.current)return;pendingStep.current=null}if(value===null){setStep(-1);return}if(Number.isInteger(n)&&n>=0&&n<=6){if(step===6&&n>0&&n<6){const previous=readWizardDraft(localStorage,`${storageKey}:wizard`);if(previous){resumeWizard({...previous,step:n});return}setStep(-1);setParams({},{replace:true});return}setStep(n)}},[params,storageKey,requestedEvent,requestedPlan,step,setParams,resumeWizard])
+ useEffect(()=>{if(scope.current!==storageKey||requestedEvent||requestedPlan||requestedSaved)return;const value=params.get('step'),n=value===null?-1:Number(value);if(pendingStep.current!==null){if(n!==pendingStep.current)return;pendingStep.current=null}if(value===null){setStep(-1);return}if(Number.isInteger(n)&&n>=0&&n<=6){if(step>=6&&n>0&&n<6){const previous=readWizardDraft(localStorage,`${storageKey}:wizard`);if(previous){resumeWizard({...previous,step:n});return}setStep(-1);setParams({},{replace:true});return}setStep(n)}},[params,storageKey,requestedEvent,requestedPlan,requestedSaved,step,setParams,resumeWizard])
  const issueDetails=planIssueDetails(plan),issues=planIssues(plan),focused=plan.stops.find(s=>s.id===selected)
  useEffect(()=>{setEditingId('');const frame=requestAnimationFrame(()=>{window.scrollTo({top:0,behavior:'auto'});heading.current?.focus({preventScroll:true})});return()=>cancelAnimationFrame(frame)},[step])
  useEffect(()=>{
-  if(!owner){setShareOpen(false);scope.current='';job.current++;setBusy(false);setAddMode(null);setSaved([]);setDraft(null);setWizardDraft(null);setUndoPlan(null);setPlan(initialPlan());setStep(-1);setSelected('');return}
+  if(!owner){setImportIssues({});setDiscardingLocal(null);setImporting(false);setLatestOpen(false);setShareOpen(false);scope.current='';job.current++;setBusy(false);setAddMode(null);setPlanRevision(0);setDraft(null);setWizardDraft(null);setUndoPlan(null);setPlan(initialPlan());setStep(-1);setSelected('');return}
   if(scope.current===storageKey)return
-  setShareOpen(false);scope.current=storageKey;job.current++;setBusy(false);setPlaces([]);setAddMode(null);setAnchor(null);setSavedSignature('');setPlan(initialPlan());setStep(-1);setWizardDraft(null);setUndoPlan(null)
-  const stored=readPlans(localStorage,storageKey),editor=readPlans(localStorage,draftKey)[0]||readPlans(sessionStorage,draftKey)[0]||null,cached=readWizardDraft(localStorage,`${storageKey}:wizard`)
-  setSaved(stored);setDraft(editor&&savedPlanSignature(stored,editor.id)!==JSON.stringify(editor)?editor:null);setWizardDraft(cached)
-  if(params.get('step')==='6'&&editor){setPlan(editor);setSelected(editor.stops[0]?.id||'');setSavedSignature(savedPlanSignature(stored,editor.id));setStep(6)}else if(params.has('step')&&cached)resumeWizard(cached)
+  setImportIssues({});setDiscardingLocal(null);setLatestOpen(false);setImporting(false);setSaveConflict(false);setPlanRevision(0);setShareOpen(false);scope.current=storageKey;job.current++;setBusy(false);setPlaces([]);setAddMode(null);setAnchor(null);setSavedSignature('');setPlan(initialPlan());setStep(-1);setWizardDraft(null);setUndoPlan(null)
+  const stored=owner==='guest'?readPlans(localStorage,storageKey):[],editor=readPlans(localStorage,draftKey)[0]||readPlans(sessionStorage,draftKey)[0]||null,cached=readWizardDraft(localStorage,`${storageKey}:wizard`)
+  setDraft(editor&&savedPlanSignature(stored,editor.id)!==JSON.stringify(editor)?editor:null);setWizardDraft(cached)
+  if(params.get('step')==='6'&&editor){setPlanRevision(readDraftRevision(draftKey));setPlan(editor);setSelected(editor.stops[0]?.id||'');setSavedSignature(savedPlanSignature(stored,editor.id));setStep(6)}else if(params.has('step')&&cached)resumeWizard(cached)
  },[owner,storageKey,draftKey,params,resumeWizard])
  useEffect(()=>{
-  if(!owner||!requestedPlan||scope.current!==storageKey)return
-  const p=readPlans(localStorage,storageKey).find(p=>p.id===requestedPlan)
-  if(p){setPlan(p);setAnchor(null);go(6,true);setSelected(p.stops[0]?.id||'');setSavedSignature(JSON.stringify(p))}
- },[owner,requestedPlan,storageKey,go])
+  if(!owner||!personal.ready||!requestedPlan||scope.current!==storageKey)return
+  const p=saved.find(p=>p.id===requestedPlan)
+  if(p){setPlanRevision(personal.state.records.find(r=>r.plan.id===p.id)?.revision||0);setPlan(p);setAnchor(null);go(6,true);setSelected(p.stops[0]?.id||'');setSavedSignature(JSON.stringify(p))}
+ },[owner,requestedPlan,storageKey,go,personal.ready,saved,personal.state.records])
+ useEffect(()=>{
+  if(!owner||!personal.ready||!requestedSaved||requestedEvent||requestedPlan||scope.current!==storageKey)return
+  const rows=saved,completed=rows.find(p=>p.id===requestedSaved)
+  pendingStep.current=null;setShareOpen(false)
+  if(!completed){setMessage('저장한 일정을 찾지 못했어요. 이 브라우저의 내 일정을 확인해 주세요.');go(-1,true);return}
+  const editor=readPlans(localStorage,draftKey)[0]||readPlans(sessionStorage,draftKey)[0]||null
+  setDraft(editor&&savedPlanSignature(rows,editor.id)!==JSON.stringify(editor)?editor:null)
+  setPlanRevision(personal.state.records.find(r=>r.plan.id===completed.id)?.revision||0);setPlan(completed);setSavedSignature(JSON.stringify(completed));setAnchor(null);setStep(7);setMessage('')
+ },[owner,requestedSaved,requestedEvent,requestedPlan,storageKey,draftKey,go,personal.ready,saved,personal.state.records])
  useEffect(()=>{
   if(!owner||!/^[1-9]\d*$/.test(requestedEvent))return
   let active=true
@@ -120,14 +138,32 @@ export function ItineraryPage(){
  },[requestedEvent,requestedDay,owner,go])
  useEffect(()=>{
   if(!owner||step!==6||!plan.stops.length||scope.current!==storageKey)return
-  try{writePlan(localStorage,draftKey,plan)}catch{ /* Explicit save reports storage failures; drafts are optional. */ }
- },[plan,step,owner,storageKey,draftKey,savedSignature])
+  try{writePlan(localStorage,draftKey,plan);localStorage.setItem(`${draftKey}:revision`,String(planRevision));setDraft(JSON.stringify(plan)!==savedSignature?plan:null)}catch{ /* Explicit save reports storage failures; drafts are optional. */ }
+ },[plan,step,owner,storageKey,draftKey,savedSignature,planRevision])
  useEffect(()=>{if(!owner||busy||scope.current!==storageKey||step<1||step>5)return;const value:WizardDraft={version:1,plan,step,anchorId:anchor?.id||null,anchorTime,duration,field,query:eventQuery,updatedAt:new Date().toISOString()};try{localStorage.setItem(`${storageKey}:wizard`,JSON.stringify(value));setWizardDraft(value)}catch{/* Explicit final save reports storage errors. */}},[plan,step,anchor,anchorTime,duration,field,eventQuery,owner,storageKey,busy])
 
  const patch=(change:Partial<Plan>)=>{if(step===6)setUndoPlan(plan);setPlan(p=>({...p,...change}));setMessage('')}
  const editStop=(id:string,change:Partial<PlanStop>)=>{if(step===6)setUndoPlan(plan);setPlan(p=>({...p,stops:p.stops.map(s=>s.id===id?{...s,...change}:s)}));setMessage('')}
- const newPlan=()=>{job.current++;setBusy(false);setPlan(initialPlan());setAnchor(null);setField('ALL');setEventQuery('');setStep(0);setSelected('');setEditingId('');setView('list');setSavedSignature('');setPlaces([]);setPlaceError('');setMessage('');setDraft(null);setWizardDraft(null);setUndoPlan(null);setDuration(60);go(0);try{sessionStorage.removeItem(draftKey);localStorage.removeItem(draftKey);localStorage.removeItem(`${storageKey}:wizard`)}catch{/* optional */}}
- const restore=(p:Plan)=>{job.current++;setBusy(false);setPlaces([]);setPlaceError('');setAddMode(null);setPlan(p);setAnchor(null);setStep(6);setSelected(p.stops[0]?.id||'');setEditingId('');setView('list');setSavedSignature(savedPlanSignature(saved,p.id));setUndoPlan(null);setMessage('');go(6)}
+ const newPlan=()=>{setPlanRevision(0);job.current++;setBusy(false);setPlan(initialPlan());setAnchor(null);setField('ALL');setEventQuery('');setStep(0);setSelected('');setEditingId('');setView('list');setSavedSignature('');setPlaces([]);setPlaceError('');setMessage('');setDraft(null);setWizardDraft(null);setUndoPlan(null);setDuration(60);go(0);try{sessionStorage.removeItem(draftKey);localStorage.removeItem(draftKey);localStorage.removeItem(`${storageKey}:wizard`)}catch{/* optional */}}
+ const restore=(p:Plan)=>{setSaveConflict(false);setPlanRevision(p===draft?readDraftRevision(draftKey):personal.state.records.find(r=>r.plan.id===p.id)?.revision||0);job.current++;setBusy(false);setPlaces([]);setPlaceError('');setAddMode(null);setPlan(p);setAnchor(null);setStep(6);setSelected(p.stops[0]?.id||'');setEditingId('');setView('list');setSavedSignature(savedPlanSignature(saved,p.id));setUndoPlan(null);setMessage('');go(6)}
+ const importLocal=async(p?:Plan,newCopy=false)=>{
+  const currentScope=storageKey;setImporting(true);setMessage('')
+  try{
+   let outcomes:ImportOutcome[]
+   if(p){try{await personal.store.importOne(p,newCopy);outcomes=[{plan:p,error:null}]}catch(error){outcomes=[{plan:p,error:error instanceof Error?error:new Error('일정을 가져오지 못했어요.')}]} }
+   else outcomes=await personal.store.importAll()
+   if(scope.current!==currentScope)return
+   setImportIssues(previous=>{const next={...previous};for(const result of outcomes){const key=JSON.stringify(result.plan);if(result.error)next[key]={message:result.error.message,deleted:'status' in result.error&&result.error.status===404};else delete next[key]}return next})
+   const failed=outcomes.filter(result=>result.error).length,succeeded=outcomes.length-failed
+   setMessage(failed?`${succeeded?`${succeeded}개를 가져왔어요. `:''}${failed}개는 가져오지 못했어요. 각 일정에서 다시 시도할 수 있어요.`:`${succeeded}개 일정을 계정으로 가져왔어요.`)
+  }catch(error){if(scope.current===currentScope)setMessage(error instanceof Error?error.message:'일정을 가져오지 못했어요.')}
+  finally{if(scope.current===currentScope)setImporting(false)}
+ }
+ const discardLocal=async(p:Plan)=>{
+  const currentScope=storageKey;setDiscardingLocal(null);setMessage('')
+  try{await personal.store.discardLocal(p);if(scope.current!==currentScope)return;setImportIssues(previous=>{const next={...previous};delete next[JSON.stringify(p)];return next});setMessage('이 기기의 원본 일정에서 제외했어요.')}
+  catch(error){if(scope.current===currentScope)setMessage(error instanceof Error?error.message:'이 기기의 일정을 정리하지 못했어요.')}
+ }
  const addStop=(stop:PlanStop)=>{
   if(step===6)setUndoPlan(plan)
   if(replaceId){setPlan(p=>({...p,stops:p.stops.map(s=>s.id===replaceId?{...stop,start:s.start,duration:s.duration,locked:s.locked}:s)}))}
@@ -152,7 +188,16 @@ export function ItineraryPage(){
   if(!next.stops.length&&initialMain)next.stops.push(initialMain)
   setPlan(next);setSelected(next.stops[0]?.id||'');go(6);setBusy(false);setSavedSignature('');setWizardDraft(null);window.scrollTo({top:0,behavior:'auto'})
  }
- const save=()=>{if(!owner||!plan.stops.length)return;try{const next={...plan,title:plan.title.trim()||'나의 하루 일정',updatedAt:new Date().toISOString()};writePlan(localStorage,storageKey,next);setPlan(next);setSaved(readPlans(localStorage,storageKey));setSavedSignature(JSON.stringify(next));sessionStorage.removeItem(draftKey);localStorage.removeItem(draftKey);localStorage.removeItem(`${storageKey}:wizard`);setDraft(null);setWizardDraft(null);setMessage('이 브라우저에 저장했어요. 내 일정에서 다시 수정할 수 있어요.')}catch{setMessage('저장 공간을 확인해 주세요. 캘린더 파일로도 내보낼 수 있어요.')}}
+ const save=async()=>{
+  if(!owner||!plan.stops.length||personal.state.busy)return
+  let next={...plan,title:plan.title.trim()||'나의 하루 일정',updatedAt:new Date().toISOString()}
+  const currentScope=storageKey
+  try{const stored=await personal.store.save(next,planRevision);if(scope.current!==currentScope)return;next=stored.plan;setPlanRevision(stored.revision)}catch(e){if(scope.current===currentScope){setMessage(e instanceof Error?e.message:'일정을 저장하지 못했어요.');setSaveConflict(true)}return}
+  setSaveConflict(false);setPlan(next);setSavedSignature(JSON.stringify(next));setDraft(null);setWizardDraft(null);setUndoPlan(null);setMessage('')
+  // Draft cleanup is optional; a cleanup failure must not turn a successful save into an error.
+  try{sessionStorage.removeItem(draftKey);localStorage.removeItem(draftKey);localStorage.removeItem(`${storageKey}:wizard`)}catch{/* optional */}
+  pendingStep.current=null;setStep(7);setParams({saved:next.id},{replace:true})
+ }
  const download=()=>{try{const content=planCalendar(plan),url=URL.createObjectURL(new Blob([content],{type:'text/calendar;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`boothhana-plan-${plan.day}.ics`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);setMessage('캘린더 파일을 내려받았어요. 변경 후에는 다시 내려받아 주세요.')}catch{setMessage('표시된 시간 문제를 수정한 뒤 캘린더에 추가해 주세요.')}}
  const edit=(id:string)=>{setSelected(id);setEditingId(id);setView('list');requestAnimationFrame(()=>{const row=document.getElementById(`stop-${id}`);row?.scrollIntoView({block:'nearest',behavior:'auto'});row?.querySelector<HTMLElement>('.it-lock-note button,.it-stop-edit input:not(:disabled)')?.focus({preventScroll:true})})}
  const replace=(stop:PlanStop)=>{setReplaceId(stop.id);setLocationId('');setAddMode(stop.kind==='EVENT'?'EVENT':stop.source==='MANUAL'?'MANUAL':'PLACES')}
@@ -170,16 +215,17 @@ export function ItineraryPage(){
  const chooseRegion=(id:string)=>{if(id===plan.area){go(3);return}patch({area:id,interests:undefined,stops:[]});setAnchor(null);setPlaces([]);setEventQuery('');setField('ALL');go(3)}
  const changeDay=(day:string)=>{if(day===plan.day)return;patch({day,stops:[]});setAnchor(null);setPlaces([])}
  const readyTime=Number.isFinite(timeMinutes(plan.start))&&Number.isFinite(timeMinutes(plan.end))&&timeMinutes(plan.end)>timeMinutes(plan.start)
+ if(!owner||!personal.ready)return <section className="it-page"><h1>내 일정</h1>{personal.state.status==='error'||auth.status==='error'?<div role="alert"><p>{personal.state.error||auth.error}</p><button className="btn secondary" onClick={()=>void (owner?personal.store.refresh():auth.refresh())}>다시 확인</button></div>:<p role="status">저장한 일정을 확인하고 있어요.</p>}</section>
  const steps=['목적','날짜','지역','행사','같이 갈 곳','시간 확인','완성']
  const quickDays=[0,1,(6-new Date(`${seoulToday()}T12:00:00Z`).getUTCDay()+7)%7].map(offset=>{const d=new Date(`${seoulToday()}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+offset);return d.toISOString().slice(0,10)})
- return <section className={`it-page${step===6?' is-editing':''}`}>
-  <header className="it-heading">
+ return <section className={`it-page${step===6?' is-editing':step===7?' is-complete':''}`} aria-busy={personal.state.busy}><div className="it-private-content" inert={personal.state.busy||importing||undefined}>
+  {step!==7&&<header className="it-heading">
    <div><h1 ref={heading} tabIndex={-1}>{step<0?'내 일정':step===6?'나의 하루 일정':'일정 만들기'}</h1><p>{step===6?'전체 코스를 확인하고, 필요한 장소만 눌러 수정하세요.':'행사를 중심으로, 또는 함께 보낼 하루를 계획하세요.'}</p></div>
    <div className="it-heading-actions">{(step===6||step<0)&&<button className="btn secondary" onClick={requestNew}>새 일정</button>}<Link className="it-back" to="/library">내 보관함 <DiscoveryIcon name="arrow" size={15}/></Link></div>
-  </header>
+  </header>}
   {step>=0&&step<6&&<><ol className="it-progress it-wizard-progress" aria-label="일정 만들기 단계">{steps.map((label,i)=><li key={label} className={i===step?'current':i<step?'done':''} aria-current={i===step?'step':undefined}><span>{i<step?<DiscoveryIcon name="check" size={13}/>:i+1}</span>{label}</li>)}</ol><div className="it-mobile-progress"><span>{step+1} / {steps.length}</span><strong>{steps[step]}</strong><div><span style={{width:`${(step+1)/steps.length*100}%`}}/></div></div></>}
-  {message&&<p className={`it-message${/못|저장 공간/.test(message)?' is-error':''}`} role={/못|저장 공간/.test(message)?'alert':'status'}>{message}</p>}
-  {!owner?<p role="status">계정 상태를 확인하고 있어요.{auth.status==='error'&&<button className="btn secondary" onClick={()=>void auth.refresh()}>다시 확인</button>}</p>:step<0?<><p className="it-storage-note">이 브라우저에 저장한 일정이에요. 다른 기기에서 보려면 공유 링크를 이용하세요.</p>{wizardDraft&&<div className="it-resume"><div><strong>작성하던 일정 이어서 만들기</strong><p>{wizardDraft.plan.day} · {regionArea(wizardDraft.plan.area)?.name||'지역 선택 전'}</p></div><button className="btn secondary" onClick={()=>resumeWizard(wizardDraft)}>이어서 만들기</button></div>}{draft&&<div className="it-resume"><div><strong>저장 전 수정사항</strong><p>{draft.title||'작성 중인 일정'}</p></div><button className="btn secondary" onClick={()=>restore(draft)}>일정 열기</button></div>}<SavedPlans rows={saved} open={restore} remove={id=>{try{const next=saved.filter(p=>p.id!==id);localStorage.setItem(storageKey,JSON.stringify(next));setSaved(next)}catch{setMessage('일정을 삭제하지 못했어요.')}}}/>{!saved.length&&!draft&&!wizardDraft&&<div className="it-empty"><h2>가고 싶은 곳으로 하루를 만들어보세요</h2><button className="btn primary" onClick={newPlan}>새 일정 만들기</button></div>}</>:step===0?<>
+  {discardingLocal&&<Modal title="이 기기 일정에서 제외할까요?" close={()=>setDiscardingLocal(null)}><p>{discardingLocal.title}</p><p>이 기기의 원본 일정만 제거해요. 계정에 저장한 일정은 유지돼요.</p><div className="it-dialog-actions"><button className="btn secondary" onClick={()=>setDiscardingLocal(null)}>취소</button><button className="btn primary" onClick={()=>void discardLocal(discardingLocal)}>기기에서 제외</button></div></Modal>}{saveConflict&&<div className="it-import-panel"><p>작성한 내용은 유지했어요. 최신 일정과 비교하거나 새 일정으로 저장할 수 있어요.</p><button className="btn secondary" onClick={()=>{setLatestOpen(true);void personal.store.refresh()}}>계정의 최신 일정 보기</button><button className="btn secondary" onClick={()=>{setPlan(p=>({...p,id:crypto.randomUUID()}));setPlanRevision(0);setSavedSignature('');setSaveConflict(false);setMessage('새 일정으로 저장할 준비가 됐어요. 일정 저장을 눌러 주세요.')}}>이 내용으로 새 일정 만들기</button></div>}{message&&<p className={`it-message${(saveConflict||/못|저장 공간/.test(message))?' is-error':''}`} role={(saveConflict||/못|저장 공간/.test(message))?'alert':'status'}>{message}</p>}
+  {!owner?<p role="status">계정 상태를 확인하고 있어요.{auth.status==='error'&&<button className="btn secondary" onClick={()=>void auth.refresh()}>다시 확인</button>}</p>:step===7?<SaveComplete account={owner.startsWith('member:')} plan={plan} areaName={areaName} headingRef={heading} open={()=>restore(draft?.id===plan.id?draft:plan)} share={()=>setShareOpen(true)} list={()=>go(-1)}/>:step<0?<><p className="it-storage-note">{owner==='guest'?'이 브라우저에 저장한 일정이에요. 로그인하면 계정에 가져올 수 있어요.':'계정에 저장한 일정이에요. 다른 기기에서도 로그인하면 이어서 볼 수 있어요.'}</p>{owner.startsWith('member:')&&<button className="btn secondary" disabled={importing} onClick={()=>void personal.store.refresh()}>최신 목록 확인</button>}{personal.state.local.length>0&&<LocalPlans rows={personal.state.local} issues={importIssues} busy={importing} importAll={()=>void importLocal()} importOne={(p,newCopy)=>void importLocal(p,newCopy)} discard={setDiscardingLocal}/>}{wizardDraft&&<div className="it-resume"><div><strong>작성하던 일정 이어서 만들기</strong><p>{wizardDraft.plan.day} · {regionArea(wizardDraft.plan.area)?.name||'지역 선택 전'}</p></div><button className="btn secondary" onClick={()=>resumeWizard(wizardDraft)}>이어서 만들기</button></div>}{draft&&<div className="it-resume"><div><strong>저장 전 수정사항</strong><p>{draft.title||'작성 중인 일정'}</p></div><button className="btn secondary" onClick={()=>restore(draft)}>일정 열기</button></div>}<SavedPlans rows={saved} open={restore} remove={id=>{const currentScope=storageKey;void personal.store.remove(id).catch(e=>{if(scope.current===currentScope)setMessage(e instanceof Error?e.message:'일정을 삭제하지 못했어요.')})}}/>{!saved.length&&!draft&&!wizardDraft&&<div className="it-empty"><h2>가고 싶은 곳으로 하루를 만들어보세요</h2><button className="btn primary" onClick={newPlan}>새 일정 만들기</button></div>}</>:step===0?<>
    <h2 className="it-purpose-heading">어떤 일정으로 시작할까요?</h2>
    <div className="it-purpose-grid">
     <PurposeCard icon="ticket" title="행사 참여" text="방문할 날짜와 지역의 행사를 살펴보고, 근처 식사와 카페를 더해요." action="방문 날짜 고르기" onClick={()=>{patch({purpose:'EVENT',start:'10:00',style:'VIEW'});go(1)}}/>
@@ -224,7 +270,7 @@ export function ItineraryPage(){
      {plan.purpose==='EVENT'&&anchor&&<label className="it-arrival"><span>행사 도착 예정 시간<small>코스에서 이 시간을 고정해요.</small></span><input className="input" type="time" value={anchorTime} onInput={e=>setAnchorTime(e.currentTarget.value)}/></label>}
      {!readyTime&&<p className="it-field-error" role="alert">마무리를 시작 시간 이후로 설정해 주세요.</p>}
      <p className="it-wizard-note">{anchor?'중심 행사 + ':''}선택한 장소 {plan.stops.length}곳 · 장소 사이에는 30분의 여유를 두어요. 실제 이동 시간은 지도에서 확인해 주세요.</p>
-     <p className="it-storage-note">일정은 이 브라우저에 저장돼요. 다른 기기에서는 공유 링크로 열 수 있어요.</p>
+     <p className="it-storage-note">{owner==='guest'?'일정은 이 브라우저에 저장돼요. 로그인하면 계정에 가져올 수 있어요.':'일정은 내 계정에 저장돼요. 저장 후 다른 기기에서도 이어서 볼 수 있어요.'}</p>
      <div className="it-setup-actions"><button className="btn secondary" onClick={()=>go(4)}>이전</button><button className="btn primary" onClick={()=>void generate()} disabled={busy||data.loading||!!data.error||!validDay(plan.day)||!readyTime||(!plan.area&&!anchor)||(!anchor&&!plan.stops.length)||(anchor&&!operatingOn(anchor,plan.day).length)||(plan.purpose==='EVENT'&&(!anchor||!Number.isFinite(timeMinutes(anchorTime))))}>{busy?'코스 만드는 중…':'코스 만들기'}<DiscoveryIcon name="arrow" size={17}/></button></div>
     </fieldset>
    </>}
@@ -256,17 +302,22 @@ export function ItineraryPage(){
      {placeError&&<p className="it-place-error" role="status">{placeError}</p>}{!nearbyAvailable&&<p className="it-check-note">주변 장소 검색은 준비 중이에요. 가고 싶은 곳을 직접 입력할 수 있어요.</p>}
     </aside>
    </div>
-   <div className="it-save-bar"><div><strong>{dirty?'아직 저장하지 않은 변경사항이 있어요':savedSignature?'저장된 일정이에요':'아직 저장 전이에요'}</strong><span>이 브라우저에 저장 · 저장 후에도 수정 가능</span></div><details className="it-more-actions"><summary aria-label="일정 더보기">···</summary><button className="it-calendar" aria-label="캘린더 내보내기" disabled={!plan.stops.length||!!issues.length} title={issues.length?'시간 확인 항목을 수정하면 내보낼 수 있어요':undefined} onClick={download}><DiscoveryIcon name="download" size={17}/><span>캘린더 내보내기</span></button><button className="it-my-plans" onClick={()=>go(-1)}>내 일정 목록</button></details><button className="btn secondary it-share-button" disabled={!plan.stops.length||!validDay(plan.day)} onClick={()=>setShareOpen(true)}>공유</button><button className="btn primary" disabled={!plan.stops.length||!validDay(plan.day)|| (!!savedSignature&&!dirty)} onClick={save}>{savedSignature&&!dirty?'저장 완료':'일정 저장'}</button></div>
+   <div className="it-save-bar"><div><strong>{dirty?'아직 저장하지 않은 변경사항이 있어요':savedSignature?'저장된 일정이에요':'아직 저장 전이에요'}</strong><span>{owner==='guest'?'이 브라우저에 저장':'내 계정에 저장'} · 저장 후에도 수정 가능</span></div><details className="it-more-actions"><summary aria-label="일정 더보기">···</summary><button className="it-calendar" aria-label="캘린더 내보내기" disabled={!plan.stops.length||!!issues.length} title={issues.length?'시간 확인 항목을 수정하면 내보낼 수 있어요':undefined} onClick={download}><DiscoveryIcon name="download" size={17}/><span>캘린더 내보내기</span></button><button className="it-my-plans" onClick={()=>go(-1)}>내 일정 목록</button></details><button className="btn secondary it-share-button" disabled={!plan.stops.length||!validDay(plan.day)} onClick={()=>setShareOpen(true)}>공유</button><button className="btn primary" disabled={!plan.stops.length||!validDay(plan.day)|| (!!savedSignature&&!dirty)} onClick={()=>void save()}>{savedSignature&&!dirty?'저장 완료':'일정 저장'}</button></div>
   </>}
   {preview&&<EventPreview row={preview} day={plan.day} close={()=>setPreview(null)} choose={()=>{chooseEvent(preview);setPreview(null)}}/>}
   {addMode&&<PlaceDialog kind={placeKind} setKind={setPlaceKind} replacing={!!replaceId} mode={addMode} setMode={setAddMode} close={()=>{setAddMode(null);setReplaceId('');setLocationId('')}} center={center} events={candidates.filter(c=>replaceId||!plan.stops.some(s=>s.eventId===c.row.id)).map(c=>c.row)} places={visiblePlaces} busy={busy} error={placeError} loadNearby={()=>void loadNearby()} addEvent={insertEvent} addPlace={insertPlace} addManual={addStop} locateStop={plan.stops.find(s=>s.id===locationId)} locatePoint={point=>{editStop(locationId,{point});setAddMode(null);setLocationId('');setMessage('선택한 위치를 지도에 표시했어요.')}}/>}
   {shareOpen&&owner&&scope.current===storageKey&&<ShareDialog key={`${owner}:${plan.id}`} plan={plan} owner={owner} close={()=>setShareOpen(false)}/>}
+  {latestOpen&&<Modal title="계정의 최신 일정" close={()=>setLatestOpen(false)}><p>확인하는 동안 작성 중인 내용은 그대로 유지됩니다.</p>{personal.state.status==='loading'?<p role="status">최신 일정을 불러오고 있어요.</p>:personal.state.error?<p role="alert">{personal.state.error}</p>:saved.find(p=>p.id===plan.id)?(()=>{const latest=saved.find(p=>p.id===plan.id)!;return <><h3>{latest.title||'이름 없는 일정'}</h3><p>{latest.day} · {latest.start} ~ {latest.end}</p><ol>{latest.stops.map(s=><li key={s.id}>{s.start} · {s.name} · {s.duration}분{s.note&&<p>{s.note}</p>}</li>)}</ol><p>아래 교체 버튼을 누르면 현재 작성 중인 내용을 버리고 최신 일정으로 바꿉니다.</p><button className="btn secondary" onClick={()=>{setLatestOpen(false);restore(latest)}}>작성 내용을 버리고 최신 일정으로 교체</button></>})():<p>계정에서 해당 일정을 찾지 못했어요. 작성 중인 내용은 새 일정으로 저장할 수 있어요.</p>}<div className="it-dialog-actions"><button className="btn primary" onClick={()=>setLatestOpen(false)}>작성 중인 일정으로 돌아가기</button></div></Modal>}
   {resetOpen&&<Modal title="새 일정을 만들까요?" close={()=>setResetOpen(false)}><p>작성 중인 내용은 새로 시작하면 초기화됩니다. 저장한 일정은 내 일정에 남아 있어요.</p><div className="it-dialog-actions"><button className="btn secondary" onClick={()=>setResetOpen(false)}>계속 수정</button><button className="btn primary" onClick={()=>{setResetOpen(false);newPlan()}}>새로 만들기</button></div></Modal>}
- </section>
+ </div>{personal.state.busy&&<p className="it-save-feedback" role="status">저장 내용을 반영하고 있어요.</p>}</section>
 }
 
+function readDraftRevision(key:string){try{const revision=Number(localStorage.getItem(`${key}:revision`)||0);return Number.isSafeInteger(revision)&&revision>=0?revision:0}catch{return 0}}
 function PurposeCard({icon,title,text,action,onClick}:{icon:'ticket'|'sparkles';title:string;text:string;action:string;onClick:()=>void}){return <button className="it-purpose" onClick={onClick}><span className="it-purpose-top"><DiscoveryIcon name={icon} size={24}/><h3>{title}</h3></span><p>{text}</p><span className="it-purpose-bottom"><strong>{action}</strong><DiscoveryIcon name="arrow" size={20}/></span></button>}
 function SavedPlans({rows,open,remove}:{rows:Plan[];open:(p:Plan)=>void;remove:(id:string)=>void}){const [deleting,setDeleting]=useState<Plan|null>(null);return <div className="it-saved"><h2>내 일정 <span>{rows.length}</span></h2>{rows.length?<div className="it-saved-grid">{rows.map(p=><article key={p.id}><small>{p.day} · {p.purpose==='EVENT'?'행사 참여':'데이트'}</small><h3>{p.title}</h3><p>{p.stops.length}곳 · {p.start}–{p.end}</p><div><button onClick={()=>open(p)}>열고 수정하기 <DiscoveryIcon name="arrow" size={15}/></button><button onClick={()=>setDeleting(p)}>삭제</button></div></article>)}</div>:<p>만든 일정을 저장하면 이 브라우저에서 다시 열 수 있어요.</p>}{deleting&&<Modal title="이 일정을 삭제할까요?" close={()=>setDeleting(null)}><p>{deleting.title}</p><div className="it-dialog-actions"><button className="btn secondary" onClick={()=>setDeleting(null)}>취소</button><button className="btn primary" onClick={()=>{remove(deleting.id);setDeleting(null)}}>삭제</button></div></Modal>}</div>}
+function LocalPlans({rows,issues,busy,importOne,importAll,discard}:{rows:Plan[];issues:Record<string,ImportIssue>;busy:boolean;importOne:(p:Plan,newCopy?:boolean)=>void;importAll:()=>void;discard:(p:Plan)=>void}){
+ return <section className="it-import-panel"><h2>이 기기에 남아 있는 일정 {rows.length}개</h2><p>비회원으로 만든 일정도 포함돼요. 계정 일정은 그대로 두고 새 일정으로 가져와요.</p><button className="btn primary" disabled={busy} onClick={importAll}>{busy?'가져오는 중…':'모두 계정으로 가져오기'}</button><div className="it-saved-grid">{rows.map(p=>{const key=JSON.stringify(p),issue=issues[key];return <article key={key}><small>{p.day.replace(/-/g,'.')}</small><h3>{p.title}</h3><p>{p.stops.length}곳 · {p.start}–{p.end}</p><div style={{flexWrap:'wrap',gap:12}}><button disabled={busy} onClick={()=>importOne(p)}>{issue?'다시 가져오기':'계정으로 가져오기'}</button>{issue?.deleted&&<button disabled={busy} onClick={()=>importOne(p,true)}>새 사본으로 가져오기</button>}<button disabled={busy} onClick={()=>discard(p)}>기기에서 제외</button></div>{issue&&<p role="alert" style={{gridColumn:'1/-1'}}>{issue.message}{issue.deleted&&' 계정에서 삭제한 일정은 그대로 두고, 새 사본으로 가져올 수 있어요.'}</p>}</article>})}</div></section>
+}
 function Modal({title,close,children}:{title:string;close:()=>void;children:ReactNode}){const titleId=useId(),dialog=useRef<HTMLDialogElement>(null),closeRef=useRef(close);closeRef.current=close;useEffect(()=>{const el=dialog.current!;return openCatalogDialog(el,el.querySelector<HTMLElement>('h2'),document.activeElement as HTMLElement)},[]);return <dialog ref={dialog} className="it-dialog" aria-labelledby={titleId} onCancel={e=>{e.preventDefault();closeRef.current()}}><header><h2 id={titleId} tabIndex={-1}>{title}</h2><button aria-label="창 닫기" onClick={close}><DiscoveryIcon name="close"/></button></header><div className="it-dialog-body">{children}</div></dialog>}
 function PlaceDialog({kind:filterKind,setKind:filterKindSet,replacing=false,mode,setMode,close,center,events,places,busy,error,loadNearby,addEvent,addPlace,addManual,locateStop,locatePoint}:{kind:StopKind;setKind:(kind:StopKind)=>void;replacing?:boolean;mode:AddMode;setMode:(m:AddMode)=>void;close:()=>void;center:Point;events:PublicEventSummary[];places:Place[];busy:boolean;error:string;loadNearby:()=>void;addEvent:(r:PublicEventSummary)=>void;addPlace:(p:Place)=>void;addManual:(p:PlanStop)=>void;locateStop?:PlanStop;locatePoint:(p:Point)=>void}){
  const [query,setQuery]=useState(locateStop?.address||locateStop?.venueName||''),[name,setName]=useState(''),[address,setAddress]=useState(''),[kind,setKind]=useState<StopKind>('PLACE'),[point,setPoint]=useState<Point|null>(null),[searching,setSearching]=useState(false),[results,setResults]=useState<Place[]>([]),[searchError,setSearchError]=useState(''),[chosenPlace,setChosenPlace]=useState<Place|null>(null)

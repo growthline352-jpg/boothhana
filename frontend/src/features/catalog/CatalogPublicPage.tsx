@@ -200,7 +200,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page event-detail-redesign">
     <Link className="discovery-back-link" to={back} state={{catalogRestore:true}}>← {categoryForType(e.subcategory).label} 목록</Link>
-    <header className="visit-summary"><figure className="visit-poster"><ContentImage url={banner?.url} kind="event" eventType={e.subcategory} alt={`${e.name} 대표 이미지`}/>{banner&&<figcaption>{banner.credit} · <SafeLink url={banner.attribution}>이미지 출처</SafeLink><ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:currentEventId,id:banner.id}} label="이미지 문제 신고"/></figcaption>}</figure><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1><BookingBadge event={e} day={state.day}/>
+    <header className="visit-summary"><figure className="visit-poster"><ContentImage url={banner?.url} kind="event" eventType={e.subcategory} alt={`${e.name} 대표 이미지`}/>{banner&&<figcaption><ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:currentEventId,id:banner.id}} label="이미지 문제 신고"/></figcaption>}</figure><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1><BookingBadge event={e} day={state.day}/>
       {status.notice&&<p className="visit-important-note" role="status">{status.notice} {status.operation.sourceUrl&&<SafeLink url={status.operation.sourceUrl}>상태 안내 원문</SafeLink>}{status.operation.checkedOn&&<small> · {status.operation.checkedOn} 확인</small>}</p>}
       <dl className="visit-facts"><div><dt>행사일</dt><dd>{eventDateLabel(e.occurrences)}</dd></div>
         <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
@@ -252,7 +252,7 @@ function ParticipantCard({eventId,row,day,hall,assets,showMap}:{eventId:number;r
   const thumb=assets.find(a=>a.participantId===row.id&&['BOOTH_CUT','PRODUCT','LOGO'].includes(a.type))
   const locations=relevantLocations(row.participant.locations,day,hall),known=attendance(row,day,hall)
   return <article className="panel catalog-booth-card visit-booth-card has-image">
-    <figure><ContentImage url={thumb?.url} kind="booth" alt={thumb?.caption||row.participant.registrationName}/>{thumb&&<figcaption>{thumb.credit} · <SafeLink url={thumb.attribution}>출처</SafeLink></figcaption>}</figure>
+    <figure><ContentImage url={thumb?.url} kind="booth" alt={thumb?.caption||row.participant.registrationName}/></figure>
     <div className="visit-booth-body"><LocationText locations={locations}/><h3>{row.participant.registrationName}</h3>{row.directRegistration&&<span className="chip">직접 등록</span>}<p className="visit-booth-summary">{row.sales?.summary||'판매정보를 확인하고 있어요.'}</p>
       {known==='unknown'&&<small className="visit-warning">선택 날짜·전시관 참가 여부 미확인</small>}
       {row.sales&&<small>{scopes[row.sales.evidenceScope]}</small>}<p className="item-meta">{row.participant.subjects.join(' · ')}</p>

@@ -12,7 +12,7 @@ import java.util.*;
 import static com.boothhana.collection.CatalogModels.*;
 import static com.boothhana.collection.CollectionModels.*;
 
-/** Rechecks are private proposals. Only existing admin review and publication can change public facts. */
+/** Lightweight source change detection. Confirmed changes use the configured intake approval policy. */
 @Service
 @Transactional(readOnly=true)
 public class CatalogObservationService {
@@ -25,11 +25,14 @@ public class CatalogObservationService {
         """;
     // A weekly check becomes due sooner when the event approaches or its facts change.
     // Failed checks on an unchanged revision retain the configured retry backoff.
-    static final String DUE_SQL="(c.next_check_at is null or c.next_check_at<=now()"
+    static final String DUE_SQL="(c.details_json->>'eventRevision' is distinct from e.revision::text or ((coalesce(c.details_json->>'repairResolution','')<>'EXHAUSTED' or c.details_json->>'repairPolicy' is distinct from 'source-completion-v2') and (c.next_check_at is null or c.next_check_at<=now()"
         +" or c.details_json->>'eventRevision' is distinct from e.revision::text"
-        +" or (coalesce(c.failures,0)=0 and "+NEAR_SQL+" and c.checked_at<=now()-interval '24 hours'))";
+        +" or (coalesce(c.failures,0)=0 and "+NEAR_SQL+" and c.checked_at<=now()-interval '24 hours'))))";
     private final JdbcTemplate db;private final JsonMapper json;private final CatalogService catalog;
-    public CatalogObservationService(JdbcTemplate db,JsonMapper json,CatalogService catalog){this.db=db;this.json=json;this.catalog=catalog;}
+    private final CatalogAutoApproval approval;
+    public CatalogObservationService(JdbcTemplate db,JsonMapper json,CatalogService catalog){this(db,json,catalog,null);}
+    @org.springframework.beans.factory.annotation.Autowired
+    public CatalogObservationService(JdbcTemplate db,JsonMapper json,CatalogService catalog,CatalogAutoApproval approval){this.db=db;this.json=json;this.catalog=catalog;this.approval=approval;}
     public record ObservationInput(long eventRevision,String digest,String status,List<String> sourceUrls,Map<String,Object> values,Map<String,String> fieldStates,Map<String,String> fieldEvidence){}
     public record ReviewInput(long eventRevision,List<String> fields,String note,int reviewSeconds,boolean reject){}
     public record PlaceInput(long eventRevision,String neighborhood,String address,Double latitude,Double longitude,String sourceUrl,String checkedOn){}
@@ -62,27 +65,37 @@ public class CatalogObservationService {
             """.formatted(DUE_SQL,NEAR_SQL,NEAR_SQL));
     }
     public List<Map<String,Object>> due(int limit){
+        return due(limit,-1);
+    }
+    public List<Map<String,Object>> due(int limit,long afterId){
         if(limit<1||limit>100)throw ApiException.badRequest("조회 한도 오류");
+        if(afterId < -1)throw ApiException.badRequest("조회 시작점 오류");
         return db.queryForList("""
             select e.id,e.revision,c.digest,c.status,c.failures,c.details_json->>'eventRevision' checked_revision,c.details_json->>'observationStatus' observation_status from subculture_event_candidate e
             join subculture_catalog_publication p on p.event_id=e.id
             left join catalog_source_check c on c.event_id=e.id
             where e.review_state<>'EXCLUDED' and e.ends_on>=(now() at time zone 'Asia/Seoul')::date
             and exists(select 1 from jsonb_array_elements((e.payload_json || e.overrides_json)->'sources') s where s->>'kind' in ('OFFICIAL','VENUE','ORGANIZER_SOCIAL') and s->>'access'='ORIGINAL')
-            and %s
-            order by (%s) desc,c.next_check_at asc nulls first,e.starts_on,e.id limit ?
-            """.formatted(DUE_SQL,NEAR_SQL),limit).stream().map(row->{Map<String,Object> out=new LinkedHashMap<String,Object>(row);out.put("event",catalog.event(((Number)row.get("id")).longValue()));return out;}).toList();
+            and %s and e.id>?
+            order by %s limit ?
+            """.formatted(DUE_SQL,afterId<0?"("+NEAR_SQL+") desc,c.next_check_at asc nulls first,e.starts_on,e.id":"e.id"),Math.max(0,afterId),limit).stream().map(row->{Map<String,Object> out=new LinkedHashMap<String,Object>(row);out.put("event",catalog.event(((Number)row.get("id")).longValue()));return out;}).toList();
     }
     @Transactional public Map<String,Object> observe(long id,ObservationInput input){
+        if(approval!=null)approval.lock();
         var row=eventRow(id);var current=catalog.event(id);
         if(input==null||input.eventRevision()!=((Number)row.get("revision")).longValue())throw ApiException.conflict("행사 정보가 바뀌었습니다. 다시 확인하세요.");
         if("EXCLUDED".equals(row.get("review_state")))throw ApiException.conflict("제외된 행사");
         if(input.digest()==null||!input.digest().matches("[a-f0-9]{64}")||input.status()==null||!STATUSES.contains(input.status())||input.values()==null||!FIELDS.containsAll(input.values().keySet())||json.writeValueAsString(input).length()>100000)throw ApiException.badRequest("관측값 형식 오류");
         if(input.sourceUrls()==null||input.sourceUrls().isEmpty()||input.sourceUrls().size()>10||!registeredSources(current).containsAll(input.sourceUrls()))throw ApiException.badRequest("등록된 공식 원문으로 확인하세요.");
         if(input.fieldStates()==null||!FIELDS.containsAll(input.fieldStates().keySet())||input.fieldStates().values().stream().anyMatch(s->s==null||!STATUSES.contains(s)))throw ApiException.badRequest("항목별 확인 상태 오류");
-        var before=fields(current);var changes=new TreeMap<String,Object>();
+        // Automatic observations describe changes to collected facts. Comparing only the
+        // effective (manually overridden) event can otherwise discard the latest raw value.
+        boolean automatic=approval!=null&&approval.enabled();
+        Map<String,Object> before=automatic?json.readValue(row.get("payload_json").toString(),Map.class):fields(current);
+        var changes=new TreeMap<String,Object>();
         if(!input.values().isEmpty()){
             var proposed=new LinkedHashMap<>(before);proposed.putAll(input.values());
+            if(automatic)proposed.putAll(json.readValue(row.get("overrides_json").toString(),Map.class));
             try{
                 EventData event=json.readValue(json.writeValueAsString(proposed),EventData.class);
                 String start=event.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=event.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
@@ -101,8 +114,13 @@ public class CatalogObservationService {
         if(!changes.isEmpty()){
             observation=UUID.randomUUID();String fp=fingerprint(json.writeValueAsString(changes)+json.writeValueAsString(input.sourceUrls()));
             db.update("insert into catalog_event_observation(id,event_id,event_revision,fingerprint,observed_at,source_urls_json,changes_json) values(?,?,?,?,now(),cast(? as jsonb),cast(? as jsonb)) on conflict(event_id,event_revision,fingerprint) do nothing",observation,id,input.eventRevision(),fp,json.writeValueAsString(input.sourceUrls()),json.writeValueAsString(changes));
+            if(automatic){
+                catalog.applyCollectedObservation(id,input.eventRevision(),input.values());
+                approval.approve(id);
+                db.update("update catalog_event_observation set state='APPLIED',review_note=?,reviewed_at=now(),review_seconds=0 where event_id=? and event_revision=? and fingerprint=? and state='PENDING'",CatalogAutoApproval.NOTE,id,input.eventRevision(),fp);
+            }
         }
-        String state=changes.isEmpty()?input.status():"CONFLICT_REVIEW";
+        String state=changes.isEmpty()||automatic?input.status():"CONFLICT_REVIEW";
         if(db.queryForObject("select count(*) from catalog_event_observation where event_id=? and state='PENDING'",Long.class,id)>0&&!input.status().endsWith("FAILED"))state="CONFLICT_REVIEW";
         int failures=(input.status().endsWith("FAILED"))?db.queryForObject("select coalesce((select failures from catalog_source_check where event_id=?),0)+1",Integer.class,id):0;
         LocalDate today=LocalDate.now(ZoneId.of("Asia/Seoul"));
@@ -118,13 +136,23 @@ public class CatalogObservationService {
         if(input.fieldEvidence()!=null&&!input.fieldEvidence().isEmpty())details.put("fieldEvidence",input.fieldEvidence());
         @SuppressWarnings("unchecked") Map<String,Object> checkedFields=(Map<String,Object>)details.getOrDefault("fieldCheckedAt",new LinkedHashMap<>());
         input.values().keySet().forEach(key->checkedFields.put(key,Instant.now().toString()));details.put("fieldCheckedAt",checkedFields);
-        details.put("sourceUrls",input.sourceUrls());details.put("eventRevision",input.eventRevision());details.put("observationStatus",input.status());
+        details.remove("repairResolution");details.remove("repairCompletedAt");details.remove("repairPolicy");
+        details.put("sourceUrls",input.sourceUrls());details.put("eventRevision",db.queryForObject("select revision from subculture_event_candidate where id=?",Long.class,id));details.put("observationStatus",input.status());
         db.update("""
             insert into catalog_source_check(event_id,checked_at,next_check_at,status,digest,details_json,failures)
             values(?,now(),now()+make_interval(hours=>?),?,?,cast(? as jsonb),?)
             on conflict(event_id) do update set checked_at=excluded.checked_at,next_check_at=excluded.next_check_at,status=excluded.status,digest=excluded.digest,details_json=excluded.details_json,failures=excluded.failures
             """,id,hours,state,input.digest(),json.writeValueAsString(details),failures);
         return Map.of("status",state,"changedFields",changes.keySet(),"nextCheckHours",hours);
+    }
+    public record ExhaustedInput(long eventRevision,List<String> methods,Map<String,String> methodStatuses){}
+    @Transactional public Map<String,Object> sourceExhausted(long id,ExhaustedInput input){
+        var row=eventRow(id);
+        if(input==null||input.eventRevision()!=((Number)row.get("revision")).longValue())throw ApiException.conflict("행사 정보가 바뀌었습니다.");
+        var methods=Set.of("SOURCE_DETAILS","ORGANIZER_SEARCH","VENUE_SEARCH");
+        if(input.methods()==null||!new HashSet<>(input.methods()).containsAll(methods)||input.methodStatuses()==null||methods.stream().anyMatch(method->!"SUCCESS".equals(input.methodStatuses().get(method))))throw ApiException.badRequest("서로 다른 보완 경로의 조사를 모두 완료하세요. 부분 조사·접근 실패는 다시 보완합니다.");
+        int changed=db.update("update catalog_source_check set details_json=details_json || jsonb_build_object('repairResolution','EXHAUSTED','repairCompletedAt',now()::text,'repairPolicy','source-completion-v2') where event_id=? and status in ('ACCESS_FAILED','EXTRACTION_FAILED') and details_json->>'eventRevision'=?",id,Long.toString(input.eventRevision()));
+        return Map.of("id",id,"exhausted",changed==1);
     }
     @SuppressWarnings("unchecked") public Map<String,Object> workspace(long id){
         var checks=db.queryForList("select checked_at,next_check_at,status,details_json,failures from catalog_source_check where event_id=?",id);

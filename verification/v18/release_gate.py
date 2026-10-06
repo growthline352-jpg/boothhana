@@ -8,7 +8,7 @@ def state(value,**extra):
 def main():
  state('NOT_READY',reason='Current attempt not yet complete')
  report=ROOT/'verification/v18/results/test-db-preparation.json'
- if not report.exists():raise ValueError('Fresh isolated SQL001..016 test preparation required; production DB is not permitted')
+ if not report.exists():raise ValueError('Fresh isolated SQL001..030 test preparation required; production DB is not permitted')
  data=json.loads(report.read_text());actual=sorted((ROOT/'database').glob('[0-9][0-9][0-9]_*.sql'))
  expected=[{'file':p.name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in actual]
  if data.get('state')!='SCHEMA_APPLIED_TEST_ONLY' or data.get('migrations')!=expected or report.stat().st_mtime<time.time()-7200:raise ValueError('Migration report missing, stale or mismatched')

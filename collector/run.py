@@ -40,12 +40,13 @@ class CliUnavailable(RunError):
 def utcnow(): return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
 
 def write_json(path: Path, value: dict):
+    from state_files import replace_with_retry
     data=(json.dumps(value,ensure_ascii=False,indent=2)+'\n').encode()
     temporary=path.with_name(path.name+'.tmp')
     with temporary.open('wb') as file: file.write(data)
     try: temporary.chmod(0o600)
     except OSError: pass
-    os.replace(temporary,path)
+    replace_with_retry(temporary,path)
 
 def config(path: Path | None):
     result={'apiBaseUrl':os.getenv('COLLECTOR_API_BASE_URL','http://localhost:8080'),
@@ -314,6 +315,14 @@ def main(argv=None):
         if args.retry_batch.stat().st_size>MAX_JSON_BYTES: raise RunError('배치 크기 초과')
         batch=json.loads(args.retry_batch.read_text(encoding='utf-8'))
         uuid.UUID(batch['runId']);parse_result(json.dumps(batch['result'],ensure_ascii=False).encode())
+        receipt_file=args.retry_batch.with_name('receipt.json')
+        if receipt_file.is_file():
+            receipt=json.loads(receipt_file.read_text(encoding='utf-8'))
+            if receipt.get('runId')==batch['runId']:
+                print(json.dumps(receipt,ensure_ascii=False));return 0
+        from event_banner_validation import guard_batch_banners
+        batch,_=guard_batch_banners(batch,cfg,args.retry_batch.parent)
+        write_json(args.retry_batch,batch)
         if args.dry_run:
             print('재전송 검사 완료. DB 변경 없음. runId='+batch['runId']);return 0
         response=send_batch(cfg['apiBaseUrl'],token,batch,cfg['httpTimeoutSeconds'])
@@ -343,6 +352,8 @@ def main(argv=None):
         batch={'schemaVersion':'1','runId':run_id,'startedAt':started,'finishedAt':utcnow(),
             'executionMode':mode,'webSearchObserved':observed,
             'scope':{'region':'SEOUL_GYEONGGI','timezone':'Asia/Seoul','startDate':str(start),'endDate':str(end)},'result':result}
+        from event_banner_validation import guard_batch_banners
+        batch,_=guard_batch_banners(batch,cfg,run_dir)
         write_json(run_dir/'batch.json',batch);write_json(run_dir/'validation.json',inspection);write_json(run_dir/'usage.json',usage)
         print(f"runId={run_id}\n검증 통과 {inspection['count']}건 / 제외 {len(inspection['rejected'])}건\n결과 폴더: {run_dir}")
         if not args.dry_run:

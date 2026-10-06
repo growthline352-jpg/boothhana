@@ -20,7 +20,10 @@ public class CatalogService {
     private final JsonMapper json;
     private final CatalogMediaService media;
     private final CatalogIdentityIndex identities;
-    public CatalogService(JdbcTemplate db,JsonMapper json,CatalogMediaService media) { this.db=db;this.json=json;this.media=media;this.identities=new CatalogIdentityIndex(json); }
+    private final CatalogAutoApproval approval;
+    public CatalogService(JdbcTemplate db,JsonMapper json,CatalogMediaService media){this(db,json,media,null);}
+    @org.springframework.beans.factory.annotation.Autowired
+    public CatalogService(JdbcTemplate db,JsonMapper json,CatalogMediaService media,CatalogAutoApproval approval) { this.db=db;this.json=json;this.media=media;this.identities=new CatalogIdentityIndex(json);this.approval=approval; }
     String encode(Object v) { return json.writeValueAsString(v); }
     <T> T decode(Object v,Class<T> type) { return json.readValue(v.toString(),type); }
     @SuppressWarnings("unchecked")
@@ -104,9 +107,10 @@ public class CatalogService {
     public List<Map<String,Object>> imageRepairTargets(int limit,long afterId) {
         if(limit<1||limit>100||afterId<0) throw ApiException.badRequest("이미지 보완 조회 범위 오류");
         var rows=db.queryForList("""
-            select p.event_id,p.event_revision,p.snapshot_json->'event' event_json,s.banner_asset_id
+            select p.event_id,p.event_revision,p.snapshot_json->'event' event_json,s.banner_asset_id,c.digest source_digest
             from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id
             left join subculture_catalog_presentation s on s.event_id=p.event_id
+            left join catalog_source_check c on c.event_id=p.event_id
             where e.review_state<>'EXCLUDED' and p.event_id>? order by p.event_id limit ?
             """,afterId,limit);
         var ids=rows.stream().map(r->num(r,"event_id")).toList();
@@ -115,6 +119,7 @@ public class CatalogService {
         for(var row:rows) {
             long id=num(row,"event_id");Map<String,Object> value=new LinkedHashMap<>();
             value.put("id",id);value.put("revision",num(row,"event_revision"));
+            value.put("sourceDigest",row.get("source_digest"));
             value.put("event",decode(row.get("event_json"),EventData.class));
             var eventAssets=assets.getOrDefault(id,List.of());value.put("assets",eventAssets);
             Map<Long,String> eventHashes=new LinkedHashMap<>();
@@ -198,7 +203,7 @@ public class CatalogService {
             EventData e=(EventData)t.get("event");long id=(Long)t.get("id");
             // Legacy records can omit banners; one empty record must not abort the sweep.
             var banners=e.banners()==null?List.<Banner>of():e.banners();
-            for(var banner:banners) { media.register(id,null,null,new Image("BANNER",banner.imageUrl(),banner.pageUrl(),banner.rightsEvidence(),e.name()));count++; }
+            for(var banner:banners) { if(approval!=null&&approval.enabled()&&!Boolean.TRUE.equals(banner.matchesEdition()))continue;media.register(id,null,null,new Image("BANNER",banner.imageUrl(),banner.pageUrl(),banner.rightsEvidence(),e.name()));count++; }
             for(var link:e.discoveryLinks()) {
                 if("FLOOR_PLAN".equals(link.kind()) && link.url()!=null && java.net.URI.create(link.url()).getPath().toLowerCase(java.util.Locale.ROOT).matches(".*\\.(png|jpe?g|webp|gif)$")) {
                     // Use the direct image itself as the source page until discovery finds a
@@ -220,6 +225,7 @@ public class CatalogService {
     private StageReceipt ingest(StageBatch b,boolean manualImport) {
         try { if(manualImport) CatalogRules.manualStage(b); else CatalogRules.stage(b); }
         catch(RuntimeException e) { throw ApiException.badRequest("단계별 JSON 형식 또는 대상/출처를 확인하세요."); }
+        if(approval!=null)approval.lock();
         String payload=encode(b),hash=CollectionRules.sha(payload);UUID run=UUID.fromString(b.runId());lock();
         var old=db.queryForList("select request_hash,request_json,receipt_json from subculture_stage_run where id=?",run);
         if(!old.isEmpty()) {
@@ -334,6 +340,7 @@ public class CatalogService {
         }
         String status="FAILED".equals(b.result().searchStatus())?"FAILED":(!issues.isEmpty()||rejected>0||"PARTIAL".equals(b.result().searchStatus())||"PARTIAL".equals(b.result().coverage().completeness())?"PARTIAL":inserted+changed+unchanged==0?"NO_RESULTS":"SUCCESS");
         StageReceipt receipt=new StageReceipt(b.runId(),status,inserted,changed,unchanged,rejected,ids,issues);
+        if(approval!=null)approval.approve(b.eventId());
         db.update("""
             insert into subculture_stage_run(id,pipeline_id,event_id,participant_id,stage,request_hash,request_json,coverage_json,receipt_json,status,started_at,finished_at)
             values(?,?,?,?,?,?,cast(? as jsonb),cast(? as jsonb),cast(? as jsonb),?,?,?)
@@ -419,6 +426,22 @@ public class CatalogService {
         review("subculture_event_candidate","id",id,row,input,e);
         db.update("update subculture_event_candidate set name=?,subcategory=?,venue_name=?,starts_on=cast(? as date),ends_on=cast(? as date) where id=?",e.name(),e.subcategory(),e.venueName(),start,end,id);
         return eventDetail(id);
+    }
+    /** Automatic observations update collected facts; manual overrides remain authoritative. */
+    @Transactional public Map<String,Object> applyCollectedObservation(long id,long revision,Map<String,Object> values) {
+        var row=one("select * from subculture_event_candidate where id=? for update",id);
+        if(num(row,"revision")!=revision)throw ApiException.conflict("행사 정보가 바뀌었습니다. 다시 확인하세요.");
+        if(!CatalogObservationService.FIELDS.containsAll(values.keySet()))throw ApiException.badRequest("관측 항목 오류");
+        Map<String,Object> collected=decode(row.get("payload_json"),Map.class);
+        var next=new LinkedHashMap<>(collected);next.putAll(values);
+        if(next.equals(collected))return eventDetail(id);
+        var effective=new LinkedHashMap<>(next);effective.putAll(decode(row.get("overrides_json"),Map.class));
+        EventData e=decode(encode(effective),EventData.class);
+        String start=e.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=e.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
+        if(!CollectionRules.event(e,new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end)).accepted())throw ApiException.badRequest("관측한 행사 정보 오류");
+        String payload=encode(next);
+        db.update("update subculture_event_candidate set payload_json=cast(? as jsonb),payload_hash=? where id=?",payload,CollectionRules.sha(payload),id);
+        return editEvent(id,new EditInput(revision,"REVIEWED",CatalogAutoApproval.NOTE,Map.of(),List.of()));
     }
     @Transactional public ParticipantView editParticipant(long id,EditInput input) {
         var row=one("select * from subculture_participant where id=? for update",id);

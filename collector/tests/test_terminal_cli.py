@@ -195,8 +195,10 @@ class TerminalCliTests(unittest.TestCase):
 
     def test_popup_block_does_not_repeat_cli_or_count_provider_failure_as_source_attempt(self):
         with patch('daily_popups.load_config', return_value=self.cfg), \
+                patch('daily_popups.OfficialInventory') as official, \
                 patch.object(weekly, 'execute_search', side_effect=run.CliUnavailable('USAGE_LIMIT')) as cli, \
                 redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            official.return_value.collect.return_value={'unfinishedBranches':0,'issues':[],'counts':{}}
             self.assertEqual(daily_popups.main(['--dry-run']), 2)
         folder = next((self.root / 'state/daily-popups').iterdir())
         summary = json.loads((folder / 'summary.json').read_text(encoding='utf-8'))

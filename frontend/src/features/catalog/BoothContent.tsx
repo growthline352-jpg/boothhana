@@ -27,7 +27,7 @@ export function BoothContent({row,assets,day='',hall='',onMap,shareUrl,eventNoti
       {onMap&&<button type="button" className="btn secondary" onClick={onMap}>지도에서 보기</button>}
       {eventId?<ShareQr target={{type:'PARTICIPANT',eventId,id:row.id,participantId:row.id}} day={day} hall={hall} title={row.participant.registrationName}/>:shareUrl&&<ShareButton title={row.participant.registrationName} url={shareUrl} label="부스 공유"/>}
     </div>
-    <div className="booth-map-gallery">{images.length?images.map(asset=><figure key={asset.id}><ContentImage url={asset.url} kind="booth" alt={asset.caption||row.participant.registrationName}/><figcaption>{asset.credit} · <SafeLink url={asset.attribution}>출처</SafeLink></figcaption></figure>):<figure><ContentImage url={null} kind="booth" alt=""/></figure>}</div>
+    <div className="booth-map-gallery">{images.length?images.map(asset=><figure key={asset.id}><ContentImage url={asset.url} kind="booth" alt={asset.caption||row.participant.registrationName}/></figure>):<figure><ContentImage url={null} kind="booth" alt=""/></figure>}</div>
     <dl className="booth-map-facts">
       <div><dt>참가 작가·업체</dt><dd>{row.participant.members.map(member=>member.name).join(' · ')||'별도 명칭 미확인'}</dd></div>
       <div><dt>정보 범위</dt><dd>{row.sales?scopes[row.sales.evidenceScope]:'참가 부스 정보만 확인'}</dd></div>

@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static com.boothhana.collection.CatalogModels.*;
 import static com.boothhana.collection.CollectionModels.*;
 
-/** REAL entire app + actual SQL001..022 already applied by prepare_test_db.py.
+/** REAL entire app + actual SQL001..030 already applied by prepare_test_db.py.
  * NEVER use production, SSH tunnels or a database containing real data.
  * OAuth provider/R2/real browsers/CLI are separate staging acceptance, not simulated success.
  * Class is skipped without opt-in; release_gate.py rejects a missing/skipped report. */
@@ -113,7 +113,7 @@ class ReleaseIntegrationTests {
  long count(String table){if(!Set.of("reservation","pos_sale").contains(table))throw new IllegalArgumentException();return db.queryForObject("select count(*) from "+table+" where event_booth_id=?",Long.class,boothId);}
  long receipts(){return db.queryForObject("select count(*) from trade_request where user_id=?",Long.class,owner.id);}
  @Test void schemaAndLeastPrivilegeRole() {
-  db.queryForList(SchemaContract.probeSql());assertThat(SchemaContract.TABLES).hasSize(58).containsKey("itinerary_share");
+  db.queryForList(SchemaContract.probeSql());assertThat(SchemaContract.TABLES).hasSize(60).containsKeys("itinerary_share","personal_itinerary","purchase_plan");
   for(String table:SchemaContract.TABLES.keySet()) {
    assertThat(db.queryForObject("select relrowsecurity from pg_class where oid=to_regclass(?)",Boolean.class,"public."+table)).as(table).isTrue();
    assertThat(db.queryForObject("select has_table_privilege('anon',?,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege('anon',?,'SELECT,INSERT,UPDATE')",Boolean.class,"public."+table,"public."+table)).as(table+" anon").isFalse();
@@ -147,7 +147,7 @@ class ReleaseIntegrationTests {
  @Test void readyUsesEntireSchemaThroughRealServer()throws Exception{var result=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/public/health/ready")).timeout(Duration.ofSeconds(10)).GET().build(),HttpResponse.BodyHandlers.ofString());assertThat(result.statusCode()).isEqualTo(200);assertThat(result.body()).contains("READY").doesNotContain("trade_request");}
  @Test void v24TypedColumnContractMatchesRealPostgres() {
   assertThat(SchemaContract.columnIssues(db.queryForList(SchemaContract.columnProbeSql())))
-   .as("SQL001..022 column types, lengths and nullability").isEmpty();
+   .as("SQL001..030 column types, lengths and nullability").isEmpty();
  }
  long catalogEvent(String label) {
   var data=new com.boothhana.collection.CollectionModels.EventData(label,"ONLY_EVENT","테스트 단체","1회","SEOUL","서울 전시장","서울특별시 마포구","원래 소개","무료",List.of(),List.of(new com.boothhana.collection.CollectionModels.Occurrence("2026-10-03","2026-10-03","10:00","17:00")),List.of(new com.boothhana.collection.CollectionModels.Source("https://example.com/event","OFFICIAL","ORIGINAL","행사 안내")),List.of(),List.of());
@@ -200,7 +200,7 @@ class ReleaseIntegrationTests {
   assertThatThrownBy(()->catalog.enrichmentTargets(pipeline.toString(),200,-1)).isInstanceOf(ApiException.class);
   catalog.syncEventAssets(pipeline.toString());
   long last=(Long)second.getLast().get("id");
-  assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where event_id=? and type='BANNER' and rights_state='PENDING'",Long.class,last)).isEqualTo(1);
+  assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where event_id=? and type='BANNER' and rights_state='APPROVED'",Long.class,last)).isEqualTo(1);
   db.update("update subculture_pipeline_run set state='SUCCESS',finished_at=now() where id=?",pipeline);
  }
  @Test void correctedSubcultureTypesAreReviewedAndPublishedInTheirOwnField() throws Exception {

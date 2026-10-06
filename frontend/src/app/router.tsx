@@ -1,6 +1,7 @@
 import {EventComparePage} from '../features/discovery/EventComparePage'
 import {lazy,Suspense} from 'react'
 const ItineraryPage=lazy(()=>import('../features/itinerary/ItineraryPage').then(module=>({default:module.ItineraryPage})))
+const PurchasePlanPage=lazy(()=>import('../features/library/PurchasePlanPage').then(module=>({default:module.PurchasePlanPage})))
 const SharedItineraryPage=lazy(()=>import('../features/itinerary/SharedItineraryPage').then(module=>({default:module.SharedItineraryPage})))
 import {PopupExplorePage} from '../features/discovery/PopupExplorePage'
 import {discoveryFeatures} from '../features/discovery/features'
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
+    { path: 'purchase-plan', element: <SupportBoundary><Suspense fallback={<p role="status">구매 계획을 열고 있어요.</p>}><PurchasePlanPage/></Suspense></SupportBoundary> },
     { path: 'itinerary', element: <SupportBoundary><Suspense fallback={<p className="content-wrap section-pad" role="status">일정 화면을 열고 있어요.</p>}><ItineraryPage/></Suspense></SupportBoundary> },
     { path: 'itinerary/shared/:token', element: <SupportBoundary><Suspense fallback={<p className="content-wrap section-pad" role="status">공유 일정을 열고 있어요.</p>}><SharedItineraryPage/></Suspense></SupportBoundary> },
     { path: 'onboarding', element: <SupportBoundary><OnboardingPage/></SupportBoundary> },

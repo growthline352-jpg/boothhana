@@ -39,13 +39,21 @@ public class CatalogDiscoveryService {
   String where="e.review_state<>'EXCLUDED' and "+scope+" and p.snapshot_json->'event'->>'region'='SEOUL' and exists(select 1 from jsonb_array_elements(p.snapshot_json->'event'->'occurrences') d where d->>'endDate'>=? and d->>'startDate'<=?)";
   args.add(from);args.add(to);
   String join="left join catalog_event_place l on l.event_id=p.event_id and l.address=p.snapshot_json->'event'->>'address' left join catalog_operating_group_member m on m.event_id=p.event_id ";
-  if(!neighborhood.isEmpty()){where+=" and l.neighborhood=?";args.add(neighborhood);}
+  // Published addresses supply neighborhoods even when no manual place record exists.
+  // Only unambiguous roads/dongs qualify; a venue name or district alone is insufficient.
+  String address="regexp_replace(coalesce(p.snapshot_json->'event'->>'address',''),'[[:space:]]','','g')";
+  String inferred="case when "+address+" ~ '^서울(특별시)?성동구(성수동|성수[일이]로|서울숲[0-9]*길|연무장[0-9]*길)' then 'SEONGSU' when "+address+" ~ '^서울(특별시)?마포구연남동' or "+address+" ~ '^서울(특별시)?마포구.*[(]연남동[,)]' then 'YEONNAM' else '' end";
+  String eligible="select p.event_id,p.snapshot_json->'event' event_json,p.published_at,0 participant_count,coalesce(m.root_event_id,p.event_id) edition_id,coalesce(l.neighborhood,"+inferred+") neighborhood,p.snapshot_json->'event'->>'address' address,l.latitude,l.longitude,l.source_url,l.checked_on from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id "+join+"where "+where;
+  String neighborhoodFilter="";
+  if(!neighborhood.isEmpty()){neighborhoodFilter=" where neighborhood=?";args.add(neighborhood);}
   // Filter operating days/places before selecting one card per edition and applying the limit.
-  String matched="select p.event_id,p.snapshot_json->'event' event_json,p.published_at,0 participant_count,row_number() over(partition by coalesce(m.root_event_id,p.event_id) order by case when p.event_id=m.root_event_id then 0 else 1 end,p.event_id) edition_row from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id "+join+"where "+where;
-  var rows=db.queryForList("with matched as ("+matched+") select event_id,event_json,published_at,participant_count from matched where edition_row=1 order by (select min(d->>'startDate') from jsonb_array_elements(event_json->'occurrences') d),event_id limit 100",args.toArray());
-  var items=publications.summaries(rows);var ids=rows.stream().map(r->r.get("event_id")).toList();
-  var places=ids.isEmpty()?List.<Map<String,Object>>of():db.queryForList("select l.event_id,l.neighborhood,l.address,l.latitude,l.longitude,l.source_url,l.checked_on from catalog_event_place l join subculture_catalog_publication p on p.event_id=l.event_id join subculture_event_candidate e on e.id=l.event_id where e.review_state<>'EXCLUDED' and l.address=p.snapshot_json->'event'->>'address' and l.event_id in ("+String.join(",",Collections.nCopies(ids.size(),"?"))+")",ids.toArray());
-  long total=db.queryForObject("select count(distinct coalesce(m.root_event_id,p.event_id)) from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id "+join+"where "+where,Long.class,args.toArray());
+  String matched="with eligible as ("+eligible+"), matched as (select *,row_number() over(partition by edition_id order by case when event_id=edition_id then 0 else 1 end,event_id) edition_row from eligible"+neighborhoodFilter+")";
+  String chosen="select * from matched where edition_row=1 order by (select min(d->>'startDate') from jsonb_array_elements(event_json->'occurrences') d),event_id limit 100";
+  var rows=db.queryForList(matched+" select event_id,event_json,published_at,participant_count from ("+chosen+") chosen",args.toArray());
+  var items=publications.summaries(rows);
+  // Every matching operating place remains visible on the map, linked to its one edition card.
+  var places=db.queryForList(matched+", chosen as ("+chosen+") select m.event_id,c.event_id display_event_id,m.neighborhood,m.address,m.latitude,m.longitude,m.source_url,m.checked_on from matched m join chosen c on c.edition_id=m.edition_id where coalesce(m.address,'')<>'' order by c.event_id,m.event_id",args.toArray());
+  long total=db.queryForObject(matched+" select count(distinct edition_id) from matched",Long.class,args.toArray());
   return Map.of("items",items,"places",places,"total",total,"limit",100);
  }
 }

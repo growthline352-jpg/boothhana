@@ -11,7 +11,13 @@ import static com.boothhana.collection.CollectionModels.*;
 @RequestMapping("/api/internal/subculture/v4")
 public class CatalogController {
     private final CatalogService service;private final CatalogMediaService media;
-    public CatalogController(CatalogService service,CatalogMediaService media){this.service=service;this.media=media;}
+    private final CatalogAutoApproval approval;
+    public CatalogController(CatalogService service,CatalogMediaService media){this(service,media,null);}
+    @org.springframework.beans.factory.annotation.Autowired
+    public CatalogController(CatalogService service,CatalogMediaService media,CatalogAutoApproval approval){this.service=service;this.media=media;this.approval=approval;}
+    @GetMapping("/auto-approval-events") public List<Long> approvalEvents(@RequestParam(defaultValue="200") int limit,@RequestParam(defaultValue="0") long afterId){return approval.pending(limit,afterId);}
+    @PostMapping("/events/{id}/auto-approve") public Map<String,Object> approve(@PathVariable long id){return approval.approve(id);}
+    @GetMapping("/events/{id}") public Map<String,Object> event(@PathVariable long id){var row=service.eventDetail(id);return Map.of("id",row.get("id"),"revision",row.get("revision"),"event",row.get("event"));}
     @PostMapping("/pipelines") public Map<String,Object> start(@RequestBody PipelineInput input){return service.start(input);}
     @PostMapping("/pipelines/{id}/heartbeat") public Map<String,Object> heartbeat(@PathVariable String id){return service.heartbeat(id);}
     @PostMapping("/pipelines/{id}/finish") public Map<String,Object> finish(@PathVariable String id,@RequestBody PipelineFinish input){return service.finish(id,input);}
@@ -24,6 +30,7 @@ public class CatalogController {
     @PostMapping("/stages") public StageReceipt stage(@RequestBody StageBatch batch){return service.ingest(batch);}
     @PostMapping("/manual-stages") public StageReceipt manualStage(@RequestBody StageBatch batch){return service.ingestManual(batch);}
     @GetMapping("/assets") public List<AssetView> assets(@RequestParam(defaultValue="100") int limit){return media.pending(limit);}
+    @GetMapping("/assets/{id}") public AssetView asset(@PathVariable long id){return media.detail(id);}
     @GetMapping("/image-repair-events") public List<Map<String,Object>> imageRepairEvents(@RequestParam(defaultValue="100") int limit,@RequestParam(defaultValue="0") long afterId){return service.imageRepairTargets(limit,afterId);}
     @PostMapping("/events/{id}/assets") public AssetView registerAsset(@PathVariable long id,@RequestBody AssetRegistrationInput input){return media.registerValidated(id,input);}
     @PostMapping("/assets/{id}/content") public AssetView content(@PathVariable long id,@RequestHeader("X-Asset-Revision") long revision,

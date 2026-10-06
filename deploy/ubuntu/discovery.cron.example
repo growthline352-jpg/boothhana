@@ -1,0 +1,9 @@
+# Preparation only: merge these lines into the existing bpdeploy crontab at the
+# bundled deployment. Keep unrelated jobs. CRON_TZ applies to the following jobs.
+CRON_TZ=Asia/Seoul
+# Broad region/category discovery; rotates persistent due jobs, not the same first rows.
+20 */3 * * * /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh discovery
+# Official inventories are an independent supplement, with no Codex auth requirement.
+50 1,7,13,19 * * * /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh popup-inventory
+# Runtime health and collection freshness are reported separately.
+5 0,6,12,18 * * * /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh doctor

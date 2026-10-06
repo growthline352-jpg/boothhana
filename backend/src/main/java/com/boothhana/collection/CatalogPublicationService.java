@@ -67,9 +67,17 @@ public class CatalogPublicationService {
         db.update("""
             insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),?)
             on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,event_revision=excluded.event_revision,published_at=now()
-            """,eventId,encoded,input.eventRevision());return Map.of("id",eventId,"published",true,"participantCount",participants.size());
+            """,eventId,encoded,input.eventRevision());
+        // Only an explicit publish action releases a prior administrative withdrawal.
+        db.update("update subculture_event_candidate set publication_withdrawn=false where id=?",eventId);
+        return Map.of("id",eventId,"published",true,"participantCount",participants.size());
     }
-    @Transactional public void unpublish(long id) {db.update("delete from subculture_catalog_publication where event_id=?",id);}
+    @Transactional public void unpublish(long id) {
+        // Serialize with automatic approval before taking the event lock, including already queued repairs.
+        lockForPublication();
+        db.update("update subculture_event_candidate set publication_withdrawn=true where id=?",id);
+        db.update("delete from subculture_catalog_publication where event_id=?",id);
+    }
     /** Compatibility for existing callers: unchanged unfiltered, most-recent publication order. */
     public PageData<Map<String,Object>> list(int page,int size) {
         try { return list(new CatalogBrowseQuery(page,size,"SUBCULTURE","","","","","RECENT")); }

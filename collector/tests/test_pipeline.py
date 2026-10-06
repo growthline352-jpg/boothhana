@@ -78,8 +78,16 @@ output=Path(sys.argv[sys.argv.index('--output-last-message')+1])
         result,_,_=self.execute(bad_json=True);self.assertEqual(result,2);self.assertEqual(self.server.bodies[-1]['result']['events'],[])
     def test_retry_uses_same_run_id(self):
         result,batch,cfg=self.execute()
+        # Simulate a committed server request whose response was lost locally.
+        batch.with_name('receipt.json').unlink()
         with patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':TOKEN}): main(['--config',str(cfg),'--retry-batch',str(batch)])
         self.assertEqual(self.server.attempts,2);self.assertEqual(len(self.server.stored),1);self.assertEqual(self.server.bodies[0],self.server.bodies[1])
+    def test_saved_receipt_keeps_the_completed_request_closed(self):
+        result,batch,cfg=self.execute()
+        original=json.loads(batch.read_text())
+        with patch.dict(os.environ,{'BOOTH_COLLECTOR_TOKEN':TOKEN}): self.assertEqual(main(['--config',str(cfg),'--retry-batch',str(batch)]),0)
+        self.assertEqual(self.server.attempts,1);self.assertEqual(len(self.server.stored),1)
+        self.assertEqual(json.loads(batch.read_text()),original)
     def test_transient_retry_identical_payload(self):
         result,batch,cfg=self.execute();value=json.loads(batch.read_text());self.server.codes=[503,200]
         send_batch(self.base,TOKEN,value,sleep=lambda _:None)

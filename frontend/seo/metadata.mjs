@@ -205,7 +205,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     title = path === '/compare' ? '행사 비교 | 부스하나' : '동네 팝업 | 부스하나'
     description = path === '/compare' ? '두 행사의 공개 일정과 장소, 입장 조건을 비교하세요.' : '날짜와 동네를 골라 공개된 서울 팝업을 살펴보세요.'
   } else if (!browse) {
-    title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
+    title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/purchase-plan' ? '부스 구매 계획 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
     description = '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'
   }
 

@@ -4,7 +4,12 @@ S=importlib.util.spec_from_file_location('schema_auditor_v24',Path(__file__).wit
 ROOT=Path(__file__).resolve().parents[2]
 class SchemaAuditorTests(unittest.TestCase):
  def test_current_ddl_names_and_typed_columns(self):
-        got=M.inventory(ROOT);self.assertEqual(got['tableCount'],58);self.assertEqual(got['columnCount'],498);self.assertEqual(got['readinessColumnsMismatch'],[])
+        got=M.inventory(ROOT);self.assertEqual(got['tableCount'],60);self.assertEqual(got['columnCount'],513);self.assertEqual(got['readinessColumnsMismatch'],[])
+        self.assertEqual(got['tables']['subculture_event_candidate']['publication_withdrawn']['udt'],'bool')
+        self.assertTrue(got['tables']['subculture_event_candidate']['publication_withdrawn']['notNull'])
+        for table,key,key_type in [('personal_itinerary','id','uuid'),('purchase_plan','event_id','int8')]:
+            self.assertEqual({name:value['udt'] for name,value in got['tables'][table].items()},
+                {'user_id':'int8',key:key_type,'plan_json':'jsonb','revision':'int8','deleted':'bool','created_at':'timestamptz','updated_at':'timestamptz'})
  def check_refused(self,extra):
   with tempfile.TemporaryDirectory() as folder:
    root=Path(folder);(root/'database').mkdir()

@@ -2,7 +2,7 @@ import {discoveryFeatures} from '../discovery/features'
 import {VisitPreparation} from './VisitPreparation'
 import {DiscoveryIcon} from '../discovery/DiscoveryIcon'
 import {compareHref} from '../discovery/compare'
-import { useEffect,useMemo,useRef,useState } from 'react'
+import { lazy,Suspense,useEffect,useMemo,useRef,useState } from 'react'
 import { Link,useSearchParams } from 'react-router'
 import { useAuth } from '../../app/useAuth'
 import { useRemote } from '../../app/useRemote'
@@ -24,8 +24,11 @@ import { MemoryDrafts,type MemoryDraft } from './MemoryDrafts'
 import { guestEntry,memoryHref,refreshedEntry } from './memory'
 import { ShareQr } from './ShareQr'
 import { OfflineEventButton } from '../offline/OfflineDownloadPanel'
+import {libraryBoothsHref} from './purchaseModel'
+import {purchaseApi} from './purchaseApi'
 import type { MemoryEntry,MemoryPage,ResolvedMemory } from './types'
 const kindNames:Record<string,string>={EVENT:'행사',PARTICIPANT:'업체·서클',PRODUCT:'제품·상품'}
+const EventPurchasePlan=lazy(()=>import('./PurchasePlanPage').then(module=>({default:module.EventPurchasePlan})))
 
 export function LibraryPage(){
  const library=useLibrary(),auth=useAuth(),[params,setParams]=useSearchParams(),[message,setMessage]=useState(''),[importing,setImporting]=useState(false)
@@ -33,6 +36,7 @@ export function LibraryPage(){
  const owner=library?.owner||'loading',guest=owner==='guest',q=(params.get('q')||'').slice(0,100),eventId=params.get('event')||'',kind=params.get('type')||'',visited=params.get('visited')==='1',group=params.get('group')==='event',item=params.get('item')||''
  const drafts=useMemo(()=>new MemoryDrafts(),[]);drafts.bind(owner)
  const ready=owner==='guest'||owner.startsWith('member:')
+ const booths=ready&&!guest&&params.get('view')==='booths'&&/^[1-9]\d*$/.test(eventId)
  const page=Math.floor(Math.max(0,Math.min(10000,Number(params.get('page'))||0))),version=library?.version||0,guestSignature=JSON.stringify(library?.guest||[])
  const [search,setSearch]=useState(q);useEffect(()=>{const timer=setTimeout(()=>setSearch(q),250);return()=>clearTimeout(timer)},[q])
  const query=new URLSearchParams({q:search,type:kind,visited:String(visited),page:String(page),size:'24'});if(/^\d+$/.test(eventId)&&Number(eventId)>0)query.set('eventId',eventId)
@@ -40,8 +44,10 @@ export function LibraryPage(){
  const targetSignature=JSON.stringify((library?.guest||[]).map(g=>g.target))
  const publicState=useRemote<ResolvedMemory[]>(async()=>guest&&library?library.resolvePublic((library.guest||[]).map(g=>g.target)):[],[owner,library?.publicVersion,targetSignature])
  const memberState=useRemote<MemoryPage>(async()=>owner.startsWith('member:')?libraryApi.list(query):{items:[],page,size:24,total:0,groups:[]},[owner,version,query.toString(),library?.publicVersion])
+ const purchaseIndex=useRemote(()=>owner.startsWith('member:')?purchaseApi.list():Promise.resolve([]),[owner])
  const localPage=useMemo(()=>guestPage(library?.guest||[],Array.isArray(publicState.data)?publicState.data:[],query),[guestSignature,publicState.data,query.toString()])
  const state=guest?{data:localPage,loading:publicState.loading,error:publicState.error,reload:async()=>{library?.refreshPublic()}}:memberState
+ const eventGroups=[...(ready?state.data?.groups||[]:[])];if(ready&&!guest)for(const record of purchaseIndex.data||[])if(!eventGroups.some(g=>g.eventId===record.plan.eventId))eventGroups.push({eventId:record.plan.eventId,name:record.plan.eventName,count:0})
  useEffect(()=>{
   if(!ready)return
   const timer=window.setInterval(()=>{if(document.visibilityState==='visible')library?.refreshPublic()},PUBLIC_MEMORY_TTL_MS)
@@ -72,21 +78,22 @@ export function LibraryPage(){
  },[ready,state.loading,state.error,state.data,page,total,params,setParams])
  const sectionGroups=group?[...new Set(rows.map(x=>x.target.eventId))].map(id=>({id,name:rows.find(x=>x.target.eventId===id)?.current?.memory.eventName||'현재 공개되지 않는 행사',items:rows.filter(x=>x.target.eventId===id)})):[{id:0,name:'',items:rows}]
  return <section className="content-wrap section-pad memory-page">
-  <header className="memory-page-heading"><div><p className="eyebrow">MY COLLECTION</p><h1>내 보관함</h1><p>가보기 전에 발견하고, 다녀온 뒤에도 다시 찾아보세요.</p></div><div className="row-actions"><Link className="btn primary" to="/discover">행사 찾기</Link></div></header>
-  <nav className="row-actions" aria-label="보관함 보기"><Link className="btn secondary" to="/library" aria-current={!params.has('offline')?'page':undefined}>저장한 항목</Link><Link className="btn secondary" to="/library?offline=1" aria-current={params.has('offline')?'page':undefined}>오프라인 저장한 행사</Link></nav>
+  <header className="memory-page-heading"><div><p className="eyebrow">MY COLLECTION</p><h1>내 보관함</h1><p>{booths?'선택한 행사의 부스와 구매 메모를 정리하세요.':'가보기 전에 발견하고, 다녀온 뒤에도 다시 찾아보세요.'}</p></div><div className="row-actions"><Link className="btn primary" to="/discover">행사 찾기</Link></div></header>
+  <nav className="row-actions" aria-label="보관함 보기"><Link className="btn secondary" to="/library" aria-current={!params.has('offline')&&!booths?'page':undefined}>{booths?'← 전체 보관함':'저장한 항목'}</Link>{!booths&&<Link className="btn secondary" to="/library?offline=1" aria-current={params.has('offline')?'page':undefined}>오프라인 저장한 행사</Link>}</nav>
   {params.has('offline')?<iframe title="보관함에 오프라인 저장한 행사" src={`/offline/index.html?embedded=1${/^[1-9]\d*$/.test(params.get('offlineEvent')||'')?'#'+params.get('offlineEvent'):''}`} style={{width:'100%',height:'75vh',minHeight:480,border:0,marginTop:20}}/>:<>
-  <p className="memory-offline-hint">인터넷 없이 볼 행사는 아래의 행사 카드에서 <strong>오프라인 정보 저장</strong>을 눌러 주세요. 함께 저장한 부스·상품 표시도 포함됩니다.</p>
-  <aside className={`memory-storage-notice ${guest?'is-device':''}`}>
+  {!booths&&<p className="memory-offline-hint">인터넷 없이 볼 행사는 아래의 행사 카드에서 <strong>오프라인 정보 저장</strong>을 눌러 주세요. 함께 저장한 부스·상품 표시도 포함됩니다.</p>}
+  <aside hidden={booths} className={`memory-storage-notice ${guest?'is-device':''}`}>
    {owner==='loading'?<p>계정을 확인하고 있어요.</p>:owner==='error'?<><strong>계정 확인이 필요해요</strong><p>개인 기록은 잠시 숨겼으며 기기 저장으로 바꾸지 않았어요. 기존 기록은 삭제하지 않았습니다.</p><button className="btn secondary" onClick={()=>void auth.refresh()}>계정 다시 확인</button></>:guest?<><strong>이 기기에 임시 저장 중</strong><p>로그인 없이 90일간 사용할 수 있어요. 브라우저 기록 삭제·시크릿 모드 종료 시 사라질 수 있고, 같은 기기를 사용하는 사람이 메모를 볼 수 있어요.</p><a className="btn secondary" href={auth.loginUrl}>로그인하고 계정에 보관</a></>:<><strong>{auth.user?.displayName}님의 개인 보관함</strong><p>메모와 방문 기록은 나만 볼 수 있어요. 저장은 업체에 연락처를 전달하거나 마케팅에 동의하는 행동이 아닙니다.</p></>}
   </aside>
-  {ready&&!guest&&library&&library.guest.length>0&&<section className="memory-import"><h2>이 기기의 임시 저장 {library.guest.length}개</h2><p>계정으로 가져오기는 직접 선택할 때만 실행합니다. 일부 항목이 비공개됐거나 메모가 다르면 기기 기록을 남겨요.</p><button className="btn primary" disabled={importing} onClick={()=>void importNow()}>{importing?'가져오는 중…':'확인 후 계정에 가져오기'}</button><details><summary>기기에 남은 기록 확인·정리</summary>{library.guest.map(g=><div className="memory-local-row" key={g.key}><Link to={memoryHref(g.target,g.day,g.hall)}>공개 대상 확인 · {kindNames[g.target.type]}</Link><small>{g.savedAt.slice(0,10)} · {g.note||'메모 없음'}</small><button className="btn secondary" disabled={importing} onClick={()=>{if(window.confirm('이 기기의 해당 임시 기록만 삭제할까요?'))library.discardGuest(g.key)}}>기기 기록 삭제</button></div>)}</details></section>}
+  {ready&&!guest&&!booths&&library&&library.guest.length>0&&<section className="memory-import"><h2>이 기기의 임시 저장 {library.guest.length}개</h2><p>계정으로 가져오기는 직접 선택할 때만 실행합니다. 일부 항목이 비공개됐거나 메모가 다르면 기기 기록을 남겨요.</p><button className="btn primary" disabled={importing} onClick={()=>void importNow()}>{importing?'가져오는 중…':'확인 후 계정에 가져오기'}</button><details><summary>기기에 남은 기록 확인·정리</summary>{library.guest.map(g=><div className="memory-local-row" key={g.key}><Link to={memoryHref(g.target,g.day,g.hall)}>공개 대상 확인 · {kindNames[g.target.type]}</Link><small>{g.savedAt.slice(0,10)} · {g.note||'메모 없음'}</small><button className="btn secondary" disabled={importing} onClick={()=>{if(window.confirm('이 기기의 해당 임시 기록만 삭제할까요?'))library.discardGuest(g.key)}}>기기 기록 삭제</button></div>)}</details></section>}
   {(message||library?.error)&&<p className="memory-feedback" role="status">{message||library?.error}</p>}
-  <form className="memory-search" hidden={!ready} role="search" onSubmit={e=>{e.preventDefault();setSearch(q)}}><label className="field"><span>이름이 기억나지 않아도 찾아보세요</span><input className="input" type="search" value={q} maxLength={100} placeholder="업체·제품·행사·내 메모로 검색" onChange={e=>update({q:e.target.value})}/></label><div className="memory-search-actions"><button className="btn primary" type="submit">검색</button>{q&&<button className="btn secondary" type="button" onClick={()=>{setSearch('');update({q:''})}}>검색어 지우기</button>}</div>
-   <div className="memory-filter-row"><label className="field"><span>행사</span><select className="select" value={eventId} onChange={e=>update({event:e.target.value})}><option value="">모든 행사</option>{eventId&&!(state.data?.groups||[]).some(g=>String(g.eventId)===eventId)&&<option value={eventId}>선택한 행사 · 이름 미확인</option>}{(ready?state.data?.groups:[])?.map(g=><option key={g.eventId} value={g.eventId}>{g.name} ({g.count})</option>)}</select></label><label className="field"><span>종류</span><select className="select" value={kind} onChange={e=>update({type:e.target.value})}><option value="">모든 저장 항목</option>{Object.entries(kindNames).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label><label className="memory-check"><input type="checkbox" checked={visited} onChange={e=>update({visited:e.target.checked?'1':''})}/>방문 표시한 항목</label><label className="memory-check"><input type="checkbox" checked={group} onChange={e=>update({group:e.target.checked?'event':''})}/>행사별로 보기</label></div>
+  <form className="memory-search" hidden={!ready} role="search" onSubmit={e=>{e.preventDefault();setSearch(q)}}>{!booths&&<><label className="field"><span>이름이 기억나지 않아도 찾아보세요</span><input className="input" type="search" value={q} maxLength={100} placeholder="업체·제품·행사·내 메모로 검색" onChange={e=>update({q:e.target.value})}/></label><div className="memory-search-actions"><button className="btn primary" type="submit">검색</button>{q&&<button className="btn secondary" type="button" onClick={()=>{setSearch('');update({q:''})}}>검색어 지우기</button>}</div></>}
+   <div className="memory-filter-row"><label className="field"><span>행사</span><select className="select" value={eventId} onChange={e=>update({event:e.target.value,view:!guest&&e.target.value?'booths':'',focus:'',item:'',q:'',type:'',visited:''})}><option value="">모든 행사</option>{eventId&&!eventGroups.some(g=>String(g.eventId)===eventId)&&<option value={eventId}>선택한 행사 · 이름 미확인</option>}{eventGroups.map(g=><option key={g.eventId} value={g.eventId}>{g.name} {g.count?`(${g.count})`:'· 구매 메모'}</option>)}</select></label>{!booths&&<><label className="field"><span>종류</span><select className="select" value={kind} onChange={e=>update({type:e.target.value})}><option value="">모든 저장 항목</option>{Object.entries(kindNames).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label><label className="memory-check"><input type="checkbox" checked={visited} onChange={e=>update({visited:e.target.checked?'1':''})}/>방문 표시한 항목</label><label className="memory-check"><input type="checkbox" checked={group} onChange={e=>update({group:e.target.checked?'event':''})}/>행사별로 보기</label></>}</div>
   </form>
-  {owner==='error'?null:owner==='loading'||state.loading?<LoadingState label="저장한 기억을 불러오고 있어요"/>:state.error?<><ErrorState error={state.error} retry={()=>void state.reload()}/><p>현재 공개 상태를 확인할 수 없어 오래된 이미지나 설명을 대신 표시하지 않습니다. 기기·계정의 저장 기록은 삭제하지 않았어요.</p></>:<>
+  {ready&&!guest&&/^[1-9]\d*$/.test(eventId)&&<nav className="memory-event-views" aria-label="선택한 행사의 보관함"><Link className={`btn ${booths?'secondary':'primary'}`} aria-current={!booths?'page':undefined} to={`/library?event=${eventId}`}>저장한 항목</Link><Link className={`btn ${booths?'primary':'secondary'}`} aria-current={booths?'page':undefined} to={libraryBoothsHref(Number(eventId))}>부스·구매 메모</Link></nav>}
+  {booths?<Suspense fallback={<p role="status">저장한 부스를 열고 있어요.</p>}><EventPurchasePlan key={`${owner}:${eventId}`} eventId={Number(eventId)} focusId={params.get('focus')||''} onDeleted={()=>void purchaseIndex.reload()}/></Suspense>:owner==='error'?null:owner==='loading'||state.loading?<LoadingState label="저장한 기억을 불러오고 있어요"/>:state.error?<><ErrorState error={state.error} retry={()=>void state.reload()}/><p>현재 공개 상태를 확인할 수 없어 오래된 이미지나 설명을 대신 표시하지 않습니다. 기기·계정의 저장 기록은 삭제하지 않았어요.</p></>:<>
    <div className="memory-list-heading"><h2>{total}개의 관심 기록</h2><small>{guest?'기기 임시 기록 · 저장일로부터 90일':'행사가 끝나도 계정 저장 기록은 유지돼요.'}</small></div>
-   {!rows.length?<div className="memory-empty"><span aria-hidden="true">▱</span><h2>{q||kind||eventId||visited?'이 조건으로 찾은 기록이 없어요.':'기억하고 싶은 곳을 하나 저장해 보세요.'}</h2><p>행사·부스·상품의 저장 버튼을 누르면 업체와 행사 맥락이 함께 남아요.</p>{q||kind||eventId||visited?<button className="btn secondary" onClick={()=>setParams({})}>조건 초기화</button>:<Link className="btn primary" to="/discover">행사 둘러보기</Link>}</div>:sectionGroups.map(g=><section key={g.id}>{g.name&&<h2 className="memory-group-title">{g.name}</h2>}<div className="memory-grid">{g.items.map(e=><MemoryCard key={e.id} entry={e} guest={guest} open={open}/>)}</div></section>)}
+   {!rows.length?<div className="memory-empty"><span aria-hidden="true">▱</span><h2>{q||kind||eventId||visited?'이 조건으로 찾은 기록이 없어요.':'기억하고 싶은 곳을 하나 저장해 보세요.'}</h2><p>행사·부스·상품의 저장 버튼을 누르면 업체와 행사 맥락이 함께 남아요.</p>{q||kind||eventId||visited?<button className="btn secondary" onClick={()=>setParams({})}>조건 초기화</button>:<Link className="btn primary" to="/discover">행사 둘러보기</Link>}</div>:sectionGroups.map(g=><section key={g.id}>{g.name&&<div className="memory-group-actions"><h2 className="memory-group-title">{g.name}</h2>{!guest&&<Link className="btn secondary" to={libraryBoothsHref(g.id)}>저장한 부스 보기</Link>}</div>}<div className="memory-grid">{g.items.map(e=><MemoryCard key={e.id} entry={e} guest={guest} open={open}/>)}</div></section>)}
    {total>24&&<nav className="catalog-pager" aria-label="보관함 페이지"><button className="btn secondary" disabled={!page} onClick={()=>update({page:String(page-1)})}>이전</button><span>{page+1} / {Math.ceil(total/24)}</span><button className="btn secondary" disabled={(page+1)*24>=total} onClick={()=>update({page:String(page+1)})}>다음</button></nav>}
   </>}
   {ready&&item&&selected.error&&<div className="notice-banner" role="alert">{selected.error.message}<button className="btn secondary" onClick={close}>닫기</button></div>}
@@ -107,7 +114,7 @@ export function MemoryCard({entry:e,guest,open}:{entry:MemoryEntry;guest:boolean
    <p className="memory-summary">{context?.summary||(!e.available?'이전에 보던 자료는 더 이상 제공하지 않아요. 메모 열람·기록 삭제는 가능합니다.':'소개를 확인하고 있어요.')}</p>
    {e.note&&<p className="memory-note-preview"><span>내 메모</span>{e.note}</p>}{e.visitedDays.length>0&&<p className="memory-visited">✓ 직접 방문 표시 · {e.visitedDays.join(' · ')}</p>}
    {e.available&&e.target.type==='EVENT'&&<OfflineEventButton eventId={e.target.eventId} day={e.day}/>}
-   <div className="row-actions"><button className="btn primary" onClick={ev=>open(e,ev.currentTarget)}>{discoveryFeatures.visitPreparation&&e.target.type==='EVENT'?'방문 준비·메모':'메모·방문 기록'}</button>{e.available&&<Link className="btn secondary" to={memoryHref(e.target,e.day,e.hall,true)}>지도에서 보기</Link>}</div>
+   <div className="row-actions">{!guest&&e.available&&<Link className="btn secondary" to={libraryBoothsHref(e.target.eventId,e.target.type==='EVENT'?'':e.id)}>{e.target.type==='EVENT'?'저장한 부스 보기':'부스·구매 메모'}</Link>}<button className="btn primary" onClick={ev=>open(e,ev.currentTarget)}>{discoveryFeatures.visitPreparation&&e.target.type==='EVENT'?'방문 준비·메모':'메모·방문 기록'}</button>{e.available&&<Link className="btn secondary" to={memoryHref(e.target,e.day,e.hall,true)}>지도에서 보기</Link>}</div>
    {e.available&&<Link className="memory-record-link" to={memoryHref(e.target,e.day,e.hall)} onClick={()=>{if(!guest)void libraryApi.activity(e.id,'OPEN').catch(()=>{})}}>업체·상품 다시 보기 →</Link>}
   </div></article>
 }

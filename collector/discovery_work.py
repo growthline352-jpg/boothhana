@@ -8,9 +8,10 @@ import os
 from pathlib import Path
 import re
 import unicodedata
+from state_files import replace_with_retry
 
 
-WORK_KINDS = {"FESTIVAL_SOURCE", "SUBCULTURE_RECENT", "POPUP_SOURCE"}
+WORK_KINDS = {"FESTIVAL_SOURCE", "SUBCULTURE_RECENT", "POPUP_SOURCE", "REGIONAL_SOURCE", "TYPE_SOURCE"}
 WORK_STATES = {"PENDING", "COMPLETE", "NO_RESULTS", "PARTIAL", "FAILED"}
 
 
@@ -43,7 +44,7 @@ def _write(path: Path, value: dict) -> None:
         temporary.chmod(0o600)
     except OSError:
         pass
-    os.replace(temporary, path)
+    replace_with_retry(temporary,path)
 
 
 def load_profiles(path: Path) -> dict:
@@ -172,7 +173,7 @@ class DiscoveryWorkQueue:
             if next_run and next_run > now:
                 continue
             rows.append(item)
-        rows.sort(key=lambda item: (bool(item.get("lastAttemptAt")), int(item.get("priority", 1)), item.get("lastAttemptAt") or "", item["createdAt"], item["key"]))
+        rows.sort(key=lambda item: (bool(item.get("lastAttemptAt")), item.get("lastAttemptAt") or "", int(item.get("priority", 1)), item["createdAt"], item["key"]))
         return rows[:limit]
 
     def begin(self, key: str) -> int:
@@ -184,7 +185,8 @@ class DiscoveryWorkQueue:
         return item["attempts"]
 
     def finish(self, key: str, state: str, *, retry_hours: int = 24, found_event_names: list[str] | None = None,
-               found_topics: list[str] | None = None, issues: list[str] | None = None) -> None:
+               found_topics: list[str] | None = None, issues: list[str] | None = None,
+               source_coverage: list[dict] | None = None, routed_counts: dict | None = None) -> None:
         if state not in WORK_STATES:
             raise ValueError("Unknown discovery work state")
         item = self.jobs[key]
@@ -192,9 +194,25 @@ class DiscoveryWorkQueue:
         item["foundEventNames"] = list(dict.fromkeys(found_event_names or []))[:200]
         item["foundTopics"] = list(dict.fromkeys(found_topics or []))[:200]
         item["issues"] = [str(value)[:300] for value in (issues or [])[:30]]
+        item["sourceCoverage"] = list(source_coverage or [])[:6]
+        item["routedCounts"] = dict(routed_counts or {})
+        if state in {"COMPLETE", "NO_RESULTS"}:
+            item["lastSuccessAt"] = utcnow()
         delay = retry_hours / 24 if state in {"FAILED", "PARTIAL"} else int(item.get("cadenceDays", 14))
         item["nextRunAt"] = (datetime.now(timezone.utc) + timedelta(days=delay)).isoformat().replace("+00:00", "Z")
         self.save()
+
+    def freshness(self, now: datetime | None = None) -> list[dict]:
+        now = now or datetime.now(timezone.utc)
+        rows = []
+        for item in self.jobs.values():
+            if item.get('kind') not in ('POPUP_SOURCE','REGIONAL_SOURCE','TYPE_SOURCE'):
+                continue
+            success = _parse_time(item.get('lastSuccessAt'))
+            overdue = success is None or now - success > timedelta(days=item.get('cadenceDays', 1))
+            rows.append({'subject': item['subject'], 'kind':item['kind'],'category':item['category'],'state': item['state'], 'lastSuccessAt': item.get('lastSuccessAt'),
+                         'overdue': overdue, 'issues': item.get('issues', []), 'nextRunAt': item.get('nextRunAt')})
+        return rows
 
     def summary(self) -> dict:
         result = {kind: {state: 0 for state in sorted(WORK_STATES)} for kind in sorted(WORK_KINDS)}

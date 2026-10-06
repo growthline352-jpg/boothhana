@@ -6,7 +6,8 @@ import static com.boothhana.collection.CatalogObservationService.*;
 public class CatalogObservationController {
  private final CatalogObservationService service;
  public CatalogObservationController(CatalogObservationService service){this.service=service;}
- @GetMapping("/api/internal/subculture/v4/recheck-events") public List<Map<String,Object>> due(@RequestParam(defaultValue="25") int limit){return service.due(limit);}
+ @GetMapping("/api/internal/subculture/v4/recheck-events") public List<Map<String,Object>> due(@RequestParam(defaultValue="25") int limit,@RequestParam(defaultValue="-1") long afterId){return service.due(limit,afterId);}
+ @PostMapping("/api/internal/subculture/v4/events/{id}/source-exhausted") public Map<String,Object> exhausted(@PathVariable long id,@RequestBody ExhaustedInput input){return service.sourceExhausted(id,input);}
  @GetMapping("/api/internal/subculture/v4/recheck-workload") public Map<String,Object> workload(){return service.workload();}
  @GetMapping("/api/admin/subculture/v4/recheck-summary") public Map<String,Object> summary(){return service.summary();}
  @PostMapping("/api/internal/subculture/v4/events/{id}/observations") public Map<String,Object> observe(@PathVariable long id,@RequestBody ObservationInput input){return service.observe(id,input);}

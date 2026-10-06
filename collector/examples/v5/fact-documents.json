@@ -1,0 +1,7 @@
+{
+  "https://example.com/test/event/2026": {
+    "sourceUrl": "https://example.com/test/event/2026",
+    "status": "READ",
+    "bodyText": "자동 테스트 전용 가상 원문. 실제 행사 자료가 아닙니다.\n[TEST] 서울 서브컬처 가상 행사\n문구 행사\n[TEST] 서울 전시장\n서울특별시 테스트 주소\n행사 개최일 2026-10-10 ~ 2026-10-11\n행사 개최일 2026-10-13 ~ 2026-10-13"
+  }
+}

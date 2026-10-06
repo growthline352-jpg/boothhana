@@ -153,6 +153,8 @@ class ScheduleTests(unittest.TestCase):
    with self.assertRaisesRegex(weekly.RunError,'web-search audit'):weekly.seed_discovery_checkpoint(source,root/'target',scope,False)
 class PipelineTests(unittest.TestCase):
  def setUp(self):
+  from fact_fixtures import read_documents
+  self.fact_reader=patch.object(weekly,'read_fact_documents',side_effect=read_documents);self.fact_reader.start();self.addCleanup(self.fact_reader.stop)
   self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.calls=[];self.state={'status':'RUNNING'}
   outer=self
   class Handler(BaseHTTPRequestHandler):
@@ -160,6 +162,7 @@ class PipelineTests(unittest.TestCase):
    def reply(self,value,status=200):self.send_response(status);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(json.dumps(value).encode())
    def do_GET(self):
     if self.headers.get('Authorization')!='Bearer '+('t'*40):return self.reply({},401)
+    if self.path.endswith('/events/11'):return self.reply({'id':11,'revision':1,'event':fixture('events')['events'][0]})
     if '/enrichment-events?' in self.path:return self.reply([{'id':11,'revision':1,'event':fixture('events')['events'][0]}])
     if '/events?' in self.path:return self.reply([{'id':11,'revision':1,'event':fixture('events')['events'][0]}])
     if '/participants?' in self.path:return self.reply([{'id':21,'eventId':11,'revision':1,'event':fixture('events')['events'][0],'participant':fixture('participants')['participants'][0]}])

@@ -93,11 +93,11 @@ class RepairTests(unittest.TestCase):
         self.assertIn('RESEARCH_IMAGE_NOT_IN_PAGE',[s['state'] for s in note['sources']])
     def test_discovered_official_source_survives_a_failed_download_for_next_attempt(self):
         self.mock_network();job=self.job();value=target()
-        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>일정</h1>',''),(f'<h1>행사</h1><img src="{URL}">','')]),patch.object(repair,'fetch_image',side_effect=TimeoutError):
+        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>일정</h1>',''),(f'<h1>2026 테스트 행사</h1><img src="{URL}">','')]),patch.object(repair,'fetch_image',side_effect=TimeoutError):
             state,note=job.discover(value)
         self.assertEqual(state,'FETCH_FAILED');self.assertEqual(len(note['sourceLeads']),1)
         job.queue.rows['1']=dict(details=note)
-        with patch.object(job.research,'search',side_effect=AssertionError('remembered page should be retried first')),patch.object(repair,'fetch_html',side_effect=[('<h1>일정</h1>',''),(f'<h1>행사</h1><img src="{URL}">','')]):
+        with patch.object(job.research,'search',side_effect=AssertionError('remembered page should be retried first')),patch.object(repair,'fetch_html',side_effect=[('<h1>일정</h1>',''),(f'<h1>2026 테스트 행사</h1><img src="{URL}">','')]):
             self.assertEqual(job.discover(value)[0],'DISCOVERED_FOR_REVIEW')
     def test_new_source_survives_full_failed_lead_cache_and_is_retried_before_research(self):
         self.mock_network();job=self.job();value=target()
@@ -106,7 +106,7 @@ class RepairTests(unittest.TestCase):
         job.queue.rows['1']=dict(details=dict(researchTarget=identity,sourceLeads=old))
         new_page='https://new.example/2026';source=self.research_source(page=new_page)['sources'][0]
         def page_html(page,*args):
-            return (f'<h1>행사</h1><img src="{URL}">','') if page==new_page else ('<h1>일정</h1>','')
+            return (f'<h1>2026 테스트 행사</h1><img src="{URL}">','') if page==new_page else ('<h1>일정</h1>','')
         with patch.object(job.research,'search',return_value=dict(state='RESEARCH_FOUND',sources=[source])) as search,patch.object(repair,'fetch_html',side_effect=page_html),patch.object(repair,'fetch_image',side_effect=TimeoutError):
             state,note=job.discover(value)
         self.assertEqual(state,'FETCH_FAILED');search.assert_called_once()
@@ -155,7 +155,7 @@ class RepairTests(unittest.TestCase):
         self.assertEqual(state,'NO_IMAGE_FOUND');self.assertEqual(job.api.calls,[]);fetch.assert_not_called()
     def test_host_waiting_candidate_still_researches_another_official_source(self):
         self.mock_network();job=self.job(apply=True)
-        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>행사</h1><img src="https://other-cdn.example/poster.png">',''),(f'<h1>행사</h1><img src="{URL}">','')]):
+        with patch.object(job.research,'search',return_value=self.research_source()),patch.object(repair,'fetch_html',side_effect=[('<h1>2026 테스트 행사</h1><img src="https://other-cdn.example/poster.png">',''),(f'<h1>2026 테스트 행사</h1><img src="{URL}">','')]):
             state,note=job.discover(target())
         self.assertEqual(state,'WAITING_REVIEW')
         self.assertEqual([c['state'] for c in note['candidates']],['WAITING_HOST','VERIFIED_BYTES_NOT_EDITION'])
@@ -281,7 +281,23 @@ class RepairTests(unittest.TestCase):
         self.assertEqual(fetch.call_args.kwargs['user_agent'],AGENT)
         self.assertEqual([c[1] for c in job.api.calls],[repair.PATH+'/events/1/assets'])
         value=target();value['assets']=[asset(rights='PENDING',state='PENDING')]
-        job.api.calls.clear();self.assertEqual(job.repair(value)[0],'WAITING_REVIEW');self.assertEqual(job.api.calls,[])
+        job.api.calls.clear();self.assertEqual(job.repair(value)[0],'NO_IMAGE_FOUND');self.assertEqual(job.api.calls,[])
+    def test_automatic_poster_is_stored_and_verified_in_same_pass_without_host_review(self):
+        self.cfg.update(autoApproveCollectedData=True,imageAllowedHosts=[])
+        self.mock_network('<h1>2026 테스트 행사</h1><img src="/poster.png">');job=self.job(apply=True)
+        original=job.api.request
+        def request(method,path,data=None,**kwargs):
+            if path.endswith('/events/1/assets'):
+                job.api.calls.append((method,path,data,kwargs));return dict(id=10,rightsState='APPROVED')
+            if method=='GET' and path.endswith('/assets/10'):
+                job.api.calls.append((method,path,data,kwargs));return asset(state='CANDIDATE')
+            return original(method,path,data,**kwargs)
+        job.api.request=request;value=target()
+        state,note=job.discover(value)
+        self.assertEqual(state,'VERIFIED')
+        self.assertTrue(note['stored']['detailVerified']);self.assertTrue(note['stored']['listVerified'])
+        self.assertEqual([c[1] for c in job.api.calls],[repair.PATH+'/events/1/assets',repair.PATH+'/assets/10',repair.PATH+'/assets/10/content'])
+        self.assertEqual(value['storedHashes']['10'],SHA)
     def test_approved_upload_carries_revision_size_hash_and_verifies_actual_public_file(self):
         self.mock_network();job=self.job(apply=True);value=target();value['assets']=[asset(state='PENDING')]
         self.assertEqual(job.store(value,value['assets'][0])[0],'VERIFIED')
@@ -312,7 +328,7 @@ class RepairTests(unittest.TestCase):
     def test_pending_research_reports_blocked_source_without_approving_or_uploading(self):
         job=self.job(apply=True);value=target();value['assets']=[asset(rights='PENDING',state='CANDIDATE')]
         with patch.object(repair,'allowed_by_robots',return_value=False):state,note=job.repair(value)
-        self.assertEqual(state,'WAITING_REVIEW');self.assertEqual(note['discoveryState'],'SOURCE_BLOCKED');self.assertEqual(job.api.calls,[])
+        self.assertEqual(state,'SOURCE_BLOCKED');self.assertEqual(note['discoveryState'],'SOURCE_BLOCKED');self.assertEqual(job.api.calls,[])
     def test_storage_only_uploads_approved_missing_banner_and_records_public_verification(self):
         self.mock_network();value=target();value['assets']=[asset(state='CANDIDATE')];job=self.job([value],apply=True,store_only=True)
         with patch.object(job,'discover',side_effect=AssertionError('storage worker must not discover')):self.assertEqual(job.run(),0)
@@ -439,11 +455,11 @@ class RepairTests(unittest.TestCase):
         with patch.object(job,'repair',side_effect=repair.BudgetExpired):job.run()
         self.assertEqual(job.queue.rows,{})
         self.assertEqual(json.loads((job.folder/'dry-report.json').read_text())['dueDeferred'],1)
-    def test_expired_verification_is_not_counted_complete_when_deferred(self):
+    def test_clock_alone_does_not_expire_completed_verification(self):
         value=target(2);value['banner']=asset();job=self.job([target(1),value],max_events=1)
         stamp,_=job.queue.due(value,job.policy,repair.now());job.queue.record(value,stamp,'VERIFIED',{},repair.now()-timedelta(days=2))
         with patch.object(job,'repair',return_value=('NO_IMAGE_FOUND',{})):job.run()
-        self.assertEqual(json.loads((job.folder/'dry-report.json').read_text())['events'][1]['state'],'VERIFICATION_DUE')
+        self.assertEqual(json.loads((job.folder/'dry-report.json').read_text())['events'][1]['state'],'VERIFIED')
 
 class RedirectPolicyTests(unittest.TestCase):
     def test_blocked_redirect_is_rejected_before_connection_or_dns_lookup(self):

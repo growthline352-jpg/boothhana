@@ -208,7 +208,7 @@ hr { border: 0; border-top: 1px solid var(--line); }
 .discovery-event-description { font-size: 14px; color: #617080; line-height: 1.75; margin: 14px 0 18px; }
 .discovery-event-bottom { border-top: 1px solid #e8edf1; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #50667a; }
 .discovery-event-bottom strong { color: var(--ink); }
-.discovery-poster-credit { font-size: 12px; color: #566b7e; padding: 10px 20px; border-top: 1px solid #edf1f4; overflow-wrap: anywhere; }
+
 .discovery-empty, .discovery-coming { border-radius: 18px; background: #fff; border: 1px solid var(--line); padding: 46px 24px; margin-top: 20px; }
 .discovery-empty h3, .discovery-coming h3 { font-size: 23px; margin: 18px 0 12px; }
 .discovery-empty p, .discovery-coming p { font-size: 15px; color: var(--muted); line-height: 1.8; }

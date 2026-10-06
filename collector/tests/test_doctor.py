@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from doctor import report
+from doctor import report,coverage_report
 
 
 class DoctorTests(unittest.TestCase):
@@ -56,6 +56,20 @@ class DoctorTests(unittest.TestCase):
 
         self.assertTrue(healthy)
         self.assertFalse(checks["codexLoginConfigured"])
+
+    def test_uninitialized_coverage_is_not_reported_as_complete(self):
+        coverage=coverage_report(Path(self.temporary.name))
+        self.assertEqual(coverage['freshnessState'],'PARTIAL')
+        self.assertIsNone(coverage['regional']);self.assertIsNone(coverage['officialPopups'])
+        self.assertEqual(len(coverage['issues']),2)
+
+    def test_corrupt_coverage_is_reported_without_erasing_state(self):
+        path=Path(self.temporary.name)/'popup-source-state-v1.json'
+        path.write_text('{bad json',encoding='utf-8')
+        coverage=coverage_report(Path(self.temporary.name))
+        self.assertEqual(coverage['freshnessState'],'PARTIAL')
+        self.assertTrue(any('unreadable' in issue for issue in coverage['issues']))
+        self.assertEqual(path.read_text(encoding='utf-8'),'{bad json')
 
 
 if __name__ == "__main__":

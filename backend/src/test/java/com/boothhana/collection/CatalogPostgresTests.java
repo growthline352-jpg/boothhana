@@ -37,6 +37,8 @@ class CatalogPostgresTests {
         db.execute(Files.readString(Path.of("../database/007_catalog_review_fixes.sql")));
         db.execute(Files.readString(Path.of("../database/008_catalog_presentation.sql")));
         db.execute(Files.readString(Path.of("../database/009_floorplan_automation.sql")));
+        db.execute(Files.readString(Path.of("../database/027_discovery_observations.sql")));
+        db.execute(Files.readString(Path.of("../database/030_catalog_publication_withdrawal.sql")));
         // Later catalog fields; commerce/account modules remain empty in this
         // catalog-only fixture. Match their lookup keys without seeding real users.
         db.execute("alter table subculture_catalog_asset add column offline_allowed boolean not null default false");
@@ -67,6 +69,44 @@ class CatalogPostgresTests {
     long participant() {return ingest(stage("PARTICIPANTS",null)).participantIds().getFirst();}
     void reviewEvent() {long revision=((Number)service.eventDetail(eventId).get("revision")).longValue();tx.execute(s->service.editEvent(eventId,new EditInput(revision,"REVIEWED","test checked",Map.of())));}
     void reviewParticipant(long id) {var row=service.participant(id);tx.execute(s->service.editParticipant(id,new EditInput(row.revision(),"REVIEWED","test checked",Map.of())));}
+    CatalogAutoApproval enableAutomaticIntake() {
+        media=new CatalogMediaService(db,mock(VerifiedImageStorage.class),"https://images.example.com",true);
+        publications=new CatalogPublicationService(db,json,media);
+        var policy=new CatalogAutoApproval(db,json,publications,media,true);
+        discovery=new CollectionService(db,json,policy);service=new CatalogService(db,json,media,policy);
+        return policy;
+    }
+    @Test void automaticIntakePublishesEventsBoothsSalesAndApprovesImagesWithoutManualReview() {
+        var policy=enableAutomaticIntake();tx.execute(s->discovery.ingest(eventBatch()));
+        assertThat(service.eventDetail(eventId).get("reviewState")).isEqualTo("REVIEWED");
+        assertThat(publications.detail(eventId).get("mode")).isEqualTo("INFO_ONLY");
+        var publishedAt=db.queryForObject("select published_at::text from subculture_catalog_publication where event_id=?",String.class,eventId);
+        tx.execute(s->discovery.ingest(eventBatch()));
+        assertThat(db.queryForObject("select published_at::text from subculture_catalog_publication where event_id=?",String.class,eventId)).isEqualTo(publishedAt);
+        long booth=participant();ingest(stage("SALES",booth));
+        assertThat(service.participant(booth).reviewState()).isEqualTo("REVIEWED");
+        assertThat(service.participant(booth).sales().reviewState()).isEqualTo("REVIEWED");
+        assertThat((List<?>)publications.detail(eventId).get("participants")).hasSize(1);
+        AssetView image=tx.execute(s->media.registerValidated(eventId,new AssetRegistrationInput(null,null,new Image("BANNER","https://example.com/new-poster.png","https://example.com/event","official poster","poster"))));
+        assertThat(image.rightsState()).isEqualTo("APPROVED");
+        tx.execute(s->media.rights(image.id(),new RightsInput(image.revision(),"REJECTED","explicit exclusion","")));
+        tx.execute(s->policy.approve(eventId));
+        assertThat(media.detail(image.id()).rightsState()).isEqualTo("REJECTED");
+        assertThat(db.queryForObject("select count(*) from event",Long.class)).isEqualTo(1);
+    }
+    @Test void automaticBackfillKeepsOverridesAndExplicitlyExcludedBooths() {
+        long included=participant();var row=service.participant(included);
+        tx.execute(s->service.editParticipant(included,new EditInput(row.revision(),"EXCLUDED","explicit exclusion",Map.of())));
+        long revision=((Number)service.eventDetail(eventId).get("revision")).longValue();
+        tx.execute(s->service.editEvent(eventId,new EditInput(revision,"PENDING","manual correction",Map.of("name","[TEST] Corrected event"))));
+        var policy=enableAutomaticIntake();
+        assertThat(policy.pending(200,0)).contains(eventId);
+        tx.execute(s->policy.approve(eventId));
+        assertThat(service.event(eventId).name()).isEqualTo("[TEST] Corrected event");
+        assertThat(service.participant(included).reviewState()).isEqualTo("EXCLUDED");
+        assertThat((List<?>)publications.detail(eventId).get("participants")).isEmpty();
+        assertThat(policy.pending(200,0)).doesNotContain(eventId);
+    }
     @Test void assetSyncContinuesPastLegacyRecordsWithoutBannerArrays() {
         long missing=copyRepairEvent("PENDING",false),explicitNull=copyRepairEvent("PENDING",false);
         db.update("update subculture_event_candidate set payload_json=payload_json-'banners'-'discoveryLinks' where id=?",missing);

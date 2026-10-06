@@ -10,8 +10,8 @@ class RecheckTests(unittest.TestCase):
  def setUp(self):
   self.url='https://example.com/event'
   self.target={'id':1,'revision':3,'event':{'name':'행사','organizer':'주최','edition':'2026','sources':[{'kind':'OFFICIAL','access':'ORIGINAL','url':self.url}]}}
-  self.docs=[{'url':self.url,'text':'공식 일정 정정: 이번 행사는 11월 1일부터 2일까지 열립니다.'}]
-  self.result={'identity':{'name':'행사','organizer':'주최','edition':'2026'},'fields':{'occurrences':{'state':'CONFIRMED','sourceUrl':self.url,'evidence':'공식 일정 정정','value':[{'startDate':'2026-11-01','endDate':'2026-11-02','startTime':None,'endTime':None}]}}}
+  self.docs=[{'url':self.url,'text':'공식 일정 정정: 이번 행사는 2026년 11월 1일부터 2일까지 열립니다.'}]
+  self.result={'identity':{'name':'행사','organizer':'주최','edition':'2026'},'fields':{'occurrences':{'state':'CONFIRMED','sourceUrl':self.url,'evidence':self.docs[0]['text'],'value':[{'startDate':'2026-11-01','endDate':'2026-11-02','startTime':None,'endTime':None}]}}}
  def test_changed_dates_are_proposed_without_replacing_or_reidentifying_event(self):
   payload=observation(self.target,self.result,self.docs)
   self.assertEqual(payload['eventRevision'],3);self.assertEqual(payload['values']['occurrences'][0]['startDate'],'2026-11-01');self.assertNotIn('occurrences',self.target['event'])

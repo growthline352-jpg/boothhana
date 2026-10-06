@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 
 from media_fetch import MediaError, PinnedHTTPS, check_url, public_addresses, request_target, fetch_image, fetch_html
 from official_site_sources import site_detail_url, site_root, parse_site_document, SITE_HOSTS, SITE_IMAGE_HOSTS
-from official_poster_sources import poster_detail_url,parse_poster_document,PLACEHOLDER_SHA256
+from official_poster_sources import poster_detail_url,parse_poster_document,PLACEHOLDER_SHA256,attachment_link
 
 PAGE_HOSTS = ['takemm.com']
 API_HOSTS = ['api.takemm.com']
@@ -120,8 +120,9 @@ def allowed_by_robots(url: str, hosts: list[str], timeout: int, cache: dict) -> 
 
 
 class DetailHTML(HTMLParser):
-    def __init__(self):
+    def __init__(self,page):
         super().__init__(convert_charrefs=True)
+        self.page = page; self.attachments = []; self.anchor = None
         self.parts = []
         self.images = []
         self.hidden = 0
@@ -130,6 +131,7 @@ class DetailHTML(HTMLParser):
         attributes = dict(attributes)
         if tag in ('script', 'style', 'template', 'iframe'): self.hidden += 1
         if self.hidden: return
+        if tag == 'a' and attributes.get('href'): self.anchor = [attributes['href'],'']
         if tag == 'img':
             source = attributes.get('src') or ''
             try: check_url(source, IMAGE_HOSTS)
@@ -141,9 +143,14 @@ class DetailHTML(HTMLParser):
     def handle_endtag(self, tag):
         if tag in ('script', 'style', 'template', 'iframe') and self.hidden: self.hidden -= 1
         if not self.hidden and tag in ('p', 'div', 'li', 'h1', 'h2', 'h3', 'h4'): self.parts.append('\n')
+        if tag == 'a' and self.anchor:
+            attachment = attachment_link(self.page, *self.anchor); self.anchor = None
+            if attachment and attachment not in self.attachments and len(self.attachments)<100: self.attachments.append(attachment)
 
     def handle_data(self, data):
-        if not self.hidden: self.parts.append(data)
+        if not self.hidden:
+            self.parts.append(data)
+            if self.anchor: self.anchor[1] = (self.anchor[1]+data)[:500]
 
 
 def _label(value: str) -> str:
@@ -166,7 +173,7 @@ def parse_tmm_product(raw: bytes, page_url: str, checked_on: str) -> dict:
     title = product.get('title')
     if not isinstance(html, str) or not isinstance(title, str) or not html.strip() or len(html) > 250000:
         raise ValueError('No readable public product body')
-    parser = DetailHTML(); parser.feed(html)
+    parser = DetailHTML(canonical); parser.feed(html)
     text = re.sub(r'[ \t]+', ' ', ''.join(parser.parts))
     text = re.sub(r'\n\s*\n+', '\n', text).strip()
     if not text: raise ValueError('No public detail text')
@@ -197,7 +204,7 @@ def parse_tmm_product(raw: bytes, page_url: str, checked_on: str) -> dict:
     return dict(sourceUrl=canonical, checkedOn=checked_on, title=title[:500], bodyText=text[:MAX_TEXT],
         textTruncated=len(text) > MAX_TEXT, reservationOpenRaw=_scalar(product.get('open_date')),
         reservationCloseRaw=_scalar(product.get('close_date')), formStateRaw=_scalar(product.get('status')),
-        images=images[:40], imagesTruncated=len(parser.images)>40 or len(images)>40, bodySha256=hashlib.sha256(html.encode('utf-8')).hexdigest())
+        images=images[:40], imagesTruncated=len(parser.images)>40 or len(images)>40, attachments=parser.attachments, bodySha256=hashlib.sha256(html.encode('utf-8')).hexdigest())
 
 
 def _scalar(value):

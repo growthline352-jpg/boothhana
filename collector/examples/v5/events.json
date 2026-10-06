@@ -6,12 +6,87 @@
     "TEST"
   ],
   "sourceCoverage": [
-    {"channel": "VENUE_CALENDAR", "status": "CHECKED", "queries": ["TEST venue"], "checkedUrls": ["https://example.com/venue"], "notes": "test"},
-    {"channel": "ORGANIZER_OFFICIAL", "status": "CHECKED", "queries": ["TEST organizer"], "checkedUrls": ["https://example.com/organizer", "https://example.com/test/event/2026"], "notes": "test"},
-    {"channel": "PUBLIC_AGENCY", "status": "NO_RESULTS", "queries": ["TEST public"], "checkedUrls": [], "notes": "test"},
-    {"channel": "TICKETING", "status": "NO_RESULTS", "queries": ["TEST ticket"], "checkedUrls": [], "notes": "test"},
-    {"channel": "PARTICIPANT_SOCIAL", "status": "NO_RESULTS", "queries": ["TEST participant"], "checkedUrls": [], "notes": "test"},
-    {"channel": "COMMUNITY_INDEX", "status": "NO_RESULTS", "queries": ["TEST community"], "checkedUrls": [], "notes": "test"}
+    {
+      "channel": "VENUE_CALENDAR",
+      "status": "CHECKED",
+      "queries": [
+        "TEST venue"
+      ],
+      "checkedUrls": [
+        "https://example.com/venue"
+      ],
+      "notes": "test"
+    },
+    {
+      "channel": "ORGANIZER_OFFICIAL",
+      "status": "CHECKED",
+      "queries": [
+        "TEST organizer"
+      ],
+      "checkedUrls": [
+        "https://example.com/organizer",
+        "https://example.com/test/event/2026"
+      ],
+      "notes": "test"
+    },
+    {
+      "channel": "PUBLIC_AGENCY",
+      "status": "NO_RESULTS",
+      "queries": [
+        "TEST public"
+      ],
+      "checkedUrls": [],
+      "notes": "test"
+    },
+    {
+      "channel": "TICKETING",
+      "status": "NO_RESULTS",
+      "queries": [
+        "TEST ticket"
+      ],
+      "checkedUrls": [],
+      "notes": "test"
+    },
+    {
+      "channel": "PARTICIPANT_SOCIAL",
+      "status": "NO_RESULTS",
+      "queries": [
+        "TEST participant"
+      ],
+      "checkedUrls": [],
+      "notes": "test"
+    },
+    {
+      "channel": "COMMUNITY_INDEX",
+      "status": "NO_RESULTS",
+      "queries": [
+        "TEST community"
+      ],
+      "checkedUrls": [],
+      "notes": "test"
+    }
+  ],
+  "eventEvidence": [
+    {
+      "eventIndex": 0,
+      "sourceUrl": "https://example.com/test/event/2026",
+      "addressSourceUrl": "https://example.com/test/event/2026",
+      "subcategory": "STATIONERY_GOODS",
+      "typeQuote": "문구 행사",
+      "venueQuote": "[TEST] 서울 전시장",
+      "addressQuote": "서울특별시 테스트 주소",
+      "nameQuote": "[TEST] 서울 서브컬처 가상 행사",
+      "occurrenceEvidence": [
+        {
+          "occurrenceIndex": 0,
+          "dateQuote": "행사 개최일 2026-10-10 ~ 2026-10-11"
+        },
+        {
+          "occurrenceIndex": 1,
+          "dateQuote": "행사 개최일 2026-10-13 ~ 2026-10-13"
+        }
+      ]
+    }
   ],
   "events": [
     {
