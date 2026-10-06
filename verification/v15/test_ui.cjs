@@ -9,7 +9,10 @@ const mod=h.load('frontend/src/features/library/LibraryPage.tsx'),tree=h.render(
 for(const word of ['내 보관함','내 기억','메모·방문 기록','지도에서 보기','업체·제품·행사·내 메모로 검색','관심 기록'])ok(html.includes(word),word)
 ok(!html.includes('type="hidden"'));ok(!html.includes('mailto:'))
 const links=nodes(h.render(mod.MemoryCard,{entry,guest:false,open:()=>{}})).filter(x=>x.props?.to).map(x=>x.props.to)
-for(const link of links){ok(!link.includes('PRIVATE_NOTE'));ok(!link.includes(entry.id))}
+for(const link of links){ok(!link.includes('PRIVATE_NOTE'));if(!link.startsWith('/library?'))ok(!link.includes(entry.id))}
+// A private in-app link can focus the saved entry; public map/share links must
+// still contain only public target ids and never the owner's memory id or note.
+ok(links.some(link=>link.startsWith('/library?')&&new URLSearchParams(link.split('?')[1]).get('focus')===entry.id))
 const hidden=toHtml(h.render(mod.MemoryCard,{entry:{...entry,available:false,current:null,saved:null,image:null},guest:false,open:()=>{}},true))
 ok(hidden.includes('현재 공개되지 않는 정보'));ok(hidden.includes('PRIVATE_NOTE_123'));ok(!hidden.includes('초록 식물 키링'));ok(!hidden.includes('지도에서 보기'))
 const draft=harness({library:{...library,owner:'guest',index:[],guest:[]},auth:{user:null,loading:false,loginUrl:'/api/auth/login'},remote:{loading:false,error:null,data:{items:[],page:0,size:24,total:0,groups:[]}}});const guestHtml=toHtml(draft.render(draft.load('frontend/src/features/library/LibraryPage.tsx').LibraryPage))

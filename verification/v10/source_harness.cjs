@@ -6,7 +6,10 @@ function harness(options={}){
  const env={location:{pathname:'/discover',search:'?category=subculture',state:null,...options.location},calls:[],slots,
   remote:options.remote||{loading:false,error:null,data:{items:[],page:0,size:20,total:0},reload:async()=>{}},auth:options.auth||{user:null,loading:false,loginUrl:'/api/auth/login',logout:async()=>{}},outlet:()=>null,history:[],navigationType:'POP'}
  const jsx=(type,props,key)=>({type,props:props||{},key})
- const react={createContext:value=>({value,Provider:props=>jsx('Fragment',{children:props.children})}),useContext:ctx=>ctx.value,useId:()=>`test-${cursor++}`,useState:init=>{let i=cursor++;if(!(i in slots))slots[i]=typeof init==='function'?init():init;return [slots[i],v=>slots[i]=typeof v==='function'?v(slots[i]):v]},useRef:init=>{let i=cursor++;if(!(i in slots))slots[i]={current:init};return slots[i]},useEffect:()=>{},useLayoutEffect:()=>{},useMemo:fn=>fn(),useCallback:fn=>fn}
+ // This synchronous source harness cannot resolve Suspense promises. Preserve a
+ // lazy component node without importing its browser dependencies; actual lazy
+ // loading is covered by the release gate's React browser verification.
+ const react={lazy:()=>function LazySourcePlaceholder(){return null},Suspense:props=>jsx('Fragment',{children:props.children}),createContext:value=>({value,Provider:props=>jsx('Fragment',{children:props.children})}),useContext:ctx=>ctx.value,useId:()=>`test-${cursor++}`,useState:init=>{let i=cursor++;if(!(i in slots))slots[i]=typeof init==='function'?init():init;return [slots[i],v=>slots[i]=typeof v==='function'?v(slots[i]):v]},useRef:init=>{let i=cursor++;if(!(i in slots))slots[i]={current:init};return slots[i]},useEffect:()=>{},useLayoutEffect:()=>{},useMemo:fn=>fn(),useCallback:fn=>fn}
  const link=({to,state,children,...props})=>jsx('a',{...props,href:to,children})
  const router={Link:link,NavLink:link,Outlet:()=>env.outlet(),useLocation:()=>env.location,useParams:()=>options.params||{},useNavigationType:()=>env.navigationType,useBlocker:()=>options.blocker||{state:'unblocked'},useNavigate:()=>to=>{env.calls.push('NAV:'+to);if(to===-1&&env.history.length){Object.assign(env.location,env.history.pop());env.navigationType='POP'}},useSearchParams:()=>[new URLSearchParams(env.location.search),(next,config={})=>{const query=new URLSearchParams(next).toString();env.calls.push(query);if(!config.replace)env.history.push({...env.location});Object.assign(env.location,{search:'?'+query,state:config.state||null});env.navigationType=config.replace?'REPLACE':'PUSH'}]}
  const api={catalogApi:options.catalogApi||{},publicCatalogApi:{browse:async query=>{env.calls.push('API:'+query);return env.remote.data},event:async()=>env.remote.data,events:async()=>env.remote.data}}
@@ -27,7 +30,7 @@ function harness(options={}){
    if(name==='react-router')return router
    if(name.endsWith('/api/image-upload'))return {ImageUploadController:class{},ImageUploadTask:class{}}
    if(name.endsWith('/useAuth'))return{useAuth:()=>env.auth}
-   if(name.endsWith('/useRemote'))return{useRemote:fn=>{if(options.callLoader)void fn();return normalizedFile.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
+   if(name.endsWith('/useRemote'))return{useRemote:fn=>{if(options.callLoader)void fn();if(fn.toString().includes('purchaseApi.list'))return options.purchaseRemote||{loading:false,error:null,data:[],reload:async()=>{}};return normalizedFile.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
    if(normalizedFile.includes('/support/')&&name==='./api')return {supportApi:options.supportApi||{}}
    if(normalizedFile.includes('/goods/')&&name==='./api')return {goodsApi:options.goodsApi||{bestsellers:async()=>({basis:'POS_LOGGED_UNITS',windowDays:30,from:'2026-08-17T00:00:00Z',to:'2026-09-16T00:00:00Z',asOf:'2026-09-16T00:00:00Z',items:[]})}}
    if(normalizedFile.includes('/floorplan/')&&name==='./api')return {floorplanApi:options.floorplanApi||{}}

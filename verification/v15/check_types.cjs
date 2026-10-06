@@ -8,6 +8,7 @@ declare namespace React { type ReactNode=unknown; }
 declare module 'qrcode' {const QRCode:{toDataURL:(value:string,options?:any)=>Promise<string>};export default QRCode;}
 declare module '*.css' {} interface ImportMeta{env:{VITE_API_BASE_URL?:string;VITE_PUBLIC_SITE_URL?:string;VITE_CATEGORY_SITES_ENABLED?:string;VITE_EVENT_COMPARE_ENABLED?:string;VITE_POPUP_EXPLORE_ENABLED?:string;VITE_VISIT_PREPARATION_ENABLED?:string;VITE_KAKAO_MAP_KEY?:string;PROD:boolean}}
 declare module 'react'{ export function useId():string; export function useSyncExternalStore<T>(subscribe:(listener:()=>void)=>()=>void,getSnapshot:()=>T,getServerSnapshot?:()=>T):T; 
+ export function lazy<T extends (props:any)=>any>(factory:()=>Promise<{default:T}>):T;export const Suspense:(props:{children?:unknown;fallback?:unknown})=>any;
  export type ReactNode=unknown;export interface RefObject<T>{current:T};export type SetStateAction<T>=T|((prev:T)=>T);export type Dispatch<T>=(value:T)=>void;
  export type CSSProperties=Record<string,string|number|undefined>;
  export interface TextareaHTMLAttributes<T>{id?:string;className?:string;placeholder?:string;rows?:number;cols?:number;maxLength?:number;minLength?:number;disabled?:boolean;required?:boolean;readOnly?:boolean;name?:string;title?:string;value?:string|number|readonly string[];defaultValue?:string|number|readonly string[];onChange?:(event:{target:T;currentTarget:T})=>void;[attribute:string]:unknown}
