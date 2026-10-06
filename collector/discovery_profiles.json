@@ -102,6 +102,17 @@
     ],
     "sources": [
       {
+        "name": "잠실 롯데월드몰 공식 팝업",
+        "region": "서울",
+        "seeds": [
+          "https://www.lotteshopping.com/contents/shpgInfo?cstrCd=0002"
+        ],
+        "queryTemplates": [
+          "site:lotteshopping.com 잠실 월드몰 팝업 {year} {month}",
+          "롯데월드몰 잠실 팝업 오픈 예정 {start_date} {end_date} 공식 브랜드"
+        ]
+      },
+      {
         "name": "성수·서울숲 공간 공지",
         "seeds": [
           "https://www.project-rent.com/"

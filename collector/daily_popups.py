@@ -5,6 +5,19 @@ from pathlib import Path
 from datetime import datetime,timedelta
 from weekly import Pipeline,load_config
 from run import SEOUL,run_lock,write_json,RunError
+from lotte_popup_sources import collect as collect_lotte
+from import_manual_events import build_batch
+
+def collect_lotte_popups(run):
+ """Direct official inventory has its own trace and does not claim CLI web search."""
+ key='lotte-worldmall-official';folder=run.job_dir(key)
+ def heartbeat():
+  run.check_budget();run.heartbeat();run.progress(key,'READING_OFFICIAL_SOURCE')
+ result=collect_lotte(run.scope,folder,heartbeat=heartbeat)
+ if result['searchStatus']!='COMPLETE':run.issue(key,RunError(result['summary']+' / '+result['sourceCoverage'][0]['notes']))
+ body=build_batch(result,None,run.cfg['blockedSourceHosts'],run.scope['startDate'],run.scope['endDate'])
+ run.deliver(key,body,legacy=True)
+ return len(result['events'])
 
 def select_source_jobs(queue,limit):
  """Reserve one daily slot for future openings; retain each source's retry order."""
@@ -22,8 +35,10 @@ def main(argv=None):
  with run_lock(state):
   run=Pipeline(cfg,folder,scope,args.dry_run)
   if run.api:run.request('POST','/pipelines',{k:run.meta[k] for k in ('runId','weekKey','scope')})
-  jobs=[]
+  jobs=[];official_events=0
   try:
+   try:official_events=collect_lotte_popups(run)
+   except Exception as exc:run.issue('lotte-worldmall-official',exc)
    jobs=select_source_jobs(run.discovery_work_queue,min(2,cfg['maxPopupDiscoveryJobs']))
    names=set()
    for item in jobs:
@@ -35,7 +50,7 @@ def main(argv=None):
    for item in [r for r in due if 'POPUP_DAILY' in r.get('origins',[])][:5]:run.research_event_name(item)
   except Exception as exc:run.issue('popup-pilot',exc)
   finally:
-   summary={'counts':{**run.stats,'cliCalls':run.calls,'sourceJobs':len(jobs),'elapsedSeconds':round(time.monotonic()-began)},'issues':run.issues[:30],'schedule':'Daily popup discovery; publication requires source review','receipts':run.receipts}
+   summary={'counts':{**run.stats,'cliCalls':run.calls,'sourceJobs':len(jobs),'officialLotteEvents':official_events,'elapsedSeconds':round(time.monotonic()-began)},'issues':run.issues[:30],'schedule':'Daily popup discovery + Lotte World Mall official inventory; publication requires source review','receipts':run.receipts}
    if run.cli_blocked_reason:summary['cliBlockedReason']=run.cli_blocked_reason
    write_json(folder/'summary.json',summary)
    if run.api:run.request('POST',f'/pipelines/{run.id}/finish',{'state':'PARTIAL' if run.issues else 'SUCCESS','summary':summary})
