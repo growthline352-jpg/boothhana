@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 import re
 import time
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urljoin
 from zoneinfo import ZoneInfo
 
 from media_fetch import MediaError, PinnedHTTPS, check_url, public_addresses, request_target, fetch_image, fetch_html
@@ -39,11 +39,29 @@ def tmm_product_url(value: str) -> str | None:
     except (TypeError, ValueError): return None
 
 
-def fetch_document(url: str, hosts: list[str], timeout: int, *, robots: bool = False) -> bytes:
+class RobotsHTML(HTMLParser):
+    """Read inert text when a server wraps robots rules in HTML; never execute it."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.hidden = 0
+    def handle_starttag(self, tag, attrs):
+        if tag in ('script', 'style'): self.hidden += 1
+        if tag in ('br', 'p', 'div', 'pre'): self.parts.append('\n')
+    def handle_endtag(self, tag):
+        if tag in ('script', 'style') and self.hidden: self.hidden -= 1
+        if tag in ('p', 'div', 'pre'): self.parts.append('\n')
+    def handle_data(self, data):
+        if not self.hidden: self.parts.append(data)
+
+
+def fetch_document(url: str, hosts: list[str], timeout: int, *, robots: bool = False, _redirects: int = 0, _deadline=None) -> bytes:
     parsed, host = check_url(url, hosts)
     addresses = public_addresses(host, 443)
-    deadline = time.monotonic() + timeout
-    connection = PinnedHTTPS(host, addresses[0], min(10, timeout))
+    deadline = _deadline if _deadline is not None else time.monotonic() + timeout
+    remaining = deadline - time.monotonic()
+    if remaining <= 0: raise MediaError('Detail deadline exceeded')
+    connection = PinnedHTTPS(host, addresses[0], min(10, remaining))
     try:
         connection.request('GET', request_target(parsed), headers={
             'User-Agent': AGENT, 'Accept': 'text/plain' if robots else 'application/json', 'Accept-Encoding': 'identity'})
@@ -51,13 +69,22 @@ def fetch_document(url: str, hosts: list[str], timeout: int, *, robots: bool = F
         # RFC 9309 section 2.3.1.3 permits crawling when robots.txt is
         # unavailable (4xx). Object-store CDNs commonly use 403 for absent
         # keys. This applies ONLY to robots.txt; detail/image 403 stays denied.
-        # Rate limits, server errors and redirects remain fail-closed.
+        # Rate limits and server errors remain fail-closed. RFC 9309 requires
+        # following at least five robots redirects, with the same pinned public
+        # DNS/HTTPS host policy and one deadline for the entire chain.
+        if robots and response.status in (301, 302, 303, 307, 308):
+            target = response.getheader('Location')
+            if not target or _redirects >= 5: raise MediaError('Robots redirect limit/missing target')
+            target = urljoin(url, target)
+            check_url(target, hosts)
+            connection.close()
+            return fetch_document(target, hosts, timeout, robots=True, _redirects=_redirects+1, _deadline=deadline)
         if robots and response.status in (403, 404, 410): return b''
         if response.status != 200: raise MediaError('Detail document HTTP failure')
         if response.getheader('Content-Encoding', 'identity') not in ('', 'identity'):
             raise MediaError('Compressed detail response rejected')
         content_type = response.getheader('Content-Type', '').split(';')[0].strip().lower()
-        allowed = ('text/plain',) if robots else ('application/json',)
+        allowed = ('text/plain', 'text/html', 'application/xhtml+xml') if robots else ('application/json',)
         if content_type not in allowed: raise MediaError('Detail content type mismatch')
         maximum = 512 * 1024 if robots else MAX_DOCUMENT_BYTES
         length = response.getheader('Content-Length')
@@ -73,6 +100,10 @@ def fetch_document(url: str, hosts: list[str], timeout: int, *, robots: bool = F
             data.extend(chunk)
             if len(data) > maximum: raise MediaError('Detail size limit')
         if length is not None and len(data) != int(length): raise MediaError('Truncated detail document')
+        if robots and content_type in ('text/html', 'application/xhtml+xml'):
+            parser = RobotsHTML()
+            parser.feed(bytes(data).decode('utf-8-sig', 'strict'));parser.close()
+            return ''.join(parser.parts).encode('utf-8')
         return bytes(data)
     finally:
         connection.close()
