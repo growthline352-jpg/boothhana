@@ -152,6 +152,7 @@ class LotteSourceTests(unittest.TestCase):
             body = args[1]
             self.assertEqual(body['executionMode'], 'MANUAL_IMPORT')
             self.assertFalse(body['webSearchObserved'])
+            self.assertTrue(body['result']['queries'])
             self.assertTrue(kw['legacy'])
             self.assertNotIn('reviewState', body['result']['events'][0])
             self.assertEqual(body['result']['events'][0]['banners'][0]['rights'], 'UNKNOWN')

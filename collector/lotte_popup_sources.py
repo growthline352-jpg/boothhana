@@ -271,7 +271,10 @@ def collect(scope, folder: Path, *, fetch=None, max_pages=30, max_details=40, ma
     if len(cards) > max_details:
         issues.append('Official popup detail budget reached')
     status = 'PARTIAL' if issues else 'COMPLETE'
-    result = dict(schemaVersion='1', searchStatus=status, summary=f'롯데월드몰 공식 쇼핑뉴스 {len(seen)}/{total}개, 팝업 후보 {len(cards)}개, 기간 내 {len(events)}개 확인', queries=[],
+    # Legacy ingestion requires a query description even for MANUAL_IMPORT.
+    # Describe the actual fixed-source inventory query, never a claimed web search.
+    inventory_query = '롯데 잠실점(0002) 공식 쇼핑뉴스(C00903) 전체 페이지 조회 · 월드몰 팝업 상세 확인'
+    result = dict(schemaVersion='1', searchStatus=status, summary=f'롯데월드몰 공식 쇼핑뉴스 {len(seen)}/{total}개, 팝업 후보 {len(cards)}개, 기간 내 {len(events)}개 확인', queries=[inventory_query],
                   sourceCoverage=[dict(channel='ORGANIZER_OFFICIAL', status='PARTIAL' if issues else 'CHECKED', queries=[],
                                        checkedUrls=list(dict.fromkeys(r['url'] for r in trace))[:50], notes='공식 잠실점 목록 전체 페이지와 연도 포함 상세 날짜 확인. '+('; '.join(issues))[:350])], events=events)
     write_json(folder/'source-trace.json', dict(reportedTotal=total, observedCards=len(seen), popupCards=len(cards), paginationComplete=complete, issues=issues, requests=trace))
