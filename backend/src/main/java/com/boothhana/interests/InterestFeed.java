@@ -40,8 +40,9 @@ public class InterestFeed {
    and exists(select 1 from jsonb_array_elements(pub.snapshot_json->'event'->'occurrences') d where d->>'endDate'>=?)
    """.formatted(SubcultureScope.SQL)+restrict+" order by (select min(d->>'startDate') from jsonb_array_elements(pub.snapshot_json->'event'->'occurrences') d),pub.event_id limit ? offset ?",Long.class,args.toArray());
   List<Map<String,Object>> eventRows=new ArrayList<>(),productRows=new ArrayList<>();
+  var details=publications.findPublicDetails(ids.stream().limit(8).toList());
   for(long id:ids.stream().limit(8).toList()){
-   var value=publications.findPublicDetail(id);if(value.isEmpty())continue;var event=value.get();var evidence=links.stream().filter(l->number(l.get("event_id"))==id).toList();
+   var event=details.get(id);if(event==null)continue;var evidence=links.stream().filter(l->number(l.get("event_id"))==id).toList();
    var reasons=new LinkedHashSet<String>();for(var l:evidence)if("EVENT".equals(l.get("kind"))&&interests.productLinkMatches(l,obj(event.get("event"))))reasons.add("작품·캐릭터 관련 행사");
    for(var participant:maps(event.get("participants"))){long pid=number(participant.get("id"));var person=obj(participant.get("participant"));
     var members=maps(person.get("members"));var matchedCreators=matchedArtistRows.stream().filter(c->creatorIds.contains(number(c.get("id")))&&members.stream().anyMatch(m->sameMember(c,m))).toList();

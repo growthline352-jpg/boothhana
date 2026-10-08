@@ -50,6 +50,15 @@ public class CatalogMediaService {
             throw ApiException.badRequest("이 참가자의 상품이 아닙니다.");
         return register(event,participant,product,input.image());
     }
+    public Map<Long,List<AssetView>> assetsForEvents(List<Long> eventIds) {
+        if(eventIds.isEmpty())return Map.of();
+        if(eventIds.size()>100)throw ApiException.badRequest("이미지 조회 한도 오류");
+        String marks=String.join(",",Collections.nCopies(eventIds.size(),"?"));
+        Map<Long,List<AssetView>> result=new HashMap<>();
+        for(var asset:db.query("select * from subculture_catalog_asset where event_id in ("+marks+") order by id",this::asset,eventIds.toArray()))
+            result.computeIfAbsent(asset.eventId(),ignored->new ArrayList<>()).add(asset);
+        return result;
+    }
     public List<AssetView> assets(long event,Long participant) {
         String q="select * from subculture_catalog_asset where event_id=?"+(participant==null?"":" and participant_id=?")+" order by id";
         return participant==null?db.query(q,this::asset,event):db.query(q,this::asset,event,participant);

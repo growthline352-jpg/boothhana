@@ -52,6 +52,20 @@ class CollectionGraphIntegrationTests {
  UUID id(Map<String,Object> job){return (UUID)job.get("id");}UUID token(Map<String,Object> job){return (UUID)job.get("leaseToken");}
  Map<String,Object> extract(Map<String,Object> job,Object result){return value(graph.extract(id(job),new Extraction(token(job),UUID.randomUUID(),job.get("contextHash").toString(),value(result),audit())));}
  Object approve(Map<String,Object> job,Map<String,Object> result){return graph.decide(id(job),new Decision(token(job),UUID.fromString(result.get("id").toString()),result.get("resultHash").toString(),"APPROVE","Original source independently verified",audit()));}
+ @Test void liveRefreshWaitsForActiveBaselineIncludingContinuationJobs(){
+  var baseline=graph.seed(new Seed("EVENT",Long.toString(event),Map.of("page",1),true,"import"));
+  var live=graph.seed(new Seed("EVENT",Long.toString(event),Map.of(),false,"live"));
+  assertThat(live.get("id")).isEqualTo(baseline.get("id"));
+  db.update("update collection_job set state='COMPLETE' where id=?",baseline.get("id"));
+  assertThat(graph.seed(new Seed("EVENT",Long.toString(event),Map.of(),false,"live")).get("id")).isNotEqualTo(baseline.get("id"));
+ }
+ @Test void firstLegacyCreatorRefreshIsBaseline(){
+  long maker=maker("Legacy author",source);
+  long p=db.queryForObject("insert into subculture_participant(event_id,identity_key,registration_name,payload_json,payload_hash) values(?,?,'Legacy booth','{}',?) returning id",Long.class,event,"a".repeat(64),"b".repeat(64));
+  db.update("insert into subculture_participant_member(participant_id,exhibitor_id) values(?,?)",p,maker);
+  graph.refreshCreators(new Bootstrap(null,maker-1,1));
+  assertThat(db.queryForObject("select baseline from collection_job where kind='CREATOR' and target_id=?",Boolean.class,Long.toString(maker))).isTrue();
+ }
  @Test void withdrawnEventIsNotBootstrappedOrRepublishedByQueuedWork(){
   var job=seed("EVENT",Long.toString(event));var extracted=extract(job,data);
   db.update("update subculture_event_candidate set publication_withdrawn=true where id=?",event);

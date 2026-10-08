@@ -33,7 +33,7 @@ class FloorplanBatch:
     def budget(self,cli=False):
         if time.monotonic()-self.started>self.cfg['floorplanMaxMinutes']*60:raise RunError('Floorplan time budget exhausted; resume stored tiles in next batch')
         if cli and self.cli_blocked_reason:raise CliUnavailable(self.cli_blocked_reason)
-        if cli and self.calls>=self.cfg['floorplanMaxCliCalls']:raise RunError('Floorplan CLI call budget exhausted; completed tile results are retained')
+        if cli and self.cfg['floorplanMaxCliCalls']>0 and self.calls>=self.cfg['floorplanMaxCliCalls']:raise RunError('Floorplan CLI call budget exhausted; completed tile results are retained')
     def heartbeat(self,event):
         if self.api:self.request('POST',f'/events/{event}/heartbeat',{'leaseId':self.lease})
     def job(self,path:Path,prompt,schema,*,images=None,fixture=None):

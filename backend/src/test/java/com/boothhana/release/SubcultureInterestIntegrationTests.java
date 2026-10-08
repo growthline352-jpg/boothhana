@@ -58,6 +58,18 @@ class SubcultureInterestIntegrationTests {
  void publish(){db.update("insert into subculture_catalog_publication(event_id,snapshot_json,event_revision) values(?,cast(? as jsonb),1) on conflict(event_id) do update set snapshot_json=excluded.snapshot_json,published_at=now()",event,json.writeValueAsString(snapshot));}
  Save input(){return new Save(new Target("PRODUCT",event,product,participant),day,"1관");}
 
+ @Autowired com.boothhana.collection.CatalogPublicationService publications;
+ @Test void batchedDetailsKeepPerEventLiveVisibility(){
+  long first=event,firstParticipant=participant;fixture();long second=event;
+  var ids=List.of(first,second);
+  assertThat(publications.findPublicDetails(ids)).containsKeys(first,second);
+  db.update("update subculture_participant set review_state='EXCLUDED' where id=?",firstParticipant);
+  var values=publications.findPublicDetails(ids);
+  assertThat((List<?>)values.get(first).get("participants")).isEmpty();
+  assertThat((List<?>)values.get(second).get("participants")).hasSize(1);
+  db.update("update subculture_event_candidate set review_state='EXCLUDED' where id=?",first);
+  assertThat(publications.findPublicDetails(ids)).containsOnlyKeys(second);
+ }
  @Test void privateSettingsRequireSessionCsrfAndAreIsolated()throws Exception{catalog();interests.save(user,new Settings(0,List.of(following(characterId))));assertThat(interests.settings(other).entries()).isEmpty();http.perform(get("/api/me/subculture/interests")).andExpect(status().isUnauthorized());http.perform(put("/api/me/subculture/interests").with(user(subject).roles("FAN")).contentType("application/json").content("{\"revision\":1,\"entries\":[]}")).andExpect(status().isForbidden());http.perform(get("/api/me/subculture/interests").with(user(subject).roles("FAN"))).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"));}
  @Test void conflictingSaveDoesNotLoseExistingInterests(){catalog();interests.save(user,new Settings(0,List.of(following(characterId))));assertThatThrownBy(()->interests.save(user,new Settings(0,List.of()))).isInstanceOf(ApiException.class);assertThat(interests.settings(user).entries()).hasSize(1);}
  @Test void worksIncludeChildrenButCharactersNeverIncludeSiblings(){catalog();link(siblingId);assertThat((List<?>)feed.home(null,null,workId,null,0).get("goods")).hasSize(1);assertThat((List<?>)feed.home(null,null,characterId,null,0).get("goods")).isEmpty();}

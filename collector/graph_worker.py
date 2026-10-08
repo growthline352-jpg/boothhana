@@ -267,12 +267,16 @@ class Worker:
                         page=self.request('POST',endpoint,{'runId':None,'afterId':after,'size':100});after=page['afterId']
                         if not page['hasMore']:break
                 refresh_at=time.monotonic()+6*3600
+                print('Graph discovery and creator refresh queued',flush=True)
             job=self.request('POST','/claim',{})
             if job.get('empty'):
                 if not watch:return
                 time.sleep(self.cfg['pollSeconds']);continue
             if job.get('skipped'):continue
-            try:self.process(job)
+            try:
+                print('Graph job started:',job['id'],job['kind'],flush=True)
+                receipt=self.process(job)
+                print('Graph job finished:',job['id'],receipt.get('verdict','stored'),flush=True)
             except Exception as exc:
                 # Durable errors contain only a bounded local diagnostic; no credentials or env dump.
                 try:self.request('POST','/jobs/'+job['id']+'/failure',{'leaseToken':job['leaseToken'],'reason':(type(exc).__name__+': '+str(exc))[:1800]})
