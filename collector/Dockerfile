@@ -2,7 +2,7 @@ FROM node:22-bookworm-slim AS node-runtime
 
 FROM python:3.12-slim-bookworm
 
-ARG CODEX_VERSION=0.144.1
+ARG CODEX_VERSION=0.161.0
 
 COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
