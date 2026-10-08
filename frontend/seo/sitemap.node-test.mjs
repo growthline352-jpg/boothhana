@@ -1,6 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { publishedEvents, renderRobots, renderSitemap } from './sitemap.mjs'
+test('company introduction is included once in the portal sitemap', () => {
+  for (const splitSites of [false, true]) {
+    const sitemap = renderSitemap('https://boothana.kr', [], splitSites)
+    assert.equal((sitemap.match(/<loc>https:\/\/boothana\.kr\/about<\/loc>/g) || []).length, 1)
+  }
+  assert.ok(!renderSitemap('https://subculture.boothana.kr', [], true).includes('/about'))
+})
 
 test('sitemap contains canonical category and event URLs with valid escaping', () => {
   const output = renderSitemap('https://boothhana.example', [{ id: 13, publishedAt: '2026-09-27' }])
