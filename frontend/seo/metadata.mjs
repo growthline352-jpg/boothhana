@@ -25,6 +25,26 @@ export function normalizePath(raw) {
   return raw.length > 500 ? '/not-found' : raw.replace(/\/+$/, '') || '/'
 }
 export function categoryFor(event) { return CATEGORY_BY_TYPE[event?.subcategory] || null }
+/** Only the complete, finite catalog directory is an indexable query view. */
+export function catalogDirectoryPage(path, search = '') {
+  if (path !== '/discover') return null
+  const params = new URLSearchParams(search)
+  if (params.get('period') !== 'all' || params.get('sort') !== 'recent') return null
+  const keys = ['category', 'period', 'sort', 'page', 'view']
+  if ([...params.keys()].some(key => !keys.includes(key) || params.getAll(key).length !== 1)) return null
+  if (params.has('view') && params.get('view') !== 'results') return null
+  const raw = params.get('page') ?? '0'
+  if (!/^(0|[1-9]\d*)$/.test(raw)) return null
+  const page = Number(raw)
+  return Number.isSafeInteger(page) && page <= 100000 ? page : null
+}
+export function catalogDirectoryHref(page = 0, category = '') {
+  const params = new URLSearchParams()
+  if (category) params.set('category', category)
+  params.set('period', 'all'); params.set('sort', 'recent')
+  if (page > 0) params.set('page', String(page))
+  return `/discover?${params}`
+}
 function categoryUrl(origin, category) { return categorySite(origin) ? `${categoryOrigin(category) || origin}/` : category === 'subculture' ? `${origin}/discover` : `${origin}/discover?category=${category}` }
 function dateTime(date, time) {
   if (!DATE.test(date || '')) return ''
@@ -152,8 +172,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   const boothMatch = /^\/discover\/([1-9]\d*)\/booths\/([1-9]\d*)$/.exec(path)
   const category = hostCategory || params.get('category') || 'subculture'
   const supported = Object.hasOwn(CATEGORY_SITES, category) && (!params.has('category') || Object.hasOwn(CATEGORY_SITES, params.get('category')))
-  const filtered = [...params.keys()].some(key => key !== 'category')
-  let title = SITE_TITLE, description = SITE_DESCRIPTION, indexable = browse && supported && !filtered
+  const directoryPage = catalogDirectoryPage(path, search)
+  const filtered = directoryPage === null && [...params.keys()].some(key => key !== 'category')
+  let title = SITE_TITLE, description = SITE_DESCRIPTION, indexable = browse && supported && !filtered && !unavailable
   let image = origin ? `${origin}/assets/brand/logo.png` : ''
   const requestedEventId = Number(detailMatch?.[1] || boothMatch?.[1])
   const validCatalog = !unavailable && Number(catalog?.id) === requestedEventId && catalog?.event && text(catalog.event.name, 160)
@@ -194,7 +215,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   } else if (path === '/events') {
     title = '예약 가능한 행사 | 부스하나'
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
-    indexable = true
+    indexable = !unavailable
   } else if (path.startsWith('/itinerary/shared/')) {
     title = '공유된 하루 일정 | 부스하나'
     description = '공유받은 일정과 지도를 확인하고 내 일정으로 복사하세요.'
@@ -216,8 +237,11 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     description = CATEGORY_SITES[category].description
   }
   const canonicalPath = split && browse && (hostCategory || path === '/discover' || params.has('category')) && supported ? '/' : path
-  // Queries remain usable but only the unfiltered category home is an index target.
-  const canonical = origin ? origin + canonicalPath + (!split && browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
+  if (directoryPage !== null && supported) title = `${CATEGORY_LABEL[category]} 전체 목록${directoryPage ? ` · ${directoryPage + 1}페이지` : ''} | ${CATEGORY_SITES[categorySite(origin)]?.name || '부스하나'}`
+  // Complete directory pages own their canonical; personal search/filter combinations stay noindex.
+  const canonical = origin ? origin + (directoryPage !== null && supported
+    ? catalogDirectoryHref(directoryPage, !split && category !== 'subculture' ? category : '')
+    : canonicalPath + (!split && browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '')) : ''
   const robots = path.startsWith('/itinerary/shared/') ? 'noindex,nofollow' : indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
   const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null, listing, path, category }) : null
   return { title, description, canonical, robots, image, schema, siteName: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', verification: verificationToken(verification), naverVerification: verificationToken(naverVerification) }
@@ -243,12 +267,13 @@ function list(values, max = 12) {
   return Array.isArray(values) ? values.map(value => text(value, 100)).filter(Boolean).slice(0, max) : []
 }
 /** Real public content for non-JavaScript crawlers; React replaces this same-content fallback after loading. */
-export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], siteUrl = '', splitSites = false } = {}) {
+export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], pagination = null, siteUrl = '', splitSites = false } = {}) {
   path = normalizePath(path)
   if (!catalog?.event) {
     if (!['/', '/discover', '/events'].includes(path)) return ''
     const params = new URLSearchParams(search)
-    if ((path === '/' || path === '/discover') && [...params.keys()].some(key => key !== 'category')) return ''
+    const directoryPage = catalogDirectoryPage(path, search)
+    if ((path === '/' || path === '/discover') && directoryPage === null && [...params.keys()].some(key => key !== 'category')) return ''
     if (path === '/' && siteUrl === PORTAL_ORIGIN && splitSites && !params.size) {
       return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.label)}</a></h2></section>`).join('')}</main>`
     }
@@ -257,8 +282,12 @@ export function renderCrawlableContent({ path = '/', search = '', catalog = null
     const rows = listingRows(listing)
     const heading = categorySite(siteUrl) && path !== '/events' ? CATEGORY_SITES[category].name : path === '/' ? '서울·경기 행사와 참가 부스 찾기' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category]
     const intro = path === '/events' ? '부스하나에 직접 등록된 예약 가능 행사입니다.' : '공개된 일정과 장소를 확인하고 행사별 참가 부스와 상품 정보를 찾아보세요.'
+    const directoryCategory = categorySite(siteUrl) || category === 'subculture' ? '' : category
+    const directoryLink = path === '/events' ? '' : `<p><a href="${esc(catalogDirectoryHref(0, directoryCategory))}">전체 행사 보기</a></p>`
+    const navigation = directoryPage !== null && pagination && pagination.page === directoryPage
+      ? `<nav aria-label="행사 목록 페이지">${directoryPage > 0 ? `<a href="${esc(catalogDirectoryHref(directoryPage - 1, directoryCategory))}" rel="prev">이전</a> · ` : ''}<span>${directoryPage + 1} / ${Math.max(1, Math.ceil(pagination.total / pagination.size))} 페이지</span>${(directoryPage + 1) * pagination.size < pagination.total ? ` · <a href="${esc(catalogDirectoryHref(directoryPage + 1, directoryCategory))}" rel="next">다음</a>` : ''}</nav>` : ''
     return `<main class="content-wrap section-pad" data-seo-fallback><h1>${esc(heading)}</h1><p>${esc(intro)}</p>
-      ${rows.length ? `<h2>공개 행사</h2><ul>${rows.map(row => `<li><a href="${esc(listingHref(row, siteOrigin(siteUrl), false))}">${esc(row.name)}</a>${row.startDate ? ` · <time datetime="${esc(text(row.startDate, 10))}">${esc(text(row.startDate, 10))}</time>` : ''}${row.venue ? ` · ${esc(text(row.venue, 160))}` : ''}</li>`).join('')}</ul>` : '<p>공개 행사 목록을 불러오고 있습니다.</p>'}</main>`
+      ${rows.length ? `<h2>공개 행사</h2><ul>${rows.map(row => `<li><a href="${esc(listingHref(row, siteOrigin(siteUrl), false))}">${esc(row.name)}</a>${row.startDate ? ` · <time datetime="${esc(text(row.startDate, 10))}">${esc(text(row.startDate, 10))}</time>` : ''}${row.venue ? ` · ${esc(text(row.venue, 160))}` : ''}</li>`).join('')}</ul>` : '<p>현재 공개된 행사가 없습니다.</p>'}${navigation}${directoryLink}</main>`
   }
   const event = catalog.event
   const eventPath = `/discover/${catalog.id}`
