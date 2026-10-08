@@ -8,6 +8,7 @@ import { useAuth } from '../../app/useAuth'
 import { useRemote } from '../../app/useRemote'
 import { ErrorState,LoadingState } from '../../components/ui/States'
 import { ContentImage } from '../../components/ui/ContentImage'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { useDirty } from '../visit/UnsavedChanges'
 import { relevantLocations,validDay,visitDays } from '../visit/visit'
 import { seoulToday } from '../discovery/browse'
@@ -96,6 +97,7 @@ export function LibraryPage(){
    {!rows.length?<div className="memory-empty"><span aria-hidden="true">▱</span><h2>{q||kind||eventId||visited?'이 조건으로 찾은 기록이 없어요.':'기억하고 싶은 곳을 하나 저장해 보세요.'}</h2><p>행사·부스·상품의 저장 버튼을 누르면 업체와 행사 맥락이 함께 남아요.</p>{q||kind||eventId||visited?<button className="btn secondary" onClick={()=>setParams({})}>조건 초기화</button>:<Link className="btn primary" to="/discover">행사 둘러보기</Link>}</div>:sectionGroups.map(g=><section key={g.id}>{g.name&&<div className="memory-group-actions"><h2 className="memory-group-title">{g.name}</h2>{!guest&&<Link className="btn secondary" to={libraryBoothsHref(g.id)}>저장한 부스 보기</Link>}</div>}<div className="memory-grid">{g.items.map(e=><MemoryCard key={e.id} entry={e} guest={guest} open={open}/>)}</div></section>)}
    {total>24&&<nav className="catalog-pager" aria-label="보관함 페이지"><button className="btn secondary" disabled={!page} onClick={()=>update({page:String(page-1)})}>이전</button><span>{page+1} / {Math.ceil(total/24)}</span><button className="btn secondary" disabled={(page+1)*24>=total} onClick={()=>update({page:String(page+1)})}>다음</button></nav>}
   </>}
+  {ready&&item&&selected.loading&&<div className="notice-banner" role="status">메모·방문 기록을 불러오고 있어요.<button type="button" className="btn secondary" onClick={close}>취소</button></div>}
   {ready&&item&&selected.error&&<div className="notice-banner" role="alert">{selected.error.message}<button className="btn secondary" onClick={close}>닫기</button></div>}
   {ready&&item&&editorEntry&&<MemoryEditor key={`${owner}:${editorEntry.id}:${editorEntry.revision}`} entry={editorEntry} draft={drafts.read(owner,editorEntry.id,editorEntry.revision)} preserveDraft={value=>drafts.put(owner,value)} publicLoading={editorPublic.loading} publicError={!!editorPublic.error} guest={guest} trigger={trigger.current} close={close}/>}
   {guest&&library&&<details className="memory-device-settings"><summary>기기 임시 저장 관리</summary><p>계정에 가져오기 전 삭제하면 되돌릴 수 없어요.</p><button className="btn secondary" onClick={()=>{if(window.confirm('이 기기의 임시 저장과 메모를 모두 삭제할까요?'))library.clearGuest()}}>이 기기 임시 저장 모두 삭제</button></details>}
@@ -121,11 +123,12 @@ export function MemoryCard({entry:e,guest,open}:{entry:MemoryEntry;guest:boolean
 export function MemoryEditor({entry:e,guest,trigger,close,publicLoading=false,publicError=false,draft,preserveDraft}:{entry:MemoryEntry;draft?:MemoryDraft;preserveDraft?:(value:MemoryDraft)=>void;guest:boolean;trigger:HTMLElement|null;close:()=>void;publicLoading?:boolean;publicError?:boolean}){
  const lib=useLibrary()!,ref=useRef<HTMLDialogElement>(null),heading=useRef<HTMLHeadingElement>(null),guard=useRef(false)
  const [note,setNote]=useState(draft?.note??e.note),[day,setDay]=useState(draft?.day??e.day),[hall,setHall]=useState(draft?.hall??e.hall),[error,setError]=useState(''),[busy,setBusy]=useState(false)
+ const [confirmation,setConfirmation]=useState<'discard'|'remove'|null>(null)
  useEffect(()=>{preserveDraft?.({id:e.id,revision:e.revision,note,day,hall})},[e.id,e.revision,note,day,hall,preserveDraft])
  const dirty=note!==e.note||day!==e.day||hall!==e.hall,clearDirty=useDirty(`memory:${e.id}`,{note:e.note,day:e.day,hall:e.hall},{note,day,hall})
  const [visitDay,setVisitDay]=useState(e.day&&e.day<=seoulToday()?e.day:seoulToday())
  useEffect(()=>ref.current?openCatalogDialog(ref.current,heading.current,trigger):undefined,[trigger])
- const dismiss=()=>{if(busy)return;if(dirty&&!window.confirm('저장하지 않은 메모가 있어요. 저장하지 않고 닫을까요?'))return;clearDirty();close()}
+ const dismiss=()=>{if(busy)return;if(dirty){setConfirmation('discard');return}clearDirty();close()}
  const run=async(action:()=>Promise<void>,closing=true)=>{if(guard.current)return;guard.current=true;setBusy(true);setError('');try{await action();if(closing){clearDirty();close()}}catch(x){setError(x instanceof Error?x.message:'처리하지 못했어요.')}finally{guard.current=false;setBusy(false)}}
  const dates=e.current?visitDays({occurrences:e.current.occurrences} as EventData):[],marked=e.visitedDays.includes(visitDay)
  const planning=discoveryFeatures.visitPreparation&&e.available&&e.target.type==='EVENT'
@@ -136,7 +139,7 @@ export function MemoryEditor({entry:e,guest,trigger,close,publicLoading=false,pu
    {e.changed&&<details><summary>저장할 때와 이름·소개가 달라졌어요</summary><p>저장 당시: {e.saved?.title}</p><p>{e.saved?.summary}</p><p>현재: {e.current.memory.title}</p><p>{e.current.memory.summary}</p></details>}
    <div className="row-actions"><Link className="btn secondary" to={memoryHref(e.target,day,hall)}>{planning?'행사 상세 보기':'공개 안내 다시 보기'}</Link>{planning&&discoveryFeatures.comparison&&<Link className="btn secondary" to={compareHref([e.target.eventId])}>다른 행사와 비교</Link>}<ShareQr target={e.target} day={day} hall={hall} title={e.current.memory.title}/></div>
   </>}
-  <footer><button className="btn secondary memory-delete" disabled={busy} onClick={()=>{if(window.confirm('이 항목과 메모를 삭제할까요? 같은 부스의 다른 저장 항목이 없다면 방문 기록도 삭제됩니다.'))void run(()=>lib.remove(e))}}>저장 항목 삭제</button></footer></>
+  <footer><button className="btn secondary memory-delete" disabled={busy} onClick={()=>setConfirmation('remove')}>저장 항목 삭제</button></footer></>
  const editorContent=<>
   {!planning&&<p className="item-meta">{guest?'기기 임시 기록이며 같은 기기의 다른 사용자가 볼 수 있어요.':'메모는 업체·관리자의 일반 화면이나 공유 링크에 나타나지 않아요.'}</p>}
   {(publicLoading||publicError)&&<p className="notice-banner" role="status">{publicError?'공개 안내를 확인하지 못해 이미지·설명을 잠시 숨겼어요. 메모는 그대로입니다.':'최신 공개 안내를 확인하고 있어요. 작성 중인 메모는 그대로입니다.'}<button type="button" className="btn secondary" onClick={()=>lib.refreshPublic()}>공개 안내 다시 확인</button></p>}
@@ -149,8 +152,8 @@ export function MemoryEditor({entry:e,guest,trigger,close,publicLoading=false,pu
   </fieldset></form>
   {planning?<details className="memory-plan-more"><summary>방문 기록·공유·더보기</summary>{extraContent}</details>:extraContent}
  </>
- return <dialog ref={ref} className={`memory-editor${planning?' memory-editor--plan':''}`} aria-labelledby="memory-editor-title" onCancel={ev=>{ev.preventDefault();dismiss()}}>
+ return <><dialog ref={ref} className={`memory-editor${planning?' memory-editor--plan':''}`} aria-labelledby="memory-editor-title" onCancel={ev=>{ev.preventDefault();dismiss()}}>
   <header><div><p className="eyebrow">{planning?'방문 준비':'나만의 관심 기록'}</p><h2 id="memory-editor-title" tabIndex={-1} ref={heading}>{e.current?.memory.title||'현재 공개되지 않는 정보'}</h2></div><button type="button" className={planning?'memory-plan-close':'btn secondary'} aria-label="닫기" disabled={busy} onClick={dismiss}>{planning?<DiscoveryIcon name="close" size={20}/>:'닫기'}</button></header>
   {planning?<><div className="memory-plan-body">{editorContent}</div><footer className="memory-plan-save"><p className="memory-plan-privacy">{guest?'메모는 이 기기에 임시 저장돼요.':'메모는 나에게만 보여요.'}</p><button className="btn primary" type="submit" form="memory-plan-form" disabled={busy}>{busy?'저장 중…':'방문 계획 저장'}</button></footer></>:editorContent}
- </dialog>
+ </dialog>{confirmation&&<ConfirmDialog title={confirmation==='discard'?'저장하지 않고 닫을까요?':'저장 항목을 삭제할까요?'} description={confirmation==='discard'?'작성 중인 메모와 방문 계획의 변경 내용이 사라집니다.':'이 항목과 메모가 삭제됩니다. 같은 부스의 마지막 저장 항목이면 방문 기록도 삭제됩니다.'} confirmLabel={confirmation==='discard'?'저장하지 않고 닫기':'저장 항목 삭제'} cancel={()=>setConfirmation(null)} confirm={()=>{setConfirmation(null);if(confirmation==='discard'){clearDirty();close()}else void run(()=>lib.remove(e))}}/>}</>
 }

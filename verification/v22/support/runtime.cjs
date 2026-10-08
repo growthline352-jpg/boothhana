@@ -22,7 +22,8 @@ function runtime(options={}){
   useLayoutEffect(f,deps){hooks.useEffect(f,deps)},
   createContext(value){return {value,Provider:component('Provider')}},useContext(c){return c.value},useId(){return `test-${cursor++}`},
  };
- const overrides={react:hooks,'react/jsx-runtime':{jsx,jsxs:jsx,Fragment:'Fragment'},...options.overrides};
+ // Keep portal children visible to source-only assertions; no DOM/top-layer emulation.
+ const overrides={react:hooks,'react-dom':{createPortal:children=>children},'react/jsx-runtime':{jsx,jsxs:jsx,Fragment:'Fragment'},...options.overrides};
  function load(relative){const file=path.isAbsolute(relative)?relative:path.resolve(root,relative);if(cache.has(file))return cache.get(file).exports;
   const m={exports:{}};cache.set(file,m);
   if(file.endsWith('.json')){m.exports=JSON.parse(fs.readFileSync(file,'utf8'));return m.exports}

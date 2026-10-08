@@ -18,6 +18,8 @@ function harness(options={}){
   const module={exports:{}};cache.set(file,module.exports)
   const result=ts.transpileModule(fs.readFileSync(file,'utf8').replace(/\bimport\.meta\.env\b/g,'({})'),{fileName:file.replace(/\.mjs$/,'.js'),compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}})
   function requireLocal(name){
+   // Source-only JSX checks retain portal content; focus and the top layer need a real browser.
+   if(name==='react-dom')return {createPortal:children=>children};
    if(name.endsWith('/PageMetadata'))return {PageMetadata:()=>null,RouteMetadata:()=>null};
    if(name==='qrcode')return {default:{toDataURL:async()=>"data:image/png;base64,TEST_ONLY"},toDataURL:async()=>"data:image/png;base64,TEST_ONLY"};
    // Vite's import.meta.env is valid in the browser build but cannot be parsed by
