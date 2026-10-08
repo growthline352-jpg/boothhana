@@ -123,13 +123,131 @@ test('server renderer resolves a public booth and returns 404 for an unknown boo
   assert.equal(missing.meta.robots, 'noindex,follow')
 })
 
-test('server renderer adds best-effort crawlable browse content without failing when listing API is unavailable', async () => {
+test('server renderer returns a retryable error instead of an indexable empty listing when the API is unavailable', async () => {
   const template = '<!-- BOOTH_META_START --><!-- BOOTH_META_END --><div id="root"></div>'
-  const ok = async () => new Response(JSON.stringify({ items: listing.map(row => ({ id: row.id, event: { name: row.name, venueName: row.venue, occurrences: [{ startDate: row.startDate, endDate: row.startDate }] } })) }), { status: 200, headers: { 'content-type': 'application/json' } })
+  const ok = async () => new Response(JSON.stringify({ total: 1, items: listing.map(row => ({ id: row.id, event: { name: row.name, venueName: row.venue, occurrences: [{ startDate: row.startDate, endDate: row.startDate }] } })) }), { status: 200, headers: { 'content-type': 'application/json' } })
   const rendered = await renderPage({ path: '/discover', template, siteUrl, apiBase: 'https://api.example', fetcher: ok })
   assert.equal(rendered.status, 200)
   assert.match(rendered.html, /href="\/discover\/13"/)
   const unavailable = await renderPage({ path: '/discover', template, siteUrl, apiBase: 'https://api.example', fetcher: async () => new Response('', { status: 503 }) })
-  assert.equal(unavailable.status, 200)
-  assert.match(unavailable.html, /공개 행사 목록을 불러오고 있습니다/)
+  assert.equal(unavailable.status, 503)
+  assert.equal(unavailable.meta.robots, 'noindex,follow')
+  assert.doesNotMatch(unavailable.html, /공개 행사 목록을 불러오고 있습니다/)
+})
+
+const browseTemplate = '<!-- BOOTH_META_START --><!-- BOOTH_META_END --><div id="root"></div>'
+const publicJson = value => new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } })
+const directorySearch = 'period=all&sort=recent'
+
+test('unfiltered all-period directory pages have independent indexable canonical URLs', () => {
+  for (const origin of ['https://subculture.boothana.kr', 'https://expo.boothana.kr', 'https://festival.boothana.kr', 'https://popup.boothana.kr']) {
+  for (const page of [0, 1, 2]) {
+    const meta = pageMetadata({ path: '/discover', siteUrl: origin, search: `${directorySearch}&page=${page}` })
+    assert.match(meta.robots, /^index,follow/)
+    assert.equal(meta.canonical, `${origin}/discover?${directorySearch}${page ? `&page=${page}` : ''}`)
+    if (page) assert.match(meta.title, new RegExp(`${page + 1}페이지`))
+  }
+  for (const extra of ['&q=인형', '&region=SEOUL', '&type=DOLL', '&page=-1', '&page=1&page=2']) {
+    assert.equal(pageMetadata({ path: '/discover', siteUrl: origin, search: directorySearch + extra }).robots, 'noindex,follow')
+  }
+  }
+})
+
+test('crawlers can follow HTML links from the category home through every directory page', async () => {
+  const origin = 'https://subculture.boothana.kr'
+  const events = Array.from({ length: 47 }, (_, i) => ({ id: 150 + i, event: { name: `공개 행사 ${150 + i}`, venueName: '서울', occurrences: [] } }))
+  const fetcher = async (url, options) => {
+    assert.equal(options.credentials, 'omit')
+    assert.equal(options.redirect, 'error')
+    const params = new URL(url).searchParams
+    assert.equal(params.get('grouped'), 'true', 'HTML and browser listings must paginate the same operating editions')
+    const page = Number(params.get('page')), size = Number(params.get('size'))
+    return publicJson({ total: events.length, page, size, items: events.slice(page * size, (page + 1) * size) })
+  }
+  const render = url => renderPage({ path: url.pathname, search: url.search.slice(1), template: browseTemplate, siteUrl: origin, apiBase: 'https://api.example', fetcher })
+  const home = await render(new URL('/', origin))
+  const directoryHref = home.html.match(/href="([^"]+)"[^>]*>전체 행사 보기/)
+  assert.ok(directoryHref, 'the home must link to the complete event directory')
+  let url = new URL(directoryHref[1].replaceAll('&amp;', '&'), origin)
+  const visited = new Set(), found = new Set()
+  while (!visited.has(url.href)) {
+    visited.add(url.href)
+    const page = await render(url)
+    assert.equal(page.status, 200)
+    assert.match(page.meta.robots, /^index/)
+    assert.equal(page.meta.canonical, url.href)
+    for (const match of page.html.matchAll(/<a href="\/discover\/(\d+)"/g)) found.add(Number(match[1]))
+    const next = page.html.match(/<a href="([^"]+)" rel="next"/)
+    if (!next) break
+    url = new URL(next[1].replaceAll('&amp;', '&'), origin)
+    assert.ok(visited.size < 5, 'pagination must not loop')
+  }
+  assert.equal(visited.size, 3)
+  assert.deepEqual([...found].sort((a, b) => a - b), events.map(row => row.id))
+})
+
+test('listing responses slower than 1.5 seconds still contain the public event links', async () => {
+  const fetcher = (url, { signal }) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(publicJson({ total: 1, items: [catalog] })), 1700)
+    signal.addEventListener('abort', () => { clearTimeout(timer); reject(signal.reason) }, { once: true })
+  })
+  const page = await renderPage({ path: '/', template: browseTemplate, siteUrl, apiBase: 'https://api.example', fetcher })
+  assert.equal(page.status, 200)
+  assert.match(page.html, /href="\/discover\/13"/)
+})
+
+test('a transient public API failure is retried once without replacing content with an empty page', async () => {
+  let calls = 0
+  const fetcher = async () => ++calls === 1 ? new Response('', { status: 503 }) : publicJson({ total: 1, items: [catalog] })
+  const page = await renderPage({ path: '/discover', search: directorySearch, template: browseTemplate, siteUrl, apiBase: 'https://api.example', fetcher })
+  assert.equal(calls, 2)
+  assert.equal(page.status, 200)
+  assert.match(page.html, /href="\/discover\/13"/)
+})
+
+test('a nonexistent directory page returns 404 and invalid pagination cannot trigger an API fetch', async () => {
+  const input = { path: '/discover', template: browseTemplate, siteUrl, apiBase: 'https://api.example' }
+  const beyond = await renderPage({ ...input, search: directorySearch + '&page=2', fetcher: async () => publicJson({ total: 1, items: [] }) })
+  assert.equal(beyond.status, 404)
+  assert.equal(beyond.meta.robots, 'noindex,follow')
+  let calls = 0
+  const invalid = await renderPage({ ...input, search: directorySearch + '&page=100001', fetcher: async () => { calls++; return publicJson({ total: 0, items: [] }) } })
+  assert.equal(calls, 0)
+  assert.equal(invalid.meta.robots, 'noindex,follow')
+})
+
+test('an empty published catalog is distinguished from an unavailable API', async () => {
+  const page = await renderPage({ path: '/discover', search: directorySearch, template: browseTemplate, siteUrl, apiBase: 'https://api.example', fetcher: async () => publicJson({ total: 0, items: [] }) })
+  assert.equal(page.status, 200)
+  assert.match(page.html, /현재 공개된 행사가 없습니다/)
+  assert.doesNotMatch(page.html, /rel="next"/)
+})
+
+test('persistent server failures are bounded and all public listing failures stay noindex', async () => {
+  for (const path of ['/discover', '/events']) {
+    let calls = 0
+    const page = await renderPage({ path, template: browseTemplate, siteUrl, apiBase: 'https://api.example',
+      fetcher: async () => { calls++; return new Response('', { status: 503 }) } })
+    assert.equal(calls, 2)
+    assert.equal(page.status, 503)
+    assert.equal(page.meta.robots, 'noindex,follow')
+    assert.doesNotMatch(page.html, /data-seo-fallback/)
+  }
+})
+
+test('published detail retries a network reset but never retries a removed event', async () => {
+  let calls = 0
+  const restored = await renderPage({ path: '/discover/13', template: browseTemplate, siteUrl, apiBase: 'https://api.example',
+    fetcher: async () => { if (++calls === 1) throw new TypeError('connection reset'); return publicJson(catalog) } })
+  assert.equal(calls, 2)
+  assert.equal(restored.status, 200)
+  assert.match(restored.html, /41회 서울 프로젝트돌/)
+  for (const status of [404, 410]) {
+    calls = 0
+    const removed = await renderPage({ path: '/discover/13', template: browseTemplate, siteUrl, apiBase: 'https://api.example',
+      fetcher: async () => { calls++; return new Response('', { status }) } })
+    assert.equal(calls, 1)
+    assert.equal(removed.status, 404)
+    assert.equal(removed.meta.robots, 'noindex,follow')
+  }
 })

@@ -27,6 +27,7 @@ import { PopularEvents } from './PopularEvents'
 import { useRecommendationViewer } from './useRecommendationViewer'
 import { EventCalendar } from './EventCalendar'
 import { calendarMonth, monthRange } from './calendar'
+import { catalogDirectoryHref } from '../../../seo/metadata.mjs'
 import './discovery.css'
 import '../visit/visit.css'
 
@@ -82,13 +83,22 @@ export function DiscoveryPage() {
   const pages = Math.max(1, Math.ceil(total / 20))
   const range = periodRange(state.period, today, state.from, state.to)
   const returnTo = location.pathname + location.search
-  const allEventsHref = searchResultsHref(params, category.key, '')
+  const allEventsHref = catalogDirectoryHref(0, currentSiteCategory() || category.key === 'subculture' ? '' : category.key)
+  const pageHref = (page: number) => {
+    const next = new URLSearchParams(params)
+    if (currentSiteCategory()) next.delete('category')
+    else next.set('category', category.key)
+    next.set('view', 'results')
+    if (page > 0) next.set('page', String(page))
+    else next.delete('page')
+    return `/discover?${next}`
+  }
   const openingRegion = homeSectionRegion(params, 'openingRegion')
   const closingRegion = homeSectionRegion(params, 'closingRegion')
   const hasFilter = Boolean(state.q || state.region || state.areas || state.subcategory || !isCalendar && state.period !== 'all')
   const dateLabel = dateFormatter.format(new Date(`${today}T12:00:00Z`)).replaceAll('.', '')
   const quickLinks = homeQuickLinks(category.key)
-  const calendarLinkParams = new URLSearchParams(allEventsHref.split('?')[1]); calendarLinkParams.set('view', 'calendar'); calendarLinkParams.set('period', 'all'); calendarLinkParams.delete('from'); calendarLinkParams.delete('to')
+  const calendarLinkParams = new URLSearchParams(searchResultsHref(params, category.key, '').split('?')[1]); calendarLinkParams.set('view', 'calendar'); calendarLinkParams.set('period', 'all'); calendarLinkParams.delete('from'); calendarLinkParams.delete('to')
   const calendarHref = `/discover?${calendarLinkParams.toString()}`
 
   return <div className={`discovery-page discovery-theme-${category.key}`}>
@@ -174,7 +184,7 @@ export function DiscoveryPage() {
           : data.error ? <div className="discovery-empty" role="alert"><div className="discovery-empty-icon"><DiscoveryIcon name="info" size={30}/></div><h3>행사를 불러오지 못했어요</h3><p>연결 상태를 확인하고 다시 시도해 주세요.</p><button type="button" className="discovery-primary" onClick={() => void data.reload()}>다시 불러오기</button></div>
           : rows.length ? <div className="discovery-card-grid">{rows.map(row => <div key={row.id}>{comparing&&<label className="compare-card-select"><input type="checkbox" checked={selectedIds.includes(editionId(row))} disabled={selectedIds.length===2&&!selectedIds.includes(editionId(row))} onChange={()=>selectComparison(editionId(row))}/>{row.event.name} 비교 선택</label>}<DiscoveryEventCard row={row} today={today} returnTo={returnTo} period={state.period} from={range.from} to={range.to}/></div>)}</div>
           : <div className="discovery-empty"><div className="discovery-empty-icon"><DiscoveryIcon name="search" size={30}/></div><h3>{state.page > 0 ? '이 페이지에는 행사가 없어요' : hasFilter ? '조건에 맞는 공개 행사가 없어요' : '새로운 행사를 준비하고 있어요'}</h3><p>{state.page > 0 ? '공개 목록이 변경되었을 수 있어요. 첫 페이지에서 다시 확인해 주세요.' : hasFilter ? '검색어와 분류를 바꾸거나 전체 기간으로 확인해 보세요.' : '검토가 끝난 행사부터 소개해 드립니다. 아직 공개되지 않은 정보는 표시하지 않아요.'}</p>{state.page > 0 ? <button className="discovery-primary" type="button" onClick={() => update({page:''})}>같은 조건의 첫 페이지로</button> : hasFilter && <button className="discovery-primary" type="button" onClick={reset}>전체 공개 행사 보기</button>}</div>}
-        {!state.dateError && !data.loading && !data.error && total > 0 && pages > 1 && state.page < pages && <nav className="discovery-pagination" aria-label="행사 목록 페이지"><button type="button" disabled={state.page === 0} onClick={() => update({ page: String(Math.max(0, state.page - 1)) })}>이전</button><span><strong>{state.page + 1}</strong> / {pages}</span><button type="button" disabled={(state.page + 1) * 20 >= total} onClick={() => update({ page: String(state.page + 1) })}>다음</button></nav>}</>}
+        {!state.dateError && !data.loading && !data.error && total > 0 && pages > 1 && state.page < pages && <nav className="discovery-pagination" aria-label="행사 목록 페이지">{state.page > 0 ? <Link className="btn" rel="prev" to={pageHref(state.page - 1)}>이전</Link> : <button type="button" disabled>이전</button>}<span><strong>{state.page + 1}</strong> / {pages}</span>{(state.page + 1) * 20 < total ? <Link className="btn" rel="next" to={pageHref(state.page + 1)}>다음</Link> : <button type="button" disabled>다음</button>}</nav>}</>}
       </> : <div className="discovery-coming"><div className="discovery-coming-icon"><DiscoveryIcon name={category.icon} size={42}/></div><h3>{category.label} 정보를 준비하고 있어요</h3><p>검토와 공개가 끝난 정보부터 이곳에서 확인할 수 있습니다.</p><Link className="discovery-primary" to={categoryHref('subculture')}>서브컬처 먼저 둘러보기 <DiscoveryIcon name="arrow" size={17}/></Link></div>}
     </section>}
     {category.enabled && <BestsellerSection category={category.code}/>}
