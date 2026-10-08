@@ -43,7 +43,8 @@ export function categoryRedirect({ origin, path, search = '', category = null, e
     // Local home tabs must retain the mounted page, including when the final tab is cleared.
     // Canonical metadata still points home aliases at the category root.
     if (siteCategory && !explicit && homeStateOnly) return ''
-    const targetPath = params.size && !homeStateOnly ? '/discover' : '/'
+    const ownSubcultureSearch = siteCategory === 'subculture' && target === 'subculture' && path === '/discover'
+    const targetPath = ownSubcultureSearch || (params.size && !homeStateOnly) ? '/discover' : '/'
     const destination = `${categoryOrigin(target)}${targetPath}${params.size ? `?${params}` : ''}`
     const current = `${origin}${path}${search ? `?${new URLSearchParams(search)}` : ''}`
     return destination === current ? '' : destination
