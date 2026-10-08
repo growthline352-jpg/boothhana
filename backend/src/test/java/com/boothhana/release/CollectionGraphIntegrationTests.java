@@ -61,6 +61,15 @@ class CollectionGraphIntegrationTests {
   UUID run=UUID.randomUUID();graph.bootstrap(new Bootstrap(run,0,200));
   assertThat(db.queryForObject("select count(*) from collection_migration where run_id=? and source_id=?",Integer.class,run,event)).isZero();
  }
+ @Autowired com.boothhana.interests.InterestFeed interestFeed;
+ @Test void expandedProductionTaxonomyIsCollectedPublishedAndDiscoverable(){
+  db.update("update subculture_event_candidate set subcategory='ANIME_GAME_FESTIVAL',payload_json=jsonb_set(payload_json,'{subcategory}','\"ANIME_GAME_FESTIVAL\"'::jsonb) where id=?",event);
+  UUID run=UUID.randomUUID();graph.bootstrap(new Bootstrap(run,event-1,1));
+  assertThat(db.queryForObject("select count(*) from collection_migration where run_id=? and source_id=?",Integer.class,run,event)).isEqualTo(1);
+  var job=graph.claim();assertThat(Long.parseLong(job.get("targetId").toString())).isEqualTo(event);
+  var result=value(data);result.put("subcategory","ANIME_GAME_FESTIVAL");approve(job,extract(job,result));
+  assertThat((List<Map<String,Object>>)interestFeed.home(null,null,null,null,0).get("events")).anyMatch(row->((Number)row.get("id")).longValue()==event);
+ }
  @Test void eventApprovalPublishesAndReplayDoesNotPublishTwice(){var job=seed("EVENT",Long.toString(event));var extracted=extract(job,data);assertThat(db.queryForObject("select count(*) from subculture_catalog_publication where event_id=?",Integer.class,event)).isZero();approve(job,extracted);var published=db.queryForObject("select published_at::text from subculture_catalog_publication where event_id=?",String.class,event);approve(job,extracted);assertThat(db.queryForObject("select published_at::text from subculture_catalog_publication where event_id=?",String.class,event)).isEqualTo(published);assertThat(db.queryForObject("select count(*) from collection_verdict",Integer.class)).isEqualTo(1);}
  long fan(){return db.queryForObject("insert into app_user(kakao_subject,display_name) values(?,'[TEST] News') returning id",Long.class,UUID.randomUUID().toString());}
  @Test void graphReadinessChecksNewMigrations(){assertThat(readiness.check().issues()).isEmpty();}

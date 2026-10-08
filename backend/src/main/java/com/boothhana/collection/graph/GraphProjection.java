@@ -41,7 +41,7 @@ public class GraphProjection {
   var cycle=ZonedDateTime.now(ZoneId.of("Asia/Seoul"));String generation=cycle.toLocalDate()+":"+(cycle.getHour()/6);
   if(kind.equals("RELATIONS"))return GraphEventRelations.apply(db,json,identities,Long.parseLong(target),context,result,verdict);
   if(kind.equals("DISCOVERY")){
-   SearchResult search=as(result,SearchResult.class);require(search.events().stream().allMatch(e->Set.of("COMIC_DOUJIN","DOLL","ONLY_EVENT","BIRTHDAY_CAFE","STATIONERY_GOODS").contains(e.subcategory())),"서브컬처 범위가 아닙니다.");
+   SearchResult search=as(result,SearchResult.class);require(search.events().stream().allMatch(e->com.boothhana.interests.SubcultureScope.TYPES.contains(e.subcategory())),"서브컬처 범위가 아닙니다.");
    var now=Instant.now().toString();var receipt=events.ingest(new Batch("1",verdict.toString(),now,now,"CLI",true,as(input.get("scope"),Scope.class),search));require(receipt.rejected()==0,"발견 결과에 유효하지 않은 행사가 있습니다.");
    for(var ref:receipt.candidates())enqueue.accept(new Seed("EVENT",Long.toString(ref.id()),Map.of(),baseline,generation));return Map.of("verdict","APPROVE","events",receipt.candidates(),"needsEnrichment",!"COMPLETE".equals(search.searchStatus()));
   }

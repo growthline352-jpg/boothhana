@@ -48,7 +48,7 @@ public class GraphService {
  /** Stable keyset backfill; all legacy IDs and published snapshots remain in place. */
  @Transactional public Map<String,Object> bootstrap(Bootstrap in){
   require(in!=null&&in.runId()!=null&&in.afterId()>=0&&in.size()>0&&in.size()<=200,"이전 범위를 확인하세요.");
-  var rows=db.queryForList("select id,revision from subculture_event_candidate where id>? and review_state<>'EXCLUDED' and not publication_withdrawn and subcategory in ('COMIC_DOUJIN','DOLL','ONLY_EVENT','BIRTHDAY_CAFE','STATIONERY_GOODS') order by id limit ?",in.afterId(),in.size()+1);
+  var rows=db.queryForList("select id,revision from subculture_event_candidate where id>? and review_state<>'EXCLUDED' and not publication_withdrawn and subcategory in ("+com.boothhana.interests.SubcultureScope.SQL+") order by id limit ?",in.afterId(),in.size()+1);
   long cursor=in.afterId();int count=0;
   for(var row:rows.stream().limit(in.size()).toList()){
    cursor=number(row.get("id"));var job=seed(new Seed("EVENT",Long.toString(cursor),Map.of(),true,in.runId()+":"+row.get("revision")));
@@ -77,7 +77,7 @@ public class GraphService {
   require(in!=null&&in.afterId()>=0&&in.size()>0&&in.size()<=200,"갱신 범위 오류");
   var now=java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Seoul"));var today=now.toLocalDate();String cycle=today+":"+(now.getHour()/6);
   if(in.afterId()==0)for(int days=0;days<90;days+=7){var start=today.plusDays(days);seed(new Seed("DISCOVERY",start.toString(),Map.of("scope",Map.of("region","SEOUL_GYEONGGI","timezone","Asia/Seoul","startDate",start.toString(),"endDate",start.plusDays(6).toString())),false,cycle));}
-  var rows=db.queryForList("select id from subculture_event_candidate where id>? and ends_on>=cast(? as date) and review_state<>'EXCLUDED' and not publication_withdrawn and subcategory in ('COMIC_DOUJIN','DOLL','ONLY_EVENT','BIRTHDAY_CAFE','STATIONERY_GOODS') order by id limit ?",in.afterId(),today.minusDays(1).toString(),in.size()+1);long after=in.afterId();
+  var rows=db.queryForList("select id from subculture_event_candidate where id>? and ends_on>=cast(? as date) and review_state<>'EXCLUDED' and not publication_withdrawn and subcategory in ("+com.boothhana.interests.SubcultureScope.SQL+") order by id limit ?",in.afterId(),today.minusDays(1).toString(),in.size()+1);long after=in.afterId();
   for(var row:rows.stream().limit(in.size()).toList()){after=number(row.get("id"));seed(new Seed("EVENT",Long.toString(after),Map.of(),false,cycle));}
   return Map.of("afterId",after,"hasMore",rows.size()>in.size());
  }
@@ -85,7 +85,7 @@ public class GraphService {
  @Transactional public Map<String,Object> refreshCreators(Bootstrap in){
   require(in!=null&&in.afterId()>=0&&in.size()>0&&in.size()<=200,"작가 갱신 범위 오류");
   String cycle=java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString();
-  var rows=db.queryForList("select c.id from subculture_exhibitor c where c.id>? and (exists(select 1 from collection_creator_publication cp where cp.exhibitor_id=c.id and cp.active) or exists(select 1 from subculture_participant_member pm join subculture_participant p on p.id=pm.participant_id join subculture_event_candidate e on e.id=p.event_id where pm.exhibitor_id=c.id and p.review_state<>'EXCLUDED' and e.review_state<>'EXCLUDED' and not e.publication_withdrawn and e.subcategory in ('COMIC_DOUJIN','DOLL','ONLY_EVENT','BIRTHDAY_CAFE','STATIONERY_GOODS'))) and not exists(select 1 from collection_creator_publication hidden where hidden.exhibitor_id=c.id and not hidden.active) order by c.id limit ?",in.afterId(),in.size()+1);long after=in.afterId();
+  var rows=db.queryForList("select c.id from subculture_exhibitor c where c.id>? and (exists(select 1 from collection_creator_publication cp where cp.exhibitor_id=c.id and cp.active) or exists(select 1 from subculture_participant_member pm join subculture_participant p on p.id=pm.participant_id join subculture_event_candidate e on e.id=p.event_id where pm.exhibitor_id=c.id and p.review_state<>'EXCLUDED' and e.review_state<>'EXCLUDED' and not e.publication_withdrawn and e.subcategory in ("+com.boothhana.interests.SubcultureScope.SQL+"))) and not exists(select 1 from collection_creator_publication hidden where hidden.exhibitor_id=c.id and not hidden.active) order by c.id limit ?",in.afterId(),in.size()+1);long after=in.afterId();
   for(var row:rows.stream().limit(in.size()).toList()){after=number(row.get("id"));seed(new Seed("CREATOR",Long.toString(after),Map.of(),false,cycle));}
   return Map.of("afterId",after,"hasMore",rows.size()>in.size());
  }

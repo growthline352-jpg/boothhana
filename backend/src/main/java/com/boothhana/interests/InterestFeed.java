@@ -35,10 +35,10 @@ public class InterestFeed {
   args.add(9);args.add(page*8);
   var ids=db.queryForList("""
    select pub.event_id from subculture_catalog_publication pub join subculture_event_candidate e on e.id=pub.event_id
-   where e.review_state<>'EXCLUDED' and pub.snapshot_json->'event'->>'subcategory' in ('COMIC_DOUJIN','DOLL','ONLY_EVENT','BIRTHDAY_CAFE','STATIONERY_GOODS')
+   where e.review_state<>'EXCLUDED' and pub.snapshot_json->'event'->>'subcategory' in (%s)
    and coalesce(pub.snapshot_json->'event'->'operationStatus'->>'state','UNKNOWN') not in ('CANCELED','POSTPONED')
    and exists(select 1 from jsonb_array_elements(pub.snapshot_json->'event'->'occurrences') d where d->>'endDate'>=?)
-   """+restrict+" order by (select min(d->>'startDate') from jsonb_array_elements(pub.snapshot_json->'event'->'occurrences') d),pub.event_id limit ? offset ?",Long.class,args.toArray());
+   """.formatted(SubcultureScope.SQL)+restrict+" order by (select min(d->>'startDate') from jsonb_array_elements(pub.snapshot_json->'event'->'occurrences') d),pub.event_id limit ? offset ?",Long.class,args.toArray());
   List<Map<String,Object>> eventRows=new ArrayList<>(),productRows=new ArrayList<>();
   for(long id:ids.stream().limit(8).toList()){
    var value=publications.findPublicDetail(id);if(value.isEmpty())continue;var event=value.get();var evidence=links.stream().filter(l->number(l.get("event_id"))==id).toList();
