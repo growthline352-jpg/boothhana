@@ -9,6 +9,19 @@ const template = '<html><head><!-- BOOTH_META_START --><!-- BOOTH_META_END --></
 const fixture = { id: 12, event: { name: '와인 박람회', subcategory: 'WINE', venueName: '전시장', occurrences: [{ startDate: '2026-10-01', endDate: '2026-10-03' }] }, participants: [{ id: 7, participant: { registrationName: '참가 브랜드' } }] }
 const json = value => new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } })
 
+test('subculture home pagination and interest controls survive SPA and HTTP routing', async () => {
+  const origin = CATEGORY_SITES.subculture.origin
+  for (const search of ['page=1', 'interestId=selected', 'catalogPage=2', 'page=1&interestId=selected&catalogPage=2']) {
+    assert.equal(categoryRedirect({ origin, path: '/', search }), '')
+    const page = await renderPage({ path: '/', search, template, siteUrl: origin, apiBase: 'https://api.example', fetcher: async () => json({ items: [], total: 0 }) })
+    assert.equal(page.status, 200)
+    assert.equal(page.location, undefined)
+  }
+  assert.equal(categoryRedirect({ origin, path: '/', search: 'q=art&page=1' }), `${origin}/discover?q=art&page=1`)
+  assert.equal(categoryRedirect({ origin, path: '/', search: 'category=exhibitions&page=1' }), 'https://expo.boothana.kr/discover?page=1')
+  assert.equal(categoryRedirect({ origin: CATEGORY_SITES.exhibitions.origin, path: '/', search: 'page=1' }), 'https://expo.boothana.kr/discover?page=1')
+})
+
 test('shared itineraries stay on the portal, noindex, and never fetch private snapshots for metadata', async () => {
   const path='/itinerary/shared/abcdefghijklmnopqrstuv'
   for(const site of Object.values(CATEGORY_SITES)) assert.equal(categoryRedirect({origin:site.origin,path}),`https://boothana.kr${path}`)

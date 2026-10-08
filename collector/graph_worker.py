@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 import jsonschema
 from catalog_transport import Api
-from run import ROOT,RunError,execute_search,audit_opened_urls,write_json,canonical_audit_url
+from run import ROOT,RunError,CliUnavailable,execute_search,audit_opened_urls,write_json,canonical_audit_url
 from media_fetch import fetch_image
 from public_sources import PublicSources,context_urls
 
@@ -282,6 +282,12 @@ class Worker:
                 try:self.request('POST','/jobs/'+job['id']+'/failure',{'leaseToken':job['leaseToken'],'reason':(type(exc).__name__+': '+str(exc))[:1800]})
                 except Exception:pass # Expired leases are recovered by the server.
                 print('Job failed:',job['id'],type(exc).__name__,flush=True)
+                if isinstance(exc,CliUnavailable):
+                    # Account-wide failures are not defects in every queued event/creator.
+                    # Release this lease and back off before claiming another target.
+                    print('Graph CLI blocked:',exc.reason,'retry in 3600 seconds',flush=True)
+                    if not watch:return
+                    time.sleep(3600)
             if once:return
 
 def main():
