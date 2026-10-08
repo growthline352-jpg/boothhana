@@ -22,6 +22,18 @@ test('subculture home pagination and interest controls survive SPA and HTTP rout
   assert.equal(categoryRedirect({ origin: CATEGORY_SITES.exhibitions.origin, path: '/', search: 'page=1' }), 'https://expo.boothana.kr/discover?page=1')
 })
 
+test('subculture event search link opens the event list instead of returning to the discovery home', async () => {
+  const origin = CATEGORY_SITES.subculture.origin
+  assert.equal(categoryRedirect({ origin, path: '/discover', search: 'category=subculture' }), `${origin}/discover`)
+  const redirect = await renderPage({ path: '/discover', search: 'category=subculture', template, siteUrl: origin })
+  assert.equal(redirect.status, 308)
+  assert.equal(redirect.location, `${origin}/discover`)
+  const page = await renderPage({ path: '/discover', template, siteUrl: origin, apiBase: 'https://api.example', fetcher: async () => json({ items: [], total: 0 }) })
+  assert.equal(page.status, 200)
+  assert.equal(page.location, undefined)
+  assert.equal(categoryRedirect({ origin, path: '/discover' }), '')
+})
+
 test('shared itineraries stay on the portal, noindex, and never fetch private snapshots for metadata', async () => {
   const path='/itinerary/shared/abcdefghijklmnopqrstuv'
   for(const site of Object.values(CATEGORY_SITES)) assert.equal(categoryRedirect({origin:site.origin,path}),`https://boothana.kr${path}`)
