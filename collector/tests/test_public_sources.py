@@ -1,9 +1,42 @@
 import unittest,json,zlib
+import io,hashlib
+from unittest.mock import patch
 from public_sources import PublicSources,illustar_notice
-from media_fetch import MediaError
+from media_fetch import MediaError,fetch_html
+
+class EvidenceResponse(io.BytesIO):
+    status=200
+    def __init__(self,body,mime):
+        self.raw=body.encode();super().__init__(self.raw);self.mime=mime
+    def getheader(self,name,default=None):
+        return {'Content-Type':self.mime,'Content-Length':str(len(self.raw))}.get(name,default)
+
+class EvidenceConnection:
+    sock=None
+    def __init__(self,routes,requests):self.routes=routes;self.requests=requests
+    def request(self,method,path,headers):self.path=path;self.requests.append((path,headers))
+    def getresponse(self):return EvidenceResponse(*self.routes[self.path])
+    def close(self):pass
 
 URL='https://example.com/item'
 class PublicSourceTests(unittest.TestCase):
+    def test_real_transport_accepts_robots_and_official_json_evidence(self):
+        routes={
+            '/robots.txt':('User-agent: *\nAllow: /','text/plain'),
+            '/v1/event/list':(json.dumps({'errorCode':0,'data':{'eventInfo':[{'name':'Official event','id':'abc','place':'Seoul','start_date':'2026-10-10','end_date':'2026-10-11'}]}}),'application/json')}
+        requests=[]
+        with patch('media_fetch.public_addresses',return_value=['93.184.216.34']),patch('media_fetch.PinnedHTTPS',side_effect=lambda *args:EvidenceConnection(routes,requests)):
+            doc=PublicSources([])(['https://api.illustar.net/v1/event/list'])[0]
+        self.assertTrue(doc['available'],doc)
+        self.assertIn('Official event',doc['text'])
+        self.assertEqual(hashlib.sha256(routes['/v1/event/list'][0].encode()).hexdigest(),doc['sha256'])
+        self.assertIn('text/plain',requests[0][1]['Accept'])
+        self.assertIn('application/json',requests[1][1]['Accept'])
+        self.assertEqual('no-cache',requests[1][1]['Cache-Control'])
+    def test_non_html_transport_types_still_require_explicit_opt_in(self):
+        for mime,kwargs in [('text/plain',{}),('application/json',{}),('application/json',{'allow_plain':True}),('text/plain',{'allow_json':True})]:
+            with self.subTest(mime=mime,kwargs=kwargs),patch('media_fetch.public_addresses',return_value=['93.184.216.34']),patch('media_fetch.PinnedHTTPS',side_effect=lambda *args:EvidenceConnection({'/item':('public evidence',mime)},[])):
+                with self.assertRaises(MediaError):fetch_html(URL,['example.com'],**kwargs)
     def test_refetches_each_review_and_preserves_hash(self):
         calls=[]
         def fetch(url,hosts,**kwargs):
