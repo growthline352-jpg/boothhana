@@ -1,3 +1,8 @@
+import { SubjectAdmin } from '../features/subculture/SubjectAdmin'
+import { NotificationPage } from '../features/subculture/NotificationPage'
+import { CreatorProductList,CreatorProductDetail } from '../features/subculture/CreatorProductPages'
+import { SubcultureHome,SubcultureBrowse,SubcultureIdentity } from '../features/subculture/SubculturePages'
+import { InterestSettingsPage } from '../features/subculture/InterestSettingsPage'
 import {EventComparePage} from '../features/discovery/EventComparePage'
 import {lazy,Suspense} from 'react'
 const ItineraryPage=lazy(()=>import('../features/itinerary/ItineraryPage').then(module=>({default:module.ItineraryPage})))
@@ -37,6 +42,15 @@ import { EmptyState } from '../components/ui/States'
 export const router = createBrowserRouter([
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
+    { path:'account/interests',element:<InterestSettingsPage/> },
+    { path:'account/notifications',element:<NotificationPage/> },
+    { path:'subculture',element:<SubcultureHome/> },
+    { path:'subculture/products',element:<CreatorProductList/> },
+    { path:'subculture/products/:id',element:<CreatorProductDetail/> },
+    { path:'subculture/subjects',element:<SubcultureBrowse kind="subjects"/> },
+    { path:'subculture/creators',element:<SubcultureBrowse kind="creators"/> },
+    { path:'subculture/subjects/:id',element:<SubcultureIdentity kind="subjects"/> },
+    { path:'subculture/creators/:id',element:<SubcultureIdentity kind="creators"/> },
     { path: 'about', element: <AboutPage /> },
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
     { path: 'purchase-plan', element: <SupportBoundary><Suspense fallback={<p role="status">구매 계획을 열고 있어요.</p>}><PurchasePlanPage/></Suspense></SupportBoundary> },
@@ -93,6 +107,7 @@ export const router = createBrowserRouter([
     { path: 'support/:id', element: <SupportBoundary><AdminSupportDetail/></SupportBoundary> },
     { path: 'goods-showcase', element: <GoodsAdminPage /> },
     { path: 'subculture', element: <CatalogAdminPage /> },
+    { path: 'subculture/interests', element: <SubjectAdmin /> },
     { path: 'subculture/legacy', element: <SubcultureCollectionPage /> },
   ] },
   { path: '*', element: <section className="section-pad"><EmptyState title="페이지를 찾을 수 없습니다" description="주소를 확인하거나 팬 홈으로 돌아가 주세요." /></section> },

@@ -49,6 +49,14 @@ server:
 app:
   collection:
     auto-approve: ${COLLECTOR_AUTO_APPROVE:true}
+    graph:
+      enabled: ${APP_COLLECTION_GRAPH_ENABLED:false}
+  notifications:
+    push:
+      enabled: ${APP_NOTIFICATIONS_PUSH_ENABLED:false}
+      public-key: ${WEB_PUSH_PUBLIC_KEY:}
+      private-key: ${WEB_PUSH_PRIVATE_KEY:}
+      subject: ${WEB_PUSH_SUBJECT:}
   discovery:
     compare-enabled: ${EVENT_COMPARE_ENABLED:false}
     popups-enabled: ${POPUP_EXPLORE_ENABLED:true}

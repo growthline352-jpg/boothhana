@@ -222,7 +222,16 @@ public class CatalogService {
     public StageReceipt ingest(StageBatch b) { return ingest(b,false); }
     @Transactional(timeout=45)
     public StageReceipt ingestManual(StageBatch b) { return ingest(b,true); }
+    /** Only the graph's verified continuation chain supplies these prior observation IDs. */
+    @Transactional(timeout=45)
+    public StageReceipt ingestSalesContinuation(StageBatch b,Set<UUID> previousStages) {
+        if(b==null||!"SALES".equals(b.stage())) throw ApiException.badRequest("판매정보 이어받기 작업이 아닙니다.");
+        return ingest(b,false,Set.copyOf(previousStages));
+    }
     private StageReceipt ingest(StageBatch b,boolean manualImport) {
+        return ingest(b,manualImport,Set.of());
+    }
+    private StageReceipt ingest(StageBatch b,boolean manualImport,Set<UUID> previousStages) {
         try { if(manualImport) CatalogRules.manualStage(b); else CatalogRules.stage(b); }
         catch(RuntimeException e) { throw ApiException.badRequest("단계별 JSON 형식 또는 대상/출처를 확인하세요."); }
         if(approval!=null)approval.lock();
@@ -313,7 +322,13 @@ public class CatalogService {
                 if(snapshot!=null) {
                     if(snapshot.products().size()>5000) throw ApiException.conflict("누적 상품 5000개 한도: 관리자가 범위를 확인하세요.");
                     Map<String,ProductCheck> checks=new LinkedHashMap<>();
-                    for(var row:productRows) checks.put(Long.toString(num(row,"id")),CatalogAccumulation.check(seen.contains(num(row,"id")),instant(row.get("last_seen_at"))));
+                    // A later window of the same reviewed source also confirms earlier windows.
+                    // A row overwritten by another collection run no longer belongs to that chain.
+                    for(var row:productRows) {
+                        Object lastStage=row.get("last_seen_stage_id");
+                        boolean confirmed=seen.contains(num(row,"id"))||(lastStage!=null&&previousStages.contains(lastStage));
+                        checks.put(Long.toString(num(row,"id")),CatalogAccumulation.check(confirmed,instant(row.get("last_seen_at"))));
+                    }
                     String data=encode(snapshot),digest=CollectionRules.sha(data),checkData=encode(checks);
                     if(previous.isEmpty()) {
                         db.update("insert into subculture_sales(participant_id,payload_json,payload_hash,latest_payload_json,latest_stage_id,product_checks_json) values(?,cast(? as jsonb),?,cast(? as jsonb),?,cast(? as jsonb))",b.participantId(),data,digest,latest==null?null:encode(latest),run,checkData);inserted++;
@@ -419,7 +434,7 @@ public class CatalogService {
     }
     @Transactional public Map<String,Object> editEvent(long id,EditInput input) {
         var row=one("select * from subculture_event_candidate where id=? for update",id);
-        checkEdit(row,input,Set.of("name","venueName","address","description","admission","organizer","edition","subjects","occurrences","eventFormat","discoveryLinks","warnings","subcategory","region","operationStatus","visitorGuide","districts"),EventData.class);
+        checkEdit(row,input,Set.of("name","venueName","address","description","admission","organizer","edition","subjects","occurrences","eventFormat","discoveryLinks","warnings","subcategory","region","operationStatus","visitorGuide","districts","sources"),EventData.class);
         EventData e=effective(after(row,input),EventData.class);
         String start=e.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=e.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
         if(!CollectionRules.event(e,new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end)).accepted()) throw ApiException.badRequest("행사 수정값을 확인하세요.");

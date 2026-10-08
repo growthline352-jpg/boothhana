@@ -109,7 +109,7 @@ export function AccountPage() {
       </form>
     </section>}
 
-    {user && <InterestSettings key={user.id}/>}
+    {user && <><AccountLink to="/account/interests" title="관심 작품·캐릭터" description="캐릭터·작가 설정과 직접 입력"/><AccountLink to="/account/notifications" title="관심 소식" description="알림함과 이 기기 푸시 설정"/><InterestSettings key={user.id}/></>}
 
     <section className="account-quick-section" aria-labelledby="account-quick-title">
       <h2 id="account-quick-title">자주 찾는 메뉴</h2>

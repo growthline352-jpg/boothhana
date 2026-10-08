@@ -20,7 +20,9 @@ public class CollectionSecurity {
             .requestCache(cache->cache.disable())
             .authorizeHttpRequests(auth->auth.requestMatchers(HttpMethod.POST,"/api/internal/subculture/batches").hasAuthority("COLLECTOR_WRITE")
                 .requestMatchers(HttpMethod.GET,"/api/internal/subculture/v4/**").hasAuthority("COLLECTOR_WRITE")
-                .requestMatchers(HttpMethod.POST,"/api/internal/subculture/v4/**").hasAuthority("COLLECTOR_WRITE").anyRequest().denyAll())
+                .requestMatchers(HttpMethod.POST,"/api/internal/subculture/v4/**").hasAuthority("COLLECTOR_WRITE")
+                .requestMatchers(HttpMethod.GET,"/api/internal/subculture/v6/**").hasAuthority("COLLECTOR_WRITE")
+                .requestMatchers(HttpMethod.POST,"/api/internal/subculture/v6/**").hasAuthority("COLLECTOR_WRITE").anyRequest().denyAll())
             .exceptionHandling(errors->errors.authenticationEntryPoint((req,res,ex)->CollectorTokenFilter.error(res,401,"UNAUTHORIZED"))
                 .accessDeniedHandler((req,res,ex)->CollectorTokenFilter.error(res,403,"FORBIDDEN")))
             .addFilterBefore(new CollectorTokenFilter(token),UsernamePasswordAuthenticationFilter.class).build();

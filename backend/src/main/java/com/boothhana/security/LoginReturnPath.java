@@ -13,7 +13,7 @@ public final class LoginReturnPath {
    try{String next=URLDecoder.decode(check,StandardCharsets.UTF_8);if(next.equals(check))break;check=next;}catch(IllegalArgumentException e){return "/";}
   }
   try{URI u=URI.create(value);String p=u.getPath();if(u.isAbsolute()||u.getRawAuthority()!=null||p==null||p.contains(".."))return "/";
-   if(!p.matches("/(?:|account|onboarding|purchase-plan|itinerary(?:/shared/[A-Za-z0-9_-]{22})?|discover(?:/[^/]+)?|events(?:/[^/]+)?|booths/[^/]+(?:/reserve)?|products/[^/]+|reservations(?:/[^/]+)?|library(?:/[A-Za-z0-9_/-]+)?|support(?:/[A-Za-z0-9_/-]+)?|creator(?:/[A-Za-z0-9_/-]+)?|admin(?:/[A-Za-z0-9_/-]+)?)"))return "/";
+   if(!p.matches("/(?:|discover(?:/[^/]+(?:/booths/[0-9]+)?)?|account(?:/(?:interests|notifications))?|onboarding|purchase-plan|itinerary(?:/shared/[A-Za-z0-9_-]{22})?|subculture(?:/(?:subjects|creators|products)(?:/[A-Za-z0-9-]+)?)?|events(?:/[^/]+)?|booths/[^/]+(?:/reserve)?|products/[^/]+|reservations(?:/[^/]+)?|library(?:/[A-Za-z0-9_/-]+)?|support(?:/[A-Za-z0-9_/-]+)?|creator(?:/[A-Za-z0-9_/-]+)?|admin(?:/[A-Za-z0-9_/-]+)?)"))return "/";
    return value;
   }catch(RuntimeException e){return "/";}
  }

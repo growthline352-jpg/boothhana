@@ -1,3 +1,5 @@
+import {InterestProvider} from '../../features/subculture/InterestProvider'
+import {currentSiteCategory} from '../../features/discovery/site'
 import {itineraryHref} from '../../features/itinerary/links'
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
@@ -16,6 +18,7 @@ export function PublicLayout() {
   const { user, loading, status, loginUrl, logout, refresh } = useAuth()
   const location = useLocation()
   const current = activeCategory(location.pathname, location.search)
+  const subculture=current==='subculture'||currentSiteCategory()==='subculture'||location.pathname.startsWith('/subculture')||['/account/interests','/account/notifications'].includes(location.pathname)
   const menu = useRef<HTMLDetailsElement>(null)
   const lock = useRef(false)
   const [busy, setBusy] = useState(false)
@@ -44,21 +47,22 @@ export function PublicLayout() {
     catch { setError('로그아웃하지 못했습니다. 다시 시도해 주세요.') }
     finally { lock.current = false; setBusy(false) }
   }
-  return <div className="page-shell public-shell" data-category={current ?? 'subculture'}>
+  return <InterestProvider><div className="page-shell public-shell" data-category={current ?? 'subculture'}>
     <RouteMetadata />
     <OnboardingGate />
     <a className="discovery-skip" href="#public-main">본문으로 바로가기</a>
     <header className="discovery-header">
       <div className="discovery-header-inner">
         <Link className="brand discovery-brand" to="/" aria-label="부스하나 홈">
-          <span className="brand-logo"><img src="/assets/brand/logo.png" alt="부스하나" /></span>
+          <span className="brand-logo"><img src={subculture?"/assets/categories/subculture-3d.webp":"/assets/brand/logo.png"} alt="부스하나" /></span>{subculture&&<strong>부스하나 서브컬처</strong>}
         </Link>
-        <nav className="discovery-category-nav" aria-label="행사 분야">
+        <nav className={'discovery-category-nav'+(subculture?' sc-production-nav':'')} aria-label={subculture?"서브컬처 탐색":"행사 분야"}>
+          {subculture?<><Link className="discovery-category-link" to="/subculture">발견</Link><Link className="discovery-category-link" to="/discover?category=subculture">행사 찾기</Link><Link className="discovery-category-link" to="/subculture/subjects">작품·캐릭터</Link><Link className="discovery-category-link" to="/subculture/creators">작가·서클</Link></>:<>
           {categories.map(category => <Link key={category.key} to={categoryHref(category.key)}
             className={`discovery-category-link${current === category.key ? ' is-current' : ''}`}
             aria-current={current === category.key ? 'page' : undefined}>
             <DiscoveryIcon name={category.icon} size={18} /><span>{category.label}{!category.enabled&&<small className="discovery-soon">준비 중</small>}</span>
-          </Link>)}
+          </Link>)}</>}
         </nav>
         <div className="discovery-header-tools">
           <NavLink className="memory-header-link" aria-label="내 일정" to={itineraryHref()}><DiscoveryIcon name="calendar" size={18}/><span>내 일정</span></NavLink>
@@ -81,6 +85,8 @@ export function PublicLayout() {
               <div className="discovery-menu-group">
                 <span className="discovery-menu-caption">내 활동</span>
                 <Link to="/account"><span>내 정보</span><small>계정·활동 관리</small></Link>
+                <Link to="/account/interests"><span>관심 작품·캐릭터</span></Link>
+                <Link to="/account/notifications"><span>관심 소식</span></Link>
                 <Link to="/library"><span>내 보관함</span><small>메모·방문 기록</small></Link>
                 <Link to={itineraryHref()}><span>내 일정</span><small>행사·데이트 코스 만들기</small></Link>
                 <Link to="/reservations"><span>내 예약</span><small>예약·수령 확인</small></Link>
@@ -120,5 +126,5 @@ export function PublicLayout() {
       <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link><Link to="/about">회사소개</Link><button type="button" className="feedback-footer-button" onClick={openFeedback}>이런 개선이 필요해요</button><AnalyticsConsent /></nav>
     </div></footer>
     <FeedbackWidget open={feedbackOpen} setOpen={setFeedbackOpen}/>
-  </div>
+  </div></InterestProvider>
 }

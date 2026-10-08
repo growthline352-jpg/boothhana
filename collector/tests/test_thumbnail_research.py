@@ -41,7 +41,7 @@ class ThumbnailResearchTests(unittest.TestCase):
             self.assertLessEqual(cfg['timeoutSeconds'], 180)
             self.assertEqual(schema.name, 'event-thumbnail.schema.json')
             if opened:
-                event = dict(type='item.completed', item=dict(type='web_search', action=dict(type='open', url=PAGE)))
+                event = dict(type='item.completed', item=dict(type='web_search', action=dict(type='open_page', url=PAGE), results=[dict(url=PAGE,ref_id='turn0view0',snippet='Total lines: 30')]))
                 (folder / 'codex.jsonl').write_text(json.dumps(event) + '\n', encoding='utf-8')
             return json.dumps(value, ensure_ascii=False).encode(), observed, {}
         return Mock(side_effect=execute)
