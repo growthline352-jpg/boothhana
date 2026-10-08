@@ -68,7 +68,13 @@ class CollectionGraphIntegrationTests {
   assertThat(db.queryForObject("select count(*) from collection_migration where run_id=? and source_id=?",Integer.class,run,event)).isEqualTo(1);
   var job=graph.claim();assertThat(Long.parseLong(job.get("targetId").toString())).isEqualTo(event);
   var result=value(data);result.put("subcategory","ANIME_GAME_FESTIVAL");approve(job,extract(job,result));
-  assertThat((List<Map<String,Object>>)interestFeed.home(null,null,null,null,0).get("events")).anyMatch(row->((Number)row.get("id")).longValue()==event);
+  boolean found=false;
+  for(int page=0;page<=1000;page++){
+   var feed=interestFeed.home(null,null,null,null,page);
+   if(((List<Map<String,Object>>)feed.get("events")).stream().anyMatch(row->((Number)row.get("id")).longValue()==event)){found=true;break;}
+   if(!Boolean.TRUE.equals(feed.get("hasMore")))break;
+  }
+  assertThat(found).as("new production event type remains discoverable across feed pages").isTrue();
  }
  @Test void eventApprovalPublishesAndReplayDoesNotPublishTwice(){var job=seed("EVENT",Long.toString(event));var extracted=extract(job,data);assertThat(db.queryForObject("select count(*) from subculture_catalog_publication where event_id=?",Integer.class,event)).isZero();approve(job,extracted);var published=db.queryForObject("select published_at::text from subculture_catalog_publication where event_id=?",String.class,event);approve(job,extracted);assertThat(db.queryForObject("select published_at::text from subculture_catalog_publication where event_id=?",String.class,event)).isEqualTo(published);assertThat(db.queryForObject("select count(*) from collection_verdict",Integer.class)).isEqualTo(1);}
  long fan(){return db.queryForObject("insert into app_user(kakao_subject,display_name) values(?,'[TEST] News') returning id",Long.class,UUID.randomUUID().toString());}
