@@ -47,7 +47,7 @@ export async function publishedEvents({ apiBase, fetcher = fetch, timeoutMs = 20
 export function renderSitemap(siteUrl, events, splitSites = false) {
   const origin = siteOrigin(siteUrl)
   if (!origin) throw new Error('Public site origin is not configured')
-  if (!Array.isArray(events) || events.length + 5 > MAX_URLS) throw new Error('Sitemap URL limit exceeded')
+  if (!Array.isArray(events) || events.length + 7 > MAX_URLS) throw new Error('Sitemap URL limit exceeded')
   // Sunday has its own roster/booth URLs, but its event landing page is
   // consolidated into the Saturday canonical page.
   events = events.filter(event => Number(event.id) !== 7)
@@ -58,8 +58,10 @@ export function renderSitemap(siteUrl, events, splitSites = false) {
     ...events.map(event => ({ loc: `${origin}/discover/${event.id}`, lastmod: event.publishedAt })),
   ] : splitSites && origin === PORTAL_ORIGIN ? [
     { loc: `${origin}/`, lastmod: newest }, { loc: `${origin}/events`, lastmod: newest },
+    { loc: `${origin}/about` },
   ] : [
     { loc: `${origin}/`, lastmod: newest },
+    { loc: `${origin}/about` },
     { loc: `${origin}/discover`, lastmod: newest },
     { loc: `${origin}/discover?category=exhibitions`, lastmod: newest },
     { loc: `${origin}/discover?category=festivals`, lastmod: newest },

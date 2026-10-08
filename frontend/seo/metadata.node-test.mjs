@@ -5,6 +5,21 @@ import { renderPage } from '../api/page.mjs'
 import { naverVerificationFor } from './naver-verification.mjs'
 
 const siteUrl = 'https://boothhana.example'
+test('company introduction is crawlable without catalog API and canonicalizes to the portal', async () => {
+  const template = '<html><head><!-- BOOTH_META_START --><!-- BOOTH_META_END --></head><body><div id="root"></div></body></html>'
+  for (const origin of ['https://boothana.kr', 'https://subculture.boothana.kr', 'https://expo.boothana.kr', 'https://festival.boothana.kr', 'https://popup.boothana.kr']) {
+    const page = await renderPage({ path: '/about', siteUrl: origin, splitSites: true, template, apiBase: 'https://api.example', fetcher: async () => { throw new Error('Company page must not depend on the catalog API') } })
+    assert.equal(page.status, 200)
+    assert.equal(page.meta.canonical, 'https://boothana.kr/about')
+    assert.match(page.meta.robots, /^index,follow/)
+    assert.ok(page.meta.schema['@graph'].some(node => node['@type'] === 'AboutPage'))
+    assert.ok(page.meta.schema['@graph'].some(node => node['@type'] === 'Organization' && node.name === '그로스라인'))
+    assert.match(page.html, /모종애드/)
+    assert.match(page.html, /https:\/\/app\.danbammsg\.co\.kr\/home/)
+    assert.match(page.html, /https:\/\/www\.danbammsg\.co\.kr\//)
+    assert.match(page.html, /현재 제공되는 기능이 아닙니다/)
+  }
+})
 test('comparison and neighborhood utilities stay noindex and have public feature titles',()=>{
  for(const [path,title] of [['/compare','행사 비교'],['/popups','동네 팝업']]){
   const meta=pageMetadata({path,search:'?ids=1,2',siteUrl});assert.ok(meta.title.includes(title));assert.equal(meta.robots,'noindex,follow');assert.equal(meta.schema,null)

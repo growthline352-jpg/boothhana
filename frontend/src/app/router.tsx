@@ -23,6 +23,7 @@ import { SubcultureCollectionPage } from '../features/collection/SubcultureColle
 import { PublicLayout } from '../components/layout/PublicLayout'
 import { ConsoleLayout } from '../components/layout/ConsoleLayout'
 import { HomePage } from '../pages/HomePage'
+import { AboutPage } from '../pages/AboutPage'
 import { LoginPage } from '../pages/LoginPage'
 import { AdminLoginPage } from '../pages/AdminLoginPage'
 import { BoothDetailPage, EventDetailPage, EventsPage, ProductDetailPage } from '../pages/PublicPages'
@@ -36,6 +37,7 @@ import { EmptyState } from '../components/ui/States'
 export const router = createBrowserRouter([
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
+    { path: 'about', element: <AboutPage /> },
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
     { path: 'purchase-plan', element: <SupportBoundary><Suspense fallback={<p role="status">구매 계획을 열고 있어요.</p>}><PurchasePlanPage/></Suspense></SupportBoundary> },
     { path: 'itinerary', element: <SupportBoundary><Suspense fallback={<p className="content-wrap section-pad" role="status">일정 화면을 열고 있어요.</p>}><ItineraryPage/></Suspense></SupportBoundary> },

@@ -115,6 +115,11 @@ function listingRows(rows) {
 }
 function schemaForPage({ origin, canonical, title, description, image, catalog, participant, listing, path, category }) {
   const { graph, webpage } = baseGraph(origin, canonical, title, description, image)
+  if (path === '/about') {
+    webpage['@type'] = 'AboutPage'
+    webpage.mainEntity = { '@id': `${origin}/#organization` }
+    graph.push({ '@type': 'Organization', '@id': `${origin}/#organization`, name: '그로스라인', alternateName: 'Growthline', url: `${origin}/about`, email: 'contact@boothana.kr', brand: { '@type': 'Brand', name: '부스하나', alternateName: 'Boothana' } })
+  }
   if (!catalog?.event) {
     const rows = listingRows(listing)
     if (rows.length) {
@@ -126,7 +131,7 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
       graph.push(itemList)
     }
     if (path !== '/') {
-      const label = path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category] || '행사 찾기'
+      const label = path === '/about' ? '회사소개' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category] || '행사 찾기'
       const trail = breadcrumb([{ name: '홈', url: `${origin}/` }, { name: label, url: canonical }], canonical)
       webpage.breadcrumb = { '@id': trail['@id'] }; graph.push(trail)
     }
@@ -225,12 +230,17 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   } else if (path === '/compare' || path === '/popups') {
     title = path === '/compare' ? '행사 비교 | 부스하나' : '동네 팝업 | 부스하나'
     description = path === '/compare' ? '두 행사의 공개 일정과 장소, 입장 조건을 비교하세요.' : '날짜와 동네를 골라 공개된 서울 팝업을 살펴보세요.'
+  } else if (path === '/about') {
+    title = '회사소개 | 부스하나 · 그로스라인'
+    description = '모든 취향이 현실에서 만나는 곳. 그로스라인이 만드는 부스하나는 행사·부스·상품을 연결하고, 발견이 실제 방문으로 이어지는 오프라인 경험 플랫폼을 지향합니다.'
+    indexable = true
   } else if (!browse) {
     title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/purchase-plan' ? '부스 구매 계획 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
     description = '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'
   }
 
   if (split && validCatalog && categoryFor(catalog.event)) origin = categoryOrigin(categoryFor(catalog.event))
+  if (split && path === '/about') origin = PORTAL_ORIGIN
   if (split && browse && supported && (hostCategory || path === '/discover' || params.has('category'))) {
     origin = categoryOrigin(category)
     title = `서울·경기 ${CATEGORY_SITES[category].label} 일정 | ${CATEGORY_SITES[category].name}`
@@ -269,6 +279,7 @@ function list(values, max = 12) {
 /** Real public content for non-JavaScript crawlers; React replaces this same-content fallback after loading. */
 export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], pagination = null, siteUrl = '', splitSites = false } = {}) {
   path = normalizePath(path)
+  if (path === '/about') return `<main class="content-wrap section-pad" data-seo-fallback><h1>모든 취향이 현실에서 만나는 곳.</h1><p>부스하나는 사람과 행사, 창작자와 브랜드를 연결하는 오프라인 경험 플랫폼을 만들어갑니다.</p><h2>좋아하는 것을 찾는 일이 좋아하는 세상을 넓히는 일이 되도록.</h2><p>서울·경기의 서브컬처·박람회·축제와 공개된 참가 부스·상품 정보를 탐색하고 저장하며 방문을 준비할 수 있습니다.</p><h2>정보를 연결하는 AI. 경험을 넓히는 기술.</h2><p>행사 정보의 AI 구조화, 취향에 맞는 추천과 방문 계획, 변화 알림과 외부 AI 서비스 연계를 구상하고 있습니다. 이 AI 기능들은 향후 개발 방향이며 현재 제공되는 기능이 아닙니다.</p><h2>운영사 그로스라인 (Growthline)</h2><p>대표 유창혜 · 2026년 5월 사업 시작 · 대한민국 서울 · 소프트웨어 개발 및 온라인 플랫폼</p><h2>협업 문의</h2><p>행사 정보 연계, 서비스 협업, 사업 제안을 기다립니다.</p><a href="mailto:contact@boothana.kr">contact@boothana.kr</a><section><h2>발견을 돕고, 이야기를 알리고. 비즈니스의 다음 성장을 만듭니다.</h2><h3>모종애드</h3><p>가게와 브랜드의 이야기를 바탕으로 주제와 구성안을 선택하고, AI로 이미지·영상·블로그 콘텐츠 제작을 돕는 통합 마케팅 솔루션입니다. 주제 제안과 제작에서 게시·분석으로 이어지는 흐름을 지향합니다.</p><a href="https://app.danbammsg.co.kr/home">모종애드 둘러보기</a><h3>그로스라인 홈페이지</h3><p>고객 유입부터 문의와 전환, 운영까지 사업이 멈추는 구간을 살펴보고 웹서비스와 자동화, 데이터 기반 개선으로 연결합니다. 홈페이지에서 서비스 분야와 프로젝트, 사업을 바라보는 관점을 확인하고 서비스 구축과 운영 개선을 상담할 수 있습니다.</p><a href="https://www.danbammsg.co.kr/">그로스라인 홈페이지</a></section></main>`
   if (!catalog?.event) {
     if (!['/', '/discover', '/events'].includes(path)) return ''
     const params = new URLSearchParams(search)
