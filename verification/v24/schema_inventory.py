@@ -42,17 +42,20 @@ def column(part):
 
 def inventory(root=ROOT):
     tables={};files=sorted((root/'database').glob('[0-9][0-9][0-9]_*.sql'))
-    if [p.name[:3] for p in files]!=[f'{i:03d}' for i in range(1,31)]:raise ValueError('Expected migration sequence 001..030')
+    if [p.name[:3] for p in files]!=[f'{i:03d}' for i in range(1,37)]:raise ValueError('Expected migration sequence 001..036')
     for path in files:
         text=re.sub(r'/\*.*?\*/','',path.read_text(),flags=re.S);text=re.sub(r'--[^\n]*','',text)
         # This extractor intentionally supports only CREATE and single ADD/DROP COLUMN.
         # Never let a future type/nullability/rename migration disappear from coverage.
-        if re.search(r'\balter\s+table\b[^;]*\b(?:alter\s+(?:column\s+)?\w+|rename\s+(?:column\s+)?\w+)\b|\bdrop\s+table\b',text,re.I):
+        nullable=r'alter\s+table\s+(?:public\.)?(\w+)\s+alter\s+column\s+(\w+)\s+(drop|set)\s+not\s+null\s*;'
+        other=re.sub(nullable,'',text,flags=re.I)
+        if re.search(r'\balter\s+table\b[^;]*\b(?:alter\s+(?:column\s+)?\w+|rename\s+(?:column\s+)?\w+)\b|\bdrop\s+table\b',other,re.I):
             raise ValueError('Unsupported ALTER/RENAME/DROP TABLE requires explicit schema audit support: '+path.name)
         for statement in re.findall(r'\balter\s+table\b[^;]*\badd\s+column\b[^;]*',text,re.I):
             if re.search(r',\s*(?:add|drop|alter|rename)\b',statement,re.I):
                 raise ValueError('Multi-action column DDL requires explicit schema audit support: '+path.name)
         actions=[]
+        for m in re.finditer(nullable,text,re.I):actions.append((m.start(),'nullable',m.group(1),(m.group(2),m.group(3).lower()=='set')))
         for m in re.finditer(r'create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?(\w+)\s*\(',text,re.I):
             body=text[m.end():close_paren(text,m.end())];actions.append((m.start(),'create',m.group(1),body))
         for m in re.finditer(r'alter\s+table\s+(?:public\.)?(\w+)\s+add\s+column\s+(?:if\s+not\s+exists\s+)?([^;]+)',text,re.I):actions.append((m.start(),'add',m.group(1),m.group(2)))
@@ -70,6 +73,7 @@ def inventory(root=ROOT):
                 tables[table]=fields
             elif kind=='add':
                 n,c=column(body);tables[table][n]=c
+            elif kind=='nullable':tables[table][body[0]]['notNull']=body[1]
             else:tables[table].pop(body,None)
     health=(root/'backend/src/main/java/com/boothhana/health/SchemaContract.java').read_text()
     declared={m.group(1):re.findall(r'"([a-z0-9_]+)"',m.group(2)) for m in re.finditer(r'Map.entry\("(\w+)",List.of\((.*?)\)\)',health)}

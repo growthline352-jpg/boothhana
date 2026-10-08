@@ -4,7 +4,7 @@ S=importlib.util.spec_from_file_location('schema_auditor_v24',Path(__file__).wit
 ROOT=Path(__file__).resolve().parents[2]
 class SchemaAuditorTests(unittest.TestCase):
  def test_current_ddl_names_and_typed_columns(self):
-        got=M.inventory(ROOT);self.assertEqual(got['tableCount'],60);self.assertEqual(got['columnCount'],513);self.assertEqual(got['readinessColumnsMismatch'],[])
+        got=M.inventory(ROOT);self.assertEqual(got['tableCount'],79);self.assertEqual(got['columnCount'],671);self.assertEqual(got['readinessColumnsMismatch'],[])
         self.assertEqual(got['tables']['subculture_event_candidate']['publication_withdrawn']['udt'],'bool')
         self.assertTrue(got['tables']['subculture_event_candidate']['publication_withdrawn']['notNull'])
         for table,key,key_type in [('personal_itinerary','id','uuid'),('purchase_plan','event_id','int8')]:
@@ -18,5 +18,8 @@ class SchemaAuditorTests(unittest.TestCase):
    with (root/'database/016_catalog_scope_offline.sql').open('a') as f:f.write('\n'+extra+';\n')
    with self.assertRaisesRegex(ValueError,'requires explicit schema audit support'):M.inventory(root)
  def test_changed_type_must_not_be_silently_ignored(self):self.check_refused('ALTER TABLE memory_item ALTER COLUMN revision TYPE text')
- def test_changed_nullability_must_not_be_silently_ignored(self):self.check_refused('ALTER TABLE memory_item ALTER COLUMN note DROP NOT NULL')
+ def test_series_automated_actor_nullability_is_explicitly_tracked(self):
+  got=M.inventory(ROOT)
+  for table,col in [('event_series','created_by'),('event_series_member','checked_by')]:
+   self.assertFalse(got['tables'][table][col]['notNull']);self.assertEqual(got['tables'][table]['system_verdict_id']['udt'],'uuid')
  def test_multi_action_column_change_is_not_partially_parsed(self):self.check_refused('ALTER TABLE memory_item ADD COLUMN a text, ADD COLUMN b text')
