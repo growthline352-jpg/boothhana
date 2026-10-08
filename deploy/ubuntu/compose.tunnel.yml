@@ -64,6 +64,32 @@ services:
     logging:
       driver: json-file
       options: {max-size: 20m, max-file: "5"}
+  # Independent durable worker: legacy image/floorplan jobs cannot block graph leases.
+  boothhana-graph:
+    profiles: [graph]
+    image: ${BOOTHHANA_COLLECTOR_IMAGE:?Set an explicitly tested collector image}
+    env_file:
+      - path: ./collector.env
+        format: raw
+    environment:
+      TZ: Asia/Seoul
+    command: [python, graph_worker.py, --config, /etc/boothhana/graph.json, --watch]
+    volumes:
+      - ./graph.config.json:/etc/boothhana/graph.json:ro
+      - collector_state:/var/lib/boothhana-collector/state
+      - collector_auth:/var/lib/boothhana-collector/codex
+    depends_on:
+      boothhana-api: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=512m,mode=1777"]
+    cpus: 2.0
+    mem_limit: 3g
+    security_opt: [no-new-privileges:true]
+    networks: [app]
+    logging:
+      driver: json-file
+      options: {max-size: 20m, max-file: "5"}
 networks:
   app: {driver: bridge}
 volumes:

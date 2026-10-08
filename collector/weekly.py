@@ -53,11 +53,11 @@ def load_config(path:Path|None):
         if type(cfg[key]) is not bool:raise RunError(key+' must be boolean')
     limits={'maxEvents':200,'maxParticipantPages':30,'maxSales':1000,'maxSalesPagesPerParticipant':50,'maxCliCalls':2000,'maxRuntimeMinutes':1200,'maxImages':200,'maxEventNameJobs':200,'eventNameMaxAttempts':50,'eventNameRetryHours':720,'eventNameNotFoundRetryHours':2160,'eventNameFailureRetryHours':168,'floorplanMaxEvents':100,'floorplanMaxSources':40,'floorplanMaxTiles':100,'floorplanMaxCliCalls':2000,'floorplanMaxMinutes':1200}
     for key,max_ in limits.items():
-        if type(cfg[key]) is not int or not 1<=cfg[key]<=max_: raise RunError(key+' outside allowed range')
+        if type(cfg[key]) is not int or not (0 if key in ('maxCliCalls','floorplanMaxCliCalls') else 1)<=cfg[key]<=max_: raise RunError(key+' outside allowed range')
     for key,max_ in {'popupOfficialMaxBranches':100,'popupOfficialMaxPages':100,'popupOfficialMaxDetails':200,
                      'popupOfficialMaxMinutes':120,'dailyDiscoveryMaxJobs':100,'dailyDiscoveryCliCalls':200,
                      'dailyDiscoveryMaxMinutes':240,'dailyResearchMaxJobs':100}.items():
-        minimum=0 if key in ('popupOfficialMaxPages','popupOfficialMaxDetails') else 1
+        minimum=0 if key in ('popupOfficialMaxPages','popupOfficialMaxDetails','dailyDiscoveryCliCalls') else 1
         if type(cfg[key]) is not int or not minimum<=cfg[key]<=max_:raise RunError(key+' outside allowed range')
     if type(cfg['maxEventEnrichments']) is not int or not 0<=cfg['maxEventEnrichments']<=100:raise RunError('maxEventEnrichments outside allowed range')
     if type(cfg['maxThumbnailSearches']) is not int or not 0<=cfg['maxThumbnailSearches']<=100:raise RunError('maxThumbnailSearches outside allowed range')
@@ -291,7 +291,7 @@ class Pipeline:
             raise TimeBudgetExceeded('Overall runtime reached; unfinished research/images remain queued')
         if cli and self.cli_blocked_reason:
             raise CliBudgetExceeded('CLI blocked: '+self.cli_blocked_reason+'; unfinished research remains queued')
-        if cli and not getattr(self,'drain',False) and self.calls>=self.cfg['maxCliCalls']:
+        if cli and not getattr(self,'drain',False) and self.cfg['maxCliCalls']>0 and self.calls>=self.cfg['maxCliCalls']:
             raise CliBudgetExceeded('CLI call budget reached; image stage may continue')
     def block_cli(self,error:CliUnavailable):
         self.cli_blocked_reason=error.reason

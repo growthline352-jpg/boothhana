@@ -47,7 +47,7 @@ def main(argv=None):
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',type=Path);p.add_argument('--dry-run',action='store_true')
  modes=p.add_mutually_exclusive_group();modes.add_argument('--official-only',action='store_true');modes.add_argument('--regional-only',action='store_true');args=p.parse_args(argv)
  cfg=load_config(args.config);cfg.update(maxPopupDiscoveryJobs=6 if args.regional_only else 2,
-   maxCliCalls=min(cfg['maxCliCalls'],cfg['dailyDiscoveryCliCalls']),maxRuntimeMinutes=min(cfg['maxRuntimeMinutes'],cfg['dailyDiscoveryMaxMinutes']))
+   maxCliCalls=min((n for n in (cfg['maxCliCalls'],cfg['dailyDiscoveryCliCalls']) if n>0),default=0),maxRuntimeMinutes=min(cfg['maxRuntimeMinutes'],cfg['dailyDiscoveryMaxMinutes']))
  now=datetime.now(SEOUL);scope={'region':'SEOUL_GYEONGGI','timezone':'Asia/Seoul','startDate':now.date().isoformat(),'endDate':(now.date()+timedelta(days=60)).isoformat()}
  mode='regional-discovery' if args.regional_only else 'official-popups' if args.official_only else 'daily-popups'
  state=Path(cfg['stateDirectory']).expanduser().resolve();folder=state/mode/now.strftime('%Y%m%d-%H%M%S');began=time.monotonic()

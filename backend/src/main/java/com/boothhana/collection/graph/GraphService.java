@@ -40,6 +40,11 @@ public class GraphService {
    else if(!"DISCOVERY".equals(in.kind()))require(Long.parseLong(in.targetId())>0,"대상 ID 오류");
    else{var scope=GraphProjection.map(in.input().get("scope"));require("SEOUL_GYEONGGI".equals(scope.get("region"))&&"Asia/Seoul".equals(scope.get("timezone")),"발견 지역 오류");var a=java.time.LocalDate.parse(text(scope.get("startDate")));var b=java.time.LocalDate.parse(text(scope.get("endDate")));require(!a.isAfter(b)&&java.time.temporal.ChronoUnit.DAYS.between(a,b)<=365,"발견 기간 오류");}
   }catch(IllegalArgumentException|java.time.format.DateTimeParseException ex){throw ApiException.badRequest("작업 대상 형식 오류");}
+  // A live refresh must not bypass an unfinished historical import and announce old goods.
+  if(!in.baseline()){
+   var baseline=db.queryForList("select id,state from collection_job where kind=? and target_id=? and baseline and state in ('PENDING','RUNNING','VERIFYING','WAITING') order by created_at,id limit 1",in.kind(),in.targetId());
+   if(!baseline.isEmpty())return baseline.getFirst();
+  }
   String key=hash(List.of(in.kind(),in.targetId(),in.input(),in.generation(),in.baseline()));
   String active=hash(List.of(in.kind(),in.targetId(),in.input(),in.baseline()));
   db.update("insert into collection_job(id,kind,target_id,input_json,dedupe_key,baseline,active_key) values(?,?,?,cast(? as jsonb),?,?,?) on conflict do nothing",UUID.randomUUID(),in.kind(),in.targetId(),encode(in.input()),key,in.baseline(),active);
@@ -85,8 +90,8 @@ public class GraphService {
  @Transactional public Map<String,Object> refreshCreators(Bootstrap in){
   require(in!=null&&in.afterId()>=0&&in.size()>0&&in.size()<=200,"작가 갱신 범위 오류");
   String cycle=java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString();
-  var rows=db.queryForList("select c.id from subculture_exhibitor c where c.id>? and (exists(select 1 from collection_creator_publication cp where cp.exhibitor_id=c.id and cp.active) or exists(select 1 from subculture_participant_member pm join subculture_participant p on p.id=pm.participant_id join subculture_event_candidate e on e.id=p.event_id where pm.exhibitor_id=c.id and p.review_state<>'EXCLUDED' and e.review_state<>'EXCLUDED' and not e.publication_withdrawn and e.subcategory in ("+com.boothhana.interests.SubcultureScope.SQL+"))) and not exists(select 1 from collection_creator_publication hidden where hidden.exhibitor_id=c.id and not hidden.active) order by c.id limit ?",in.afterId(),in.size()+1);long after=in.afterId();
-  for(var row:rows.stream().limit(in.size()).toList()){after=number(row.get("id"));seed(new Seed("CREATOR",Long.toString(after),Map.of(),false,cycle));}
+  var rows=db.queryForList("select c.id, not exists(select 1 from collection_creator_publication initial where initial.exhibitor_id=c.id) as initial_baseline from subculture_exhibitor c where c.id>? and (exists(select 1 from collection_creator_publication cp where cp.exhibitor_id=c.id and cp.active) or exists(select 1 from subculture_participant_member pm join subculture_participant p on p.id=pm.participant_id join subculture_event_candidate e on e.id=p.event_id where pm.exhibitor_id=c.id and p.review_state<>'EXCLUDED' and e.review_state<>'EXCLUDED' and not e.publication_withdrawn and e.subcategory in ("+com.boothhana.interests.SubcultureScope.SQL+"))) and not exists(select 1 from collection_creator_publication hidden where hidden.exhibitor_id=c.id and not hidden.active) order by c.id limit ?",in.afterId(),in.size()+1);long after=in.afterId();
+  for(var row:rows.stream().limit(in.size()).toList()){after=number(row.get("id"));seed(new Seed("CREATOR",Long.toString(after),Map.of(),Boolean.TRUE.equals(row.get("initial_baseline")),cycle));}
   return Map.of("afterId",after,"hasMore",rows.size()>in.size());
  }
  @Transactional public Object heartbeat(UUID id,UUID token){leased(id,token);db.update("update collection_job set lease_until=now()+interval '30 minutes',updated_at=now() where id=?",id);return Map.of("renewed",true);}

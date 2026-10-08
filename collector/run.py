@@ -51,7 +51,7 @@ def write_json(path: Path, value: dict):
 def config(path: Path | None):
     result={'apiBaseUrl':os.getenv('COLLECTOR_API_BASE_URL','http://localhost:8080'),
         'tokenEnv':'BOOTH_COLLECTOR_TOKEN','stateDirectory':'~/.boothhana-collector',
-        'codexExecutable':'codex','codexHome':None,'model':None,'timeoutSeconds':900,'httpTimeoutSeconds':45}
+        'codexExecutable':'codex','codexHome':None,'model':'gpt-6.1-sol','timeoutSeconds':900,'httpTimeoutSeconds':45}
     if path:
         extra=json.loads(path.read_text(encoding='utf-8-sig'))
         if not isinstance(extra,dict) or set(extra)-set(result): raise RunError('알 수 없는 설정 키가 있습니다.')

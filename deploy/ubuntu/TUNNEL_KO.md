@@ -91,3 +91,32 @@ Vercel `VITE_API_BASE_URL`, `SEO_API_BASE_URL`은 `https://api.boothana.kr`로 �
 이전 Render 서비스는 삭제하지 않고 일시중지했다. GitHub 변수 `RENDER_KEEPALIVE_ENABLED=false`.
 복구 시 Render를 재개하고 준비 상태를 확인한 뒤 Vercel 두 API 변수를 기존 주소로 복원하고 재배포한다.
 DB와 GCS는 동일한 서비스를 계속 사용하므로 Render에서 Ubuntu로의 인프라 이관 자체에는 DB 이전이 없다. 이후 새 기능에 필요한 SQL 마이그레이션은 별도로 적용한다.
+
+
+## 서브컬처 관계 수집 상시 실행 (0.4.0.3)
+
+`graph.config.json`에는 `collector/config.graph.example.json`을 바탕으로 내부 API 주소,
+`/var/lib/boothhana-collector/state/graph`, `/var/lib/boothhana-collector/codex`를 설정합니다.
+SQL031–036, API 그래프 기능, Codex 로그인과 정확한 모델 호출 검증이 선행되어야 합니다.
+
+```bash
+docker compose --profile graph up -d --no-deps boothhana-graph
+docker compose --profile graph logs --tail 50 boothhana-graph
+```
+
+독립 서비스는 `collector.lock`을 사용하지 않습니다. 서버 작업 임대, 컨텍스트 해시와
+기존 공개 처리의 DB 잠금으로 중복 처리·변경된 자료의 공개를 방지합니다.
+시작 시와 6시간 간격으로 발견/행사/작가 갱신을 페이지 끝까지 예약하며,
+작가는 날짜 기준으로 중복 예약을 제거합니다. 대기 작업을 계속 처리하고 실패는 서버 큐에서 재시도합니다.
+`run-graph-baseline.sh`의 기존 5분 cron은 상시 서비스를 활성화할 때 제거해 실행 경로를 하나로 유지합니다.
+다른 카테고리·이미지·배치 스케줄은 유지합니다.
+
+이전 완료까지는 `collection_job.baseline=true`인 작업의 진행을 우선 보존합니다.
+기존 작가의 첫 공개 수집 역시 baseline으로 처리하여 과거 상품을 새 소식으로 알리지 않습니다.
+원문 미확인에 따른 `ENRICH`는 오류 은폐나 강제 승인이 아닌 보완 대기입니다.
+
+운영 `collector.config.json`에 `model: "gpt-6.1-sol"`,
+`maxCliCalls: 0`, `floorplanMaxCliCalls: 0`, `dailyDiscoveryCliCalls: 0`을 명시합니다.
+0은 호출 횟수 무제한이며 인증 오류, 개별 호출 시간 제한, 배치 실행 시간 제한은 유지됩니다.
+이미 시작된 컨테이너의 모델 설정은 바뀌지 않으며 다음 실행부터 적용됩니다.
+롤백 시 상시 그래프 서비스만 중지하고 이전 이미지·설정·graph baseline cron을 복원합니다.

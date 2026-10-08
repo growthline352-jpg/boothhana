@@ -233,30 +233,41 @@ public class CatalogPublicationService {
         return findPublicDetail(id).orElseThrow(() -> ApiException.notFound("공개된 안내를 찾을 수 없습니다."));
     }
     /** Expected absence is a value; SQL failures still propagate and roll back the caller. */
-    @SuppressWarnings("unchecked") public Optional<Map<String,Object>> findPublicDetail(long id) {
-        var rows=db.queryForList("select p.snapshot_json from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where p.event_id=? and e.review_state<>'EXCLUDED'",id);
-        if(rows.isEmpty()) return Optional.empty();
-        Map<String,Object> snapshot=json.readValue(rows.getFirst().get("snapshot_json").toString(),Map.class);
+    public Optional<Map<String,Object>> findPublicDetail(long id) {
+        return Optional.ofNullable(findPublicDetails(List.of(id)).get(id));
+    }
+    /** Batch all live visibility checks, without caching withdrawn publications or rights. */
+    @SuppressWarnings("unchecked") public Map<Long,Map<String,Object>> findPublicDetails(List<Long> ids) {
+        if(ids.isEmpty())return Map.of();
+        if(ids.size()>100)throw ApiException.badRequest("공개 상세 조회 한도 오류");
+        String marks=String.join(",",Collections.nCopies(ids.size(),"?"));
+        var rows=db.queryForList("select p.event_id,p.snapshot_json from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where p.event_id in ("+marks+") and e.review_state<>'EXCLUDED'",ids.toArray());
+        Set<Long> excluded=new HashSet<>(db.queryForList("select id from subculture_participant where event_id in ("+marks+") and review_state='EXCLUDED'",Long.class,ids.toArray()));
+        Set<Long> hiddenSales=new HashSet<>(db.queryForList("select s.participant_id from subculture_sales s join subculture_participant p on p.id=s.participant_id where p.event_id in ("+marks+") and s.review_state='EXCLUDED'",Long.class,ids.toArray()));
+        var allAssets=media.assetsForEvents(ids);var banners=media.publicBanners(ids);var allGroups=groups.publicGroups(ids);
+        Map<Long,Map<String,Object>> result=new LinkedHashMap<>();
+        for(var row:rows){long id=((Number)row.get("event_id")).longValue();
+        Map<String,Object> snapshot=json.readValue(row.get("snapshot_json").toString(),Map.class);
         Set<Long> publishedParticipants=new HashSet<>(),publishedProducts=new HashSet<>(),publishedSales=new HashSet<>();
         List<Map<String,Object>> participants=(List<Map<String,Object>>)snapshot.get("participants");
         // Migration 022 freezes legacy provenance. Unknown snapshots use collected
         // presentation; draft overrides must never change the published presentation.
         for(var p:participants) if(!p.containsKey("salesSummaryOrigin") && p.get("sales") instanceof Map<?,?>)
             p.put("salesSummaryOrigin","COLLECTED");
-        Set<Long> excluded=new HashSet<>(db.query("select id from subculture_participant where event_id=? and review_state='EXCLUDED'",(rs,n)->rs.getLong(1),id));
         participants.removeIf(p->excluded.contains(((Number)p.get("id")).longValue()));
-        Set<Long> hiddenSales=new HashSet<>(db.query("select s.participant_id from subculture_sales s join subculture_participant p on p.id=s.participant_id where p.event_id=? and s.review_state='EXCLUDED'",(rs,n)->rs.getLong(1),id));
         for(var p:participants) { if(hiddenSales.contains(((Number)p.get("id")).longValue())) {p.put("sales",null);p.put("productIds",Map.of());p.put("productRows",List.of());} publishedParticipants.add(((Number)p.get("id")).longValue());if(p.get("sales")!=null) publishedSales.add(((Number)p.get("id")).longValue());var products=(Map<String,Number>)p.get("productIds");if(products!=null) products.values().forEach(v->publishedProducts.add(v.longValue()));}
-        var assets=media.assets(id,null).stream().filter(a->"APPROVED".equals(a.rightsState())&&"STORED".equals(a.storageState())&&a.storedUrl()!=null)
+        var assets=allAssets.getOrDefault(id,List.of()).stream().filter(a->"APPROVED".equals(a.rightsState())&&"STORED".equals(a.storageState())&&a.storedUrl()!=null)
             .filter(a->a.participantId()==null||publishedParticipants.contains(a.participantId()))
             .filter(a->a.productId()==null||publishedProducts.contains(a.productId()))
             .filter(a->!"SALES_SHEET".equals(a.type())||a.participantId()!=null&&publishedSales.contains(a.participantId()))
             .map(a->{Map<String,Object> m=new LinkedHashMap<>();m.put("id",a.id());m.put("participantId",a.participantId());m.put("productId",a.productId());m.put("type",a.type());m.put("url",a.storedUrl());m.put("caption",a.caption());m.put("attribution",a.pageUrl());m.put("credit",a.credit());m.put("offlineAllowed",a.offlineAllowed());return m;}).toList();
         snapshot.put("assets",assets);
-        AssetView banner=media.publicBanners(List.of(id)).get(id);
+        AssetView banner=banners.get(id);
         // Explicit null matters: the frontend must not pick another banner after rights revocation.
         snapshot.put("banner",banner==null?null:assets.stream().filter(a->Objects.equals(a.get("id"),banner.id())).findFirst().orElse(null));
-        var group=groups.publicGroups(List.of(id)).get(id);if(group!=null)snapshot.put("operatingGroup",group);
-        return Optional.of(snapshot);
+        var group=allGroups.get(id);if(group!=null)snapshot.put("operatingGroup",group);
+        result.put(id,snapshot);
+        }
+        return result;
     }
 }

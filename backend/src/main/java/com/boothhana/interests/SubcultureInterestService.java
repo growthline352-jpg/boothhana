@@ -70,7 +70,31 @@ public class SubcultureInterestService {
   for(var row:db.queryForList("select i.alias_id,i.canonical_id from collection_creator_identity i join collection_creator_publication p on p.exhibitor_id=i.canonical_id and p.active where i.active and i.alias_id in ("+marks+")",views.stream().map(v->v.get("id")).toArray()))groups.put(number(row.get("alias_id")),number(row.get("canonical_id")));
   var cards=new LinkedHashMap<Long,Map<String,Object>>();for(var view:views){long id=number(view.get("id"));cards.putIfAbsent(groups.getOrDefault(id,id),view);}return new ArrayList<>(cards.values());
  }
- public List<Map<String,Object>> creatorViews(Collection<Long> ids){Map<Long,Optional<Map<String,Object>>> cache=new HashMap<>();List<Map<String,Object>> results=new ArrayList<>();for(long id:ids){try{results.add(creator(id,cache));}catch(ApiException e){if(e.status.value()!=404)throw e;}}return results;}
+ public List<Map<String,Object>> creatorViews(Collection<Long> ids){
+  if(ids.isEmpty())return List.of();
+  String marks=String.join(",",Collections.nCopies(ids.size(),"?"));
+  String profileJoin=graphEnabled?" left join collection_creator_publication cp on cp.exhibitor_id=e.id ":" ";
+  String profile=graphEnabled?"case when cp.exhibitor_id is not null then case when cp.active then cp.data_json end else legacy.member end":"legacy.member";
+  String legacyGate=graphEnabled?"cp.exhibitor_id is null and ":"";
+  var rows=db.queryForList("select e.id,"+profile+" as data_json from subculture_exhibitor e "+profileJoin+"""
+   left join lateral (
+    select member from subculture_participant_member pm
+    join subculture_participant p on p.id=pm.participant_id
+    join subculture_catalog_publication pub on pub.event_id=p.event_id
+    join subculture_event_candidate event on event.id=p.event_id
+    cross join lateral jsonb_array_elements(pub.snapshot_json->'participants') participant
+    cross join lateral jsonb_array_elements(participant->'participant'->'members') member
+    where %spm.exhibitor_id=e.id and p.review_state<>'EXCLUDED' and event.review_state<>'EXCLUDED'
+    and participant->>'id'=p.id::text
+    and member->>'name' is not distinct from e.profile_json->>'name'
+    and member->>'profileUrl' is not distinct from e.profile_json->>'profileUrl'
+    order by pub.published_at desc limit 1
+   ) legacy on true where e.id in (
+   """.formatted(legacyGate)+marks+")",ids.toArray());
+  Map<Long,Map<String,Object>> found=new HashMap<>();
+  for(var row:rows)if(row.get("data_json")!=null){long id=number(row.get("id"));var value=new LinkedHashMap<String,Object>(json.readValue(row.get("data_json").toString(),Map.class));value.put("id",id);found.put(id,value);}
+  return ids.stream().map(found::get).filter(Objects::nonNull).toList();
+ }
  public List<Map<String,Object>> adminSubjects(){return db.queryForList("select id,kind,name,work_id as \"workId\",medium,aliases::text as \"aliasesJson\",source_url as \"sourceUrl\",active,revision from subculture_subject order by reviewed_at desc limit 100");}
  public List<Map<String,Object>> adminLinks(UUID subjectId){return db.queryForList("select id,subject_id as \"subjectId\",kind,target_id as \"targetId\",event_id as \"eventId\",participant_id as \"participantId\",source_url as \"sourceUrl\",evidence,active,revision from subculture_subject_link where subject_id=? order by reviewed_at desc limit 100",subjectId);}
  @Transactional public Map<String,Object> reviewSubject(long actor,UUID id,SubjectInput in){if(in==null||in.kind()==null||!Set.of("WORK","CHARACTER").contains(in.kind())||in.revision()<0)throw ApiException.badRequest("종류와 버전을 확인해 주세요.");String name=text(in.name(),160,true),medium=text(in.medium(),24,false),source=url(in.sourceUrl());if(in.kind().equals("WORK")&&(!MEDIA.contains(medium)||in.workId()!=null)||in.kind().equals("CHARACTER")&&(in.workId()==null||!"WORK".equals(subject(in.workId()).get("kind"))))throw ApiException.badRequest("출처 작품을 확인해 주세요.");if(id.equals(in.workId()))throw ApiException.badRequest("자신을 출처로 지정할 수 없습니다.");if(in.aliases()==null||in.aliases().size()>30)throw ApiException.badRequest("별칭은 30개 이하로 입력해 주세요.");var aliases=in.aliases().stream().map(x->text(x,160,true)).toList();db.queryForList("select pg_advisory_xact_lock(hashtextextended(?,0))","subject:"+id);var old=db.queryForList("select revision,kind from subculture_subject where id=?",id);if(!old.isEmpty()&&(!old.getFirst().get("kind").equals(in.kind())||number(old.getFirst().get("revision"))!=in.revision()))throw ApiException.conflict("항목의 종류나 버전이 변경됐습니다.");if(old.isEmpty()&&in.revision()!=0)throw ApiException.conflict("새 항목의 버전은 0입니다.");db.update("insert into subculture_subject(id,kind,name,work_id,medium,aliases,source_url,active,reviewed_by) values(?,?,?,?,?,cast(? as jsonb),?,?,?) on conflict(id) do update set name=excluded.name,work_id=excluded.work_id,medium=excluded.medium,aliases=excluded.aliases,source_url=excluded.source_url,active=excluded.active,reviewed_by=excluded.reviewed_by,reviewed_at=now(),revision=subculture_subject.revision+1",id,in.kind(),name,in.workId(),medium,json.writeValueAsString(aliases),source,in.active(),actor);return Map.of("id",id,"active",in.active());}

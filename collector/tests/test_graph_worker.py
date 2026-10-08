@@ -17,6 +17,19 @@ class FakeApi:
         return {}
 
 class GraphWorkerTests(unittest.TestCase):
+    def test_watch_refreshes_all_pages_before_claiming(self):
+        with tempfile.TemporaryDirectory() as temp:
+            cfg=configuration();cfg['stateDirectory']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
+            calls=[]
+            def request(method,path,body):
+                calls.append((path,body))
+                if path=='/claim':return {'empty':True}
+                return {'afterId':100 if body['afterId']==0 else 150,'hasMore':body['afterId']==0}
+            with patch.object(worker,'request',side_effect=request),patch('graph_worker.time.sleep',side_effect=InterruptedError):
+                with self.assertRaises(InterruptedError):worker.run(watch=True)
+            self.assertEqual(['/refresh','/refresh','/refresh-creators','/refresh-creators','/claim'],[p for p,b in calls])
+            self.assertEqual([0,100,0,100],[b['afterId'] for p,b in calls[:-1]])
+
     def test_all_job_schemas_are_valid(self):
         for kind in ['DISCOVERY','EVENT','PARTICIPANTS','SALES','CREATOR','CHARACTERS','RELATIONS']:jsonschema.Draft202012Validator.check_schema(schema(kind))
     def test_batch_schema_requires_nullable_cursor_without_changing_legacy_schema(self):
