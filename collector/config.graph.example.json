@@ -1,0 +1,12 @@
+{
+  "apiBaseUrl": "http://localhost:8080",
+  "tokenEnv": "BOOTH_COLLECTOR_TOKEN",
+  "stateDirectory": "~/.boothhana-collector/graph",
+  "codexExecutable": "auto",
+  "codexHome": null,
+  "model": "gpt-6.1-sol",
+  "timeoutSeconds": 900,
+  "httpTimeoutSeconds": 45,
+  "pollSeconds": 30,
+  "blockedSourceHosts": ["witchform.com"]
+}

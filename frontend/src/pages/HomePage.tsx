@@ -1,3 +1,4 @@
+import {SubcultureHome} from '../features/subculture/SubculturePages'
 import { DiscoveryPage } from '../features/discovery/DiscoveryPage'
 import { useLocation } from 'react-router'
 import { categories, categoryHref } from '../features/discovery/categories'
@@ -7,6 +8,7 @@ import { DiscoveryIcon } from '../features/discovery/DiscoveryIcon'
 /** The public home is the real category feed, never a seeded marketing demo. */
 export function HomePage() {
   const location = useLocation()
+  if (currentSiteCategory()==='subculture') return <SubcultureHome/>
   if (!categorySitesActive() || currentSiteCategory() || location.search) return <DiscoveryPage />
   return <section className="discovery-container category-portal">
     <h1>어떤 행사를 찾고 계세요?</h1><p>서브컬처, 박람회, 축제, 팝업. 관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>

@@ -28,6 +28,7 @@
   ],
   "buildCommand": "pnpm run build:hosting",
   "headers": [
+    {"source":"/push-sw.js","headers":[{"key":"Cache-Control","value":"no-cache"}]},
     {"source":"/library-sw.js","headers":[{"key":"Cache-Control","value":"no-cache"}]},
     {
       "source": "/offline/sw.js",

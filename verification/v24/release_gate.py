@@ -32,6 +32,8 @@ def main():
         state('NOT_READY', reason='Inherited full checks passed; v24 checks pending')
         subprocess.run([sys.executable, 'verification/run_checks.py'], cwd=ROOT, check=True)
         required=[
+            ('TEST-com.boothhana.release.CollectionGraphIntegrationTests.xml','withdrawnEventIsNotBootstrappedOrRepublishedByQueuedWork'),
+            ('TEST-com.boothhana.release.CollectionGraphIntegrationTests.xml','eventApprovalPublishesAndReplayDoesNotPublishTwice'),
             ('TEST-com.boothhana.release.LibraryIntegrationTests.xml','seoulAreaFiltersApplyToCountsListsCalendarAndMultiVenueEvents'),
             ('TEST-com.boothhana.release.PersistentSessionIntegrationTests.xml','storedKakaoSessionSurvivesRepositoryRecreationAndRenewsOnUse'),
             ('TEST-com.boothhana.release.PersistentSessionIntegrationTests.xml','expiredSessionCannotBeRestoredOrRenewed'),

@@ -165,6 +165,7 @@ def terminal_cli_failure(path: Path) -> str | None:
     return None
 
 def canonical_audit_url(value: str) -> str:
+    if not isinstance(value,str):return ''
     try:
         parsed=urlsplit(value.strip())
         if parsed.scheme not in ('http','https') or not parsed.hostname:return ''
@@ -175,7 +176,12 @@ def canonical_audit_url(value: str) -> str:
     except (TypeError,ValueError):return ''
 
 def audit_opened_urls(path: Path) -> list[str]:
-    """Return URLs explicitly opened by completed CLI web actions, not search results."""
+    """Only successful page results, including batched/ref opens; never open attempts.
+
+    Current CLI collapses batch actions to `other` or the first action. A page
+    result has a view reference and the tool's exact line-count summary. Search
+    snippets, even with URLs, are not evidence of a fetched document.
+    """
     opened=[]
     if not path.is_file() or path.stat().st_size>20*1024*1024:return opened
     for line in path.read_text(encoding='utf-8',errors='replace').splitlines():
@@ -184,13 +190,20 @@ def audit_opened_urls(path: Path) -> list[str]:
         item=event.get('item') or {}
         if event.get('type')!='item.completed' or item.get('type') not in ('web_search','web_search_call'):continue
         action=item.get('action') or {}
-        action_type=action.get('type') if isinstance(action,dict) else str(action)
-        values=[item.get('query')]
-        if isinstance(action,dict):values.extend(action.get(key) for key in ('url','uri','query'))
-        if action_type=='search':continue
-        for value in values:
-            normalized=canonical_audit_url(value) if isinstance(value,str) else ''
+        results=item.get('results') or []
+        for result in results:
+            if not isinstance(result,dict):continue
+            ref=str(result.get('ref_id',''))
+            count=re.fullmatch(r'Total lines:\s*(\d+)',str(result.get('snippet','')).strip())
+            if not re.fullmatch(r'turn\w*view\d+',ref) or not count or int(count[1])<2:continue
+            if re.search(r'internal error|access denied|just a moment|captcha|403 forbidden',str(result.get('title','')),re.I):continue
+            normalized=canonical_audit_url(result.get('url',''))
             if normalized and normalized not in opened:opened.append(normalized)
+            # A single successful redirect may prove the original requested URL.
+            # In a batch the first requested URL may have failed: never infer it.
+            if normalized and len(results)==1 and isinstance(action,dict) and action.get('type')=='open_page':
+                requested=canonical_audit_url(action.get('url',''))
+                if requested and requested not in opened:opened.append(requested)
     return opened[:500]
 
 def stop_process(p: subprocess.Popen):

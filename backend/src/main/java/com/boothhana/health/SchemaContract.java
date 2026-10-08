@@ -167,7 +167,9 @@ public final class SchemaContract {
             if(!want.udt().equals(row.get("udt_name")))issues.add("COLUMN_TYPE_MISMATCH:"+key);
             Object length=row.get("character_maximum_length");
             if(want.length()!=null&&(!(length instanceof Number n)||n.intValue()!=want.length()))issues.add("COLUMN_LENGTH_MISMATCH:"+key);
-            if(!(want.notNull()?"NO":"YES").equals(row.get("is_nullable")))issues.add("COLUMN_NULLABILITY_MISMATCH:"+key);
+            boolean automatedSeries=(key.equals("event_series.created_by")||key.equals("event_series_member.checked_by"))
+                && actual.containsKey(key.substring(0,key.indexOf('.'))+".system_verdict_id")&&"YES".equals(row.get("is_nullable"));
+            if(!(want.notNull()?"NO":"YES").equals(row.get("is_nullable"))&&!automatedSeries)issues.add("COLUMN_NULLABILITY_MISMATCH:"+key);
         });
         return List.copyOf(issues);
     }
