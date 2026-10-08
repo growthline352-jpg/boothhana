@@ -39,7 +39,7 @@ public class ReadinessService {
                 select c.relname,c.relrowsecurity,
                   (r.rolsuper or r.rolbypassrls or (c.relowner=r.oid and not c.relforcerowsecurity)
                    or exists(select 1 from pg_policy pol where pol.polrelid=c.oid
-                     and pol.polname='boothhana_server_v11' and r.oid=any(pol.polroles))) server_policy,
+                     and pol.polname in ('boothhana_server_v11','collection_server','notification_server') and r.oid=any(pol.polroles))) server_policy,
                   (has_table_privilege(current_user,c.oid,'SELECT')
                    and has_table_privilege(current_user,c.oid,'INSERT')
                    and has_table_privilege(current_user,c.oid,'UPDATE')
