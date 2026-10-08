@@ -54,7 +54,7 @@ export function PublicLayout() {
     <header className="discovery-header">
       <div className="discovery-header-inner">
         <Link className="brand discovery-brand" to="/" aria-label="부스하나 홈">
-          <span className="brand-logo"><img src={subculture?"/assets/categories/subculture-3d.webp":"/assets/brand/logo.png"} alt="부스하나" /></span>{subculture&&<strong>부스하나 서브컬처</strong>}
+          {subculture ? <span className="sc-production-brand"><img src="/assets/categories/subculture-3d.webp" alt=""/><strong>부스하나<small>서브컬처 · SUBCULTURE</small></strong></span> : <span className="brand-logo"><img src="/assets/brand/logo.png" alt="부스하나" /></span>}
         </Link>
         <nav className={'discovery-category-nav'+(subculture?' sc-production-nav':'')} aria-label={subculture?"서브컬처 탐색":"행사 분야"}>
           {subculture?<><Link className="discovery-category-link" to="/subculture">발견</Link><Link className="discovery-category-link" to="/discover?category=subculture">행사 찾기</Link><Link className="discovery-category-link" to="/subculture/subjects">작품·캐릭터</Link><Link className="discovery-category-link" to="/subculture/creators">작가·서클</Link></>:<>

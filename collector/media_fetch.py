@@ -108,8 +108,11 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PI
         finally: connection.close()
     raise MediaError('Too many image redirects')
 
-def fetch_html(url: str,hosts: list[str],timeout: int=30):
-    """Fetch a reviewed public HTML floorplan page with the same SSRF controls as images."""
+def fetch_html(url: str,hosts: list[str],timeout: int=30,*,allow_plain: bool=False,allow_json: bool=False):
+    """Fetch public evidence with pinned HTTPS; non-HTML formats require opt-in."""
+    accepted={'text/html','application/xhtml+xml'}
+    if allow_plain:accepted.add('text/plain')
+    if allow_json:accepted.add('application/json')
     deadline=time.monotonic()+timeout
     for _ in range(4):
         parsed,host=check_url(url,hosts);addresses=public_addresses(host,443)
@@ -118,7 +121,7 @@ def fetch_html(url: str,hosts: list[str],timeout: int=30):
         connection=PinnedHTTPS(host,addresses[0],min(10,remaining))
         try:
             path=request_target(parsed)
-            connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Floorplan-Fetcher/1','Accept':'text/html','Accept-Encoding':'identity'})
+            connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Floorplan-Fetcher/1','Accept':','.join(sorted(accepted)),'Accept-Encoding':'identity','Cache-Control':'no-cache'})
             response=connection.getresponse()
             if response.status in (301,302,303,307,308):
                 target=response.getheader('Location')
@@ -127,7 +130,7 @@ def fetch_html(url: str,hosts: list[str],timeout: int=30):
             if response.status!=200:raise MediaError(f'HTML HTTP {response.status}')
             if response.getheader('Content-Encoding','identity') not in ('identity',''):raise MediaError('Compressed transport not accepted')
             type_=response.getheader('Content-Type','').split(';')[0].strip().lower()
-            if type_ not in ('text/html','application/xhtml+xml'):raise MediaError('Floorplan page is not HTML')
+            if type_ not in accepted:raise MediaError('Floorplan page is not HTML')
             length=response.getheader('Content-Length')
             if length is not None and (not length.isdigit() or not 0<int(length)<=MAX_HTML_BYTES):raise MediaError('Declared HTML size invalid')
             data=bytearray()
