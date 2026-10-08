@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 import jsonschema
 from graph_worker import Worker,configuration,schema,require_opened,MODEL,validate_products,MEDIA
-from run import RunError,audit_opened_urls
+from run import RunError,CliUnavailable,audit_opened_urls
 
 SOURCE='https://example.com/product'
 RESULT={'assignments':[],'unresolved':[], 'sources':[{'url':SOURCE,'kind':'OFFICIAL','access':'ORIGINAL','evidence':'Product description'}]}
@@ -29,6 +29,30 @@ class GraphWorkerTests(unittest.TestCase):
                 with self.assertRaises(InterruptedError):worker.run(watch=True)
             self.assertEqual(['/refresh','/refresh','/refresh-creators','/refresh-creators','/claim'],[p for p,b in calls])
             self.assertEqual([0,100,0,100],[b['afterId'] for p,b in calls[:-1]])
+
+    def test_account_failure_releases_job_then_backs_off_without_draining_queue(self):
+        for reason in ('USAGE_LIMIT','AUTH_REQUIRED','INVALID_SCHEMA'):
+            with self.subTest(reason=reason),tempfile.TemporaryDirectory() as temp:
+                cfg=configuration();cfg['stateDirectory']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
+                job={'id':str(uuid.uuid4()),'kind':'EVENT','leaseToken':str(uuid.uuid4())};calls=[]
+                def request(method,path,body):
+                    calls.append((path,body))
+                    if path=='/claim':return job
+                    return {'afterId':1,'hasMore':False}
+                with patch.object(worker,'request',side_effect=request),patch.object(worker,'process',side_effect=CliUnavailable(reason)),patch('graph_worker.time.sleep',side_effect=InterruptedError) as sleep:
+                    with self.assertRaises(InterruptedError):worker.run(watch=True)
+                self.assertEqual(1,sum(path=='/claim' for path,body in calls))
+                self.assertTrue(calls[-1][0].endswith('/failure'))
+                self.assertEqual(job['leaseToken'],calls[-1][1]['leaseToken'])
+                sleep.assert_called_once_with(3600)
+
+    def test_drain_exits_on_account_failure_without_claiming_every_pending_job(self):
+        with tempfile.TemporaryDirectory() as temp:
+            cfg=configuration();cfg['stateDirectory']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
+            job={'id':str(uuid.uuid4()),'kind':'EVENT','leaseToken':str(uuid.uuid4())}
+            with patch.object(worker,'request',side_effect=[job,{}]) as request,patch.object(worker,'process',side_effect=CliUnavailable('USAGE_LIMIT')),patch('graph_worker.time.sleep') as sleep:
+                worker.run()
+            self.assertEqual(2,request.call_count);sleep.assert_not_called()
 
     def test_all_job_schemas_are_valid(self):
         for kind in ['DISCOVERY','EVENT','PARTICIPANTS','SALES','CREATOR','CHARACTERS','RELATIONS']:jsonschema.Draft202012Validator.check_schema(schema(kind))
