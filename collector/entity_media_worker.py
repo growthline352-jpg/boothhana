@@ -459,6 +459,17 @@ class EntityMediaWorker:
                     continue
                 try:
                     receipt = self.request('GET', '/' + str(uuid.UUID(str(saved['id']))))
+                    if receipt.get('storageState') != 'STORED':
+                        candidate = receipt.get('candidate', {})
+                        prior_documents = receipt.get('extractionAudit', {}).get('sourceDocuments', [])
+                        prior_hashes = self._hashes(prior_documents)
+                        identity = next((url for url in identity_urls(context['target']) if url in prior_hashes), None)
+                        if not identity:
+                            raise RunError('RESUME_IDENTITY_AUDIT_MISSING')
+                        documents, _ = self._documents(context, candidate.get('pageUrl'), candidate.get('usageSourceUrl'), identity)
+                        self._native(documents, candidate['pageUrl'], candidate['imageUrl'])
+                        if any(prior_hashes.get(url) != digest for url, digest in self._hashes(documents).items()):
+                            raise RunError('SOURCE_CHANGED_REEXTRACT')
                     url = receipt.get('storedUrl') if receipt.get('storageState') == 'STORED' else receipt.get('imageUrl')
                     result = self._publish(context, receipt, self._image(url))
                     write_json(directory / 'report.json', result)

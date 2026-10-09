@@ -244,6 +244,18 @@ class EntityMediaWorkerTests(unittest.TestCase):
         self.assertEqual('DEFERRED', result['status'])
         self.assertEqual('PUBLIC_IMAGE_HASH_MISMATCH', result['attempts'][0]['reason'])
 
+    def test_failed_upload_cannot_resume_after_license_original_changes(self):
+        self.worker().run_target(CONTEXT, [SEED])
+        self.api.saved.update(storageState='FAILED', storedUrl=None)
+        saved = copy.deepcopy(self.api.saved)
+        self.api.calls, self.model_calls = [], []
+        def sources(urls):
+            return [document(url, 'd' * 64 if url == USAGE else None) for url in urls]
+        result = self.worker(source_loader=sources).run_target({**CONTEXT, 'existingMedia': [saved]})
+        self.assertEqual('DEFERRED', result['status'])
+        self.assertEqual('SOURCE_CHANGED_REEXTRACT', result['attempts'][0]['reason'])
+        self.assertFalse(any(c[1].endswith('/content') for c in self.api.calls))
+
     def test_delivery_failure_records_safe_reason_and_remains_retryable(self):
         original = self.api.request
         def request(method, path, body=None, **kwargs):
