@@ -23,7 +23,7 @@ function harness(options={}){
    if(name==='react/jsx-runtime')return{jsx,jsxs:jsx,Fragment:'Fragment'}
    if(name==='react-router')return router
    if(name.endsWith('/useAuth'))return{useAuth:()=>env.auth}
-   if(name.endsWith('/useRemote'))return{useRemote:fn=>{if(options.callLoader)void fn();return file.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
+   if(name.endsWith('/useRemote'))return{useRemote:(_namespace,fn)=>{if(options.callLoader)void fn();return file.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
    if(file.includes('/goods/')&&name==='./api')return {goodsApi:options.goodsApi||{bestsellers:async()=>({basis:'POS_LOGGED_UNITS',windowDays:30,from:'2026-08-17T00:00:00Z',to:'2026-09-16T00:00:00Z',asOf:'2026-09-16T00:00:00Z',items:[]})}}
    if(file.includes('/floorplan/')&&name==='./api')return {floorplanApi:options.floorplanApi||{}}
    if(name==='../catalog/api'||((file.endsWith('CatalogPublicPage.tsx')||file.endsWith('BannerSelectionPanel.tsx'))&&name==='./api'))return api

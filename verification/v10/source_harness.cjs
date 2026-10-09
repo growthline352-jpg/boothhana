@@ -32,7 +32,7 @@ function harness(options={}){
    if(name==='react-router')return router
    if(name.endsWith('/api/image-upload'))return {ImageUploadController:class{},ImageUploadTask:class{}}
    if(name.endsWith('/useAuth'))return{useAuth:()=>env.auth}
-   if(name.endsWith('/useRemote'))return{useRemote:fn=>{if(options.callLoader)void fn();if(fn.toString().includes('purchaseApi.list'))return options.purchaseRemote||{loading:false,error:null,data:[],reload:async()=>{}};return normalizedFile.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
+   if(name.endsWith('/useRemote'))return{useRemote:(_namespace,fn)=>{if(options.callLoader)void fn();if(fn.toString().includes('purchaseApi.list'))return options.purchaseRemote||{loading:false,error:null,data:[],reload:async()=>{}};return normalizedFile.includes('/floorplan/')?(options.floorplanRemote||{loading:false,error:null,data:{plans:[],managedAssetIds:[]},reload:async()=>{}}):env.remote}}
    if(normalizedFile.includes('/support/')&&name==='./api')return {supportApi:options.supportApi||{}}
    if(normalizedFile.includes('/goods/')&&name==='./api')return {goodsApi:options.goodsApi||{bestsellers:async()=>({basis:'POS_LOGGED_UNITS',windowDays:30,from:'2026-08-17T00:00:00Z',to:'2026-09-16T00:00:00Z',asOf:'2026-09-16T00:00:00Z',items:[]})}}
    if(normalizedFile.includes('/floorplan/')&&name==='./api')return {floorplanApi:options.floorplanApi||{}}

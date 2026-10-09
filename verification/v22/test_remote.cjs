@@ -1,8 +1,8 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {runtime,wait}=require('./support/runtime.cjs');
 function setup(){const h=runtime(),{useRemote}=h.load('frontend/src/app/useRemote.ts');let key='A',loader=()=>Promise.resolve('initial');
- const render=()=>h.render(()=>useRemote(loader,[key]));render();h.flushEffects();return {h,render,setLoader:x=>loader=x,setKey:x=>key=x};}
-async function settle(){await Promise.resolve();await Promise.resolve();}
+ const render=()=>h.render(()=>useRemote('verification:v22:remote',loader,[key]));render();h.flushEffects();return {h,render,setLoader:x=>loader=x,setKey:x=>key=x};}
+const settle=()=>new Promise(resolve=>setImmediate(resolve));
 test('a successful explicit write replaces an older in-flight GET result',async()=>{const x=setup();await settle();const delayed=wait();x.setLoader(()=>delayed.promise); // reload captures the current scope loader: change key deliberately
  x.setKey('B');x.render();x.h.flushEffects();x.render().setData('saved revision 2');delayed.resolve('stale revision 1');await settle();assert.equal(x.render().data,'saved revision 2');assert.equal(x.render().loading,false);});
 test('older GET failure cannot erase successful write or display a false error',async()=>{const x=setup();await settle();const delayed=wait();x.setLoader(()=>delayed.promise);x.setKey('B');x.render();x.h.flushEffects();x.render().setData('saved');delayed.reject(Error('old lookup failed'));await settle();assert.equal(x.render().data,'saved');assert.equal(x.render().error,null)});
