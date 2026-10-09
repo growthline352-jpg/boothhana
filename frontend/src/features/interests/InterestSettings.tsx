@@ -6,8 +6,8 @@ import './interests.css'
 
 export function InterestSettings({ onboarding = false, onComplete }: { onboarding?: boolean; onComplete?: () => void }) {
   const auth = useAuth()
-  const options = useRemote(interestApi.options)
-  const preferences = useRemote(interestApi.get, [auth.user?.id, auth.generation])
+  const options = useRemote("features/interests/InterestSettings:InterestSettings:options", interestApi.options)
+  const preferences = useRemote("features/interests/InterestSettings:InterestSettings:preferences", interestApi.get, [auth.user?.id, auth.generation])
   const view = preferences.data
   return <section className="interest-settings" aria-labelledby="interest-title">
     <header><h2 id="interest-title">{onboarding ? '어떤 행사를 좋아하세요?' : '관심분야 설정'}</h2>

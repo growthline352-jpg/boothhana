@@ -11,7 +11,7 @@ export function EventComments({eventId,draft,onDraftChange}:{eventId:number;draf
  const {user,loading,loginUrl}=useAuth(),[page,setPage]=useState(0),[localBody,setLocalBody]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('')
  const body=draft??localBody,setBody=onDraftChange??setLocalBody
  const request=useRef<{id:string;body:string}|null>(null),guard=useRef(false)
- const list=useRemote(()=>api<Result>(`/api/public/catalog/events/${eventId}/comments?page=${page}`),[eventId,page])
+ const list=useRemote("features/catalog/EventComments:EventComments:list", ()=>api<Result>(`/api/public/catalog/events/${eventId}/comments?page=${page}`),[eventId,page])
  async function send(e:FormEvent){
   e.preventDefault();if(guard.current)return;guard.current=true;setBusy(true);setError('')
   if(!request.current||request.current.body!==body)request.current={id:crypto.randomUUID(),body}

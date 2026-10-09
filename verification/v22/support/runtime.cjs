@@ -20,6 +20,8 @@ function runtime(options={}){
   useCallback(f,deps){return hooks.useMemo(()=>f,deps)},
   useEffect(f,deps){const i=cursor++;if(!slots[i]||!same(slots[i].deps,deps)){const old=slots[i];slots[i]={deps,cleanup:old?.cleanup};pending.push(()=>{slots[i].cleanup?.();slots[i].cleanup=f()})}},
   useLayoutEffect(f,deps){hooks.useEffect(f,deps)},
+  // Read current store state on each explicit render, and preserve subscription cleanup.
+  useSyncExternalStore(subscribe,read){hooks.useEffect(()=>subscribe(()=>{}),[subscribe]);return read()},
   createContext(value){return {value,Provider:component('Provider')}},useContext(c){return c.value},useId(){return `test-${cursor++}`},
  };
  // Keep portal children visible to source-only assertions; no DOM/top-layer emulation.

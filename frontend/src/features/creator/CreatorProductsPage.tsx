@@ -24,9 +24,9 @@ export function CreatorProductsPage() {
   return <ProductEditor key={eventBoothId} eventBoothId={eventBoothId} />
 }
 function ProductEditor({ eventBoothId }: { eventBoothId: string }) {
-  const state = useRemote(() => creatorApi.products(eventBoothId), [eventBoothId])
-  const booths = useRemote(creatorApi.eventBooths, [])
-  const events = useRemote(creatorApi.events, [])
+  const state = useRemote("features/creator/CreatorProductsPage:ProductEditor:state", () => creatorApi.products(eventBoothId), [eventBoothId])
+  const booths = useRemote("features/creator/CreatorProductsPage:ProductEditor:booths", creatorApi.eventBooths, [])
+  const events = useRemote("features/creator/CreatorProductsPage:ProductEditor:events", creatorApi.events, [])
   const booth = booths.data?.find(row => String(row.id) === eventBoothId)
   const event = events.data?.find(row => row.id === booth?.eventId)
   const [editing, setEditing, submission] = useConsoleDraft<ProductDraft | null>(`creator:products:${eventBoothId}`, null)

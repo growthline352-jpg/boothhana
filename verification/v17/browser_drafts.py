@@ -37,7 +37,7 @@ async def run(dist):
                     identity = {'id': 701, 'displayName': '격리 테스트', 'permissions': ['ADMIN', 'CREATOR', 'FAN']}
                     me_ready, save_ready, save_started = asyncio.Event(), asyncio.Event(), asyncio.Event()
                     me_ready.set(); save_ready.set()
-                    state = {'auth_status': 200, 'saves': 0, 'unexpected': [], 'page_errors': []}
+                    state = {'auth_status': 200, 'saves': 0, 'me_reads': 0, 'signal_changes': 0, 'unexpected': [], 'page_errors': []}
                     page.on('pageerror', lambda error: state['page_errors'].append(str(error)))
                     async def fixture(route):
                         req = route.request; url = urlsplit(req.url); endpoint = url.path
@@ -49,6 +49,7 @@ async def run(dist):
                             await route.fulfill(status=204, headers={'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Credentials':'true','Access-Control-Allow-Headers':'content-type,x-xsrf-token','Access-Control-Allow-Methods':'GET,POST,PATCH,PUT,DELETE,OPTIONS'}); return
                         status, body = 200, []
                         if endpoint == '/api/me':
+                            state['me_reads'] += 1
                             await me_ready.wait(); status = state['auth_status']
                             body = dict(identity) if status == 200 else {'status':status,'code':'TEST','message':'fixture'}
                         elif endpoint == '/api/auth/csrf': body = {'token':'isolated-browser-fixture'}
@@ -74,15 +75,34 @@ async def run(dist):
                         if open_button: await page.get_by_role('button', name=open_button, exact=True).click()
                         control = page.get_by_label(field, exact=True)
                         await control.fill('초안-외부탭-복원')
+                        async def stable_identity_signal():
+                            value = ('member:' + str(identity['id']) + ':' + ','.join(sorted(identity['permissions']))) if state['auth_status'] == 200 else 'anonymous'
+                            expected = hashlib.sha256(value.encode()).hexdigest()
+                            await page.wait_for_function("expected => document.cookie.split('; ').includes('boothhana_identity_v1=' + expected)", arg=expected)
+                        async def ordinary_focus():
+                            await stable_identity_signal()
+                            reads = state['me_reads']; me_ready.clear()
+                            try:
+                                await page.evaluate("window.dispatchEvent(new Event('focus')); document.dispatchEvent(new Event('visibilitychange')); window.dispatchEvent(new Event('pageshow'))")
+                                await expect(control).to_be_visible()
+                                await expect(page.get_by_role('heading', name='계정을 확인하고 있습니다')).to_have_count(0)
+                                assert state['me_reads'] == reads, 'Ordinary tab return must not request identity again'
+                            finally: me_ready.set()
                         async def recheck():
                             me_ready.clear()
+                            # Simulate the non-authenticating signal published by another tab.
+                            # The mocked server remains the only source of account identity.
+                            state['signal_changes'] += 1
+                            changed = hashlib.sha256(('isolated-account-change:' + str(state['signal_changes'])).encode()).hexdigest()
+                            await context.add_cookies([{'name':'boothhana_identity_v1','value':changed,'url':origin}])
                             await page.evaluate("window.dispatchEvent(new Event('focus'))")
                             await expect(page.get_by_role('heading', name='계정을 확인하고 있습니다')).to_be_visible()
                             await expect(control).to_have_count(0)
                             me_ready.set()
-                        await recheck()
+                            await stable_identity_signal()
+                        await ordinary_focus()
                         await expect(control).to_have_value('초안-외부탭-복원')
-                        passed.append(path + ': same-account focus restores draft without exposing during check')
+                        passed.append(path + ': ordinary focus, visibility and pageshow preserve draft without identity requests')
                         # Account B cannot inherit A's edits. A returning later must not recover the discarded epoch.
                         identity['id'] = 702; await recheck()
                         if open_button:
@@ -106,12 +126,12 @@ async def run(dist):
                         save_ready.clear(); await button.click()
                         await asyncio.wait_for(save_started.wait(),timeout=10)
                         await expect(page.get_by_role('button', name='저장 중…', exact=True)).to_be_disabled()
-                        await recheck()
+                        await ordinary_focus()
                         await expect(page.get_by_role('button', name='저장 중…', exact=True)).to_be_disabled()
                         assert state['saves'] == 1, 'Duplicate create across revalidation'
                         save_ready.set()
                         await expect(page.get_by_text('저장이 완료되었습니다. 목록에서 결과를 확인해 주세요.', exact=True)).to_be_visible()
-                        passed.append(path + ': in-flight create stays locked across remount')
+                        passed.append(path + ': in-flight create stays locked across ordinary tab return')
                         state['auth_status'] = 401; await recheck()
                         await expect(page.get_by_role('heading', name='로그인이 필요합니다')).to_be_visible()
                         assert not state['unexpected'], f"Unmocked endpoints: {state['unexpected']}"

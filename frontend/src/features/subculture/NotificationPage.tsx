@@ -20,8 +20,8 @@ export function NotificationPage(){
 function InboxPage(){
  const auth=useAuth(),[params,setParams]=useSearchParams(),[error,setError]=useState(''),[busy,setBusy]=useState(false)
  const page=Math.max(0,Math.min(1000,Math.trunc(Number(params.get('page'))||0)))
- const inbox=useRemote(()=>api<Inbox>('/api/me/subculture/notifications?page='+page,{cache:'no-store'}),[page])
- const push=useRemote(async()=>{const config=await api<Config>('/api/me/subculture/push',{cache:'no-store'});const subscription=await currentPush();return {...config,active:!!subscription&&config.endpoints.includes(subscription.endpoint)}},[])
+ const inbox=useRemote("features/subculture/NotificationPage:InboxPage:inbox", ()=>api<Inbox>('/api/me/subculture/notifications?page='+page,{cache:'no-store'}),[page])
+ const push=useRemote("features/subculture/NotificationPage:InboxPage:push", async()=>{const config=await api<Config>('/api/me/subculture/push',{cache:'no-store'});const subscription=await currentPush();return {...config,active:!!subscription&&config.endpoints.includes(subscription.endpoint)}},[])
  async function togglePush(){if(!push.data)return;setBusy(true);setError('');const identity=auth.getSnapshot();try{if(push.data.active)await disablePush();else await enablePush(push.data.publicKey,()=>auth.getSnapshot()===identity);await push.reload()}catch(e){setError(e instanceof Error?e.message:'설정하지 못했어요.')}finally{setBusy(false)}}
  async function readAll(){setBusy(true);setError('');try{await api('/api/me/subculture/notifications/read-all',{method:'POST'});await inbox.reload()}catch(e){setError(e instanceof Error?e.message:'읽음 처리하지 못했어요.')}finally{setBusy(false)}}
  function read(id:string){void api('/api/me/subculture/notifications/'+id+'/read',{method:'POST'}).catch(()=>{/* Navigation remains available; inbox keeps the item unread on failure. */})}

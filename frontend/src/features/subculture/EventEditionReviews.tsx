@@ -15,7 +15,7 @@ export function EventEditionReviews({eventId,name}:{eventId:number;name:string})
  const location=useLocation(),[params,setParams]=useSearchParams(),page=Math.max(0,Math.min(1000,Math.trunc(Number(params.get('editionPage'))||0)))
  const auth=useAuth(),[drafts,setDrafts]=useState<Record<number,string>>({})
  useEffect(()=>setDrafts({}),[auth.user?.id,eventId])
- const history=useRemote(()=>ownershipApi.history(eventId,page),[eventId,page])
+ const history=useRemote("features/subculture/EventEditionReviews:EventEditionReviews:history", ()=>ownershipApi.history(eventId,page),[eventId,page])
  const selected=selectedReviewEvent(eventId,params.get('reviewEvent'),history.data?.items||[]),previous=selected!==eventId
  const chosen=history.data?.items.find(row=>row.id===selected)
  function move(next:number){const query=new URLSearchParams(params);query.set('editionPage',String(next));query.delete('reviewEvent');setParams(query,{preventScrollReset:true,state:location.state})}

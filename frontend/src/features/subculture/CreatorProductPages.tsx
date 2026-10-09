@@ -22,7 +22,7 @@ export function CreatorProductList({subjectId,creatorId,mine=false,title}:{subje
  const [params,setParams]=useSearchParams(),page=Math.max(0,Math.min(1000,Math.trunc(Number(params.get('catalogPage'))||0))),q=(subjectId||creatorId||mine?'':params.get('q')||'').trim().slice(0,100)
  const query=new URLSearchParams({page:String(page)});if(subjectId)query.set('subjectId',subjectId);if(creatorId)query.set('creatorId',creatorId)
  if(mine&&params.get('interestId'))query.set('interestId',params.get('interestId')!)
- const state=useRemote(()=>mine?subcultureApi.myProducts(query):subcultureApi.products(query),[query.toString(),mine,auth.generation,auth.user?.id,interests.settings?.revision])
+ const state=useRemote("features/subculture/CreatorProductPages:CreatorProductList:state", ()=>mine?subcultureApi.myProducts(query):subcultureApi.products(query),[query.toString(),mine,auth.generation,auth.user?.id,interests.settings?.revision])
  const embedded=!!subjectId||!!creatorId||mine
  function move(value:number){const next=new URLSearchParams(params);next.set('catalogPage',String(value));setParams(next)}
  const items=state.data?.items.filter(p=>embedded||!q||[p.data.name,p.creator.name,...p.subjects.map(s=>s.name)].join(' ').toLocaleLowerCase('ko-KR').includes(q.toLocaleLowerCase('ko-KR')))||[]
@@ -32,7 +32,7 @@ export function CreatorProductList({subjectId,creatorId,mine=false,title}:{subje
 }
 export function CreatorProductDetail(){
  const {id=''}=useParams(),location=useLocation()
- const state=useRemote(()=>subcultureApi.product(id),[id])
+ const state=useRemote("features/subculture/CreatorProductPages:CreatorProductDetail:state", ()=>subcultureApi.product(id),[id])
  const candidate=(location.state as {productReturnTo?:unknown}|null)?.productReturnTo
  const back=typeof candidate==='string'&&/^\/subculture(?:\/|\?|$)/.test(candidate)?candidate:'/subculture/products'
  const p=state.data

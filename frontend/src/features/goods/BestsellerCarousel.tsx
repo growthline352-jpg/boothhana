@@ -7,7 +7,7 @@ import { carouselEdges, goodsState, isGoodsFeed, rankingDate } from './rankingVi
 import './goods.css'
 
 export function BestsellerSection({ category = 'SUBCULTURE' }: { category?: string }) {
-  const state = useRemote(async () => {
+  const state = useRemote("features/goods/BestsellerCarousel:BestsellerSection:state", async () => {
     const { goodsApi } = await import('./api')
     const response: unknown = await goodsApi.bestsellers(category)
     if (!isGoodsFeed(response)) throw new Error('판매량 집계 응답을 확인하지 못했어요.')

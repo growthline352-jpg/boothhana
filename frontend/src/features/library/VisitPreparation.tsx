@@ -11,7 +11,7 @@ import {eventTimeLabels} from '../discovery/browse'
 import {DiscoveryIcon} from '../discovery/DiscoveryIcon'
 import './visitPreparation.css'
 export function VisitPreparation({eventId,day}:{eventId:number;day:string}){
- const data=useRemote(()=>publicRead<PublicEventSummary[]>(`/api/public/catalog/events/compare?ids=${eventId}`),[eventId]),[message,setMessage]=useState('')
+ const data=useRemote("features/library/VisitPreparation:VisitPreparation:data", ()=>publicRead<PublicEventSummary[]>(`/api/public/catalog/events/compare?ids=${eventId}`),[eventId]),[message,setMessage]=useState('')
  useEffect(()=>setMessage(''),[eventId,day])
  const value=data.data?.[0],matching=value?.operatingPlaces?.filter(p=>p.event.occurrences.some(o=>o.startDate<=day&&o.endDate>=day))
  const event=matching?.length===1?matching[0].event:value?.event

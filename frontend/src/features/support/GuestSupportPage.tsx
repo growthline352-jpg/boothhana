@@ -10,7 +10,7 @@ import {TicketHeader,MessageThread,ReplyForm} from './TicketViews'
 import {useUnsaved} from './useSupportUnsaved'
 /** Secret is kept only in this tab's memory. Never URL, localStorage or analytics. */
 export function GuestSupportPage(){
- const options=useRemote(supportApi.options,[]),[mode,setMode]=useState<'new'|'read'>('new'),[title,setTitle]=useState(''),[body,setBody]=useState(''),[website,setWebsite]=useState(''),[ticketId,setTicketId]=useState(''),[accessKey,setAccessKey]=useState(''),[confirmed,setConfirmed]=useState(false),[ticket,setTicket]=useState<Ticket|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');const ref=useRef<GuestAccess|null>(null),guard=useRef(false),sent=useRef(false),requestSignature=useRef('');const clear=useUnsaved(Boolean(title||body)&&!busy&&!sent.current)
+ const options=useRemote("features/support/GuestSupportPage:GuestSupportPage:options", supportApi.options,[]),[mode,setMode]=useState<'new'|'read'>('new'),[title,setTitle]=useState(''),[body,setBody]=useState(''),[website,setWebsite]=useState(''),[ticketId,setTicketId]=useState(''),[accessKey,setAccessKey]=useState(''),[confirmed,setConfirmed]=useState(false),[ticket,setTicket]=useState<Ticket|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');const ref=useRef<GuestAccess|null>(null),guard=useRef(false),sent=useRef(false),requestSignature=useRef('');const clear=useUnsaved(Boolean(title||body)&&!busy&&!sent.current)
  // A lookup is a separate session even when the same ticket/key is reopened.
  const scope=useRef(new RemoteScope()),activeToken=useRef<number|null>(null)
  useLayoutEffect(()=>{scope.current.activate();return()=>{scope.current.deactivate();ref.current=null;activeToken.current=null}},[])

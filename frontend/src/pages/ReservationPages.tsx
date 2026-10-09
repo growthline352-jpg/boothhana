@@ -20,8 +20,8 @@ export function ReservationCreatePage() {
   const { boothId = '' } = useParams()
   const { user, loading: authLoading, loginUrl } = useAuth()
   const navigate = useNavigate()
-  const booth = useRemote(() => publicApi.booth(boothId), [boothId])
-  const products = useRemote(() => publicApi.products(boothId), [boothId])
+  const booth = useRemote("pages/ReservationPages:ReservationCreatePage:booth", () => publicApi.booth(boothId), [boothId])
+  const products = useRemote("pages/ReservationPages:ReservationCreatePage:products", () => publicApi.products(boothId), [boothId])
   const [quantities, setQuantities] = useState<Record<number, number>>({})
   const trade=useTradeSubmission<{eventBoothId:number;items:ReservationItem[]},Reservation>(
     tradeAttemptKey(user?.id,'RESERVATION',boothId),
@@ -54,13 +54,13 @@ export function ReservationCreatePage() {
 
 export function ReservationsPage() {
   const { user, loading: authLoading, loginUrl } = useAuth()
-  const state = useRemote(() => user ? reservationApi.list() : Promise.resolve([]), [user?.id])
+  const state = useRemote("pages/ReservationPages:ReservationsPage:state", () => user ? reservationApi.list() : Promise.resolve([]), [user?.id])
   return <section className="content-wrap section-pad"><PageHeader eyebrow="My · Reservations" title="내 예약" description="예약한 굿즈와 현장 수령 상태를 확인합니다." />{authLoading ? <LoadingState label="계정을 확인하고 있습니다" /> : !user ? <EmptyState title="로그인이 필요합니다" description="카카오 계정으로 로그인하면 예약 내역을 확인할 수 있습니다." action={<a className="btn primary" href={loginUrl}>카카오 로그인</a>} /> : state.loading ? <LoadingState label="예약을 불러오고 있습니다" /> : state.error ? <ErrorState error={state.error} retry={() => void state.reload()} /> : !state.data?.length ? <EmptyState title="예약한 굿즈가 없습니다" description="행사와 부스를 둘러보고 원하는 굿즈를 예약해 보세요." action={<Link className="btn primary" to="/events">행사 둘러보기</Link>} /> : <div className="reservation-list">{state.data.map((item) => <Link className="reservation-card" to={`/reservations/${item.id}`} key={item.id}><div><p className="eyebrow mono">{item.reservationNo}</p><h2>{item.boothName}</h2><p className="item-meta">{item.eventName} · 상품 {item.items.length}종</p></div><StatusChip tone={item.status === 'CANCELED' ? 'muted' : item.status === 'PICKED_UP' ? 'info' : 'active'}>{statusText(item.status)}</StatusChip></Link>)}</div>}</section>
 }
 
 export function ReservationDetailPage() {
   const { reservationId = '' } = useParams()
-  const state = useRemote(() => reservationApi.detail(reservationId), [reservationId])
+  const state = useRemote("pages/ReservationPages:ReservationDetailPage:state", () => reservationApi.detail(reservationId), [reservationId])
   const [qr, setQr] = useState('')
   const [actionError, setActionError] = useState('')
   useEffect(() => {

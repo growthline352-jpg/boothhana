@@ -1,11 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os')
-const {pathToFileURL}=require('node:url'),ts=require('../v4/load_ts.cjs')()
+const {pathToFileURL}=require('node:url')
+const {prepareApiClient}=require('../v4/load_api_client.cjs')
 const {loadSource}=require('../v21/load_source.cjs')
 const root=process.env.BOOTHHANA_REVIEW_BASELINE||path.resolve(__dirname,'../..'),dir=fs.mkdtempSync(path.join(os.tmpdir(),'booth-v24-api-'));let index=0
 process.on('exit',()=>fs.rmSync(dir,{recursive:true,force:true}))
 async function client(t,base='https://api.example.com'){
- const source=fs.readFileSync(path.join(root,'frontend/src/api/client.ts'),'utf8').replace('import.meta.env.VITE_API_BASE_URL',JSON.stringify(base))
- const out=path.join(dir,`${++index}.mjs`);fs.writeFileSync(out,ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText)
+ const out=prepareApiClient(root,path.join(dir,String(++index)),base)
  const old=global.fetch;t.after(()=>global.fetch=old);return import(pathToFileURL(out).href)
 }
 const json=x=>new Response(JSON.stringify(x),{headers:{'Content-Type':'application/json'}})

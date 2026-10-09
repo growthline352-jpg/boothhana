@@ -31,7 +31,7 @@ export function FeedbackDialog({ open, setOpen }: { open: boolean; setOpen: (ope
   const [draftNotice,setDraftNotice] = useState('')
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [uncertain, setUncertain] = useState(false)
   const [receipt, setReceipt] = useState<{ id: string; number: string } | null>(null)
-  const options = useRemote(() => open && auth.status === 'anonymous' ? supportApi.options() : Promise.resolve(null), [open, auth.status])
+  const options = useRemote("features/support/FeedbackWidget:FeedbackDialog:options", () => open && auth.status === 'anonymous' ? supportApi.options() : Promise.resolve(null), [open, auth.status])
   const settled = auth.status === 'authenticated' || auth.status === 'anonymous'
   const ready = auth.status === 'authenticated' || auth.status === 'anonymous' && options.data?.feedbackEnabled
   useEffect(()=>{

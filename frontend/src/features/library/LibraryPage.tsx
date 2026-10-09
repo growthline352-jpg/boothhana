@@ -19,7 +19,6 @@ import { LocationText,SafeLink,scopes,saleStates } from '../catalog/Shared'
 import type { EventData,EvidenceScope } from '../catalog/api'
 import { libraryApi } from './api'
 import { useLibrary } from './LibraryProvider'
-import { PUBLIC_MEMORY_TTL_MS } from './publicCache'
 import { guestPage } from './guestPage'
 import { libraryParams, lastMemoryPage } from './navigation'
 import { VerificationNotice } from './VerificationNotice'
@@ -46,28 +45,23 @@ export function LibraryPage(){
  const query=new URLSearchParams({q:search,type:kind,visited:String(visited),page:String(page),size:'24'});if(/^\d+$/.test(eventId)&&Number(eventId)>0)query.set('eventId',eventId)
  // Public data is independent of local notes/search/page. One snapshot is shared for up to 30 seconds.
  const targetSignature=JSON.stringify((library?.guest||[]).map(g=>g.target))
- const publicState=useRemote<ResolvedMemory[]>(async()=>guest&&library?library.resolvePublic((library.guest||[]).map(g=>g.target)):[],[owner,library?.publicVersion,targetSignature])
- const memberState=useRemote<MemoryPage>(async()=>owner.startsWith('member:')?libraryApi.list(query):{items:[],page,size:24,total:0,groups:[]},[owner,version,query.toString(),library?.publicVersion])
- const purchaseIndex=useRemote(()=>owner.startsWith('member:')?purchaseApi.list():Promise.resolve([]),[owner])
+ const publicState=useRemote<ResolvedMemory[]>("features/library/LibraryPage:LibraryPage:publicState", async()=>guest&&library?library.resolvePublic((library.guest||[]).map(g=>g.target)):[],[owner,library?.publicVersion,targetSignature])
+ const memberState=useRemote<MemoryPage>("features/library/LibraryPage:LibraryPage:memberState", async()=>owner.startsWith('member:')?libraryApi.list(query):{items:[],page,size:24,total:0,groups:[]},[owner,version,query.toString(),library?.publicVersion])
+ const purchaseIndex=useRemote("features/library/LibraryPage:LibraryPage:purchaseIndex", ()=>owner.startsWith('member:')?purchaseApi.list():Promise.resolve([]),[owner])
  const localPage=useMemo(()=>guestPage(library?.guest||[],Array.isArray(publicState.data)?publicState.data:[],query),[guestSignature,publicState.data,query.toString()])
  const state=guest?{data:localPage,loading:publicState.loading,error:publicState.error,reload:async()=>{library?.refreshPublic()}}:memberState
  const eventGroups=[...(ready?state.data?.groups||[]:[])];if(ready&&!guest)for(const record of purchaseIndex.data||[])if(!eventGroups.some(g=>g.eventId===record.plan.eventId))eventGroups.push({eventId:record.plan.eventId,name:record.plan.eventName,count:0})
- useEffect(()=>{
-  if(!ready)return
-  const timer=window.setInterval(()=>{if(document.visibilityState==='visible')library?.refreshPublic()},PUBLIC_MEMORY_TTL_MS)
-  return()=>window.clearInterval(timer)
- },[ready,library?.refreshPublic])
  // Guest storage arrives after the owner is known; retry a deep link once its item is loaded.
  const hasGuestItem=guest&&!!library?.guest.some(g=>g.key===item)
- const selected=useRemote<MemoryEntry|null>(async()=>{
+ const selected=useRemote<MemoryEntry|null>("features/library/LibraryPage:LibraryPage:selected", async()=>{
   if(!item||!ready)return null
   if(!guest){if(!/^[0-9a-f-]{36}$/i.test(item))throw Error('잘못된 보관함 주소예요.');return libraryApi.detail(item)}
   const g=library?.guest.find(g=>g.key===item);if(!g||!library)throw Error('이 기기에 저장한 항목이 없어요. 다른 기기에서는 계정 동기화 후 확인할 수 있어요.')
   const result=(await library.resolvePublic([g.target]))[0];return result?guestEntry(g,result):null
- },[owner,item,hasGuestItem])
+ },[owner,item,hasGuestItem,version])
  // Revalidate only public details in the open editor, without unmounting its private unsaved note.
  const editorTarget=selected.data?.target
- const editorPublic=useRemote<ResolvedMemory|null>(async()=>ready&&editorTarget&&library?(await library.resolvePublic([editorTarget]))[0]:null,[owner,item,editorTarget?.eventId,editorTarget?.type,editorTarget?.id,editorTarget?.participantId,library?.publicVersion])
+ const editorPublic=useRemote<ResolvedMemory|null>("features/library/LibraryPage:LibraryPage:editorPublic", async()=>ready&&editorTarget&&library?(await library.resolvePublic([editorTarget]))[0]:null,[owner,item,editorTarget?.eventId,editorTarget?.type,editorTarget?.id,editorTarget?.participantId,library?.publicVersion])
  const editorEntry=selected.data?refreshedEntry(selected.data,editorPublic.data,!editorPublic.loading&&!editorPublic.error):null
  const update=(part:Record<string,string>)=>{setParams(libraryParams(params,part),{replace:!('item' in part),preventScrollReset:true})}
  const open=(e:MemoryEntry,button:HTMLElement)=>{trigger.current=button;update({item:e.id});if(!guest)void libraryApi.activity(e.id,'OPEN').catch(()=>{/* telemetry must never block opening */})}

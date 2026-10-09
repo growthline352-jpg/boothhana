@@ -18,7 +18,7 @@ export function EventCalendar({ state, today, returnTo, update }: { state: Brows
   const candidate = params.get('day') || ''
   const selected = candidate >= range.from && candidate <= range.to && /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : ''
   const query = calendarApiParams(state, month).toString()
-  const events = useRemote(() => publicCatalogApi.calendar(query), [query])
+  const events = useRemote("features/discovery/EventCalendar:EventCalendar:events", () => publicCatalogApi.calendar(query), [query])
   const rows = !events.loading && !events.error ? events.data ?? [] : []
   const byDay = calendarEventsByDay(rows, month), weeks = calendarWeeks(rows, month)
   const selectedRows = byDay.get(selected) ?? []

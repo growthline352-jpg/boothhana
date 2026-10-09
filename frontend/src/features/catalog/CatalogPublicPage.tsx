@@ -57,7 +57,7 @@ export function CatalogPublicBoothDetail() {
   return <LoadBooth key={`${eventId}:${participantId}`} eventId={eventId} participantId={participantId}/>
 }
 function LoadEvent({eventId}:{eventId:string}) {
-  const state=useRemote(async()=>{
+  const state=useRemote("features/catalog/CatalogPublicPage:LoadEvent:state", async()=>{
     const primary=await publicCatalogApi.event(eventId)
     if(primary.operatingGroup){
       const members=await Promise.all(primary.operatingGroup.members.map(member=>member.eventId===primary.id?Promise.resolve(primary):publicCatalogApi.event(String(member.eventId))))
@@ -77,7 +77,7 @@ function LoadEvent({eventId}:{eventId:string}) {
   return <><PageMetadata catalog={state.data.display} /><CatalogEventDetail eventId={eventId} value={state.data.display} alternate={state.data.alternate} members={state.data.members}/></>
 }
 function LoadBooth({eventId,participantId}:{eventId:string;participantId:string}) {
-  const state=useRemote(()=>publicCatalogApi.event(eventId),[eventId])
+  const state=useRemote("features/catalog/CatalogPublicPage:LoadBooth:state", ()=>publicCatalogApi.event(eventId),[eventId])
   const [slow,setSlow]=useState(false)
   useEffect(()=>{if(!state.loading){setSlow(false);return}const timer=window.setTimeout(()=>setSlow(true),7_000);return()=>window.clearTimeout(timer)},[state.loading,eventId])
   usePageScroll(!state.loading)
@@ -128,7 +128,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   const confirmedCount=dayParticipants.filter(row=>attendance(row,state.day)==='confirmed').length
   const e=alternate||members?{...currentValue.event,name:value.event.name,occurrences:value.event.occurrences}:value.event
   const hasBooths=currentValue.participants.length>0,requestedSection=eventSection(params)
-  const floorplanState=useRemote(()=>floorplanApi.public(String(currentEventId)),[currentEventId])
+  const floorplanState=useRemote("features/catalog/CatalogPublicPage:CatalogEventDetail:floorplanState", ()=>floorplanApi.public(String(currentEventId)),[currentEventId])
   const hasFloorplans=useMemo(()=>hasFloorplanContent(currentValue,floorplanState.data),[currentValue,floorplanState.data])
     ||!!floorplanState.error||(floorplanState.loading&&requestedSection==='map')
   const section=(!hasBooths&&requestedSection==='booths')||(!hasFloorplans&&requestedSection==='map')?'home':requestedSection,browsingBooths=section==='booths'||section==='map'

@@ -54,26 +54,26 @@ export function ItineraryPage(){
  const area=areas.find(a=>a.id===plan.area)||areas[0]
  const areaName=regionArea(plan.area)?.name||(plan.area==='UNLOCATED'?'지역 확인 중':plan.area?area.name:'행사장 위치 기준')
 
- const data=useRemote(async()=>{
+ const data=useRemote("features/itinerary/ItineraryPage:ItineraryPage:data", async()=>{
   if(!validDay(plan.day))return []
   const result=await Promise.allSettled(categories.map(c=>publicCatalogApi.calendar(new URLSearchParams({category:c.code,from:plan.day,to:plan.day,sort:'DATE_ASC'}).toString())))
   if(result.some(r=>r.status==='rejected'))throw new Error('행사 목록을 모두 확인하지 못했어요. 다시 불러와 주세요.')
   return result.flatMap(r=>r.status==='fulfilled'?r.value:[])
  },[plan.day])
  const rows=useMemo(()=>data.data||[],[data.data])
- const topicData=useRemote(async()=>{
+ const topicData=useRemote("features/itinerary/ItineraryPage:ItineraryPage:topicData", async()=>{
   if(step!==3||field!=='SUBCULTURE')return []
   const from=seoulToday(),date=new Date(`${from}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+90)
   return publicCatalogApi.calendar(new URLSearchParams({category:'SUBCULTURE',from,to:date.toISOString().slice(0,10),sort:'DATE_ASC'}).toString())
  },[step===3,field])
- const popup=useRemote(()=>validDay(plan.day)?publicRead<PopupData>(`/api/public/catalog/popups?from=${plan.day}&to=${plan.day}`).catch(()=>({places:[]})):Promise.resolve({places:[]}),[plan.day])
+ const popup=useRemote("features/itinerary/ItineraryPage:ItineraryPage:popup", ()=>validDay(plan.day)?publicRead<PopupData>(`/api/public/catalog/popups?from=${plan.day}&to=${plan.day}`).catch(()=>({places:[]})):Promise.resolve({places:[]}),[plan.day])
  const pointFor=(row:PublicEventSummary):Point|null=>{const p=popup.data?.places.find(p=>p.event_id===row.id&&p.address===row.event.address),point=p?{lat:p.latitude,lng:p.longitude}:null;return validPoint(point)?point:null}
  const resolvedAnchor=useMemo(()=>{
   if(!anchor)return null
   for(const row of rows){const place=operatingOn(row,plan.day).find(p=>p.eventId===anchor.id);if(place)return {...anchor,event:{...anchor.event,address:anchor.event.address||place.event.address,venueName:anchor.event.venueName||place.event.venueName}}}
   return anchor
  },[anchor,rows,plan.day])
- const anchorPoint=useRemote(()=>resolvedAnchor?resolveEventLocation(resolvedAnchor.event.address,pointFor(resolvedAnchor),resolveAddress):Promise.resolve(null),[resolvedAnchor?.id,resolvedAnchor?.event.address,popup.data])
+ const anchorPoint=useRemote("features/itinerary/ItineraryPage:ItineraryPage:anchorPoint", ()=>resolvedAnchor?resolveEventLocation(resolvedAnchor.event.address,pointFor(resolvedAnchor),resolveAddress):Promise.resolve(null),[resolvedAnchor?.id,resolvedAnchor?.event.address,popup.data])
  const nearbyCenter=step<6?(resolvedAnchor?anchorPoint.data||null:regionArea(plan.area)?.point||null):planNearbyCenter(plan,area.point),center=nearbyCenter||area.point
  const recommendationAnchor=useMemo(()=>{
   if(resolvedAnchor)return resolvedAnchor
@@ -83,7 +83,7 @@ export function ItineraryPage(){
   return undefined
  },[resolvedAnchor,rows,plan.stops,plan.day])
  const recommendationArea=plan.purpose==='EVENT'?eventArea(recommendationAnchor?.event.address,recommendationAnchor?.event.venueName):plan.area
- const nearbyEventPoints=useRemote(async()=>{
+ const nearbyEventPoints=useRemote("features/itinerary/ItineraryPage:ItineraryPage:nearbyEventPoints", async()=>{
   if(!nearbyCenter||step<4)return {} as Record<number,Point>
   const possible=rows.flatMap(row=>operatingOn(row,plan.day).map(p=>({...row,id:p.eventId,event:p.event,operatingPlaces:undefined}))).filter(row=>row.id!==recommendationAnchor?.id&&!!row.event.address).filter(row=>{const r=regionForEvent(row.event);return r&&(r.id===recommendationArea||distance(nearbyCenter,r.point)<=12)}).sort((a,b)=>distance(nearbyCenter,regionForEvent(a.event)!.point)-distance(nearbyCenter,regionForEvent(b.event)!.point)).slice(0,12)
   const result=await Promise.all(possible.map(async row=>[row.id,await resolveEventLocation(row.event.address,pointFor(row),resolveAddress)] as const))
@@ -96,7 +96,7 @@ export function ItineraryPage(){
  const localTopics=useMemo(()=>(topicData.data||[]).flatMap(row=>row.operatingPlaces?.length?row.operatingPlaces.map(p=>({...row,id:p.eventId,event:p.event,operatingPlaces:undefined})):[row]).filter(row=>regionForEvent(row.event)?.id===plan.area).filter((r,i,all)=>all.findIndex(x=>x.id===r.id)===i),[topicData.data,plan.area])
  const anchorRows=localRows.filter(row=>(field==='ALL'||categoryForType(row.event.subcategory).code===field)&&row.event.name.toLocaleLowerCase().includes(eventQuery.toLocaleLowerCase())&&(field!=='SUBCULTURE'||matchesTopics(row,plan.interests)))
  const nextMatches=field==='SUBCULTURE'&&!anchorRows.length?upcomingMatches(localTopics,plan.interests||emptyTopics(),plan.day).filter(x=>regionForEvent(x.row.event)?.id===plan.area&&x.row.event.name.toLocaleLowerCase().includes(eventQuery.toLocaleLowerCase())).slice(0,3):[]
- const alternativeDates=useRemote(async()=>{
+ const alternativeDates=useRemote("features/itinerary/ItineraryPage:ItineraryPage:alternativeDates", async()=>{
   if(step!==3||localRows.length||!regionArea(plan.area)||!validDay(plan.day))return []
   const date=new Date(`${plan.day}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+14)
   const upcoming=await Promise.all(categories.map(c=>publicCatalogApi.calendar(new URLSearchParams({category:c.code,from:plan.day,to:date.toISOString().slice(0,10),sort:'DATE_ASC'}).toString())))

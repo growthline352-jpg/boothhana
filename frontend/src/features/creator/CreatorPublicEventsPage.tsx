@@ -21,7 +21,7 @@ export function CreatorPublicEventsPage() {
   const query = registrationQuery(params, today, currentSiteCategory())
   const category = categories.find(c => c.code === query.get('category'))!
   const page = Number(query.get('page'))
-  const state = useRemote(async () => {
+  const state = useRemote("features/creator/CreatorPublicEventsPage:CreatorPublicEventsPage:state", async () => {
     const [events, booths] = await Promise.all([creatorCatalogApi.events(query), creatorCatalogApi.mine()])
     return { events, booths }
   }, [query.toString()])

@@ -1,5 +1,6 @@
 import { createContext,useCallback,useContext,useEffect,useLayoutEffect,useMemo,useRef,useState,type ReactNode } from 'react'
 import { AuthContext } from '../../app/auth-context'
+import { clearReadCache } from '../../api/readCache'
 import type { AuthSnapshot } from '../../app/AuthSession'
 import { PublicMemoryCache } from './publicCache'
 import { libraryApi } from './api'
@@ -31,7 +32,7 @@ export function LibraryProvider({children}:{children:ReactNode}) {
  const auth=useContext(AuthContext)
  const owner=storageOwner(auth)
  const publicCache=useMemo(()=>new PublicMemoryCache(),[]),[publicVersion,setPublicVersion]=useState(0)
- const refreshPublic=useCallback(()=>{publicCache.clear();setPublicVersion(n=>n+1)},[publicCache])
+ const refreshPublic=useCallback(()=>{clearReadCache();publicCache.clear();setPublicVersion(n=>n+1)},[publicCache])
  const resolvePublic=publicCache.resolve
  const store=useMemo(()=>new GuestStore(storage),[]),epoch=useRef(0),ownerRef=useRef(owner),serial=useRef(0)
  const [state,setState]=useState<{owner:string;index:MemoryIndex[];loading:boolean;error:string}>({owner:'loading',index:[],loading:true,error:''})
@@ -46,20 +47,19 @@ export function LibraryProvider({children}:{children:ReactNode}) {
   catch(e){if(epoch.current===session&&request===serial.current&&storageOwner(auth?.getSnapshot())===who)setState({owner:who,index:[],loading:false,error:e instanceof Error?e.message:'보관함을 확인하지 못했어요.'})}
  },[readGuest,auth?.getSnapshot])
  useEffect(()=>{void refresh()},[owner,refresh,auth?.generation])
- useEffect(()=>{const focus=()=>{refreshPublic();void auth?.refresh()};const visible=()=>{if(document.visibilityState==='visible')focus()};window.addEventListener('focus',focus);window.addEventListener('pageshow',focus);document.addEventListener('visibilitychange',visible);return()=>{window.removeEventListener('focus',focus);window.removeEventListener('pageshow',focus);document.removeEventListener('visibilitychange',visible)}},[auth?.refresh,refreshPublic])
  useEffect(()=>{const event=(e:StorageEvent)=>{if(!isGuestStorageKey(e.key))return;readGuest();if(ownerRef.current==='guest')void refresh()};window.addEventListener('storage',event);return()=>window.removeEventListener('storage',event)},[readGuest,refresh])
  const begin=()=>{const current=auth?.getSnapshot(),who=storageOwner(current);if(!usable(who)||who!==ownerRef.current)throw Error(current?.status==='error'?'로그인 확인에 실패해 저장을 보류했어요. 계정 다시 확인을 눌러 주세요.':'계정을 확인 중이에요. 확인 후 다시 시도해 주세요.');return {epoch:epoch.current,generation:current!.generation,owner:who}}
  const check=(token:ReturnType<typeof begin>)=>{const current=auth?.getSnapshot();if(token.epoch!==epoch.current||token.generation!==current?.generation||token.owner!==storageOwner(current))throw Error('계정 확인 상태가 바뀌었습니다. 현재 계정을 다시 확인해 주세요.')}
  const complete=async(token:ReturnType<typeof begin>)=>{check(token);setVersion(n=>n+1);await refresh();check(token)}
  const save=async(i:SaveInput)=>{validInput(i);const token=begin(),who=token.owner;if(who==='loading')throw Error('계정을 확인 중이에요.')
-  if(who==='guest'){const live=(await libraryApi.resolve([i.target]))[0];check(token);if(!live?.available)throw Error('현재 공개되지 않은 정보는 새로 저장할 수 없어요.');if(i.day&&!live.current?.occurrences.some(o=>o.startDate<=i.day&&o.endDate>=i.day))throw Error('공개된 실제 운영일에서 방문일을 선택해 주세요.');const item=store.save(i);await complete(token);return guestIndex([item])[0]}
+  if(who==='guest'){const live=(await libraryApi.resolve([i.target],true))[0];check(token);if(!live?.available)throw Error('현재 공개되지 않은 정보는 새로 저장할 수 없어요.');if(i.day&&!live.current?.occurrences.some(o=>o.startDate<=i.day&&o.endDate>=i.day))throw Error('공개된 실제 운영일에서 방문일을 선택해 주세요.');const item=store.save(i);await complete(token);return guestIndex([item])[0]}
   const result=await libraryApi.save(i);check(token);await complete(token);return result.item
  }
  const remove=async(row:MemoryIndex)=>{const token=begin();if(ownerRef.current==='guest')store.remove(row.id,row.revision);else{if(ownerRef.current==='loading')return;await libraryApi.remove(row.id,row.revision)}await complete(token)}
  const edit=async(row:MemoryEntry,note:string,day:string,hall:string)=>{const token=begin();if(ownerRef.current==='guest'){if(day!==row.day&&day&&(!row.available||!row.current?.occurrences.some(o=>o.startDate<=day&&o.endDate>=day)))throw Error('공개된 실제 운영일에서 방문일을 선택해 주세요.');store.update(row.id,{note,day,hall},row.revision);}else await libraryApi.edit(row.id,{revision:row.revision,note,day,hall});await complete(token)}
  const visit=async(row:MemoryEntry,day:string,visited:boolean)=>{const token=begin();if(!day||day>seoulToday())throw Error('방문 표시는 오늘이나 지난 날짜에 남겨 주세요.')
   if(ownerRef.current==='guest'){
-   if(visited){const current=(await libraryApi.resolve([row.target]))[0];check(token);if(!current?.available||!current.current?.occurrences.some(o=>o.startDate<=day&&o.endDate>=day))throw Error('현재 공개된 운영일을 확인해 주세요.');const ls=current.current.locations;if(ls.length&&!ls.some(l=>!l.startDate||!l.endDate||l.startDate<=day&&l.endDate>=day))throw Error('해당 날짜에는 이 부스의 참가 위치가 등록되어 있지 않아요.')}
+   if(visited){const current=(await libraryApi.resolve([row.target],true))[0];check(token);if(!current?.available||!current.current?.occurrences.some(o=>o.startDate<=day&&o.endDate>=day))throw Error('현재 공개된 운영일을 확인해 주세요.');const ls=current.current.locations;if(ls.length&&!ls.some(l=>!l.startDate||!l.endDate||l.startDate<=day&&l.endDate>=day))throw Error('해당 날짜에는 이 부스의 참가 위치가 등록되어 있지 않아요.')}
    // A product save and a booth save share the explicit booth visit. Never infer visits from QR/open.
    for(const x of store.list().filter(x=>x.target.eventId===row.target.eventId&&x.target.participantId===row.target.participantId))store.update(x.key,{visitedDays:visited?[...new Set([...x.visitedDays,day])].sort():x.visitedDays.filter(d=>d!==day)})
   }else await libraryApi.visit(row.id,day,visited)

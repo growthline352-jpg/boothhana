@@ -17,8 +17,8 @@ import { eventBoothLabel, saleBoothLabel, salesForBooth } from './context'
 const paymentLabel = (value: string) => value === 'CASH' ? '현금' : value === 'TRANSFER' ? '계좌이체' : '기타'
 
 export function CreatorPosPage() {
-  const booths = useRemote(creatorApi.eventBooths, [])
-  const events = useRemote(creatorApi.events, [])
+  const booths = useRemote("features/creator/CreatorPosPage:CreatorPosPage:booths", creatorApi.eventBooths, [])
+  const events = useRemote("features/creator/CreatorPosPage:CreatorPosPage:events", creatorApi.events, [])
   const [params, setParams] = useSearchParams()
   const selected = params.get('booth') || String(booths.data?.[0]?.id ?? '')
   if (booths.loading || events.loading) return <LoadingState />
@@ -33,8 +33,8 @@ function PosWorkspace({ boothId, booths, events, select }: {
   const { user } = useAuth()
   const booth = booths.find(item => String(item.id) === boothId)
   const ended = events.find(item => item.id === booth?.eventId)?.status === 'ENDED'
-  const products = useRemote(() => booth ? creatorApi.products(boothId) : Promise.resolve([]), [boothId])
-  const sales = useRemote(creatorApi.posSales, [])
+  const products = useRemote("features/creator/CreatorPosPage:PosWorkspace:products", () => booth ? creatorApi.products(boothId) : Promise.resolve([]), [boothId])
+  const sales = useRemote("features/creator/CreatorPosPage:PosWorkspace:sales", creatorApi.posSales, [])
   const [cart, setCart] = useState<Record<number, number>>({})
   const [paymentMethod, setPaymentMethod] = useState('CASH')
   const [query, setQuery] = useState('')

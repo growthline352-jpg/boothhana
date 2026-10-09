@@ -10,18 +10,11 @@ const os = require('node:os')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 const cp = require('node:child_process')
-const loadTypeScript=require('./load_ts.cjs')
-const ts = loadTypeScript()
+const {prepareApiClient}=require('./load_api_client.cjs')
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'boothhana-api-test-'))
-const source = fs.readFileSync(path.resolve(__dirname, '../../frontend/src/api/client.ts'), 'utf8')
-const js = ts.transpileModule(source.replace('import.meta.env.VITE_API_BASE_URL', JSON.stringify('https://api.test')), {
-  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },
-  reportDiagnostics: true,
-}).outputText
-const modulePath = path.join(dir, 'client.mjs')
-fs.writeFileSync(modulePath, js)
+const root=path.resolve(__dirname,'../..')
 let sequence = 0
-const fresh = () => import(`${pathToFileURL(modulePath).href}?test=${++sequence}`)
+const fresh = () => import(pathToFileURL(prepareApiClient(root,path.join(dir,String(++sequence)),'https://api.test')).href)
 const response = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 const empty = () => new Response(null, { status: 204 })
 const originalFetch = global.fetch
@@ -91,15 +84,19 @@ test('network failure of a mutation is never automatically retried', async () =>
   await assert.rejects(api('/write', { method: 'POST' }), /network unavailable/)
   assert.equal(writes, 1)
 })
-test('401 clears cached CSRF state for the next request', async () => {
+test('401 clears cached CSRF state and blocks writes until identity is reconfirmed', async () => {
   let tokens = 0, writes = 0
   global.fetch = async url => {
     if (url.endsWith('/api/auth/csrf')) return response({ token: `T${++tokens}` })
     if (++writes === 1) return response({ code: 'UNAUTHORIZED', message: 'login' }, 401)
     return empty()
   }
-  const { api } = await fresh()
+  const { api, resetCsrfToken } = await fresh()
   await assert.rejects(api('/write', { method: 'POST' }), e => e.status === 401)
+  await assert.rejects(api('/write', { method: 'POST' }), e => e.code === 'SESSION_CHANGED')
+  assert.equal(tokens,1);assert.equal(writes,1)
+  // AuthProvider calls this only after a confirmed account boundary or recovery.
+  resetCsrfToken()
   await api('/write', { method: 'POST' })
   assert.equal(tokens, 2); assert.equal(writes, 2)
 })

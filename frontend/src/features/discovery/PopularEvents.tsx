@@ -7,7 +7,7 @@ import { loadPopularEvents } from './popular'
 
 export function PopularEvents({ categoryCode }: { categoryCode?: string }) {
   const today = seoulToday()
-  const popular = useRemote(() => loadPopularEvents(categoryCode, today), [categoryCode, today])
+  const popular = useRemote("features/discovery/PopularEvents:PopularEvents:popular", () => loadPopularEvents(categoryCode, today), [categoryCode, today])
   const rows = popular.data?.items || []
   const hasSaves = rows.some(row => row.saveCount > 0)
   const field = categories.find(category => category.code === categoryCode)?.label || '전체 분야'

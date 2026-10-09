@@ -21,7 +21,7 @@ export function SubcultureResults({subjectId,creatorId}:{subjectId?:string;creat
  const isDetail=!!subjectId||!!creatorId,member=!isDetail&&auth.status==='authenticated'
  const query=new URLSearchParams({page:String(page)})
  if(subjectId)query.set('subjectId',subjectId);if(creatorId)query.set('creatorId',creatorId);if(member&&interest)query.set('interestId',interest)
- const data=useRemote(()=>auth.loading||auth.status==='error'?Promise.resolve<Feed|null>(null):subcultureApi.feed(member,query),[auth.status,auth.generation,auth.user?.id,query.toString(),interests.settings?.revision])
+ const data=useRemote("features/subculture/SubculturePages:SubcultureResults:data", ()=>auth.loading||auth.status==='error'?Promise.resolve<Feed|null>(null):subcultureApi.feed(member,query),[auth.status,auth.generation,auth.user?.id,query.toString(),interests.settings?.revision])
  function filter(id:string){const next=new URLSearchParams(params);next.delete('page');next.delete('catalogPage');if(id)next.set('interestId',id);else next.delete('interestId');setParams(next)}
  if(auth.status==='error')return <section className="content-wrap section-pad"><ErrorState error={new Error('계정을 확인하지 못했습니다. 다시 확인해 주세요.')} retry={()=>void auth.refresh()}/></section>
  return <section className={'sc-live sc-taste-results'+(isDetail?' is-embedded':' content-wrap section-pad')}>
@@ -48,8 +48,8 @@ export function SubcultureBrowse({kind}:{kind:'subjects'|'creators'}){
  const [params,setParams]=useSearchParams(),q=(params.get('q')||'').slice(0,100),[draft,setDraft]=useState(q),page=Math.max(0,Math.min(1000,Math.trunc(Number(params.get('page'))||0)))
  const filter=['WORK','CHARACTER'].includes(params.get('kind')||'')?params.get('kind')!:''
  useEffect(()=>setDraft(q),[q,kind])
- const subjects=useRemote(()=>kind==='subjects'?subcultureApi.subjects(q,filter,page):Promise.resolve([]),[kind,q,filter,page])
- const creators=useRemote(()=>kind==='creators'?subcultureApi.creators(q,page):Promise.resolve([]),[kind,q,page])
+ const subjects=useRemote("features/subculture/SubculturePages:SubcultureBrowse:subjects", ()=>kind==='subjects'?subcultureApi.subjects(q,filter,page):Promise.resolve([]),[kind,q,filter,page])
+ const creators=useRemote("features/subculture/SubculturePages:SubcultureBrowse:creators", ()=>kind==='creators'?subcultureApi.creators(q,page):Promise.resolve([]),[kind,q,page])
  const state=kind==='subjects'?subjects:creators
  const change=(part:Record<string,string>)=>{const next=new URLSearchParams(params);next.delete('page');Object.entries(part).forEach(([key,value])=>value?next.set(key,value):next.delete(key));setParams(next)}
  const submit=(e:FormEvent)=>{e.preventDefault();change({q:draft.trim()})}
@@ -60,7 +60,7 @@ export function SubcultureBrowse({kind}:{kind:'subjects'|'creators'}){
 }
 export function SubcultureIdentity({kind}:{kind:'subjects'|'creators'}){
  const {id=''}=useParams()
- const data=useRemote(async()=>kind==='subjects'?{subject:await subcultureApi.subject(id),creator:null}:{creator:await subcultureApi.creator(id),subject:null},[kind,id])
+ const data=useRemote("features/subculture/SubculturePages:SubcultureIdentity:data", async()=>kind==='subjects'?{subject:await subcultureApi.subject(id),creator:null}:{creator:await subcultureApi.creator(id),subject:null},[kind,id])
  const subject=data.data?.subject,creator=data.data?.creator,name=subject?.name||creator?.name||''
  const source=subject?.sourceUrl||creator?.profileUrl
  return <section className="content-wrap section-pad sc-live sc-taste-detail"><SubcultureBackLink fallback={'/subculture/'+kind} label={kind==='subjects'?'작품·캐릭터':'작가·서클'}/>{data.loading?<LoadingState/>:data.error?<ErrorState error={data.error} retry={()=>void data.reload()}/>:data.data&&<><header className="sc-taste-identity"><TastePortrait name={name} kind={creator?'creator':subject?.kind==='WORK'?'work':'character'}/><div><span className="sc-taste-eyebrow">{subject?[subject.workName||subject.medium,subject.kind==='CHARACTER'?'캐릭터':'작품'].filter(Boolean).join(' · '):'작가·서클'}</span><div className="sc-taste-identity-title"><h1>{name}</h1><FollowButton entry={newInterest(subject??undefined,creator??undefined)}/></div><p>{subject?'이 작품·캐릭터와 연결된 행사, 굿즈와 작가를 찾아보세요.':'공개된 작업과 굿즈를 살펴보고, 다음 참가 행사에서 만나보세요.'}</p>{subject?.workId&&<Link className="sc-taste-source-work" to={'/subculture/subjects/'+subject.workId}>{subject.workName} 작품 보기 →</Link>}{source&&<SafeLink url={source}>공식 정보 ↗</SafeLink>}</div></header>

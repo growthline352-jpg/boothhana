@@ -11,7 +11,7 @@ import './itinerary.css'
 export function SharedItineraryPage(){
  const {token=''}=useParams(),navigate=useNavigate(),auth=useAuth(),[message,setMessage]=useState(''),[selected,setSelected]=useState(''),[view,setView]=useState('list')
  const owner=auth.status==='authenticated'&&auth.user?`member:${auth.user.id}`:auth.status==='anonymous'?'guest':''
- const result=useRemote(async()=>{if(!/^[\w-]{22}$/.test(token))throw new Error('공유 일정을 찾을 수 없어요.');const r=await shareApi.read(token);if(!validatePlan(r.plan))throw new Error('일정 정보를 확인하지 못했어요.');return r},[token])
+ const result=useRemote("features/itinerary/SharedItineraryPage:SharedItineraryPage:result", async()=>{if(!/^[\w-]{22}$/.test(token))throw new Error('공유 일정을 찾을 수 없어요.');const r=await shareApi.read(token);if(!validatePlan(r.plan))throw new Error('일정 정보를 확인하지 못했어요.');return r},[token])
  useEffect(()=>{const old=document.querySelector<HTMLMetaElement>('meta[name="referrer"]'),previous=old?.content,tag=old||document.createElement('meta');tag.name='referrer';tag.content='no-referrer';if(!old)document.head.append(tag);return()=>{if(old)old.content=previous||'';else tag.remove()}},[])
  const [copying,setCopying]=useState(false),[copyDeleted,setCopyDeleted]=useState(false)
  const p=result.data?.plan,copyScope=useMemo(()=>({owner,generation:auth.generation,token,plan:p}),[owner,auth.generation,token,p]),liveScope=useRef(copyScope),alive=useRef(true),inFlight=useRef<object|null>(null);liveScope.current=copyScope

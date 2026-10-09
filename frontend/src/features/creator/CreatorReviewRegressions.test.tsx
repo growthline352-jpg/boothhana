@@ -44,7 +44,7 @@ vi.mock('react', async importOriginal => ({
 vi.mock('../../api', () => ({ creatorApi: fixture.api }))
 vi.mock('../../api/image-upload', () => ({ createImageUploadTask: () => ({ run: fixture.upload }) }))
 vi.mock('react-router', () => ({ Link: 'a', useParams: () => ({ eventBoothId: '201' }) }))
-vi.mock('../../app/useRemote', () => ({ useRemote: (load: unknown) => ({
+vi.mock('../../app/useRemote', () => ({ useRemote: (_namespace: string, load: unknown) => ({
   loading: false, error: null, reload: fixture.reload,
   data: load === fixture.api.reservations ? fixture.reservations
     : load === fixture.api.events ? [{ id: 101, name: 'Test event', startAt: '2026-10-01', endAt: '2026-10-02', status: 'PUBLISHED' }]

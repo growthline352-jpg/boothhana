@@ -11,7 +11,7 @@ import { BoothCard, EventCard, ProductCard } from '../features/cards/DomainCards
 import { formatDate, formatPrice } from '../utils/format'
 
 export function EventsPage() {
-  const state = useRemote(publicApi.events, [])
+  const state = useRemote("pages/PublicPages:EventsPage:state", publicApi.events, [])
   const [params] = useSearchParams()
   const [query, setQuery] = useState(params.get('q') ?? '')
   const [status, setStatus] = useState('ALL')
@@ -25,8 +25,8 @@ export function EventsPage() {
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams()
-  const event = useRemote(() => publicApi.event(eventId), [eventId])
-  const booths = useRemote(() => publicApi.eventBooths(eventId), [eventId])
+  const event = useRemote("pages/PublicPages:EventDetailPage:event", () => publicApi.event(eventId), [eventId])
+  const booths = useRemote("pages/PublicPages:EventDetailPage:booths", () => publicApi.eventBooths(eventId), [eventId])
   if (event.loading) return <LoadingState label="행사 정보를 불러오고 있습니다" />
   if (event.error || !event.data) return <ErrorState error={event.error ?? new Error('행사를 찾을 수 없습니다.')} retry={() => void event.reload()} />
   return <section className="content-wrap section-pad"><header className="event-hero"><div><p className="eyebrow">Event Detail</p><h1>{event.data.name}</h1><ReportLink target={{namespace:'PLATFORM',type:'EVENT',eventId:Number(eventId),id:Number(eventId)}}/><p className="lead">{event.data.description}</p><div className="detail-inline"><span>{formatDate(event.data.startAt)} — {formatDate(event.data.endAt)}</span><span>{event.data.venue}</span><StatusChip tone={event.data.status === 'ENDED' ? 'muted' : 'active'}>{event.data.status === 'ENDED' ? '종료' : '진행중'}</StatusChip></div></div><div className="event-poster"><ContentImage url={event.data.imageUrl} kind="event" alt={event.data.name} /></div></header>{event.data.status === 'ENDED' && <div className="notice-banner"><strong>종료된 행사입니다.</strong><span>부스와 상품은 계속 볼 수 있지만 새로운 예약은 받지 않습니다.</span></div>}<div className="section-heading compact"><div><p className="eyebrow">Booths</p><h2>참가 부스 찾기</h2></div></div><div className="filter-bar"><input className="input" type="search" placeholder="부스명, 크리에이터명 검색" aria-label="참가 부스 검색" /></div>{booths.loading ? <LoadingState label="참가 부스를 불러오고 있습니다" /> : booths.error ? <ErrorState error={booths.error} retry={() => void booths.reload()} /> : !booths.data?.length ? <EmptyState title="공개된 참가 부스가 없습니다" description="승인된 부스가 공개되면 이곳에 표시됩니다." /> : <div className="booth-list">{booths.data.map((booth, index) => <BoothCard booth={booth} index={index} key={booth.id} />)}</div>}</section>
@@ -34,8 +34,8 @@ export function EventDetailPage() {
 
 export function BoothDetailPage() {
   const { boothId = '' } = useParams()
-  const booth = useRemote(() => publicApi.booth(boothId), [boothId])
-  const products = useRemote(() => publicApi.products(boothId), [boothId])
+  const booth = useRemote("pages/PublicPages:BoothDetailPage:booth", () => publicApi.booth(boothId), [boothId])
+  const products = useRemote("pages/PublicPages:BoothDetailPage:products", () => publicApi.products(boothId), [boothId])
   if (booth.loading) return <LoadingState label="부스 정보를 불러오고 있습니다" />
   if (booth.error || !booth.data) return <ErrorState error={booth.error ?? new Error('부스를 찾을 수 없습니다.')} retry={() => void booth.reload()} />
   const pinned = booth.data.notices?.find((notice) => notice.pinned)
@@ -44,7 +44,7 @@ export function BoothDetailPage() {
 
 export function ProductDetailPage() {
   const { productId = '' } = useParams()
-  const product = useRemote(() => publicApi.product(productId), [productId])
+  const product = useRemote("pages/PublicPages:ProductDetailPage:product", () => publicApi.product(productId), [productId])
   if (product.loading) return <LoadingState label="상품 정보를 불러오고 있습니다" />
   if (product.error || !product.data) return <ErrorState error={product.error ?? new Error('상품을 찾을 수 없습니다.')} retry={() => void product.reload()} />
   const item = product.data

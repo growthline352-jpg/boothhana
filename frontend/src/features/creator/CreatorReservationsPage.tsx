@@ -8,7 +8,7 @@ import type { Reservation } from '../../types'
 import { reservationStatusLabel } from './context'
 
 export function CreatorReservationsPage() {
-  const state = useRemote(creatorApi.reservations, [])
+  const state = useRemote("features/creator/CreatorReservationsPage:CreatorReservationsPage:state", creatorApi.reservations, [])
   const [query, setQuery] = useState('')
   const [found, setFound] = useState<Reservation | null>(null)
   const [message, setMessage] = useState('')

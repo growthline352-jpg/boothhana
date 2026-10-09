@@ -9,7 +9,7 @@ function setup(initial={}){let live={target,available:true,current,image:null},s
  const h=runtime({globals:{window:{location:{host:'subculture.boothana.kr'},setInterval,clearInterval,confirm:()=>true},document:{visibilityState:'visible'}},resolve:(name,file)=>{
   if(name==='react-router')return {Link:component('Link'),useSearchParams:()=>[new URLSearchParams({item:stored.id}),()=>{}]};
   if(name.endsWith('/useAuth'))return {useAuth:()=>({user:{id:1,displayName:'테스트'},refresh:async()=>{}})};
-  if(name.endsWith('/useRemote'))return {useRemote:fn=>{if(fn.toString().includes('purchaseApi.list'))return {loading:false,error:null,data:[],reload:async()=>{}};const call=++remoteCall;return {loading:false,error:null,reload:async()=>{},data:call===1?[]:call===2?{items:[],total:0,groups:[]}:call===3?stored:live,...(call===4?status:{})}}};
+  if(name.endsWith('/useRemote'))return {useRemote:(_namespace,fn)=>{if(fn.toString().includes('purchaseApi.list'))return {loading:false,error:null,data:[],reload:async()=>{}};const call=++remoteCall;return {loading:false,error:null,reload:async()=>{},data:call===1?[]:call===2?{items:[],total:0,groups:[]}:call===3?stored:live,...(call===4?status:{})}}};
   if(name==='./LibraryProvider')return {useLibrary:()=>lib};
   if(name==='./api'&&file.includes('/library/'))return {libraryApi:{}};
   if(name.endsWith('/UnsavedChanges'))return {useDirty:()=>()=>{}};

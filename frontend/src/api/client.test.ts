@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { api } from './client'
+import { api, resetCsrfToken } from './client'
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => { resetCsrfToken(); vi.unstubAllGlobals() })
 
 describe('api request cancellation', () => {
   it('adds a default timeout signal', async () => {
@@ -17,7 +17,7 @@ describe('api request cancellation', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal)
   })
 
-  it('preserves a caller-provided signal', async () => {
+  it('gives a shared read its own timeout instead of another screen’s signal', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}', {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -28,6 +28,7 @@ describe('api request cancellation', () => {
     await api('/api/test', { signal: controller.signal })
 
     const init = fetchMock.mock.calls[0][1] as RequestInit
-    expect(init.signal).toBe(controller.signal)
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+    expect(init.signal).not.toBe(controller.signal)
   })
 })

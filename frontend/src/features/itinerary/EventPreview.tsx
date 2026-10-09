@@ -8,7 +8,7 @@ import {publicLink} from '../visit/visit'
 
 export function EventPreview({row,day,close,choose}:{row:PublicEventSummary;day:string;close:()=>void;choose:()=>void}){
  const ref=useRef<HTMLDialogElement>(null),title=useRef<HTMLHeadingElement>(null),id=useId()
- const detail=useRemote(()=>publicCatalogApi.event(String(row.id)),[row.id])
+ const detail=useRemote("features/itinerary/EventPreview:EventPreview:detail", ()=>publicCatalogApi.event(String(row.id)),[row.id])
  const event=detail.data?.event||row.event,booking=eventBooking(event,day)
  const occurrence=event.occurrences.find(o=>o.startDate<=day&&o.endDate>=day)
  useEffect(()=>openCatalogDialog(ref.current!,title.current,document.activeElement as HTMLElement),[])

@@ -3,7 +3,7 @@
 const test = require('node:test'), assert = require('node:assert/strict')
 const fs = require('node:fs'), path = require('node:path'), os = require('node:os')
 const {pathToFileURL} = require('node:url')
-const ts = require('../v4/load_ts.cjs')()
+const {prepareApiClient}=require('../v4/load_api_client.cjs')
 const root = process.env.BOOTHHANA_REVIEW_BASELINE || path.resolve(__dirname,'../..')
 let sequence = 0
 const dir = fs.mkdtempSync(path.join(os.tmpdir(),'boothhana-v20-api-'))
@@ -12,9 +12,7 @@ process.on('exit',()=>fs.rmSync(dir,{recursive:true,force:true}))
 const response = (body,status=200) => new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}})
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return {resolve,promise}}
 async function fresh(t){
- const source=fs.readFileSync(path.join(root,'frontend/src/api/client.ts'),'utf8').replace('import.meta.env.VITE_API_BASE_URL',JSON.stringify('https://api.test'))
- const file=path.join(dir,`client-${++sequence}.mjs`)
- fs.writeFileSync(file,ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText)
+ const file=prepareApiClient(root,path.join(dir,String(++sequence)),'https://api.test')
  t.after(()=>{global.fetch=originalFetch});return import(pathToFileURL(file).href)
 }
 test('CSRF timeout remains active until JSON body has been read, then clears pending request',async t=>{

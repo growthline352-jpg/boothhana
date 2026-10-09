@@ -10,7 +10,7 @@ function load(relative, inject={}) {
  const module={exports:{}}
  const requireLocal=name=>name in inject?inject[name]:load(path.posix.join(path.posix.dirname(relative),name)+'.ts',inject)
  vm.runInNewContext(js,{module,exports:module.exports,require:requireLocal,console,setTimeout,clearTimeout,
-   crypto:global.crypto,AbortController,File,Blob,Error,Promise,Uint8Array,Array,Set,Number},{filename:relative})
+   crypto:global.crypto,AbortController,URL,URLSearchParams,File,Blob,Error,Promise,Uint8Array,Array,Set,Number},{filename:relative})
  return module.exports
 }
 const tests=[];const test=(name,run)=>tests.push([name,run]);const tick=()=>new Promise(resolve=>setImmediate(resolve))
@@ -24,10 +24,11 @@ function harness(){
    useMemo(make,deps){const i=cursor++;if(!slots[i]||!same(slots[i].deps,deps))slots[i]={deps,value:make()};return slots[i].value},
    useCallback(fn,deps){return react.useMemo(()=>fn,deps)},
    useEffect(fn,deps){record(fn,deps,effects)},useLayoutEffect(fn,deps){record(fn,deps,layout)},
+   useSyncExternalStore(subscribe,read){react.useEffect(()=>subscribe(()=>{}),[subscribe]);return read()},
  }
  function record(fn,deps,queue){const i=cursor++;if(!slots[i]||!same(slots[i].deps,deps)){queue.push(()=>{slots[i]?.cleanup?.();slots[i]={deps,cleanup:fn()}})}}
  const {useRemote}=load('app/useRemote.ts',{react})
- return {render(loadData,deps){cursor=0;effects=[];layout=[];const result=useRemote(loadData,deps);layout.forEach(f=>f());effects.forEach(f=>f());return result},unmount(){slots.forEach(s=>s?.cleanup?.())}}
+ return {render(loadData,deps){cursor=0;effects=[];layout=[];const result=useRemote('verification:v4:remote',loadData,deps);layout.forEach(f=>f());effects.forEach(f=>f());return result},unmount(){slots.forEach(s=>s?.cleanup?.())}}
 }
 test('old reload cannot start a request after A -> B',async()=>{
  const h=harness();let a=0,b=0;const getA=async()=>{a++;return 'A'},getB=async()=>{b++;return 'B'}
@@ -38,7 +39,7 @@ test('late A response cannot replace B',async()=>{
  const h=harness(),a=deferred();const getB=async()=>'B';h.render(()=>a.promise,['A']);h.render(getB,['B']);await tick();a.resolve('A');await tick();assert.equal(h.render(getB,['B']).data,'B');h.unmount()
 })
 test('A -> B -> A does not reactivate the original A closure',async()=>{
- const h=harness();let calls=0;const a=async()=>++calls,b=async()=>'B';const first=h.render(a,['A']);await tick();h.render(b,['B']);await tick();h.render(a,['A']);await tick();await first.reload();assert.equal(calls,2);h.unmount()
+ const h=harness();let calls=0;const a=async()=>++calls,b=async()=>'B';const first=h.render(a,['A']);await tick();h.render(b,['B']);await tick();const returned=h.render(a,['A']);assert.equal(returned.data,1);assert.equal(returned.loading,false);await tick();await first.reload();assert.equal(calls,1);h.unmount()
 })
 test('old setData is scoped and cannot overwrite a new lookup',async()=>{
  const h=harness();const a=h.render(async()=>'A',['A']);await tick();const b=async()=>'B';h.render(b,['B']);await tick();a.setData('wrong');assert.equal(h.render(b,['B']).data,'B');h.unmount()
