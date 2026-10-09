@@ -26,10 +26,21 @@ public class CollectionService {
 
     @Transactional(timeout = 30)
     public Receipt ingest(Batch batch) {
+        return ingest(batch,Map.of());
+    }
+
+    /** Graph intake supplies IDs selected from its captured context and independently reviewed. */
+    @Transactional(timeout = 30)
+    public Receipt ingest(Batch batch,Map<Integer,Long> existingTargets) {
         try { CollectionRules.batch(batch); }
         catch(RuntimeException e) { throw ApiException.badRequest("수집 배치 형식/기간/검색 기록을 확인해 주세요."); }
         if(approval!=null)approval.lock();
-        String request=json.writeValueAsString(batch), hash=CollectionRules.sha(request);
+        String request=json.writeValueAsString(batch);
+        if(!existingTargets.isEmpty()){
+            if(existingTargets.entrySet().stream().anyMatch(e->e.getKey()<0||e.getKey()>=batch.result().events().size()||e.getValue()==null||e.getValue()<1))throw ApiException.badRequest("기존 행사 참조 범위 오류");
+            @SuppressWarnings("unchecked") Map<String,Object> stored=json.readValue(request,Map.class);stored.put("existingEventTargets",new TreeMap<>(existingTargets));request=json.writeValueAsString(stored);
+        }
+        String hash=CollectionRules.sha(request);
         UUID runId=UUID.fromString(batch.runId());
         // A small daily ingestion workload: serialize writers instead of racing unique inserts.
         // Transaction-scoped and DB-wide, therefore also works with multiple backend instances.
@@ -63,7 +74,15 @@ public class CollectionService {
             String warnings=json.writeValueAsString(check.warnings()), match=CollectionRules.matchKey(event);
             String start=event.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow();
             String end=event.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
-            List<Map<String,Object>> existing=jdbc.queryForList("select id,payload_hash,overrides_json from subculture_event_candidate where identity_key=? for update",key);
+            List<Map<String,Object>> existing=jdbc.queryForList("select id,payload_hash,overrides_json,publication_withdrawn,possible_duplicate_of from subculture_event_candidate where identity_key=? for update",key);
+            if(existingTargets.containsKey(index)){
+                long selected=existingTargets.get(index);
+                if(!existing.isEmpty()&&((Number)existing.getFirst().get("id")).longValue()!=selected){
+                    var alias=existing.getFirst();if(!Boolean.TRUE.equals(alias.get("publication_withdrawn"))||!(alias.get("possible_duplicate_of") instanceof Number duplicate)||duplicate.longValue()!=selected)throw ApiException.conflict("선택한 행사와 이미 등록된 식별값이 충돌합니다.");
+                }
+                existing=jdbc.queryForList("select id,payload_hash,overrides_json from subculture_event_candidate where id=? and review_state<>'EXCLUDED' and not publication_withdrawn for update",selected);
+                if(existing.isEmpty())throw ApiException.conflict("보완할 기존 행사를 확인할 수 없습니다.");
+            }
             long id;
             if(existing.isEmpty()) {
                 List<Long> possible=jdbc.query("select id from subculture_event_candidate where match_key=? order by last_seen_at desc,id desc limit 1",(rs,row)->rs.getLong(1),match);

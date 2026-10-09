@@ -146,11 +146,15 @@ public class GraphService {
  private Map<String,Object> reviewedDiscovery(Map<String,Object> job,Map<String,Object> value,Decision decision){
   require("DISCOVERY".equals(job.get("kind")),"행사별 판정은 발견 작업에만 사용할 수 있습니다.");
   var events=GraphProjection.maps(value.get("events"));require(decision.eventDecisions().size()==events.size(),"모든 행사에 독립 판정이 필요합니다.");
+  var extraction=one("select context_json from collection_extraction where id=?",decision.extractionId());
+  var targets=GraphProjection.existingEventTargets(value,decode(extraction.get("context_json")));var approvedRefs=new ArrayList<Map<String,Object>>();
   var seen=new HashSet<Integer>();var approved=new ArrayList<Map<String,Object>>();
   for(var item:decision.eventDecisions()){
    require(item.index()>=0&&item.index()<events.size()&&seen.add(item.index())&&Set.of("APPROVE","ENRICH","REJECT").contains(item.verdict())&&item.reason()!=null&&!item.reason().isBlank()&&item.reason().length()<=2000,"행사별 판정 형식 오류");audit(item.audit());
    var event=events.get(item.index());
-   if("APPROVE".equals(item.verdict())){projection.checkSources(event,item.audit().openedUrls());approved.add(event);}
+   if("APPROVE".equals(item.verdict())){
+    projection.checkSources(event,item.audit().openedUrls());var ref=new LinkedHashMap<String,Object>();ref.put("eventIndex",approved.size());ref.put("existingEventId",targets.get(item.index()));ref.put("identityReason",targets.containsKey(item.index())?"독립 검토에서 기존 행사 "+targets.get(item.index())+"와 동일 회차임을 확인함":"독립 검토에서 신규 회차를 확인함");approvedRefs.add(ref);approved.add(event);
+   }
    else if("ENRICH".equals(item.verdict())){
     var sources=GraphProjection.maps(event.get("sources"));String url=sources.stream().filter(s->"ORIGINAL".equals(s.get("access"))).map(s->text(s.get("url"))).findFirst().orElse("");require(!url.isBlank(),"보완할 행사 원문이 필요합니다.");CollectionRules.url(url);
     var input=new LinkedHashMap<String,Object>();input.put("scope",decode(job.get("input_json")).get("scope"));input.put("leadUrl",url);
@@ -164,7 +168,7 @@ public class GraphService {
   // Evidence/lead metadata for deferred events stays in the immutable extraction.
   var result=new LinkedHashMap<String,Object>();
   for(String key:List.of("schemaVersion","searchStatus","summary","queries","sourceCoverage"))if(value.containsKey(key))result.put(key,value.get(key));
-  result.put("events",approved);return result;
+  result.put("events",approved);result.put("existingEventRefs",approvedRefs);return result;
  }
  @Transactional public Object fail(UUID id,Failure in){var row=leased(id,in.leaseToken());String reason=text(in.reason());require(reason.length()<=2000,"오류 설명 길이 초과");int hours=Math.min(24,1<<Math.min(5,((Number)row.get("attempts")).intValue()-1));db.update("update collection_job set state='WAITING',lease_token=null,lease_until=null,available_at=now()+(? * interval '1 hour'),last_error=?,updated_at=now() where id=?",hours,reason,id);return Map.of("retryAfterHours",hours);}
  public Object status(){return db.queryForList("select kind,state,count(*) as count,min(available_at) as next_at from collection_job group by kind,state order by kind,state");}

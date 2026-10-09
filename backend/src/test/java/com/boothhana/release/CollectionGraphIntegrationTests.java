@@ -274,6 +274,24 @@ class CollectionGraphIntegrationTests {
   db.update("update subculture_event_candidate set publication_withdrawn=true where id=?",event);
   assertThatThrownBy(()->extract(job,Map.of("schemaVersion","1","searchStatus","PARTIAL","summary","none","queries",List.of("test"),"events",List.of(),"sourceCoverage",List.of(Map.of("channel","ORGANIZER_OFFICIAL","status","PARTIAL","queries",List.of("test"),"checkedUrls",List.of(source),"notes","checked"))))).isInstanceOf(ApiException.class).hasMessageContaining("변경");
  }
+ @Test void discoveryReusesIdAcrossEditionAndNameChangesWithoutLosingManualTitle(){
+  db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{edition}','null'),overrides_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","[TEST] Protected manual title")),event);
+  String day=data.occurrences().getFirst().startDate();
+  graph.seed(new Seed("DISCOVERY","reuse-id",Map.of("scope",Map.of("region","SEOUL_GYEONGGI","timezone","Asia/Seoul","startDate",day,"endDate",day)),true,"test"));var job=graph.claim();
+  long before=db.queryForObject("select count(*) from subculture_event_candidate",Long.class);
+  var candidate=value(data);candidate.put("name","[TEST] Latest translated official title");
+  var result=Map.of("schemaVersion","1","searchStatus","COMPLETE","summary","Known event updated","queries",List.of("test"),"events",List.of(candidate),"existingEventRefs",List.of(Map.of("eventIndex",0,"existingEventId",event,"identityReason","Same official edition, organizer, venue and dates")));
+  var e=extract(job,result);graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"APPROVE","Same existing event independently verified",audit(),List.of(new EventDecision(0,"APPROVE","Same edition",audit()))));
+  assertThat(db.queryForObject("select count(*) from subculture_event_candidate",Long.class)).isEqualTo(before);
+  assertThat(db.queryForObject("select payload_json->>'edition' from subculture_event_candidate where id=?",String.class,event)).isEqualTo("2026");
+  assertThat(db.queryForObject("select name from subculture_event_candidate where id=?",String.class,event)).isEqualTo("[TEST] Protected manual title");
+  assertThat(db.queryForObject("select count(*) from collection_job where kind='EVENT' and target_id=?",Integer.class,Long.toString(event))).isEqualTo(1);
+ }
+ @Test void discoveryCannotReuseIdOutsideCapturedCandidates(){
+  var candidate=value(data);var context=Map.<String,Object>of("existingEvents",List.of(Map.of("id",event)));
+  var result=Map.<String,Object>of("events",List.of(candidate),"existingEventRefs",List.of(Map.of("eventIndex",0,"existingEventId",event+1000000,"identityReason","Claimed identity")));
+  assertThatThrownBy(()->GraphProjection.existingEventTargets(result,context)).isInstanceOf(ApiException.class).hasMessageContaining("문맥");
+ }
  ProductData option(String name,String entry,String url,List<Source> sources,Identity identity){return new ProductData(entry,name,"Original product option","Identity Maker",List.of(),List.of(),"GENERAL_CATALOG",null,"UNKNOWN",url,sources,List.of(),List.of(),identity);}
  Map<String,Object> productWindow(int offset,int total){var result=makerResult("Identity Maker",source);var goods=new ArrayList<ProductData>();for(int i=offset;i<Math.min(total,offset+100);i++)goods.add(option("Option "+i,null,null,List.of(new Source(source,"OFFICIAL","ORIGINAL","Exact named option")),null));result.put("goods",goods);result.put("coverage",offset+goods.size()<total?"PARTIAL":"COMPLETE");result.put("pageBatch",Map.of("sourceUrl",source,"sourceHash","a".repeat(64),"offset",offset,"total",total,"labels",goods.stream().map(ProductData::name).toList()));return result;}
  Audit pageAudit(String digest){return new Audit("gpt-6.1-sol","graph-4","graph-4",false,List.of(source),Map.of(),List.of(),List.of(new SourceDocument(source,digest,Instant.now().toString())));}
