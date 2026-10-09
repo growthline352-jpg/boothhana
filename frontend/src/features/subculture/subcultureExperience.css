@@ -110,6 +110,7 @@
 .sc-taste-settings .sc-live-filters { margin-top:0; padding-top:0; }
 .sc-taste-settings .sc-live-filters button { border-radius:7px; }
 .sc-taste-settings .sc-live-settings-actions { position:sticky; bottom:0; z-index:8; background:#fffffff5; padding:20px 0; backdrop-filter:blur(12px); margin-bottom:0; }
+.public-shell.sc-site:has(.sc-taste-settings) .feedback-launcher { display:none; }
 .sc-taste-settings .sc-live-custom { background:#faf9f6; }
 .sc-taste-settings .sc-live-custom fieldset label { min-height:44px; }
 .sc-site :is(.sc-taste-settings,.sc-taste-notifications,.sc-taste-following) .btn.primary { background:#343d34; border-color:#343d34; color:white; }
