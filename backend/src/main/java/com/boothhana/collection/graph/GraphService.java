@@ -171,7 +171,15 @@ public class GraphService {
  private Map<String,Object> event(long id,boolean lock){var row=one("select id,revision,review_state,payload_json,overrides_json from subculture_event_candidate where id=? and review_state<>'EXCLUDED' and not publication_withdrawn"+(lock?" for update":""),id);return target(row);}
  private Map<String,Object> target(Map<String,Object> row){var result=new LinkedHashMap<String,Object>();for(String key:List.of("id","event_id","revision","review_state"))if(row.containsKey(key))result.put(key,row.get(key));var data=new LinkedHashMap<>(decode(row.get("payload_json")));data.putAll(decode(row.get("overrides_json")));result.put("data",data);return result;}
  Map<String,Object> context(Map<String,Object> job,boolean lock){String kind=text(job.get("kind")),id=text(job.get("target_id"));var result=new LinkedHashMap<String,Object>();result.put("input",decode(job.get("input_json")));
-  if(kind.equals("DISCOVERY"))return result;
+  if(kind.equals("DISCOVERY")){
+   var scope=GraphProjection.map(decode(job.get("input_json")).get("scope"));
+   String start=text(scope.get("startDate")),end=text(scope.get("endDate"));
+   if(!start.isBlank()&&!end.isBlank()){
+    try{java.time.LocalDate.parse(start);java.time.LocalDate.parse(end);}catch(java.time.format.DateTimeParseException ex){throw ApiException.badRequest("행사 탐색 기간 오류");}
+    result.put("existingEvents",db.queryForList("select * from subculture_event_candidate where starts_on<=cast(? as date) and ends_on>=cast(? as date) and review_state<>'EXCLUDED' and not publication_withdrawn and subcategory in ("+com.boothhana.interests.SubcultureScope.SQL+") order by id"+(lock?" for update":""),end,start).stream().map(this::target).toList());
+   }
+   return result;
+  }
   if(kind.equals("RELATIONS")){var e=event(Long.parseLong(id),lock);result.put("event",e);result.put("identityCandidates",identities.subjectCandidates(encode(e.get("data"))));result.put("seriesCandidates",db.queryForList("select id,name,official_url as \"officialUrl\" from event_series order by id desc limit 100"));result.put("seriesLink",db.queryForList("select * from event_series_member where event_id=?"+(lock?" for update":""),Long.parseLong(id)));return result;}
   if(kind.equals("EVENT")||kind.equals("PARTICIPANTS")){result.put("event",event(Long.parseLong(id),lock));
    if(kind.equals("PARTICIPANTS"))result.put("existingOverrides",db.queryForList("select id,revision,review_state,payload_json,overrides_json from subculture_participant where event_id=? and overrides_json<>'{}'::jsonb order by id"+(lock?" for update":""),Long.parseLong(id)).stream().map(this::target).toList());return result;}

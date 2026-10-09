@@ -260,6 +260,20 @@ class CollectionGraphIntegrationTests {
  }
  @Test void tablesDenyDirectBrowserRoles(){for(String table:List.of("collection_job","collection_extraction","collection_verdict","collection_product","collection_product_subject","collection_creator_publication","collection_migration","collection_image_part","collection_subject_identity","collection_creator_identity","collection_identity_history")){assertThat(db.queryForObject("select relrowsecurity from pg_class where oid=cast(? as regclass)",Boolean.class,table)).isTrue();assertThat(db.queryForObject("select has_table_privilege('anon',?,'SELECT') or has_table_privilege('authenticated',?,'SELECT')",Boolean.class,table,table)).isFalse();}}
 
+ @Test void discoveryReceivesLegacyIdentityAndKeepsManualCorrections(){
+  db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{edition}','null'),overrides_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","[TEST] Canonical remembered title")),event);
+  String day=data.occurrences().getFirst().startDate();
+  graph.seed(new Seed("DISCOVERY","canonical-identity",Map.of("scope",Map.of("startDate",day,"endDate",day)),true,"test"));
+  var job=graph.claim();var context=value(job.get("context"));
+  var existing=(List<Map<String,Object>>)context.get("existingEvents");
+  var known=existing.stream().filter(e->((Number)e.get("id")).longValue()==event).findFirst().orElseThrow();
+  var canonical=value(known.get("data"));
+  assertThat(canonical.get("name")).isEqualTo("[TEST] Canonical remembered title");
+  assertThat(canonical.get("edition")).isNull();
+  assertThat(canonical.get("organizer")).isEqualTo(data.organizer());
+  db.update("update subculture_event_candidate set publication_withdrawn=true where id=?",event);
+  assertThatThrownBy(()->extract(job,Map.of("schemaVersion","1","searchStatus","PARTIAL","summary","none","queries",List.of("test"),"events",List.of(),"sourceCoverage",List.of(Map.of("channel","ORGANIZER_OFFICIAL","status","PARTIAL","queries",List.of("test"),"checkedUrls",List.of(source),"notes","checked"))))).isInstanceOf(ApiException.class).hasMessageContaining("변경");
+ }
  ProductData option(String name,String entry,String url,List<Source> sources,Identity identity){return new ProductData(entry,name,"Original product option","Identity Maker",List.of(),List.of(),"GENERAL_CATALOG",null,"UNKNOWN",url,sources,List.of(),List.of(),identity);}
  Map<String,Object> productWindow(int offset,int total){var result=makerResult("Identity Maker",source);var goods=new ArrayList<ProductData>();for(int i=offset;i<Math.min(total,offset+100);i++)goods.add(option("Option "+i,null,null,List.of(new Source(source,"OFFICIAL","ORIGINAL","Exact named option")),null));result.put("goods",goods);result.put("coverage",offset+goods.size()<total?"PARTIAL":"COMPLETE");result.put("pageBatch",Map.of("sourceUrl",source,"sourceHash","a".repeat(64),"offset",offset,"total",total,"labels",goods.stream().map(ProductData::name).toList()));return result;}
  Audit pageAudit(String digest){return new Audit("gpt-6.1-sol","graph-4","graph-4",false,List.of(source),Map.of(),List.of(),List.of(new SourceDocument(source,digest,Instant.now().toString())));}

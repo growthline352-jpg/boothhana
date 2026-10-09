@@ -124,6 +124,16 @@ unresolved에는 이 상품의 캐릭터 식별/연결을 완료하는 데 실�
 텍스트만으로 정체성이 확정되면 basis=TEXT를 사용한다. 상품에 관련된 확정 연결과 미확정 연결을 구분해서 반환한다.
 '''
 PROMPTS['DISCOVERY']+=' input.eventHint가 있으면 보완 대상으로 지정된 그 행사 회차만 조사하고 다른 행사를 결과에 섞지 말라. 힌트는 정답이 아니라 검증 대상이다.'
+PROMPTS['DISCOVERY']+='''
+context.existingEvents는 같은 탐색 기간에 이미 등록된 행사다. 원문과 대조해 동일 회차인지 먼저 확인한다. 제목의 번역·띄어쓰기·부제 차이나 기존 edition=null을 보완하려는 이유만으로 새 회차를 만들지 않는다.
+동일 회차로 확인되면 name/edition/organizer/venueName과 occurrences의 시작·종료 날짜는 해당 기존 행사의 data 식별값을 그대로 반환하고, 최신 공식 출처와 확인된 부가 정보를 보완한다. 기존 edition=null은 null로 유지한다.
+기존 수동 수정과 모순되거나 날짜·장소가 변경되어 같은 회차의 식별값을 유지할 수 없으면 새 행사로 확정 등록하지 말고 unverifiedLeads에 기존 행사 id와 구체적 충돌 사유를 남긴다. 기존 행사 EVENT 작업에서 재확인할 대상이다.
+이름이나 일정 하나만 같다고 동일 회차로 취급하지 말고 주최·장소·원문을 함께 대조한다. 별도 행사임이 확인되면 신규 식별값을 반환한다.
+'''
+REVIEW_PROMPT+='''
+DISCOVERY 검토에서는 context.existingEvents와도 비교한다. 같은 회차인데 번역·부제·회차 표기 보완 때문에 기존 name/edition/organizer/venueName 또는 개최 날짜 식별값을 바꾼 후보는 ENRICH로 돌려 중복 등록을 막는다.
+원문으로 동일 회차가 확인되고 기존 식별값을 유지한 후보는 최신 출처·부가 정보만 검토한다. 기존 edition=null 유지 자체는 보완 사유가 아니다. 기존 후보는 검증 대상이며 같은 이름만으로 별도 회차를 합치지 않는다.
+'''
 PROMPTS['RELATIONS']+=' series.officialUrl도 검토자가 본문을 직접 확인할 수 있어야 한다. 홈페이지가 JavaScript 전용이면 반복 회차를 실제 열람한 안정적인 공식 행사 목록 URL(공식 공개 API 포함)을 사용한다. 이름뿐인 추정 홈페이지를 확정하지 않는다. seriesCandidates가 비어 있다는 사실 자체는 unresolved 사유가 아니며 검증된 신규 시리즈는 id=null로 생성한다. 일반 행사에 전체 주제의 부재를 증명하려고 참가 작가/상품 전체를 조사하지 않는다. 공식 행사 소개가 종합 행사라고 확인되면 행사 전체의 특정 주제를 지정하지 않으며, 미열람한 특정 주제 공지가 실제 남아 있을 때만 unresolved에 남긴다.'
 for _kind in ('PARTICIPANTS','SALES','CREATOR'):
     PROMPTS[_kind]+='''
