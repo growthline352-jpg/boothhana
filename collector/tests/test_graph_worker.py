@@ -221,4 +221,38 @@ class GraphWorkerTests(unittest.TestCase):
             body=api.calls[-1][2];self.assertEqual('APPROVE',body['verdict']);self.assertEqual(['APPROVE','ENRICH'],[d['verdict'] for d in body['eventDecisions']])
             self.assertEqual(events,api.calls[0][2]['result']['events'])
 
+    def creator_result(self):
+        return {'profile':{'name':'Artist','kind':'ARTIST','aliases':[],'profileUrl':SOURCE},'sources':RESULT['sources'],'goods':[],'socialAccounts':[],'socialPageComplete':True,'productCoverage':[],'eventLeads':[],'identityDecision':{'action':'KEEP','canonicalId':None,'evidence':[]},'nextPageUrl':None,'coverage':'COMPLETE','pageBatch':None}
+    def test_creator_searches_social_profiles_then_extracts_and_independently_reviews(self):
+        profile='https://bsky.app/profile/artist.bsky.social';calls=[];loads=[]
+        def sources(urls):
+            loads.append(urls);return [{'url':u,'available':True,'sha256':'a'*64,'capturedAt':'2026-10-09T00:00:00Z','text':'Original author page'} for u in urls]
+        def search(cfg,directory,prompt,schema_path,**kwargs):
+            calls.append(directory.name);(directory/'codex.jsonl').write_text(json.dumps(page_result()))
+            value={'profileUrls':[profile]} if directory.name=='social-discovery' else self.creator_result() if directory.name=='extract' else {'verdict':'APPROVE','reason':'checked'}
+            return json.dumps(value).encode(),True,{}
+        with tempfile.TemporaryDirectory() as temp:
+            cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi();job={'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'kind':'CREATOR','contextHash':'a'*64,'context':{'input':{},'creator':{'data':{'profileUrl':SOURCE}}}}
+            Worker(cfg,api,search,sources).process(job)
+        self.assertEqual(['social-discovery','extract','review'],calls);self.assertIn(profile,loads[1]);self.assertEqual('APPROVE',api.calls[-1][2]['verdict'])
+    def test_native_social_cursor_prevents_a_false_complete_page(self):
+        page='https://bsky.app/profile/artist.bsky.social?bh_feed=1';next_page=page+'&bh_cursor=next'
+        receipt={'profileUrl':page.split('?')[0],'accountId':'did:plc:test','sourceUrl':page,'headPostId':'abc','postIds':['abc'],'nextPageUrl':next_page}
+        def sources(urls):return [{'url':u,'available':True,'sha256':'a'*64,'capturedAt':'2026-10-09T00:00:00Z','text':'Original page','nextPageUrl':next_page if u==page else None,**({'socialPageReceipt':receipt} if u==page else {})} for u in urls]
+        def search(cfg,directory,prompt,schema_path,**kwargs):
+            (directory/'codex.jsonl').write_text(json.dumps(page_result()));return json.dumps(self.creator_result() if directory.name=='extract' else {'verdict':'APPROVE','reason':'checked'}).encode(),True,{}
+        with tempfile.TemporaryDirectory() as temp:
+            cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi();job={'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'kind':'CREATOR','contextHash':'a'*64,'context':{'input':{'pageUrl':page,'socialPage':True},'creator':{'data':{'profileUrl':SOURCE}}}}
+            Worker(cfg,api,search,sources).process(job)
+        result=api.calls[0][2]['result'];self.assertEqual('PARTIAL',result['coverage']);self.assertEqual(next_page,result['nextPageUrl']);self.assertEqual(receipt,result['socialPageReceipt'])
+    def test_missing_social_sale_image_keeps_this_page_pending_before_its_cursor(self):
+        page='https://bsky.app/profile/artist.bsky.social?bh_feed=1';next_page=page+'&bh_cursor=next'
+        def sources(urls):return [{'url':u,'available':True,'sha256':'a'*64,'capturedAt':'2026-10-09T00:00:00Z','text':'Original page','nextPageUrl':next_page if u==page else None,'images':[{'imageUrl':'https://cdn.bsky.app/sale.jpg','pageUrl':page}]} for u in urls]
+        def search(cfg,directory,prompt,schema_path,**kwargs):
+            (directory/'codex.jsonl').write_text(json.dumps(page_result()));return json.dumps(self.creator_result() if directory.name=='extract' else {'verdict':'APPROVE','reason':'text checked'}).encode(),True,{}
+        with tempfile.TemporaryDirectory() as temp:
+            cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi();job={'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'kind':'CREATOR','contextHash':'a'*64,'context':{'input':{'pageUrl':page,'socialPage':True},'creator':{'data':{'profileUrl':SOURCE}}}}
+            with patch('graph_worker.fetch_image',side_effect=RunError('Image inaccessible')):Worker(cfg,api,search,sources).process(job)
+        result=api.calls[0][2]['result'];self.assertFalse(result['socialPageComplete']);self.assertEqual('PARTIAL',result['coverage']);self.assertIsNone(result['nextPageUrl'])
+
 if __name__=='__main__':unittest.main()

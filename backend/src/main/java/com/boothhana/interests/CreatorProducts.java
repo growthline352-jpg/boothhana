@@ -46,6 +46,7 @@ public class CreatorProducts {
   var data=new LinkedHashMap<String,Object>(json.readValue(row.get("data_json").toString(),Map.class));data.remove("images");
   var subjects=db.queryForList("select s.id,s.name,w.name as \"workName\" from collection_product_subject ps join subculture_subject s on s.id=ps.subject_id join subculture_subject w on w.id=s.work_id where ps.product_id=? and ps.active and s.active and w.active order by s.name,s.id",row.get("id"));
   var creator=new LinkedHashMap<String,Object>(json.readValue(row.get("creator_json").toString(),Map.class));creator.put("id",row.get("exhibitor_id"));
+  if(creator.remove("socialAccounts") instanceof List<?> accounts)creator.put("officialLinks",accounts.stream().filter(a->a instanceof Map<?,?> m&&!Boolean.FALSE.equals(m.get("active"))).map(a->((Map<?,?>)a).get("profileUrl")).toList());
   return new LinkedHashMap<>(Map.of("id",row.get("id"),"creatorId",row.get("exhibitor_id"),"creator",creator,"data",data,"subjects",subjects,"status","PAST_REFERENCE".equals(data.get("evidenceScope"))?"과거 판매 기록":"작가 상품 · 행사 판매 미확인"));
  }
 }

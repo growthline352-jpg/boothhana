@@ -150,4 +150,12 @@ def context_urls(context):
         for s in data.get('sources',[]):
             if s.get('access')=='ORIGINAL':add(s.get('url'))
         for link in data.get('officialLinks',[]):add(link if isinstance(link,str) else link.get('url'))
+    for account in context.get('publication',{}).get('data',{}).get('socialAccounts',[]):add(account.get('profileUrl'))
+    for creator in context.get('creatorSources',[]):
+        add(creator.get('profileUrl'))
+        for account in creator.get('socialAccounts',[]):add(account.get('profileUrl'))
+    for row in context.get('creatorProvenance',[]):
+        for link in row.get('officialLinks') or []:add(link if isinstance(link,str) else link.get('url'))
+        for source in (row.get('sources') or [])+(row.get('eventSources') or []):
+            if source.get('access')=='ORIGINAL':add(source.get('url'))
     return result
