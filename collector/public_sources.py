@@ -1,12 +1,13 @@
 """Public HTML evidence, independent of search snippets. No cookies or private IPs.
 
 Uses the existing pinned HTTPS transport, honors robots, and keeps provenance.
-Script-only/login/challenge pages remain unavailable; no access bypass or browser
-execution. Re-fetch on every extraction/review rather than reusing old evidence.
+Script-only/login/challenge pages remain unavailable. Known public article data
+embedded in HTML can be decoded without executing scripts or bypassing access.
+Re-fetch on every extraction/review rather than reusing old evidence.
 """
 from datetime import datetime,timezone
 import json,re,zlib
-from html import escape
+from html import escape,unescape
 from html.parser import HTMLParser
 from urllib.parse import urlsplit,urljoin
 from urllib.robotparser import RobotFileParser
@@ -31,6 +32,36 @@ class PageText(HTMLParser):
     def handle_data(self,data):
         if self.in_title:self.title.append(data)
         if not self.hidden and data.strip():self.text.append(data.strip())
+
+class InlineScripts(HTMLParser):
+    """Capture inline bytes only; this parser never evaluates JavaScript."""
+    def __init__(self):
+        super().__init__();self.current=None;self.scripts=[]
+    def handle_starttag(self,tag,attrs):
+        if tag=='script' and not dict(attrs).get('src'):self.current=[]
+    def handle_endtag(self,tag):
+        if tag=='script' and self.current is not None:
+            self.scripts.append(''.join(self.current));self.current=None
+    def handle_data(self,data):
+        if self.current is not None:self.current.append(data)
+
+def kakao_pr_article(url,html):
+    """Decode literal article fields from this publisher's public Nuxt HTML."""
+    parsed=urlsplit(url);route=re.fullmatch(r'/pr/detail/(\d+)',parsed.path)
+    if parsed.hostname!='kakaoent.com' or not route:return html
+    scripts=InlineScripts();scripts.feed(html)
+    states=[s for s in scripts.scripts if re.match(r'^\s*window\.__NUXT__\s*=',s)]
+    if not states:return html
+    if len(states)!=1:raise MediaError('Ambiguous public article data')
+    literal=r'"(?:\\.|[^"\\])*"'
+    pattern=r'\bdetailData:\{newsIdx:(\d+),title:('+literal+r'),summary:(?:'+literal+r'|[A-Za-z][A-Za-z0-9]*),content:('+literal+r')'
+    articles=list(re.finditer(pattern,states[0]))
+    if len(articles)!=1:raise MediaError('Unsupported public article encoding')
+    article=articles[0]
+    if int(article[1])!=int(route[1]):raise MediaError('Public article identity mismatch')
+    title=json.loads(article[2]);content=json.loads(article[3])
+    if not isinstance(title,str) or not isinstance(content,str):raise MediaError('Invalid public article fields')
+    return '<title>'+escape(unescape(title))+'</title>'+unescape(content)
 
 class PublicSources:
     def __init__(self,blocked,fetch=fetch_html):self.blocked=blocked;self.fetch=fetch
@@ -63,6 +94,7 @@ class PublicSources:
                     fields=('id','round','event_type','name','status','place','start_date','end_date','show_date','ticket_open_date','ticket_close_date')
                     rows=[{k:row.get(k) for k in fields} for row in data['eventInfo'] if isinstance(row,dict)]
                     html='<title>일러스타 공식 행사 목록</title><pre>'+escape(json.dumps(rows,ensure_ascii=False))+'</pre>'
+                html=kakao_pr_article(url,html)
                 parser=PageText(url);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
                 # The official web bundle reads this public, unauthenticated API.
                 # Exact notice routes only: no account endpoints or arbitrary URL proxy.
