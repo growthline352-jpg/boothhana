@@ -14,7 +14,7 @@ export function AdminEventFormPage() {
 }
 function EventEditor({ eventId }: { eventId: string }) {
   const navigate = useNavigate()
-  const existing = useRemote(() => eventId !== 'new' ? adminApi.event(eventId) : Promise.resolve(null), [eventId])
+  const existing = useRemote("features/admin/AdminEventFormPage:EventEditor:existing", () => eventId !== 'new' ? adminApi.event(eventId) : Promise.resolve(null), [eventId])
   const [draft, setDraft, submission] = useConsoleDraft<Partial<EventSummary> | null>(`admin:event:${eventId}`, null)
   const [error, setError] = useState('')
   const value = draft ?? existing.data ?? blankEvent

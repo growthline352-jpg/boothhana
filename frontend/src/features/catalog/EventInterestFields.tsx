@@ -7,7 +7,7 @@ import { categoryForType } from '../discovery/categories'
 import { linkedByWork, matchesInterest, removeOtherCategoryInterestCodes, toggleEventInterest } from './eventInterestEditing'
 import { eventTopicIssues } from '../interests/taxonomy'
 export function EventInterestFields({subcategory,subjects,change,disabled}:{subcategory:string;subjects:string[];change:(value:string[])=>void;disabled:boolean}) {
-  const data=useRemote(interestApi.options,[]),category=categoryForType(subcategory)
+  const data=useRemote("features/catalog/EventInterestFields:EventInterestFields:data", interestApi.options,[]),category=categoryForType(subcategory)
   const previousCategory=useRef(category.code)
   useEffect(()=>{
     if(previousCategory.current===category.code||!data.data)return

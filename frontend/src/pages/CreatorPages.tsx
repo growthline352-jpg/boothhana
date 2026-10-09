@@ -27,8 +27,8 @@ export { CreatorBoothsPage } from '../features/creator/CreatorBoothsPage'
 export function CreatorEventBoothPage() {
   const { eventBoothId = '' } = useParams()
   const navigate = useNavigate()
-  const booths = useRemote(creatorApi.eventBooths, [])
-  const events = useRemote(creatorApi.events, [])
+  const booths = useRemote("pages/CreatorPages:CreatorEventBoothPage:booths", creatorApi.eventBooths, [])
+  const events = useRemote("pages/CreatorPages:CreatorEventBoothPage:events", creatorApi.events, [])
   const booth = booths.data?.find((item) => String(item.id) === eventBoothId)
   const event = events.data?.find((item) => item.id === booth?.eventId)
   const [loadedId, setLoadedId] = useState<number | null>(null)

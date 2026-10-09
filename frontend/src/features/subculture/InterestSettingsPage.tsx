@@ -22,8 +22,8 @@ function Editor({initial,onboarding}:{initial:Settings;onboarding:boolean}){
  const [entries,setEntries]=useState(initial.entries),[kind,setKind]=useState('WORK'),[query,setQuery]=useState(''),[search,setSearch]=useState(''),[error,setError]=useState(''),[manual,setManual]=useState(false),[editing,setEditing]=useState<string|null>(null),[completing,setCompleting]=useState(false)
  const [name,setName]=useState(''),[work,setWork]=useState(''),[medium,setMedium]=useState('게임'),[workId,setWorkId]=useState(''),[workSearch,setWorkSearch]=useState(''),[workQuery,setWorkQuery]=useState(''),[directWork,setDirectWork]=useState(false)
  const busy=interests.busy||completing
- const list=useRemote(()=>subcultureApi.subjects(search,kind),[search,kind])
- const works=useRemote(()=>manual&&!directWork?subcultureApi.subjects(workQuery,'WORK'):Promise.resolve([]),[manual,directWork,workQuery])
+ const list=useRemote("features/subculture/InterestSettingsPage:Editor:list", ()=>subcultureApi.subjects(search,kind),[search,kind])
+ const works=useRemote("features/subculture/InterestSettingsPage:Editor:works", ()=>manual&&!directWork?subcultureApi.subjects(workQuery,'WORK'):Promise.resolve([]),[manual,directWork,workQuery])
  useEffect(()=>setEntries(initial.entries),[initial])
  function toggle(entry:Interest){setEntries(old=>old.some(x=>interestKey(x)===interestKey(entry))?old.filter(x=>interestKey(x)!==interestKey(entry)):[...old,entry])}
  function openManual(entry?:Interest){setManual(true);setEditing(entry?.id||null);setName(entry?.customName||'');setWork(entry?.customWork||'');setMedium(entry?.medium||'게임');setWorkId(entry?.customWorkId||'');setDirectWork(entry?!entry.customWorkId:false);setError('')}

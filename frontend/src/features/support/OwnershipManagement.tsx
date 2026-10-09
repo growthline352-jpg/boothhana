@@ -12,7 +12,7 @@ import { supportPath } from './rules'
 import { useUnsaved } from './useSupportUnsaved'
 export function OwnershipManagement(){
  const {user,loading,loginUrl}=useAuth(),[params]=useSearchParams()
- const events=useRemote(()=>user?ownershipApi.events():Promise.resolve([]),[user?.id]),booths=useRemote(()=>user?supportApi.managed():Promise.resolve([]),[user?.id])
+ const events=useRemote("features/support/OwnershipManagement:OwnershipManagement:events", ()=>user?ownershipApi.events():Promise.resolve([]),[user?.id]),booths=useRemote("features/support/OwnershipManagement:OwnershipManagement:booths", ()=>user?supportApi.managed():Promise.resolve([]),[user?.id])
  if(loading)return <LoadingState/>
  if(!user)return <EmptyState title="로그인 후 관리할 수 있어요" description="인증 신청한 계정으로 로그인해 주세요." action={<a href={loginUrl}>카카오 로그인</a>}/>
  const event=Number(params.get('event')),participant=Number(params.get('participant')||0),type=params.get('type')||'EVENT'
@@ -40,7 +40,7 @@ export function OwnershipManagement(){
 }
 function OwnerEditor({event,participant,type}:{event:number;participant:number;type:string}){
  const [savedNotice,setSavedNotice]=useState(false)
- const state=useRemote(()=>ownershipApi.editable(event,type,participant),[event,type,participant])
+ const state=useRemote("features/support/OwnershipManagement:OwnerEditor:state", ()=>ownershipApi.editable(event,type,participant),[event,type,participant])
  return <section className="ownership-workspace"><nav className="creator-breadcrumb" aria-label="현재 위치"><Link to="/support/management">내 공개 행사·부스</Link><span>/ 정보 수정</span></nav><PageHeader eyebrow="Creator · Public" title={`${type==='EVENT'?'행사 정보':type==='SALES'?'판매 안내':'부스 소개'} 수정`}/><p>수집기가 다시 조사해도 직접 수정한 값은 유지됩니다. 이미지·배치도·상품 추가는 권리·참가 범위 확인을 위해 정정 요청으로 접수해 주세요.</p><Link to={supportPath('REPORT',{namespace:'CATALOG',type:participant?'PARTICIPANT':'EVENT',eventId:event,id:participant||event})}>이미지·배치도 등 정정 요청</Link>{savedNotice&&<p role="status">수정했습니다.</p>}{state.loading?<LoadingState/>:state.error||!state.data?<ErrorState error={state.error??new Error('정보 없음')} retry={()=>void state.reload()}/>:<OwnerForm key={state.data.revision} event={event} participant={participant} type={type} value={state.data} saved={next=>{state.setData(next);setSavedNotice(true)}}/>}</section>
 }
 const labels:Record<string,string>={description:'소개',venueName:'장소명',address:'주소',admission:'입장 안내',summary:'판매 안내',salesMethod:'판매 방식',officialLinks:'공식 링크 (한 줄에 하나)',occurrences:'행사 일시'}

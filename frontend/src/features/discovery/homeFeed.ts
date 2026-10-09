@@ -1,5 +1,6 @@
 import type { Page, PublicEventSummary } from '../catalog/api'
 import { searchResultsHref } from './browse'
+import { readCacheGeneration } from '../../api/readCache'
 
 type HomePage = Page<PublicEventSummary>
 type Entry = { request: Promise<HomePage>; data?: HomePage }
@@ -7,12 +8,18 @@ type Entry = { request: Promise<HomePage>; data?: HomePage }
 /** Public feeds only; owned by one mounted discovery page and reset on category/day changes. */
 export class HomeFeed {
   private entries = new Map<string, Entry>()
+  private generation = readCacheGeneration()
   private fetch: (query: string) => Promise<HomePage>
   constructor(fetch: (query: string) => Promise<HomePage>) { this.fetch = fetch }
 
-  peek(query: string) { return this.entries.get(query)?.data }
+  private synchronize() {
+    const generation = readCacheGeneration()
+    if (generation !== this.generation) { this.entries.clear(); this.generation = generation }
+  }
+  peek(query: string) { this.synchronize(); return this.entries.get(query)?.data }
 
   load(query: string): Promise<HomePage> {
+    this.synchronize()
     const existing = this.entries.get(query)
     if (existing) return existing.request
     const entry: Entry = { request: Promise.resolve().then(() => this.fetch(query)).then(data => {

@@ -16,9 +16,9 @@ import './explore.css'
 export function EventComparePage(){
  const [params,setParams]=useSearchParams(),ids=compareIds(params.get('ids'))
  const [category,setCategory]=useState('SUBCULTURE'),[draft,setDraft]=useState(''),[q,setQ]=useState(''),[page,setPage]=useState(0)
- const chosen=useRemote(()=>ids.length?publicRead<PublicEventSummary[]>(`/api/public/catalog/events/compare?ids=${ids.join(',')}`):Promise.resolve([]),[ids.join(',')])
+ const chosen=useRemote("features/discovery/EventComparePage:EventComparePage:chosen", ()=>ids.length?publicRead<PublicEventSummary[]>(`/api/public/catalog/events/compare?ids=${ids.join(',')}`):Promise.resolve([]),[ids.join(',')])
  const search=new URLSearchParams({category,q,page:String(page),size:'12',sort:'DATE_ASC'})
- const candidates=useRemote(()=>ids.length<2?publicCatalogApi.browse(search.toString()):Promise.resolve({items:[],page:0,size:12,total:0}),[category,q,page,ids.length])
+ const candidates=useRemote("features/discovery/EventComparePage:EventComparePage:candidates", ()=>ids.length<2?publicCatalogApi.browse(search.toString()):Promise.resolve({items:[],page:0,size:12,total:0}),[category,q,page,ids.length])
  const update=(values:number[])=>{const next=new URLSearchParams(params);if(values.length)next.set('ids',values.join(','));else next.delete('ids');setParams(next,{preventScrollReset:true})}
  const topics=(event:PublicEventSummary['event'])=>eventSubjectLabels(event.subcategory,event.subjects)
  const rows=chosen.data??[],selectedEditions=rows.map(editionId)

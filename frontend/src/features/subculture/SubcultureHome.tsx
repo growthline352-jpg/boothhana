@@ -28,9 +28,9 @@ export function SubcultureHome() {
   const query = new URLSearchParams({ page: String(page) })
   const productQuery = new URLSearchParams({ page: String(catalogPage) })
   if (member && active) { query.set('interestId', active); productQuery.set('interestId', active) }
-  const feed = useRemote(() => ready ? subcultureApi.feed(member, query) : Promise.resolve<Feed | null>(null),
+  const feed = useRemote("features/subculture/SubcultureHome:SubcultureHome:feed", () => ready ? subcultureApi.feed(member, query) : Promise.resolve<Feed | null>(null),
     [ready, member, auth.generation, auth.user?.id, query.toString(), interests.settings?.revision])
-  const products = useRemote(() => ready && member ? subcultureApi.myProducts(productQuery) : Promise.resolve<{items: CreatorProduct[]; hasMore: boolean} | null>(null),
+  const products = useRemote("features/subculture/SubcultureHome:SubcultureHome:products", () => ready && member ? subcultureApi.myProducts(productQuery) : Promise.resolve<{items: CreatorProduct[]; hasMore: boolean} | null>(null),
     [ready, member, auth.generation, auth.user?.id, productQuery.toString(), interests.settings?.revision])
   const from = location.pathname + location.search
   function filter(id: string) {

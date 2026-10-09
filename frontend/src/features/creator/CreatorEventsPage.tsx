@@ -16,15 +16,15 @@ function eventState(event: EventSummary) {
   return { label: event.status === 'PUBLISHED' ? '등록 가능' : '준비중', tone: 'muted' as const, button: '부스 등록' }
 }
 export function CreatorEventsPage() {
-  const applications=useRemote(creatorApi.applications,[])
-  const booths = useRemote(creatorApi.booths, [])
+  const applications=useRemote("features/creator/CreatorEventsPage:CreatorEventsPage:applications", creatorApi.applications,[])
+  const booths = useRemote("features/creator/CreatorEventsPage:CreatorEventsPage:booths", creatorApi.booths, [])
   const [chosen, setChosen] = useState('')
   const [message, setMessage] = useState('')
   const [pending, setPending] = useState<number | null>(null)
   const submitting = useRef(false)
   const selected = booths.data?.some(booth => String(booth.id) === chosen) ? chosen
     : booths.data?.length === 1 ? String(booths.data[0].id) : ''
-  const events = useRemote(() => selected ? creatorApi.events(Number(selected)) : Promise.resolve([]), [selected])
+  const events = useRemote("features/creator/CreatorEventsPage:CreatorEventsPage:events", () => selected ? creatorApi.events(Number(selected)) : Promise.resolve([]), [selected])
 
   const apply = async (eventId: number) => {
     if (!selected || submitting.current) return

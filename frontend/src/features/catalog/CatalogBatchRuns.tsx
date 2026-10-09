@@ -7,7 +7,7 @@ import {labels,Pager} from './Shared'
 import {imageStates} from './imageHealth'
 
 export function CatalogBatchRuns(){
- const [page,setPage]=useState(0),data=useRemote(()=>catalogApi.runs(page),[page])
+ const [page,setPage]=useState(0),data=useRemote("features/catalog/CatalogBatchRuns:CatalogBatchRuns:data", ()=>catalogApi.runs(page),[page])
  return <><p>행사 수집과 이미지 보완의 실행 결과입니다. 승인 대기·저장 실패는 공개 확인 완료 건수에 포함하지 않습니다.</p>
  <button className="btn secondary" onClick={()=>void data.reload()}>새로고침</button>
  {data.loading?<LoadingState/>:data.error?<ErrorState error={data.error} retry={()=>void data.reload()}/>:!data.data?.items.length?<EmptyState title="실행 기록이 없습니다" description="수집 서버의 예약 작업을 확인해 주세요."/>:data.data.items.map(r=>{

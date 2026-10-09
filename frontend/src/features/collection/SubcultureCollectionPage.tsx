@@ -31,7 +31,7 @@ function Candidates() {
   const [state, setState] = useState<ReviewState | 'ALL'>('PENDING')
   const [page, setPage] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
-  const data = useRemote(() => collectionApi.candidates(state, page), [state, page])
+  const data = useRemote("features/collection/SubcultureCollectionPage:Candidates:data", () => collectionApi.candidates(state, page), [state, page])
   return <>
     <div className="filter-bar"><label>검토 상태 <select className="select" value={state} onChange={e => { setState(e.target.value as ReviewState | 'ALL'); setPage(0); setSelected(null) }}><option value="ALL">전체</option>{Object.entries(reviews).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><button className="btn secondary" onClick={() => void data.reload()}>새로고침</button></div>
     {data.loading ? <LoadingState /> : data.error ? <ErrorState error={data.error} retry={() => void data.reload()} /> : !data.data?.items.length ? <EmptyState title="수집 후보가 없습니다" description="수집 PC에서 collector/run.py를 실행하거나 필터를 변경하세요." /> : <div className="table-wrap"><table><thead><tr><th>행사</th><th>유형</th><th>일정 범위</th><th>장소</th><th>상태</th><th>확인</th></tr></thead><tbody>{data.data.items.map(row => <tr key={row.id}><td><strong>{row.name}</strong>{row.possibleDuplicateOf && <small>기존 후보 #{row.possibleDuplicateOf}와 중복/일정 변경 확인 필요</small>}</td><td>{categories[row.subcategory]}</td><td>{row.startsOn} ~ {row.endsOn}<small>휴무일은 상세 운영일 확인</small></td><td>{row.venueName || '확인 필요'}</td><td>{reviews[row.reviewState]}</td><td><button className="btn secondary" onClick={() => setSelected(row.id)}>상세</button></td></tr>)}</tbody></table></div>}
@@ -40,7 +40,7 @@ function Candidates() {
   </>
 }
 function CandidatePanel({ id, close, changed, open }: { id: number; close: () => void; changed: () => void; open: (id: number) => void }) {
-  const data = useRemote(() => collectionApi.detail(id), [id])
+  const data = useRemote("features/collection/SubcultureCollectionPage:CandidatePanel:data", () => collectionApi.detail(id), [id])
   if (data.loading) return <LoadingState />
   if (data.error || !data.data) return <ErrorState error={data.error ?? new Error('후보를 찾을 수 없습니다.')} retry={() => void data.reload()} />
   return <ReviewForm key={`${id}:${data.data.revision}`} detail={data.data} close={close} open={open} saved={value => { data.setData(value); changed() }} />
@@ -74,6 +74,6 @@ function ReviewForm({ detail, close, saved, open }: { detail: Detail; close: () 
 }
 function Runs() {
   const [page, setPage] = useState(0)
-  const data = useRemote(() => collectionApi.runs(page), [page])
+  const data = useRemote("features/collection/SubcultureCollectionPage:Runs:data", () => collectionApi.runs(page), [page])
   return <><p>예약 실행은 별도 수집 PC/서버에서 수행합니다. 이 화면은 결과를 조회하며 브라우저에서 CLI를 직접 실행하지 않습니다.</p><button className="btn secondary" onClick={() => void data.reload()}>새로고침</button>{data.loading ? <LoadingState /> : data.error ? <ErrorState error={data.error} retry={() => void data.reload()} /> : !data.data?.items.length ? <EmptyState title="실행 기록이 없습니다" description="첫 수집을 실행하면 기록이 표시됩니다." /> : data.data.items.map(run => <article className="panel collection-run" key={run.id}><h3>{runStatuses[run.status] ?? run.status} · {run.executionMode === 'CLI' ? 'CLI 검색' : '수동 JSON 가져오기'}</h3><p>{run.scope.startDate} ~ {run.scope.endDate} / {new Date(run.finishedAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}</p><p>신규 {run.receipt.inserted} · 변경 {run.receipt.changed} · 동일 {run.receipt.unchanged} · 제외 {run.receipt.rejected}</p><p className="collection-copy">{run.summary}</p><small className="mono">{run.id}</small>{run.receipt.rejections.length > 0 && <details><summary>제외 내역</summary>{run.receipt.rejections.map((item, i) => <p key={i}>{item.name || `항목 ${item.index + 1}`} — {item.reasons.join(', ')}</p>)}</details>}</article>)}{data.data && <Paging page={page} total={data.data.total} change={setPage} />}</>
 }

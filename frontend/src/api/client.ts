@@ -1,4 +1,6 @@
 import type { ApiErrorBody } from '../types'
+import { remoteCache } from '../app/RemoteCache'
+import { cachedRead, clearReadCache, forgetRead, waitForRead } from './readCache'
 
 export function normalizeApiBase(value: string): string {
   const raw = value.trim()
@@ -57,6 +59,12 @@ let csrfGeneration = 0
 // Token renewal and a known authentication change are different boundaries.
 // An ordinary CSRF retry must not invalidate unrelated in-flight requests.
 let sessionGeneration = 0
+let expiredSession = false
+const expirationListeners = new Set<() => void>()
+export function onSessionExpired(listener: () => void) {
+  expirationListeners.add(listener)
+  return () => { expirationListeners.delete(listener) }
+}
 
 function invalidateCsrfToken() {
   csrfGeneration += 1
@@ -66,7 +74,10 @@ function invalidateCsrfToken() {
 
 export function resetCsrfToken() {
   sessionGeneration += 1
+  expiredSession = false
   invalidateCsrfToken()
+  clearReadCache()
+  remoteCache.clear()
 }
 
 async function readError(response: Response): Promise<ApiError> {
@@ -112,28 +123,39 @@ function replayable(body: BodyInit | null | undefined) {
   return body == null || typeof body === 'string' || body instanceof Blob || body instanceof FormData || body instanceof URLSearchParams
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+export type ApiRequestInit = RequestInit & { fresh?: boolean; readOnly?: boolean; reuse?: boolean; timeoutMs?: number }
+
+export async function api<T>(path: string, options?: ApiRequestInit): Promise<T> {
+  const { fresh = false, readOnly = false, reuse = true, timeoutMs = DEFAULT_API_TIMEOUT_MS, ...init } = options ?? {}
   const method = (init?.method ?? 'GET').toUpperCase()
   const mutation = !['GET', 'HEAD', 'OPTIONS'].includes(method)
+  // Identity and write-receipt checks must verify the server when explicitly requested.
+  const volatile = path === '/api/me' || path.startsWith('/api/auth/') || /\/(?:[\w-]*requests)\//.test(path)
+  const cacheable = reuse && (method === 'GET' || readOnly) && !volatile
+  const url = new URL(path, API_BASE_URL || 'http://same-origin.invalid')
+  url.searchParams.sort()
+  const key = JSON.stringify([method, url.pathname + url.search, [...new Headers(init.headers).entries()].sort(), init.body ?? null])
   const session = sessionGeneration
+  const transportSignal = cacheable ? null : init.signal
   const requireSameSession = () => {
-    if (mutation && session !== sessionGeneration) throw new ApiError({
+    if (session !== sessionGeneration || mutation && expiredSession) throw new ApiError({
       status: 409, code: 'SESSION_CHANGED',
       message: '로그인 상태가 변경되어 이전 요청의 전송·재시도 또는 결과 반영을 중단했습니다. 이미 전송한 요청의 처리 결과는 다시 확인해 주세요.',
     })
   }
   async function send(retried: boolean): Promise<T> {
-    init?.signal?.throwIfAborted()
+    transportSignal?.throwIfAborted()
     requireSameSession()
     const token = mutation ? await ensureCsrfToken() : null
-    init?.signal?.throwIfAborted()
+    transportSignal?.throwIfAborted()
     requireSameSession()
     const headers = new Headers(init?.headers)
     if (init?.body != null && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json')
     }
     if (token) headers.set('X-XSRF-TOKEN', token)
-    const signal = init?.signal ?? AbortSignal.timeout(DEFAULT_API_TIMEOUT_MS)
+    // A cached read belongs to the application; callers cancel only their own wait.
+    const signal = cacheable ? AbortSignal.timeout(timeoutMs) : init?.signal ?? AbortSignal.timeout(timeoutMs)
     const response = await fetch(`${API_BASE_URL}${path}`, { ...init, method, headers, credentials: 'include', signal })
     requireSameSession()
     if (!response.ok) {
@@ -145,21 +167,39 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
         if (csrfToken === token) invalidateCsrfToken()
         return send(true)
       }
-      if (response.status === 401 && session === sessionGeneration) resetCsrfToken()
+      if (response.status === 401 && session === sessionGeneration) {
+        if (path === '/api/me') invalidateCsrfToken() // AuthSession establishes the identity boundary.
+        else if (!expiredSession) {
+          // Let an already pending /api/me finish and establish the confirmed identity.
+          // Advancing its session generation here would turn an anonymous result into an error.
+          invalidateCsrfToken(); clearReadCache(); remoteCache.clear(); expiredSession = true
+          expirationListeners.forEach(listener => listener())
+        }
+      }
       throw error
     }
-    if (response.status === 204) return undefined as T
+    const changed = () => {
+      if (mutation && !readOnly) { clearReadCache(); remoteCache.invalidate() }
+    }
+    if (response.status === 204) { changed(); return undefined as T }
     let result: T
     try { result = await response.json() as T }
     catch {
-      init?.signal?.throwIfAborted()
+      transportSignal?.throwIfAborted()
       requireSameSession()
       throw new ApiError({ status: response.status, code: 'INVALID_RESPONSE', message: '서버 응답 형식을 확인하지 못했습니다.' })
     }
     requireSameSession()
+    changed()
     return result
   }
-  return send(false)
+  init.signal?.throwIfAborted()
+  if (!cacheable) return send(false)
+  if (fresh) forgetRead(key)
+  // Browser 'no-store' still applies to HTTP storage; in-app session reuse is separate.
+  const result = await waitForRead(cachedRead(key, () => send(false)), init.signal)
+  requireSameSession()
+  return result
 }
 
 function retryablePublicRead(error: unknown) {
@@ -179,14 +219,12 @@ function waitForColdStartRetry(signal?: AbortSignal | null) {
 }
 
 /** Retry one idempotent public read when Render is still waking up. */
-export async function publicRead<T>(path: string, init?: RequestInit): Promise<T> {
+export async function publicRead<T>(path: string, init?: ApiRequestInit): Promise<T> {
   const method = (init?.method ?? 'GET').toUpperCase()
   if (!['GET', 'HEAD'].includes(method)) throw new Error('publicRead는 읽기 요청에만 사용할 수 있습니다.')
   const { signal: callerSignal, ...request } = init ?? {}
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const timeoutSignal = AbortSignal.timeout(COLD_START_API_TIMEOUT_MS)
-    const signal = callerSignal ? AbortSignal.any([callerSignal, timeoutSignal]) : timeoutSignal
-    try { return await api<T>(path, { ...request, method, signal }) }
+    try { return await api<T>(path, { ...request, method, signal: callerSignal, timeoutMs: COLD_START_API_TIMEOUT_MS }) }
     catch (error) {
       if (attempt === 1 || callerSignal?.aborted || !retryablePublicRead(error)) throw error
       await waitForColdStartRetry(callerSignal)

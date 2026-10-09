@@ -13,7 +13,7 @@ export function CatalogEventList({open}:{open:(id:number,images?:boolean)=>void}
   const [draft,setDraft]=useState(q)
   const image=params.get('image')||''
   useEffect(()=>setDraft(q),[q])
-  const data=useRemote(()=>catalogApi.events(page,{q,category,state,publication,image}),[page,q,category,state,publication,image])
+  const data=useRemote("features/catalog/CatalogEventList:CatalogEventList:data", ()=>catalogApi.events(page,{q,category,state,publication,image}),[page,q,category,state,publication,image])
   const update=(patch:Record<string,string>)=>setParams(previous=>{const next=new URLSearchParams(previous);next.delete('page');for(const [k,v] of Object.entries(patch)){if(v)next.set(k,v);else next.delete(k)}return next})
   const search=(e:FormEvent)=>{e.preventDefault();update({q:draft.trim()})}
   return <><form className="panel support-controls" onSubmit={search}>

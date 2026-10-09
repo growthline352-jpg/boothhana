@@ -14,9 +14,9 @@ export function CreatorBoothsPage() {
   const [params]=useSearchParams()
   const returnTo=params.get('returnTo')
   const safeReturn=returnTo&&/^\/creator\/catalog\/events\/\d+\/booths\/new$/.test(returnTo)?returnTo:null
-  const state = useRemote(creatorApi.booths, [])
-  const approved = useRemote(creatorApi.eventBooths, [])
-  const events = useRemote(creatorApi.events, [])
+  const state = useRemote("features/creator/CreatorBoothsPage:CreatorBoothsPage:state", creatorApi.booths, [])
+  const approved = useRemote("features/creator/CreatorBoothsPage:CreatorBoothsPage:approved", creatorApi.eventBooths, [])
+  const events = useRemote("features/creator/CreatorBoothsPage:CreatorBoothsPage:events", creatorApi.events, [])
   const [editing, setEditing, submission] = useConsoleDraft<Partial<BoothSummary> | null>('creator:booths', null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')

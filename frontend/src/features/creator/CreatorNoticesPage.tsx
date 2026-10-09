@@ -12,8 +12,8 @@ const blank = { title: '', body: '', pinned: false }
 const content = (value: Partial<BoothNotice>) => JSON.stringify([value.title, value.body, value.pinned])
 
 export function CreatorNoticesPage() {
-  const booths = useRemote(creatorApi.eventBooths, [])
-  const events = useRemote(creatorApi.events, [])
+  const booths = useRemote("features/creator/CreatorNoticesPage:CreatorNoticesPage:booths", creatorApi.eventBooths, [])
+  const events = useRemote("features/creator/CreatorNoticesPage:CreatorNoticesPage:events", creatorApi.events, [])
   const [params, setParams] = useSearchParams()
   const selected = params.get('booth') || String(booths.data?.[0]?.id ?? '')
   if (booths.loading || events.loading) return <LoadingState />
@@ -28,7 +28,7 @@ function NoticeWorkspace({ boothId, booths, events, select }: {
   boothId: string; booths: BoothSummary[]; events: EventSummary[]; select: (id: string) => void
 }) {
   const booth = booths.find(item => String(item.id) === boothId)
-  const state = useRemote(() => booth ? creatorApi.notices(boothId) : Promise.resolve([]), [boothId])
+  const state = useRemote("features/creator/CreatorNoticesPage:NoticeWorkspace:state", () => booth ? creatorApi.notices(boothId) : Promise.resolve([]), [boothId])
   const [editing, setEditing] = useState<Partial<BoothNotice>>(blank)
   const [baseline, setBaseline] = useState<Partial<BoothNotice>>(blank)
   const [message, setMessage] = useState('')

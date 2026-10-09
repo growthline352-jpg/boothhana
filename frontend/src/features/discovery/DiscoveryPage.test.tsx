@@ -28,7 +28,7 @@ vi.mock('react-router', () => ({
   useLocation: () => ({ pathname: '/discover', search: `?${fixture.params}` }),
   useSearchParams: () => [fixture.params, fixture.setParams],
 }))
-vi.mock('../../app/useRemote', () => ({ useRemote: (_load: unknown, deps: unknown[]) => {
+vi.mock('../../app/useRemote', () => ({ useRemote: (_namespace: string, _load: unknown, deps: unknown[]) => {
   fixture.requests.push(deps)
   return { data: fixture.remoteData, loading: fixture.remoteLoading, error: null, reload: vi.fn() }
 } }))
@@ -102,7 +102,7 @@ describe('home region tab isolation', () => {
     const child = () => (node.type as (props: Record<string, unknown>) => ReactNode)({ ...node.props, feed })
     let tree = child()
     expect(nodes(tree).some(node => node.props['aria-busy'] === 'true')).toBe(true)
-    const query = fixture.requests.at(-1)![1] as string
+    const query = fixture.requests.at(-1)![0] as string
     await feed.load(query)
     tree = child()
     expect(nodes(tree).some(node => node.props['aria-busy'] === 'true')).toBe(false)

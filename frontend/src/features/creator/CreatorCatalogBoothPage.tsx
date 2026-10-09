@@ -10,7 +10,7 @@ import { creatorCatalogApi, type CatalogBoothInput, type CatalogBoothValue } fro
 import type { BoothSummary } from '../../types'
 
 export function CatalogBoothList(){
- const state=useRemote(creatorCatalogApi.mine,[])
+ const state=useRemote("features/creator/CreatorCatalogBoothPage:CatalogBoothList:state", creatorCatalogApi.mine,[])
  return <section className="panel"><div className="panel-header"><h2>직접 등록한 공개 행사 부스</h2><Link className="btn secondary" to="/creator/catalog/events">행사 찾아 등록하기</Link></div>
  {state.loading?<LoadingState/>:state.error?<ErrorState error={state.error} retry={()=>void state.reload()}/>:!state.data?.length?<p>참가할 행사 화면에서 ‘내 부스 등록’을 선택해 주세요. 계정당 행사별 1개까지 등록할 수 있습니다.</p>:state.data.map(b=><article className="list-row" key={b.participantId}><div><h3>{b.name}</h3><p>{b.eventName}{b.reviewState==='EXCLUDED'?' · 공개 제외됨':''}</p></div>{b.reviewState!=='EXCLUDED'&&<div className="row-actions"><Link className="btn secondary" to={`/creator/catalog/events/${b.eventId}/booths/${b.participantId}`}>부스 수정</Link><Link className="btn secondary" to={`/support/management?event=${b.eventId}&participant=${b.participantId}&type=PRODUCTS`}>상품 관리</Link><Link to={`/discover/${b.eventId}/booths/${b.participantId}`}>공개 화면</Link></div>}</article>)}
  </section>
@@ -18,7 +18,7 @@ export function CatalogBoothList(){
 export function CreatorCatalogBoothPage(){
  const [saved,setSaved]=useState(false)
  const params=useParams(),event=Number(params.eventId),participant=Number(params.participantId)||0
- const state=useRemote(async()=>{
+ const state=useRemote("features/creator/CreatorCatalogBoothPage:CreatorCatalogBoothPage:state", async()=>{
   const [value,booths,availability,existing]=await Promise.all([publicCatalogApi.event(String(event)),creatorApi.booths(),creatorCatalogApi.availability(event),participant?creatorCatalogApi.detail(event,participant):Promise.resolve(null)])
   return {value,booths,availability,existing}
  },[event,participant])

@@ -46,12 +46,12 @@ export function DiscoveryPage() {
   useEffect(() => { const id = window.setInterval(() => setToday(seoulToday()), 60_000); return () => window.clearInterval(id) }, [])
   const homeFeed = useMemo(() => new HomeFeed(publicCatalogApi.browse), [category.code, today])
   const query = (isHome ? homeBrowseApiParams(state, today) : browseApiParams(state, today)).toString()
-  const data = useRemote(() => category.enabled && !state.dateError && !isCalendar ? isHome ? homeFeed.load(query) : publicCatalogApi.browse(query)
-    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError, isCalendar, isHome, homeFeed])
+  const data = useRemote("features/discovery/DiscoveryPage:DiscoveryPage:data", () => category.enabled && !state.dateError && !isCalendar ? isHome ? homeFeed.load(query) : publicCatalogApi.browse(query)
+    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 20, total: 0 }), [query, category.enabled, state.dateError, isCalendar, isHome, category.code, today])
   const auth = useAuth()
   const viewer = useRecommendationViewer(auth)
   const personal = typeof viewer === 'number'
-  const featured = useRemote(() => isHome && category.enabled && viewer !== 'pending' ? interestApi.featured(category.code, state.region, personal)
+  const featured = useRemote("features/discovery/DiscoveryPage:DiscoveryPage:featured", () => isHome && category.enabled && viewer !== 'pending' ? interestApi.featured(category.code, state.region, personal)
     : Promise.resolve({ items: [], mode: 'RECENT' as const, personalized: false }),
     [isHome, category.enabled, category.code, state.region, personal, viewer, today])
   usePageScroll(!data.loading)
@@ -199,8 +199,8 @@ function HomeRankingSection({ id, title, description, empty, feed, state, today,
   today: string; returnTo: string; region: string; changeRegion: (region: string) => void; allEventsHref: string; closing?: boolean
 }) {
   const query = homeBrowseApiParams({ ...state, region, areas: '' }, today).toString()
-  const remote = useRemote(() => state.category.enabled ? feed.load(query)
-    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 100, total: 0 }), [feed, query, state.category.enabled])
+  const remote = useRemote("features/discovery/DiscoveryPage:HomeRankingSection:remote", () => state.category.enabled ? feed.load(query)
+    : Promise.resolve({ items: [] as PublicEventSummary[], page: 0, size: 100, total: 0 }), [query, state.category.enabled])
   // Cached regions render immediately, including the frame before useRemote activates its new scope.
   const data = feed.peek(query) ?? remote.data
   const loading = !data && remote.loading

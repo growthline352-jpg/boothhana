@@ -10,7 +10,7 @@ import { useUnsaved } from './useSupportUnsaved'
 import { supportPath } from './rules'
 export function OwnerProducts({event,participant}:{event:number;participant:number}){
  const [selected,setSelected]=useState<number|null>(null),[done,setDone]=useState(false)
- const state=useRemote(()=>ownershipApi.products(event,participant),[event,participant])
+ const state=useRemote("features/support/OwnerProducts:OwnerProducts:state", ()=>ownershipApi.products(event,participant),[event,participant])
  const requestPath=supportPath('REPORT',{namespace:'CATALOG',type:'PARTICIPANT',eventId:event,id:participant})
  return <section className="ownership-workspace"><nav className="creator-breadcrumb" aria-label="현재 위치"><Link to="/support/management">내 공개 행사·부스</Link><span>/ 상품 관리</span></nav><PageHeader eyebrow="Creator · Products" title="부스 상품 관리"/><p>현재 공개된 본인 단독 부스 상품만 수정할 수 있습니다. 직접 등록한 부스는 새 상품도 바로 추가할 수 있습니다. 수집된 부스의 새 상품·이미지 변경은 아래 버튼으로 요청해 주세요.</p>
  <nav className="row-actions" aria-label="공개 상품 관리 동작">{state.data?.directRegistration?<button className="btn primary" onClick={()=>{setSelected(-1);setDone(false)}}>새 상품 추가</button>:<Link className="btn primary" to={`${requestPath}&category=PRODUCT_PRICE&template=NEW_PRODUCT`}>새 상품 추가 요청</Link>}<Link className="btn secondary" to={`${requestPath}&category=IMAGE_RIGHTS&template=PRODUCT_IMAGE`}>이미지 변경 요청</Link><Link className="btn secondary" to={`/discover/${event}/booths/${participant}`}>사용자 화면 확인</Link><Link to="/support?kind=REPORT">요청 처리 내역</Link></nav>

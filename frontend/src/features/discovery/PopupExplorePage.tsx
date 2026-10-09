@@ -20,7 +20,7 @@ export function PopupExplorePage(){
  const from=params.get('from')||week.from,to=params.get('to')||week.to,neighborhood=['SEONGSU','YEONNAM'].includes(params.get('neighborhood')||'')?params.get('neighborhood')!:''
  const error=rangeError(from,to)||((Date.parse(to)-Date.parse(from))/86400000>31?'31일 이내로 골라 주세요.':'')
  const query=new URLSearchParams({from,to,neighborhood})
- const data=useRemote(()=>error?Promise.resolve({items:[],places:[],total:0,limit:100}):publicRead<PopupResult>(`/api/public/catalog/popups?${query}`),[from,to,neighborhood,error])
+ const data=useRemote("features/discovery/PopupExplorePage:PopupExplorePage:data", ()=>error?Promise.resolve({items:[],places:[],total:0,limit:100}):publicRead<PopupResult>(`/api/public/catalog/popups?${query}`),[from,to,neighborhood,error])
  const [selected,setSelected]=useState<number|null>(null),[view,setView]=useState('list'),[retry,setRetry]=useState(0),[focusRequest,setFocusRequest]=useState(0)
  const update=(patch:Record<string,string>)=>{const next=new URLSearchParams(params);Object.entries(patch).forEach(([k,v])=>v?next.set(k,v):next.delete(k));setParams(next,{preventScrollReset:true});setSelected(null)}
  const rows=useMemo(()=>data.data?.items??[],[data.data])

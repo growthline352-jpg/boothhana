@@ -6,7 +6,7 @@ import { supportPath } from './rules'
 import { ErrorState } from '../../components/ui/States'
 const disclaimer='운영 주체와 계정의 관계를 확인한 표시입니다. 행사 품질·거래 안전·이번 회차 참가 확정을 보증하지 않습니다.'
 export function OwnershipPanel({eventId,participantId}:{eventId:number;participantId?:number}){
- const state=useRemote(()=>ownershipApi.info(eventId),[eventId])
+ const state=useRemote("features/support/OwnershipPanels:OwnershipPanel:state", ()=>ownershipApi.info(eventId),[eventId])
  const verified=participantId?state.data?.exhibitors.filter(x=>x.participantId===participantId):state.data?.organizers
  const direct=participantId!=null&&state.data?.directParticipantIds?.includes(participantId)
  const target={namespace:'CATALOG' as const,type:participantId?'PARTICIPANT' as const:'EVENT' as const,eventId,id:participantId??eventId}
@@ -19,7 +19,7 @@ export function OwnershipPanel({eventId,participantId}:{eventId:number;participa
  </section>
 }
 export function EventHistory({eventId}:{eventId:number}){
- const [page,setPage]=useState(0),info=useRemote(()=>ownershipApi.info(eventId),[eventId]),state=useRemote(()=>ownershipApi.history(eventId,page),[eventId,page])
+ const [page,setPage]=useState(0),info=useRemote("features/support/OwnershipPanels:EventHistory:info", ()=>ownershipApi.info(eventId),[eventId]),state=useRemote("features/support/OwnershipPanels:EventHistory:state", ()=>ownershipApi.history(eventId,page),[eventId,page])
  if(info.loading||state.loading)return null
  if(info.error||state.error)return <ErrorState error={info.error||state.error!} retry={()=>{void info.reload();void state.reload()}}/>
  if(!info.data?.series.length)return null

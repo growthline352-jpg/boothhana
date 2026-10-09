@@ -8,7 +8,7 @@ import { seoulToday } from '../discovery/browse'
 import { catalogApi, publicCatalogApi, type EventDetail, type OperatingGroupSettings } from './api'
 
 export function OperatingGroupEditor({detail}:{detail:EventDetail}) {
-  const state=useRemote(()=>catalogApi.operatingGroup(detail.id),[detail.id])
+  const state=useRemote("features/catalog/OperatingGroupEditor:OperatingGroupEditor:state", ()=>catalogApi.operatingGroup(detail.id),[detail.id])
   if(!detail.publication.length)return <section className="panel"><h3>같은 회차의 운영일·전시장 묶음</h3><p>행사를 먼저 검토하고 공개한 뒤, 같은 회차의 공개 행사들을 연결해 주세요.</p></section>
   if(state.loading)return <LoadingState/>
   if(state.error||!state.data)return <ErrorState error={state.error||new Error('묶음 정보를 확인하지 못했습니다.')} retry={()=>void state.reload()}/>
@@ -17,8 +17,8 @@ export function OperatingGroupEditor({detail}:{detail:EventDetail}) {
 }
 function GroupForm({detail,value,saved}:{detail:EventDetail;value:OperatingGroupSettings;saved:(v:OperatingGroupSettings)=>void}) {
   const [name,setName]=useState(value.name||detail.event.name),[source,setSource]=useState(value.sourceUrl),[checked,setChecked]=useState(value.checkedOn||seoulToday()),[ids,setIds]=useState(value.eventIds),[query,setQuery]=useState(''),[search,setSearch]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('')
-  const results=useRemote(()=>search?catalogApi.events(0,{q:search,category:categoryForType(detail.event.subcategory).code,publication:'PUBLISHED'}):Promise.resolve(null),[search,detail.event.subcategory])
-  const members=useRemote(()=>Promise.all(ids.map(id=>publicCatalogApi.event(String(id)).then(row=>({id,name:row.event.name,dates:row.event.occurrences})))),[ids.join(',')])
+  const results=useRemote("features/catalog/OperatingGroupEditor:GroupForm:results", ()=>search?catalogApi.events(0,{q:search,category:categoryForType(detail.event.subcategory).code,publication:'PUBLISHED'}):Promise.resolve(null),[search,detail.event.subcategory])
+  const members=useRemote("features/catalog/OperatingGroupEditor:GroupForm:members", ()=>Promise.all(ids.map(id=>publicCatalogApi.event(String(id)).then(row=>({id,name:row.event.name,dates:row.event.occurrences})))),[ids.join(',')])
   const clean=useDirty(`group-${detail.id}`,{name:value.name||detail.event.name,source:value.sourceUrl,checked:value.checkedOn||seoulToday(),ids:value.eventIds},{name,source,checked,ids})
   const save=async()=>{if(busy)return;setError('');setNotice('');if(ids.length<2||!name.trim()||!source.trim()||!checked){setError('묶을 행사 2개 이상과 이름·공식 출처·확인일을 입력해 주세요.');return}if(!window.confirm('선택한 행사들을 같은 회차의 운영일로 묶어 공개할까요? 기존 부스·보관함·댓글·관리권은 각 원본에 유지됩니다.'))return;setBusy(true);try{const next=await catalogApi.saveOperatingGroup(detail.id,{revision:value.revision,name:name.trim(),sourceUrl:source.trim(),checkedOn:checked,eventIds:ids});clean();saved(next);setNotice('묶음 공개 설정을 저장했습니다.')}catch(e){setError(e instanceof Error?e.message:'저장 실패')}finally{setBusy(false)}}
   const remove=async()=>{if(busy||!window.confirm('묶음 표시를 해제할까요? 각 행사와 부스·보관함·댓글은 그대로 유지됩니다.'))return;setBusy(true);setError('');try{await catalogApi.removeOperatingGroup(detail.id,value.revision);const next=await catalogApi.operatingGroup(detail.id);clean();saved(next)}catch(e){setError(e instanceof Error?e.message:'해제 실패')}finally{setBusy(false)}}

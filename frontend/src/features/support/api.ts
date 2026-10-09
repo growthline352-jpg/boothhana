@@ -23,7 +23,7 @@ const prefix=(admin=false)=>admin?'/api/admin/support':'/api/me/support'
 const post=<T>(url:string,body:unknown)=>api<T>(url,{method:'POST',body:JSON.stringify(body),cache:'no-store'})
 export const supportApi={
  options:()=>api<Options>('/api/public/support/options',{cache:'no-store'}),
- target:(t:Target)=>post<Resolved>('/api/public/support/target',t),
+ target:(t:Target)=>api<Resolved>('/api/public/support/target',{method:'POST',body:JSON.stringify(t),readOnly:true,cache:'no-store'}),
  claimables:(t:Target)=>api<{id:number;name:string;profileUrl:string|null}[]>(`/api/public/support/claimables?eventId=${t.eventId}&participantId=${t.id}`,{cache:'no-store'}),
  list:(kind:TicketKind,page=0,status='',admin=false,category='')=>api<Page<TicketSummary>>(`${prefix(admin)}/tickets?${new URLSearchParams({kind,page:String(page),status,category})}`,{cache:'no-store'}),
  receipt:(id:string)=>api<{found:boolean;id?:string}>(`${prefix()}/requests/${encodeURIComponent(id)}`,{cache:'no-store'}),
@@ -38,7 +38,7 @@ export const supportApi={
  managed:()=>api<Manager[]>(`${prefix()}/managed-exhibitors`,{cache:'no-store'}),
  guestCreate:(ticket:TicketInput,accessKey:string,website='')=>post<Ticket>('/api/public/support/guest/tickets',{ticket,accessKey,website}),
  feedback:(ticket:TicketInput,accessKey:string,website='')=>post<{id:string;number:string}>('/api/public/support/feedback',{ticket,accessKey,website}),
- guestRead:(access:GuestAccess)=>post<Ticket>('/api/public/support/guest/read',access),
+ guestRead:(access:GuestAccess)=>api<Ticket>('/api/public/support/guest/read',{method:'POST',body:JSON.stringify(access),readOnly:true,reuse:false,cache:'no-store'}),
  guestReply:(access:GuestAccess,message:ReplyInput)=>post<Ticket>('/api/public/support/guest/messages',{access,message}),
  upload:async(id:string,uploadId:string,file:File)=>{
   if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size<1||file.size>5*1024*1024)throw new Error('JPG·PNG·WebP, 5MiB 이하 이미지만 첨부할 수 있어요.')

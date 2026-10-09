@@ -17,7 +17,7 @@ export function CharacterHomeHero() {
   const browse = params.get('characters') === 'browse' || !favorites.length
   const page = Math.max(0, Math.min(1000, Math.trunc(Number(params.get('characterPage')) || 0)))
   const ready = !auth.loading && auth.status !== 'error' && (!interests.loading && !interests.error || auth.status === 'anonymous')
-  const catalog = useRemote(() => ready && browse ? subcultureApi.subjects(work, 'CHARACTER', page) : Promise.resolve([]), [ready, browse, work, page, auth.generation])
+  const catalog = useRemote("features/subculture/CharacterHomeHero:CharacterHomeHero:catalog", () => ready && browse ? subcultureApi.subjects(work, 'CHARACTER', page) : Promise.resolve([]), [ready, browse, work, page, auth.generation])
   const workEntry = entries.find(entry => entry.kind === 'WORK' && entry.label === work)
   const cards: Interest[] = browse
     ? (catalog.data ?? []).filter(subject => !work || (workEntry ? subject.workId === workEntry.subjectId : subject.workName === work)).map(subject => newInterest(subject))

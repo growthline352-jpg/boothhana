@@ -15,7 +15,7 @@ const elementKinds:Record<MapElementKind,string>={BOOTH:'참가 부스',RESTROOM
 const time=(value:string|null)=>value?new Date(value).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}):'아직 없음'
 function message(e:unknown){return e instanceof Error?e.message:'저장하지 못했습니다.'}
 export function FloorplanAdmin({eventId}:{eventId:number}){
- const guard=useUnsavedGuard();const data=useRemote(()=>floorplanApi.admin(eventId),[eventId]);const [selected,setSelected]=useState('');const [error,setError]=useState('');const action=useSubmission()
+ const guard=useUnsavedGuard();const data=useRemote("features/floorplan/FloorplanAdmin:FloorplanAdmin:data", ()=>floorplanApi.admin(eventId),[eventId]);const [selected,setSelected]=useState('');const [error,setError]=useState('');const action=useSubmission()
  if(data.loading)return <p>배치도 작업을 확인하고 있습니다…</p>
  if(data.error||!data.data)return <p className="form-alert">배치도 작업 정보를 불러오지 못했어요. 잠시 후 다시 시도해주세요. <button className="btn secondary" onClick={()=>void data.reload()}>다시 조회</button></p>
  const refresh=()=>{void floorplanApi.admin(eventId).then(data.setData).catch(e=>setError(message(e)))}
@@ -46,7 +46,7 @@ function SourceCard({event,source:s,saved}:{event:number;source:Source;saved:()=
  <button className="btn secondary" disabled={action.pending||!s.sourceRevision} onClick={()=>void saveScope()}>원본 범위 수정 · 다음 배치 재분석</button><p>{s.lastError}</p>{error&&<p className="form-alert" role="alert">{error}</p>}</details>
 }
 function VersionLoader({versionId,roster,saved}:{versionId:string;roster:Roster[];saved:()=>void}){
- const state=useRemote(()=>floorplanApi.version(versionId),[versionId]);
+ const state=useRemote("features/floorplan/FloorplanAdmin:VersionLoader:state", ()=>floorplanApi.version(versionId),[versionId]);
  if(state.loading)return <p>선택한 배치도 버전을 불러옵니다…</p>;
  if(state.error||!state.data)return <p role="alert">버전 조회 실패 <button className="btn secondary" onClick={()=>void state.reload()}>재시도</button></p>;
  return <VersionEditor key={`${state.data.id}-${state.data.revision}`} version={state.data} roster={roster} saved={saved}/>;

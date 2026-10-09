@@ -8,8 +8,8 @@ type Row=Subject&{active:boolean;aliasesJson?:string}
 type Relation={id:string;revision:number;subjectId:string;kind:'EVENT'|'PRODUCT'|'CREATOR';targetId:number;eventId:number|null;participantId:number|null;sourceUrl:string;evidence:string;active:boolean}
 const emptySubject=():Row=>({id:crypto.randomUUID(),revision:0,kind:'WORK',name:'',workId:null,workName:null,medium:'게임',sourceUrl:'',active:true,aliasesJson:'[]'})
 export function SubjectAdmin(){
- const list=useRemote(()=>api<Row[]>('/api/admin/subculture/subjects',{cache:'no-store'}),[]),[draft,setDraft]=useState(emptySubject),[subjectId,setSubjectId]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
- const links=useRemote(()=>subjectId?api<Relation[]>(`/api/admin/subculture/subjects/${subjectId}/links`,{cache:'no-store'}):Promise.resolve([]),[subjectId])
+ const list=useRemote("features/subculture/SubjectAdmin:SubjectAdmin:list", ()=>api<Row[]>('/api/admin/subculture/subjects',{cache:'no-store'}),[]),[draft,setDraft]=useState(emptySubject),[subjectId,setSubjectId]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
+ const links=useRemote("features/subculture/SubjectAdmin:SubjectAdmin:links", ()=>subjectId?api<Relation[]>(`/api/admin/subculture/subjects/${subjectId}/links`,{cache:'no-store'}):Promise.resolve([]),[subjectId])
  const blank=():Relation=>({id:crypto.randomUUID(),revision:0,subjectId,kind:'EVENT',targetId:0,eventId:null,participantId:null,sourceUrl:'',evidence:'',active:true})
  const [relation,setRelation]=useState<Relation|null>(null)
  async function saveSubject(e:FormEvent){e.preventDefault();if(busy)return;setBusy(true);setError('');try{await api('/api/admin/subculture/subjects/'+draft.id,{method:'PUT',body:JSON.stringify({...draft,aliases:JSON.parse(draft.aliasesJson||'[]')})});await list.reload();setSubjectId(draft.id);setDraft(emptySubject());}catch(e){setError(e instanceof Error?e.message:'저장 실패')}finally{setBusy(false)}}

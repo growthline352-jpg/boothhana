@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { COLD_START_API_TIMEOUT_MS, COLD_START_RETRY_DELAY_MS, canonicalProductionUrl } from '../../api/client'
+import { COLD_START_API_TIMEOUT_MS, COLD_START_RETRY_DELAY_MS, canonicalProductionUrl, resetCsrfToken } from '../../api/client'
 import { presentPublicParticipant, publicCatalogApi, type PublicParticipant } from './api'
 
-afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
+afterEach(() => { resetCsrfToken(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 function participant(overrides: Partial<PublicParticipant> = {}): PublicParticipant {
  return {

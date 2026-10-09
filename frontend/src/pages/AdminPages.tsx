@@ -8,7 +8,7 @@ import { StatusChip } from '../components/ui/StatusChip'
 
 
 export function AdminEventsPage() {
-  const state = useRemote(adminApi.events, [])
+  const state = useRemote("pages/AdminPages:AdminEventsPage:state", adminApi.events, [])
   const [params,setParams]=useSearchParams(),q=params.get('q')||'',status=params.get('status')||''
   const filter=(key:string,value:string)=>setParams(previous=>{const next=new URLSearchParams(previous);if(value)next.set(key,value);else next.delete(key);return next},{replace:true})
   const rows=(state.data||[]).filter(e=>(!status||e.status===status)&&(!q||[e.name,e.venue].join(' ').toLocaleLowerCase().includes(q.trim().toLocaleLowerCase())))
@@ -22,7 +22,7 @@ export function AdminEventsPage() {
 export { AdminEventFormPage } from '../features/admin/AdminEventFormPage'
 
 export function AdminApplicationsPage() {
-  const state = useRemote(adminApi.applications, [])
+  const state = useRemote("pages/AdminPages:AdminApplicationsPage:state", adminApi.applications, [])
   const [message, setMessage] = useState('')
   const decide = async (id: number, decision: 'approve' | 'reject', revision: number) => { try { if (decision === 'approve') await adminApi.approve(id, revision); else { const reason = window.prompt('반려 사유를 입력해 주세요.') ?? ''; if (!reason.trim()) return; await adminApi.reject(id, reason, revision) } await state.reload() } catch (caught) { setMessage(caught instanceof Error ? caught.message : '신청 상태를 변경하지 못했습니다.') } }
   return <><PageHeader eyebrow="Admin · Applications" title="행사 부스 등록 내역" description="새 부스는 바로 등록됩니다. 기존 수집 부스의 운영자 연결 심사는 주최자·부스 인증에서 처리하세요. 아래 대기 항목은 이전 신청 내역입니다." />{message && <div className="form-alert">{message}</div>}{state.loading ? <LoadingState label="참가 신청을 불러오고 있습니다" /> : state.error ? <ErrorState error={state.error} retry={() => void state.reload()} /> : !state.data?.length ? <EmptyState title="행사 부스 등록 내역이 없습니다" description="부스가 등록되면 이곳에 표시됩니다." /> : <div className="table-wrap"><table><thead><tr><th>행사</th><th>부스</th><th>크리에이터</th><th>상태</th><th>관리</th></tr></thead><tbody>{state.data.map((application) => <tr key={application.id}><td>{application.eventName}</td><td>{application.boothName}</td><td>{application.creatorName}</td><td><StatusChip tone={application.status === 'APPROVED' ? 'active' : application.status === 'REJECTED' ? 'danger' : 'warning'}>{{APPROVED:'등록 완료',PENDING:'이전 신청 대기',REJECTED:'반려',WITHDRAWN:'철회'}[application.status]}</StatusChip></td><td><div className="row-actions"><button className="btn primary" disabled={application.status !== 'PENDING'} onClick={() => void decide(application.id, 'approve', application.revision)}>이전 신청 활성화</button><button className="btn secondary" disabled={application.status !== 'PENDING'} onClick={() => void decide(application.id, 'reject', application.revision)}>반려</button></div></td></tr>)}</tbody></table></div>}</>

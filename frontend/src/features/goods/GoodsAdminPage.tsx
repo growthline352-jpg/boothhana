@@ -7,7 +7,7 @@ import './goods.css'
 
 export function GoodsAdminPage() {
   const [query,setQuery]=useState(''),[draft,setDraft]=useState(''),[page,setPage]=useState(0)
-  const state=useRemote(()=>goodsApi.candidates(query,page),[query,page])
+  const state=useRemote("features/goods/GoodsAdminPage:GoodsAdminPage:state", ()=>goodsApi.candidates(query,page),[query,page])
   const submit=(event:FormEvent)=>{event.preventDefault();setPage(0);setQuery(draft.trim())}
   return <div className="goods-admin-page"><PageHeader eyebrow="관리자 · POS 인기 굿즈" title="분야 화면의 인기 굿즈 노출" description="분야별 ‘많이 판매된 굿즈’를 관리합니다. 최근 30일 POS 판매수량순이며, 저장순 인기행사와는 별도입니다."/>
     <div className="goods-admin-note">판매량 숫자나 순위를 직접 입력하지 않습니다. 예약·취소·외부 추정 판매량은 제외하며, 정상 판매기록이 0건이면 허용해도 메인에 나오지 않습니다. 공개 상품에 한해 분류와 노출 여부를 설정합니다. 분류를 바꾸거나 노출을 해제하면 다음 조회에 반영됩니다.</div>
