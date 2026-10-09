@@ -51,7 +51,7 @@ export function CharacterHomeHero() {
         <div className="sc-taste-bottom"><span>캐릭터를 선택하면 출처와 관련 정보를 볼 수 있어요.</span><Link to="/subculture/subjects">캐릭터 전체 보기 <Icon name="arrow" size={15}/></Link></div>
       </div>
     </section>
-    <nav className="sc-home-shortcuts" aria-label="서브컬처 바로가기"><Link to="/subculture/creators"><Icon name="sparkles"/><span><strong>작가·서클 둘러보기</strong><small>그리는 캐릭터에서 작가를 발견해요</small></span><Icon name="chevron" size={16}/></Link><Link to="/discover?category=subculture"><Icon name="calendar"/><span><strong>갈 행사부터 찾기</strong><small>일정과 장소를 먼저 살펴보세요</small></span><Icon name="chevron" size={16}/></Link><Link to="/library"><Icon name="bookmark"/><span><strong>내 방문 준비</strong><small>저장한 부스와 방문 계획을 확인해요</small></span><Icon name="chevron" size={16}/></Link></nav>
+    <nav className="sc-home-shortcuts" aria-label="서브컬처 바로가기"><Link to="/subculture/creators"><Icon name="sparkles"/><span><strong>작가·서클 둘러보기</strong><small>그리는 캐릭터에서 작가를 발견해요</small></span><Icon name="chevron" size={16}/></Link><Link to="/discover?category=subculture&period=all&sort=recent"><Icon name="calendar"/><span><strong>갈 행사부터 찾기</strong><small>일정과 장소를 먼저 살펴보세요</small></span><Icon name="chevron" size={16}/></Link><Link to="/library"><Icon name="bookmark"/><span><strong>내 방문 준비</strong><small>저장한 부스와 방문 계획을 확인해요</small></span><Icon name="chevron" size={16}/></Link></nav>
   </>
 }
 

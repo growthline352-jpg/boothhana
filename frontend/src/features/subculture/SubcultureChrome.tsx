@@ -13,7 +13,7 @@ export function SubcultureHeader({accountMenu}: {accountMenu: ReactNode}) {
   const atHome = location.pathname === home || location.pathname === '/subculture'
   return <header className="sc-site-header"><div className="sc-container sc-header-inner">
     <Link className="sc-brand" to={home} aria-label="부스하나 서브컬처 홈"><SubcultureBrand/></Link>
-    <nav className="sc-desktop-nav" aria-label="서브컬처 탐색"><Link to={home} aria-current={atHome ? 'page' : undefined}>발견</Link><NavLink to="/subculture/subjects">캐릭터 탐색</NavLink><NavLink to="/subculture/creators">작가·서클</NavLink><Link to="/discover?category=subculture" aria-current={location.pathname.startsWith('/discover') ? 'page' : undefined}>행사 찾기</Link></nav>
+    <nav className="sc-desktop-nav" aria-label="서브컬처 탐색"><Link to={home} aria-current={atHome ? 'page' : undefined}>발견</Link><NavLink to="/subculture/subjects">캐릭터 탐색</NavLink><NavLink to="/subculture/creators">작가·서클</NavLink><Link to="/discover?category=subculture&period=all&sort=recent" aria-current={location.pathname.startsWith('/discover') ? 'page' : undefined}>행사 찾기</Link></nav>
     <div className="sc-header-actions"><NavLink to="/subculture/search" aria-label="캐릭터·작가 검색"><Icon name="search" size={20}/></NavLink><NavLink to="/account/notifications" aria-label="알림"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span className="sc-desktop-label">알림</span></NavLink><NavLink to="/library" className="sc-desktop-label"><Icon name="bookmark" size={19}/>내 방문</NavLink>{accountMenu}</div>
   </div></header>
 }

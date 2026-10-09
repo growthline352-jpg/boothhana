@@ -71,7 +71,7 @@ export function HomeFeed({value, from}: {value: Feed; from: string}) {
   const hasGoods = value.goods.length > 0
   return <>
     <div className={'sc-discovery-lead' + (hasGoods ? '' : ' is-events-only')}>
-      <section aria-labelledby="home-events-title"><div className="sc-discovery-section-head"><h2 id="home-events-title">{value.personalized ? '관심으로 찾은 행사' : '다가오는 행사'}</h2><Link to="/discover?category=subculture">행사 전체 <Icon name="chevron" size={14}/></Link></div>
+      <section aria-labelledby="home-events-title"><div className="sc-discovery-section-head"><h2 id="home-events-title">{value.personalized ? '관심으로 찾은 행사' : '다가오는 행사'}</h2><Link to="/discover?category=subculture&period=all&sort=recent">행사 전체 <Icon name="chevron" size={14}/></Link></div>
         {value.events.length ? <div className="sc-discovery-events">{value.events.map((row, index) => {
           const date = homeEventDate(row.event), state = row.event.operationStatus?.state
           return <Link key={row.id} to={'/discover/' + row.id} state={{subcultureReturnTo: from}} className={'sc-discovery-event ' + ['', 'navy', 'green'][index % 3]}>
