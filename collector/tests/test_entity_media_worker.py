@@ -51,6 +51,7 @@ def extracted(usage='PERMITTED'):
         'caption': '작품의 캐릭터', 'credit': 'Creator / CC BY 4.0',
         'identityEvidence': '원문 양쪽에 작품과 캐릭터가 일치함', 'usageStatus': usage,
         'usageEvidence': '이 이미지에 적용되는 명시적 CC BY 4.0 조건', 'usageSourceUrl': USAGE,
+        'identitySourceEvidence': '공식 출판사 원문에서 캐릭터 이름과 소속 작품 일치', 'sourceIsOfficial': True,
     }}
 
 
@@ -66,7 +67,7 @@ class FakeApi:
                           'extractionId': body['extractionId'], 'resultHash': 'b' * 64, 'revision': 0,
                           'imageUrl': body['candidate']['imageUrl'], 'imageHash': body['candidate']['imageHash'],
                           'usageStatus': body['candidate']['usageStatus'], 'extractionAudit': copy.deepcopy(body['audit']),
-                          'reviewVerdict': None, 'rightsState': 'PENDING', 'storageState': 'CANDIDATE', 'storedUrl': None}
+                          'reviewVerdict': None, 'rightsState': 'PENDING', 'storageState': 'PENDING', 'storedUrl': None}
         elif path.endswith('/review'):
             self.saved.update(reviewVerdict=body['verdict'], reviewAudit=body['audit'], revision=self.saved['revision'] + 1,
                               rightsState='APPROVED' if body['verdict'] == 'APPROVE' else 'PENDING')
@@ -176,12 +177,64 @@ class EntityMediaWorkerTests(unittest.TestCase):
         self.assertEqual(['extract-1', 'discover'], [c[0] for c in self.model_calls])
         self.assertFalse(any(c[1].endswith('/review') for c in self.api.calls))
 
-    def test_identity_original_is_mandatory_even_if_name_and_image_match(self):
+    def test_creator_identity_original_is_mandatory_even_if_name_and_image_match(self):
+        def sources(urls):
+            return [document(url) if url != IDENTITY else {'url': url, 'available': False} for url in urls]
+        creator = {**CONTEXT, 'kind': 'CREATOR', 'targetId': '1', 'target': {**CONTEXT['target'], 'id': 1}}
+        result = self.worker(source_loader=sources).run_target(creator, [{**SEED, 'kind': 'CREATOR', 'targetId': '1'}])
+        self.assertEqual('IDENTITY_SOURCE_UNAVAILABLE', result['attempts'][0]['reason'])
+        self.assertEqual([], self.api.calls)
+
+    def test_unknown_official_reference_needs_two_calls_and_never_uploads_bytes(self):
+        self.usage, self.verdict = 'UNKNOWN', 'REFERENCE'
+        result = self.worker().run_target(CONTEXT, [SEED])
+        self.assertEqual('VERIFIED', result['status'])
+        self.assertEqual('SOURCE_REFERENCE', result['displayMode'])
+        self.assertEqual(IMAGE, result['publicUrl'])
+        self.assertEqual(['extract-1', 'review'], [c[0] for c in self.model_calls])
+        self.assertEqual('UNKNOWN', self.api.saved['usageStatus'])
+        self.assertEqual('PENDING', self.api.saved['rightsState'])
+        self.assertEqual('PENDING', self.api.saved['storageState'])
+        self.assertFalse(any(c[1].endswith('/content') for c in self.api.calls))
+
+    def test_available_official_alternate_does_not_fabricate_blocked_canonical_audits(self):
+        self.usage, self.verdict = 'UNKNOWN', 'REFERENCE'
         def sources(urls):
             return [document(url) if url != IDENTITY else {'url': url, 'available': False} for url in urls]
         result = self.worker(source_loader=sources).run_target(CONTEXT, [SEED])
-        self.assertEqual('IDENTITY_SOURCE_UNAVAILABLE', result['attempts'][0]['reason'])
-        self.assertEqual([], self.api.calls)
+        self.assertEqual('VERIFIED', result['status'])
+        self.assertEqual(PAGE, self.api.saved['candidate']['identitySourceUrl'])
+        for call in self.api.calls:
+            self.assertNotIn(IDENTITY, [d['url'] for d in call[2]['audit']['sourceDocuments']])
+
+    def test_changed_html_reference_is_independently_reviewed_with_truthful_hashes(self):
+        self.usage, self.verdict = 'UNKNOWN', 'REFERENCE'
+        def sources(urls):
+            return [document(url, 'd' * 64 if len(urls) == 3 and url == PAGE else None) for url in urls]
+        result = self.worker(source_loader=sources).run_target(CONTEXT, [SEED])
+        self.assertEqual('VERIFIED', result['status'])
+        before = self.api.saved['extractionAudit']['sourceDocuments']
+        after = self.api.saved['reviewAudit']['sourceDocuments']
+        self.assertNotEqual(next(d['sha256'] for d in before if d['url'] == PAGE), next(d['sha256'] for d in after if d['url'] == PAGE))
+        self.assertEqual([DIGEST], self.api.saved['reviewAudit']['imageHashes'])
+
+    def test_unknown_creator_and_unofficial_subject_cannot_be_referenced(self):
+        self.usage, self.verdict = 'UNKNOWN', 'REFERENCE'
+        creator = {**CONTEXT, 'kind': 'CREATOR', 'targetId': '1', 'target': {**CONTEXT['target'], 'id': 1}}
+        result = self.worker().run_target(creator, [{**SEED, 'kind': 'CREATOR', 'targetId': '1'}])
+        self.assertEqual('DEFERRED', result['status'])
+        self.assertEqual('ENRICH', self.api.saved['reviewVerdict'])
+        def search(cfg, directory, prompt, schema_path, **kwargs):
+            value = extracted('UNKNOWN') if directory.name.startswith('extract') else {'verdict': 'REFERENCE', 'reason': '확인'}
+            if directory.name.startswith('extract'):
+                value['candidate']['sourceIsOfficial'] = False
+            if directory.name == 'discover':
+                value = {'status': 'DEFERRED', 'candidates': [], 'reason': '원문 없음'}
+            return json.dumps(value).encode(), True, {}
+        self.api = FakeApi()
+        result = self.worker(search=search).run_target(CONTEXT, [SEED])
+        self.assertEqual('DEFERRED', result['status'])
+        self.assertEqual('ENRICH', self.api.saved['reviewVerdict'])
 
     def test_shared_quota_failure_propagates_and_does_not_drain_candidates(self):
         def search(*args, **kwargs):
@@ -350,6 +403,11 @@ class EntityMediaWorkerTests(unittest.TestCase):
 
 
 class NativeEvidenceTests(unittest.TestCase):
+    def test_empty_boolean_image_attributes_do_not_break_original_source_capture(self):
+        parser = NativeImages(PAGE)
+        parser.feed('<img src="/character.png" srcset data-srcset alt><meta name content><script type></script>')
+        self.assertEqual([{'imageUrl': 'https://official.example/character.png', 'role': 'CONTENT', 'alt': ''}], parser.images)
+
     def test_native_html_css_and_jsonld_references_only(self):
         parser = NativeImages(PAGE)
         parser.feed('''<img src="/small.png" srcset="/large.png 2x" alt="character">

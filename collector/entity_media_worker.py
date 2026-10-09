@@ -38,10 +38,12 @@ EXTRACTION_SCHEMA = obj({
         'usageStatus': {'type': 'string', 'enum': ['PERMITTED', 'UNKNOWN', 'FORBIDDEN']},
         'usageEvidence': {'type': 'string', 'minLength': 1, 'maxLength': 2000},
         'usageSourceUrl': string(),
+        'identitySourceEvidence': {'type': 'string', 'minLength': 1, 'maxLength': 2000},
+        'sourceIsOfficial': {'type': 'boolean'},
     })]},
     'reason': string(),
 })
-REVIEW_SCHEMA = obj({'verdict': {'type': 'string', 'enum': ['APPROVE', 'REJECT', 'ENRICH']},
+REVIEW_SCHEMA = obj({'verdict': {'type': 'string', 'enum': ['APPROVE', 'REFERENCE', 'REJECT', 'ENRICH']},
                      'reason': {'type': 'string', 'minLength': 1, 'maxLength': 2000}})
 DISCOVERY_PROMPT = '''대상의 대표 이미지 후보를 여러 공식 출처에서 조사하라. 기존 원문의 작가 귀속·작품·캐릭터·개별 상품 옵션을 대조하라.
 실제 공개 원문에 포함된 이미지 URL과 그 원문 pageUrl만 제출한다. 이름만 같은 계정, 팬 업로드, 검색 썸네일, 사이트 로고를 대상 이미지로 만들지 말라.
@@ -50,6 +52,7 @@ DISCOVERY_PROMPT = '''대상의 대표 이미지 후보를 여러 공식 출처�
 없는 후보는 status=DEFERRED,candidates=[]로 남긴다. 아직 원문을 못 읽은 결과를 완료로 표시하지 말라.'''
 EXTRACTION_PROMPT = '''첨부된 실제 이미지를 보고 대상에 대응하는 대표 이미지인지 추출하라. nativeImages는 이 원문 HTML에 실제 포함된 이미지이지 동일성 정답이 아니다.
 원문 pageUrl과 대상의 기존 identitySource 양쪽 자료로 정체성을 확인한다. 작품·캐릭터의 소속, 동명 작가/서클, 공동 판매표의 귀속, 개별 상품 옵션을 분리한다.
+기존 작품/캐릭터 출처가 접근 불가하면 선택한 identitySource의 실제 공식 소개로 같은 대상을 확인한다. 기존 URL을 읽었다고 위조하지 말라. 출판사·제작사·권리자 원문의 공식성, 캐릭터 이름과 소속 작품을 identitySourceEvidence에 기록한다. 원문 pageUrl이 실제 공식 자료이면 sourceIsOfficial=true, 팬 사이트·불명확한 귀속은 false. 작품 로고만으로 캐릭터를 확인하지 말라.
 상품 판매표 전체와 다른 옵션의 사진, 로고, 기본 아바타를 해당 상품/작가 이미지로 선택하지 말라. 다른 캐릭터이면 UNRESOLVED로 남긴다.
 사용 조건 원문으로 BoothHana가 이미지를 다운로드·저장·재게시할 수 있는 명시적 허락/적용 라이선스가 확인될 때만 PERMITTED.
 Commons는 개별 파일 설명 HTML에 표시된 해당 이미지의 라이선스·저자·출처를 대조한다. 허용된 imageinfo/extmetadata가 함께 있으면 추가로 대조하되 API 호출 자체는 필수 조건이 아니다. Commons 전역 footer/본문 텍스트의 CC0를 이미지 파일의 허락으로 오인하지 말라. 출처 표시·동일 조건 등 의무가 있으면 credit에 필요한 표시를 남겨야 한다.
@@ -63,7 +66,8 @@ REVIEW_PROMPT = '''너는 앞선 추출과 별도 실행하는 독립 검토자�
 재게시 권한은 원문의 명시적 허락/라이선스와 이 이미지·사용 목적에 적용되는 근거가 필요하다. 공식/공개/분석 허용만으로 APPROVE하지 않는다.
 Commons 전역 footer의 CC0를 파일 자체의 권한으로 쓰면 ENRICH. 개별 파일 설명 HTML의 이미지별 라이선스·저자·필수 출처표시가 정확히 대응해야 한다. 원문 HTML만으로 이 근거가 충분하면 승인할 수 있으며 API 조회는 필수 조건이 아니다.
 동일성과 명시적 재게시 권한이 모두 입증되고 candidate.usageStatus=PERMITTED이면 APPROVE. 다른 대상/명시적 금지는 REJECT.
-같은 대상이지만 권리·귀속·원문 근거가 부족하면 ENRICH. UNKNOWN은 승인할 수 없다. 구체적인 reason을 남긴다.'''
+SUBJECT 작품/캐릭터에 한해 candidate.usageStatus=UNKNOWN이고 공식 원문에 실제 포함된 정확한 대표 이미지이며 sourceIsOfficial=true, 이름·작품 소속·공식 출처가 새 원문과 실제 첨부 이미지에서 독립적으로 확인되면 REFERENCE. 이는 원본 URL 참조이며 파일 복제·저장 허락이나 APPROVE가 아니다. 명시적 금지 조건이 있으면 REJECT. 후보가 못 찾은 별도 사용 조건도 탐색하라.
+새 HTML의 SHA가 달라도 같은 URL에서 현재 이름·소속·공식성·native 이미지가 일치하는지 다시 확인한다. 후보의 근거가 새 원문과 충돌하거나 공식/귀속이 불확실하면 ENRICH 또는 REJECT. 다른 종류의 UNKNOWN은 ENRICH. 구체적인 reason을 남긴다.'''
 
 
 def _https(value):
@@ -121,7 +125,7 @@ class NativeImages(HTMLParser):
             self.add(value, 'CSS')
 
     def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
+        attrs = {key: value or '' for key, value in attrs}
         if tag in ('img', 'source'):
             for key in ('src', 'data-src', 'data-original', 'data-lazy-src'):
                 if attrs.get(key):
@@ -294,7 +298,7 @@ class EntityMediaWorker:
         if any(not loaded.get(url, {}).get('available') for url in required):
             raise RunError('SOURCE_UNAVAILABLE')
         identities = identity_urls(context['target'])
-        chosen = identity if identity in identities else next((u for u in required if u in identities), None)
+        chosen = identity or next((u for u in required if u in identities), None)
         if not chosen:
             for url in identities:
                 docs = self.sources([url])
@@ -304,6 +308,10 @@ class EntityMediaWorker:
                     required.append(url)
                     chosen = url
                     break
+        if not chosen and context['kind'] == 'SUBJECT':
+            # Only a lead until both image-attached calls verify the official
+            # alternate and the exact character/work. Never invent old docs.
+            chosen = page
         if not chosen:
             raise RunError('IDENTITY_SOURCE_UNAVAILABLE')
         return [loaded[url] for url in required], chosen
@@ -342,7 +350,14 @@ class EntityMediaWorker:
 
     def _publish(self, context, receipt, image):
         raw, mime, digest = image
-        if receipt.get('kind') != context['kind'] or str(receipt.get('targetId')) != str(context['targetId']) or receipt.get('targetHash') != context['targetHash'] or not receipt.get('active') or receipt.get('imageHash') != digest or receipt.get('reviewVerdict') != 'APPROVE' or receipt.get('rightsState') != 'APPROVED' or receipt.get('usageStatus') != 'PERMITTED':
+        if receipt.get('kind') != context['kind'] or str(receipt.get('targetId')) != str(context['targetId']) or receipt.get('targetHash') != context['targetHash'] or not receipt.get('active') or receipt.get('imageHash') != digest:
+            raise RunError('PUBLICATION_NOT_APPROVED')
+        if receipt.get('reviewVerdict') == 'REFERENCE':
+            if context['kind'] != 'SUBJECT' or receipt.get('rightsState') != 'PENDING' or receipt.get('usageStatus') != 'UNKNOWN' or receipt.get('storageState') != 'PENDING' or not receipt.get('candidate', {}).get('sourceIsOfficial') or not _https(receipt.get('imageUrl')):
+                raise RunError('REFERENCE_NOT_VERIFIED')
+            return {'status': 'VERIFIED', 'displayMode': 'SOURCE_REFERENCE', 'retryable': False,
+                    'mediaId': str(receipt['id']), 'sha256': digest, 'bytes': len(raw), 'publicUrl': receipt['imageUrl']}
+        if receipt.get('reviewVerdict') != 'APPROVE' or receipt.get('rightsState') != 'APPROVED' or receipt.get('usageStatus') != 'PERMITTED':
             raise RunError('PUBLICATION_NOT_APPROVED')
         if receipt.get('storageState') != 'STORED':
             try:
@@ -382,21 +397,23 @@ class EntityMediaWorker:
                 'context': context, 'lead': lead, 'identitySource': identity,
                 'imageUrl': image_url, 'pageUrl': page, 'usageSourceUrl': usage, 'imageHash': image[2],
             }, ensure_ascii=False)
-            result, audit = self._call(phase, prompt, EXTRACTION_SCHEMA, [attached], documents, 'entity-media-extract-2')
+            result, audit = self._call(phase, prompt, EXTRACTION_SCHEMA, [attached], documents, 'entity-media-extract-3')
             if result['status'] != 'CANDIDATE' or not result['candidate']:
                 raise RunError('IDENTITY_UNRESOLVED')
             candidate = result['candidate']
             if candidate['usageSourceUrl'] != usage:
                 usage = candidate['usageSourceUrl']
                 continue  # A newly discovered license is read before being claimed.
-            candidate = {**candidate, 'imageUrl': image_url, 'pageUrl': page, 'imageHash': image[2]}
+            if identity not in identity_urls(context['target']) and not candidate['sourceIsOfficial']:
+                raise RunError('ALTERNATE_IDENTITY_NOT_OFFICIAL')
+            candidate = {**candidate, 'imageUrl': image_url, 'pageUrl': page, 'imageHash': image[2], 'identitySourceUrl': identity}
             break
         receipt = self.request('POST', '/candidates', {
             'extractionId': str(uuid.uuid4()), 'kind': context['kind'], 'targetId': str(context['targetId']),
             'targetHash': context['targetHash'], 'candidate': candidate, 'audit': audit,
         })
         if receipt.get('reviewVerdict'):
-            if receipt['reviewVerdict'] == 'APPROVE':
+            if receipt['reviewVerdict'] in ('APPROVE', 'REFERENCE'):
                 return self._publish(context, receipt, image)
             raise RunError('SAVED_REVIEW_' + receipt['reviewVerdict'])
         if receipt.get('targetHash') != context['targetHash'] or receipt.get('candidate') != candidate or not receipt.get('active'):
@@ -407,23 +424,27 @@ class EntityMediaWorker:
         if fresh_image[2] != image[2]:
             raise RunError('IMAGE_CHANGED_REEXTRACT')
         old_hashes, fresh_hashes = self._hashes(documents), self._hashes(fresh)
-        if any(fresh_hashes.get(url) != digest for url, digest in old_hashes.items()):
+        if candidate['usageStatus'] != 'UNKNOWN' and any(fresh_hashes.get(url) != digest for url, digest in old_hashes.items()):
             raise RunError('SOURCE_CHANGED_REEXTRACT')
         review_dir = directory / 'review'
         attached = self._image_file(review_dir, fresh_image)
         prompt = REVIEW_PROMPT + '\nUNTRUSTED REVIEW INPUT:\n' + json.dumps({
             'context': context, 'candidate': candidate, 'identitySource': identity, 'imageHash': fresh_image[2],
         }, ensure_ascii=False)
-        decision, reviewed = self._call(review_dir, prompt, REVIEW_SCHEMA, [attached], fresh, 'entity-media-review-2')
+        decision, reviewed = self._call(review_dir, prompt, REVIEW_SCHEMA, [attached], fresh, 'entity-media-review-3')
         if candidate['usageStatus'] == 'FORBIDDEN':
             decision = {'verdict': 'REJECT', 'reason': '명시적 사용 금지. ' + decision['reason'][:1900]}
         elif candidate['usageStatus'] != 'PERMITTED' and decision['verdict'] == 'APPROVE':
             decision = {'verdict': 'ENRICH', 'reason': '재게시 권한 미확인. ' + decision['reason'][:1900]}
+        elif decision['verdict'] == 'REFERENCE' and (context['kind'] != 'SUBJECT' or candidate['usageStatus'] != 'UNKNOWN' or not candidate['sourceIsOfficial']):
+            decision = {'verdict': 'ENRICH', 'reason': '공식 작품·캐릭터 원본 참조 조건 미충족. ' + decision['reason'][:1850]}
+        if decision['verdict'] != 'REFERENCE' and any(fresh_hashes.get(url) != digest for url, digest in old_hashes.items()):
+            raise RunError('SOURCE_CHANGED_REEXTRACT')
         receipt = self.request('POST', '/' + str(receipt['id']) + '/review', {
             'revision': receipt['revision'], 'extractionId': receipt['extractionId'], 'resultHash': receipt['resultHash'],
             **decision, 'audit': reviewed,
         })
-        if decision['verdict'] != 'APPROVE':
+        if decision['verdict'] not in ('APPROVE', 'REFERENCE'):
             raise RunError('REVIEW_' + decision['verdict'])
         return self._publish(context, receipt, fresh_image)
 

@@ -151,14 +151,21 @@ public class EntityMediaService {
  }
  private void sources(Candidate candidate,Map<String,Object> target,Map<String,String> docs){
   require(docs.containsKey(candidate.pageUrl())&&docs.containsKey(candidate.usageSourceUrl()),"이미지 게시 원문·사용 조건의 직접 확인이 필요합니다.");
-  var identity=identityUrls(target);require(!identity.isEmpty()&&identity.stream().anyMatch(docs::containsKey),"대상 정체성 원문 확인이 필요합니다.");
+  var identity=identityUrls(target);
+  if(candidate.identitySourceUrl()!=null){
+   url(candidate.identitySourceUrl());require(docs.containsKey(candidate.identitySourceUrl()),"선택한 정체성 원문 확인이 필요합니다.");
+   if(!identity.contains(candidate.identitySourceUrl())){
+    require(Set.of("WORK","CHARACTER").contains(text(target.get("kind")))&&Boolean.TRUE.equals(candidate.sourceIsOfficial()),"공식 작품·캐릭터 원문만 대체 정체성 출처로 사용할 수 있습니다.");
+    required(candidate.identitySourceEvidence(),2000,"공식 대체 출처와 대상·작품 소속");
+   }
+  } else require(!identity.isEmpty()&&identity.stream().anyMatch(docs::containsKey),"대상 정체성 원문 확인이 필요합니다.");
  }
  @Transactional public Map<String,Object> extract(ExtractionInput input){
   require(input!=null&&input.extractionId()!=null&&input.candidate()!=null&&input.targetHash()!=null&&input.targetHash().matches("[0-9a-f]{64}"),"이미지 추출 입력 오류");String id=targetId(input.kind(),input.targetId());Candidate candidate=input.candidate();
   url(candidate.imageUrl());url(candidate.pageUrl());url(candidate.usageSourceUrl());required(candidate.credit(),1000,"이미지 출처");required(candidate.identityEvidence(),2000,"동일성");
   required(candidate.usageEvidence(),2000,"사용 조건");require(candidate.caption()!=null&&candidate.caption().length()<=500&&candidate.usageStatus()!=null&&Set.of("PERMITTED","UNKNOWN","FORBIDDEN").contains(candidate.usageStatus()),"이미지 후보 조건 오류");
   require(candidate.imageHash()!=null&&candidate.imageHash().matches("[0-9a-f]{64}"),"추출에서 확인한 이미지 해시가 필요합니다.");var documents=audit(input.audit(),candidate.imageHash());
-  String resultHash=hash(candidate);String identity=hash(List.of(input.kind(),id,input.targetHash(),resultHash,documents));
+  String resultHash=hash(candidate);String identity=hash(List.of(input.kind(),id,input.targetHash(),resultHash,documents,input.audit().promptVersion(),input.audit().sourceDocuments()));
   var previous=db.queryForList("select * from subculture_entity_media where extraction_id=? or identity_key=?",input.extractionId(),identity);
   if(!previous.isEmpty()){
    var row=previous.getFirst();if(!Objects.equals(row.get("identity_key"),identity)||!Objects.equals(row.get("result_hash"),resultHash))throw ApiException.conflict("이미지 추출 ID가 다른 대상에 사용되었습니다.");return detail((UUID)row.get("id"));
@@ -183,7 +190,7 @@ public class EntityMediaService {
   value.put("storedUrl",base.isBlank()||row.get("object_key")==null?null:base+"/"+row.get("object_key"));return value;
  }
  @Transactional public Map<String,Object> review(UUID id,ReviewInput input){
-  require(input!=null&&input.revision()>=0&&input.extractionId()!=null&&input.resultHash()!=null&&input.audit()!=null&&input.verdict()!=null&&Set.of("APPROVE","REJECT","ENRICH").contains(input.verdict()),"이미지 검토 입력 오류");required(input.reason(),2000,"독립 검토");
+  require(input!=null&&input.revision()>=0&&input.extractionId()!=null&&input.resultHash()!=null&&input.audit()!=null&&input.verdict()!=null&&Set.of("APPROVE","REFERENCE","REJECT","ENRICH").contains(input.verdict()),"이미지 검토 입력 오류");required(input.reason(),2000,"독립 검토");
   var initial=row(id,false);String kind=text(initial.get("target_kind")),targetId=text(initial.get("target_id"));lockTarget(kind,targetId);var row=row(id,true);
   require(input.extractionId().equals(row.get("extraction_id"))&&input.resultHash().equals(row.get("result_hash")),"다른 이미지 추출을 검토할 수 없습니다.");
   String reviewHash=hash(List.of(input.extractionId(),input.resultHash(),input.verdict(),input.reason(),input.audit()));
@@ -194,15 +201,23 @@ public class EntityMediaService {
   Audit extracted=json.readValue(row.get("extraction_audit_json").toString(),Audit.class);var prior=audit(extracted,candidate.imageHash());
   require(!Objects.equals(extracted.promptVersion(),input.audit().promptVersion()),"추출과 독립 검토는 서로 다른 검토 프롬프트 기록이 필요합니다.");
   var required=new LinkedHashSet<String>(List.of(candidate.pageUrl(),candidate.usageSourceUrl()));
-  var identity=identityUrls(current);var shared=identity.stream().filter(prior::containsKey).filter(docs::containsKey).toList();require(!shared.isEmpty(),"양쪽 호출에서 같은 정체성 원문을 확인해야 합니다.");required.addAll(shared);
-  for(String source:required)require(Objects.equals(prior.get(source),docs.get(source)),"추출과 검토 사이 원문 내용이 변경되었습니다. 새로 수집하세요.");
+  var identity=candidate.identitySourceUrl()==null?identityUrls(current):Set.of(candidate.identitySourceUrl());var shared=identity.stream().filter(prior::containsKey).filter(docs::containsKey).toList();require(!shared.isEmpty(),"양쪽 호출에서 같은 정체성 원문을 확인해야 합니다.");required.addAll(shared);
+  // A reference review rechecks the fresh native page. Dynamic HTML may change;
+  // both actual source hashes remain in the audits, and the image hash is fixed.
+  for(String source:required){require(prior.containsKey(source)&&docs.containsKey(source),"양쪽 원문 확인 누락");
+   if(!"REFERENCE".equals(input.verdict()))require(Objects.equals(prior.get(source),docs.get(source)),"추출과 검토 사이 원문 내용이 변경되었습니다. 새로 수집하세요.");}
   require(!"APPROVE".equals(input.verdict())||"PERMITTED".equals(candidate.usageStatus()),"명시적으로 사용이 확인된 이미지에만 공개 승인을 부여할 수 있습니다.");
+  if("REFERENCE".equals(input.verdict())){
+   require("SUBJECT".equals(kind)&&"UNKNOWN".equals(candidate.usageStatus())&&Boolean.TRUE.equals(candidate.sourceIsOfficial())&&candidate.identitySourceUrl()!=null,"공식 작품·캐릭터 이미지의 원본 참조만 허용합니다.");
+   required(candidate.identitySourceEvidence(),2000,"공식 출처와 대상·작품 소속");
+   for(String source:List.of(candidate.imageUrl(),candidate.pageUrl(),candidate.usageSourceUrl(),candidate.identitySourceUrl()))require(java.net.URI.create(source).getScheme().equals("https"),"이미지 원본 참조는 공개 HTTPS만 허용합니다.");
+  }
   String rights=input.verdict().equals("APPROVE")?"APPROVED":input.verdict().equals("REJECT")?"REJECTED":"PENDING";
   db.update("update subculture_entity_media set review_verdict=?,review_reason=?,review_audit_json=cast(? as jsonb),review_hash=?,reviewed_at=now(),rights_state=?,revision=revision+1 where id=?",input.verdict(),input.reason(),encode(input.audit()),reviewHash,rights,id);return detail(id);
  }
  @Transactional(timeout=70) public Map<String,Object> content(UUID id,long revision,String type,String digest,long size,InputStream input) throws IOException {
   var initial=row(id,false);String kind=text(initial.get("target_kind")),targetId=text(initial.get("target_id"));lockTarget(kind,targetId);var row=row(id,true);
-  if(!Boolean.TRUE.equals(row.get("active"))||!"APPROVED".equals(row.get("rights_state"))||!"APPROVE".equals(row.get("review_verdict")))throw ApiException.forbidden("사용·동일성 검토를 통과한 이미지에만 저장할 수 있습니다.");
+  if(!Boolean.TRUE.equals(row.get("active"))||!"PERMITTED".equals(row.get("usage_status"))||!"APPROVED".equals(row.get("rights_state"))||!"APPROVE".equals(row.get("review_verdict")))throw ApiException.forbidden("사용·동일성 검토를 통과한 이미지에만 저장할 수 있습니다.");
   if(!hash(target(kind,targetId)).equals(row.get("target_hash")))throw ApiException.conflict("이미지 대상 정보가 변경되었습니다.");
   require(digest!=null&&digest.equals(row.get("expected_sha256")),"모델이 확인한 이미지와 저장 이미지가 다릅니다.");byte[] bytes;
   try{bytes=ImageUploadRules.readVerified(input,size,type,digest);}catch(IllegalArgumentException ex){throw ApiException.badRequest("이미지 크기·형식·해시 오류");}
@@ -212,7 +227,11 @@ public class EntityMediaService {
   storage.put(key,type,bytes,digest);storage.verify(key,type,size,digest);
   db.update("update subculture_entity_media set object_key=?,sha256=?,byte_size=?,content_type=?,storage_state='STORED',stored_at=clock_timestamp(),last_attempt_at=clock_timestamp(),error='',revision=revision+1 where id=?",key,digest,size,type,id);return detail(id);
  }
- @Transactional public Map<String,Object> failed(UUID id,FailureInput input){require(input!=null&&input.revision()>=0&&input.reason()!=null&&input.reason().length()<=1000,"이미지 오류 형식 확인 필요");db.update("update subculture_entity_media set storage_state='FAILED',last_attempt_at=now(),error=?,revision=revision+1 where id=? and revision=? and storage_state<>'STORED' and reviewed_by is null",input.reason(),id,input.revision());return detail(id);}
+ @Transactional public Map<String,Object> failed(UUID id,FailureInput input){
+  require(input!=null&&input.revision()>=0&&input.reason()!=null&&input.reason().length()<=1000,"이미지 오류 형식 확인 필요");
+  db.update("update subculture_entity_media set active=false,last_attempt_at=now(),error=?,revision=revision+1 where id=? and revision=? and review_verdict='REFERENCE' and reviewed_by is null",input.reason(),id,input.revision());
+  db.update("update subculture_entity_media set storage_state='FAILED',last_attempt_at=now(),error=?,revision=revision+1 where id=? and revision=? and review_verdict='APPROVE' and storage_state<>'STORED' and reviewed_by is null",input.reason(),id,input.revision());return detail(id);
+ }
  /** Bounds every result page and checks current target visibility/snapshot; never returns source candidates. */
  public Map<String,Map<String,Object>> publicImages(String kind,Collection<String> ids){
   if(ids.size()>3000){
@@ -220,10 +239,11 @@ public class EntityMediaService {
    for(int start=0;start<unique.size();start+=3000)result.putAll(publicImages(kind,unique.subList(start,Math.min(start+3000,unique.size()))));
    return result;
   }
-  if(!enabled||ids.isEmpty()||base.isBlank())return Map.of();require(ids.size()<=3000&&KINDS.contains(kind),"이미지 조회 범위 오류");ids.forEach(id->targetId(kind,id));
+  if(!enabled||ids.isEmpty())return Map.of();require(ids.size()<=3000&&KINDS.contains(kind),"이미지 조회 범위 오류");ids.forEach(id->targetId(kind,id));
   String marks=String.join(",",Collections.nCopies(ids.size(),"?"));var args=new ArrayList<Object>();args.add(kind);args.addAll(ids);
-  var rows=db.queryForList("select distinct on(m.target_id) m.target_id,m.object_key,m.page_url,m.credit,m.sha256 from subculture_entity_media m join ("+targetSql(kind)+") t on t.target_id=m.target_id where m.target_kind=? and m.target_id in ("+marks+") and m.active and m.rights_state='APPROVED' and m.review_verdict='APPROVE' and m.storage_state='STORED' and m.object_key is not null and (m.reviewed_by is not null or m.target_snapshot_json=t.snapshot) order by m.target_id,(m.reviewed_by is not null) desc,m.stored_at asc nulls last,m.created_at,m.id",args.toArray());
-  var result=new LinkedHashMap<String,Map<String,Object>>();for(var row:rows)result.put(text(row.get("target_id")),Map.of("imageUrl",base+"/"+row.get("object_key"),"imageSourceUrl",row.get("page_url"),"imageCredit",row.get("credit")));return result;
+  args.add(!base.isBlank());
+  var rows=db.queryForList("select distinct on(m.target_id) m.target_id,m.object_key,m.image_url,m.page_url,m.credit,m.review_verdict from subculture_entity_media m join ("+targetSql(kind)+") t on t.target_id=m.target_id where m.target_kind=? and m.target_id in ("+marks+") and m.active and ((? and m.rights_state='APPROVED' and m.usage_status='PERMITTED' and m.review_verdict='APPROVE' and m.storage_state='STORED' and m.object_key is not null and (m.reviewed_by is not null or m.target_snapshot_json=t.snapshot)) or (m.target_kind='SUBJECT' and m.review_verdict='REFERENCE' and m.usage_status='UNKNOWN' and m.rights_state='PENDING' and m.storage_state='PENDING' and m.target_snapshot_json=t.snapshot and m.review_audit_json is not null and m.reviewed_at>now()-interval '7 days')) order by m.target_id,(m.review_verdict='APPROVE') desc,(m.reviewed_by is not null) desc,m.stored_at asc nulls last,m.created_at,m.id",args.toArray());
+  var result=new LinkedHashMap<String,Map<String,Object>>();for(var row:rows){boolean reference="REFERENCE".equals(row.get("review_verdict"));String image=reference?text(row.get("image_url")):base+"/"+row.get("object_key");if(reference)url(image);result.put(text(row.get("target_id")),Map.of("imageUrl",image,"imageSourceUrl",row.get("page_url"),"imageCredit",row.get("credit")));}return result;
  }
  public List<Map<String,Object>> attach(String kind,List<Map<String,Object>> values){
   if(values.isEmpty())return values;var images=publicImages(kind,values.stream().map(v->text(v.get("id"))).toList());
