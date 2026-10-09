@@ -16,13 +16,18 @@ from run import canonical_audit_url
 
 class PageText(HTMLParser):
     def __init__(self,url):
-        super().__init__();self.url=url;self.hidden=0;self.text=[];self.links=[];self.title=[];self.in_title=False
+        super().__init__();self.url=url;self.hidden=0;self.text=[];self.links=[];self.images=[];self.title=[];self.in_title=False
     def handle_starttag(self,tag,attrs):
         if tag in ('script','style','noscript','template'):self.hidden+=1
         if tag=='title':self.in_title=True
         if not self.hidden:
             values=dict(attrs)
             if tag=='img' and values.get('alt'):self.text.append(values['alt'])
+            if tag=='img':
+                src=values.get('src') or values.get('data-src')
+                if isinstance(src,str):
+                    link=urljoin(self.url,src)
+                    if canonical_audit_url(link) and not urlsplit(link).path.lower().endswith(('.svg','.ico')) and link not in self.images:self.images.append(link)
             if tag=='a' and values.get('href'):
                 link=urljoin(self.url,values['href'])
                 if canonical_audit_url(link) and link not in self.links:self.links.append(link)
@@ -112,8 +117,10 @@ class PublicSources:
                     body,digest=self.fetch(api,['api.illustar.net'],timeout=15,allow_json=True)
                     html=illustar_notice(body);parser=PageText(url);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
                     value['transportUrl']=api
-                if len(text)<100 or any(s in title.lower() for s in ('access denied','just a moment','captcha','로그인','login','sign in')):raise MediaError('No usable public page body')
+                sns_post=(host=='postype.com' or host.endswith('.postype.com')) and re.fullmatch(r'(?:/@[A-Za-z0-9_.-]+)?/post/[0-9]+/?',parsed.path) or host in ('instagram.com','www.instagram.com') and re.fullmatch(r'/(?:p|reel)/[A-Za-z0-9_-]+/?',parsed.path)
+                if len(text)<100 and not (sns_post and parser.images) or any(s in title.lower() for s in ('access denied','just a moment','captcha','로그인','login','sign in')):raise MediaError('No usable public page body')
                 value.update(available=True,title=title,sha256=digest,text=text[:50000],links=parser.links[:150],truncated=len(text)>50000)
+                if sns_post:value['images']=[{'imageUrl':u,'pageUrl':url} for u in parser.images]
             except (ValueError,OSError) as exc:value['failure']=str(exc)[:200]
             documents.append(value)
         return documents
@@ -150,4 +157,12 @@ def context_urls(context):
         for s in data.get('sources',[]):
             if s.get('access')=='ORIGINAL':add(s.get('url'))
         for link in data.get('officialLinks',[]):add(link if isinstance(link,str) else link.get('url'))
+    for account in context.get('publication',{}).get('data',{}).get('socialAccounts',[]):add(account.get('profileUrl'))
+    for creator in context.get('creatorSources',[]):
+        add(creator.get('profileUrl'))
+        for account in creator.get('socialAccounts',[]):add(account.get('profileUrl'))
+    for row in context.get('creatorProvenance',[]):
+        for link in row.get('officialLinks') or []:add(link if isinstance(link,str) else link.get('url'))
+        for source in (row.get('sources') or [])+(row.get('eventSources') or []):
+            if source.get('access')=='ORIGINAL':add(source.get('url'))
     return result

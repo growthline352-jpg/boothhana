@@ -407,6 +407,37 @@ class CollectionGraphIntegrationTests {
   var job=seedDiscovery();approveJob(job,emptyDiscovery("PARTIAL","PARTIAL",List.of(source,source+"/failed")));
   assertThat(db.queryForObject("select state from collection_job where id=?",String.class,id(job))).isEqualTo("WAITING");
  }
+ Map<String,Object> snsAccount(String profile,String owner){var account=new LinkedHashMap<String,Object>();account.put("profileUrl",profile);account.put("accountId",owner);account.put("identityEvidence",List.of(Map.of("sourceUrl",source,"evidence","Named official artist links this account"),Map.of("sourceUrl",profile,"evidence","This account confirms the same artist")));return account;}
+ @Test void approvedSocialAccountPersistsAndFirstHistoryScanSuppressesNotifications(){
+  String profile="https://bsky.app/profile/artist.bsky.social";long creator=maker("SNS Artist",source);var result=makerResult("SNS Artist",source);result.put("socialAccounts",List.of(snsAccount(profile,"did:plc:test")));
+  reviewed(seed("CREATOR",Long.toString(creator)),result,audit(List.of(source,profile),List.of()));
+  assertThat(db.queryForObject("select data_json->'socialAccounts'->0->>'profileUrl' from collection_creator_publication where exhibitor_id=?",String.class,creator)).isEqualTo(profile);
+  assertThat(db.queryForObject("select baseline from collection_job where kind='CREATOR' and target_id=? and input_json->>'socialPage'='true'",Boolean.class,Long.toString(creator))).isTrue();
+  db.update("update collection_job set available_at=now()+interval '7 days'");var followup=seed("CREATOR",Long.toString(creator));var context=value(followup.get("context"));assertThat(value(value(context.get("publication")).get("data"))).containsKey("socialAccounts");
+  reviewed(followup,makerResult("SNS Artist",source),audit(List.of(source),List.of()));
+  assertThat(db.queryForObject("select jsonb_array_length(data_json->'socialAccounts') from collection_creator_publication where exhibitor_id=?",Integer.class,creator)).isEqualTo(1);
+  assertThat(db.queryForObject("select profile_json->>'profileUrl' from subculture_exhibitor where id=?",String.class,creator)).isEqualTo(source);
+ }
+ @Test void socialAccountNeedsOpenedIdentityEvidenceAndExistingArtistAnchor(){
+  String profile="https://x.com/artist";long creator=maker("SNS Artist",source);var result=makerResult("SNS Artist",source);var account=snsAccount(profile,"123");result.put("socialAccounts",List.of(account));
+  assertThatThrownBy(()->reviewed(seed("CREATOR",Long.toString(creator)),result,audit(List.of(source),List.of()))).isInstanceOf(ApiException.class).hasMessageContaining("직접");
+  account.put("identityEvidence",List.of(Map.of("sourceUrl",profile,"evidence","Matching name alone")));db.update("update collection_job set available_at=now()+interval '7 days'");long another=maker("Another SNS Artist",source);var otherResult=makerResult("Another SNS Artist",source);otherResult.put("socialAccounts",List.of(account));
+  assertThatThrownBy(()->reviewed(seed("CREATOR",Long.toString(another)),otherResult,audit(List.of(source,profile),List.of()))).isInstanceOf(ApiException.class).hasMessageContaining("연결 근거");
+  assertThat(db.queryForObject("select count(*) from collection_creator_publication where exhibitor_id=?",Integer.class,creator)).isZero();
+ }
+ @Test void recycledSocialHandleCannotReplaceVerifiedOwner(){
+  String profile="https://x.com/artist";long creator=maker("SNS Artist",source);var result=makerResult("SNS Artist",source);result.put("socialAccounts",List.of(snsAccount(profile,"123")));reviewed(seed("CREATOR",Long.toString(creator)),result,audit(List.of(source,profile),List.of()));
+  db.update("update collection_job set available_at=now()+interval '7 days'");result.put("socialAccounts",List.of(snsAccount(profile,"999")));
+  assertThatThrownBy(()->reviewed(seed("CREATOR",Long.toString(creator)),result,audit(List.of(source,profile),List.of()))).isInstanceOf(ApiException.class).hasMessageContaining("소유자 ID");
+ }
+ @Test void creatorContextReceivesPublishedBoothSnsAndSalesReusesVerifiedAccount(){
+  String profile="https://bsky.app/profile/artist.bsky.social";approveJob(seed("EVENT",Long.toString(event)),value(data));db.update("update collection_job set available_at=now()+interval '7 days'");
+  var member=new Member("SNS Artist","ARTIST",List.of(),source);var participant=new Participant(null,"Shared booth","CIRCLE",List.of(member),List.of(),List.of(),"Named artist",List.of(profile),List.of(new Source(source,"OFFICIAL","ORIGINAL","Named member and account")),List.of(),List.of());
+  approveJob(seed("PARTICIPANTS",Long.toString(event)),value(new StageResult("COMPLETE","One booth",List.of("test"),new Coverage("COMPLETE",1,"REGISTERED_BOOTHS",List.of(source),null,List.of()),List.of(participant),null)));
+  long creator=db.queryForObject("select id from subculture_exhibitor where name='SNS Artist'",Long.class);db.update("update collection_job set available_at=now()+interval '7 days'");var job=seed("CREATOR",Long.toString(creator));
+  assertThat(value(job.get("context")).get("creatorProvenance").toString()).contains(profile);var result=makerResult("SNS Artist",source);result.put("socialAccounts",List.of(snsAccount(profile,"did:plc:test")));reviewed(job,result,audit(List.of(source,profile),List.of()));
+  long pid=db.queryForObject("select id from subculture_participant where event_id=?",Long.class,event);db.update("update collection_job set available_at=now()+interval '7 days'");var sales=seed("SALES",Long.toString(pid));assertThat(value(sales.get("context")).get("creatorSources").toString()).contains(profile);
+ }
  @Test void emptyDiscoveryCannotClaimCompletionWithoutAllOriginalReads(){
   var projection=new GraphProjection(db,json,null,null,null,null,null);
   assertThatThrownBy(()->projection.checkSources(emptyDiscovery("COMPLETE","NO_RESULTS",List.of(source)),List.of())).isInstanceOf(ApiException.class);
