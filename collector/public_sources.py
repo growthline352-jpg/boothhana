@@ -11,7 +11,7 @@ from html import escape,unescape
 from html.parser import HTMLParser
 from urllib.parse import urlsplit,urljoin
 from urllib.robotparser import RobotFileParser
-from media_fetch import fetch_html,MediaError
+from media_fetch import fetch_html,MediaError,PUBLIC_SOURCE_USER_AGENT
 from run import canonical_audit_url
 
 class PageText(HTMLParser):
@@ -85,7 +85,7 @@ class PublicSources:
                         if str(exc) not in ('HTML HTTP 404','HTML HTTP 410'):raise
                         policy.parse([])
                     robots[origin]=policy
-                if not robots[origin].can_fetch('BoothHana-Approved-Floorplan-Fetcher',url):raise MediaError('robots disallows collection')
+                if not robots[origin].can_fetch(PUBLIC_SOURCE_USER_AGENT,url):raise MediaError('robots disallows collection')
                 event_list=host=='api.illustar.net' and parsed.path=='/v1/event/list' and not parsed.query
                 html,digest=self.fetch(url,[host],timeout=15,**({'allow_json':True} if event_list else {}))
                 if event_list:
@@ -108,7 +108,7 @@ class PublicSources:
                     except MediaError as exc:
                         if str(exc) not in ('HTML HTTP 404','HTML HTTP 410'):raise
                         policy.parse([])
-                    if not policy.can_fetch('BoothHana-Approved-Floorplan-Fetcher',api):raise MediaError('API robots disallows collection')
+                    if not policy.can_fetch(PUBLIC_SOURCE_USER_AGENT,api):raise MediaError('API robots disallows collection')
                     body,digest=self.fetch(api,['api.illustar.net'],timeout=15,allow_json=True)
                     html=illustar_notice(body);parser=PageText(url);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
                     value['transportUrl']=api

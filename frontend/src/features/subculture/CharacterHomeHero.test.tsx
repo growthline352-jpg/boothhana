@@ -42,6 +42,18 @@ describe('selected character hero', () => {
   it('keeps unpublished identities out of public detail routes', () => {
     f.entries = [{...character, available: false}]; expect(render()).toContain('현재 비공개'); expect(render()).not.toContain('href="/subculture/subjects/character-1"')
   })
+  it('uses the saved approved portrait without another subject lookup', () => {
+    f.entries = [{...character,imageUrl:'https://media.example.com/verified/luna.png'}]
+    const html = render()
+    expect(html).toContain('src="https://media.example.com/verified/luna.png"')
+    expect(html).not.toContain('캐릭터 이미지 준비 중')
+  })
+  it('keeps an unavailable identity portrait hidden along with its detail route', () => {
+    f.entries = [{...character,available:false,imageUrl:'https://media.example.com/hidden.png'}]
+    const html = render()
+    expect(html).not.toContain('src="https://media.example.com/hidden.png"')
+    expect(html).toContain('캐릭터 이미지 준비 중')
+  })
   it('restores the header and mobile navigation without category tabs', () => {
     const html = renderToStaticMarkup(<MemoryRouter><SubcultureHeader accountMenu={<button>계정</button>}/><SubcultureMobileNav/></MemoryRouter>)
     expect(html).toContain('/assets/categories/subculture-3d.webp')

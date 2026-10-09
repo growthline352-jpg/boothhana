@@ -6,7 +6,7 @@ import { ContentImage } from '../../components/ui/ContentImage'
 import { subcultureApi,type CreatorProduct } from './api'
 import { useAuth } from '../../app/useAuth'
 import { useInterests } from './InterestProvider'
-import { TasteTitle,TasteSectionTitle,TasteEmpty,TasteExploreNav } from './SubcultureUI'
+import { TasteTitle,TasteSectionTitle,TasteEmpty,TasteExploreNav,TasteImageCredit } from './SubcultureUI'
 import './subculture.css'
 export function creatorPrice(product:CreatorProduct['data']){
  const price=product.price;if(!price)return '가격 미확인'
@@ -15,7 +15,7 @@ export function creatorPrice(product:CreatorProduct['data']){
 }
 export function TasteProductCard({product:p}:{product:CreatorProduct}){
  const location=useLocation()
- return <article className="sc-taste-product-card"><Link to={'/subculture/products/'+p.id} state={{productReturnTo:location.pathname+location.search}}><div className="sc-taste-product-art"><ContentImage url={null} kind="product" alt={p.data.name+' · 공개 대표 이미지 미등록'}/></div><div><small>{p.creator.name}</small><h3>{p.data.name}</h3><strong>{creatorPrice(p.data)}</strong><p>{p.status}</p><span>{p.subjects.map(s=>s.name).join(' · ')}</span></div></Link></article>
+ return <article className="sc-taste-product-card"><Link to={'/subculture/products/'+p.id} state={{productReturnTo:location.pathname+location.search}}><div className="sc-taste-product-art"><ContentImage url={p.imageUrl} kind="product" alt={p.data.name}/></div><div><small>{p.creator.name}</small><h3>{p.data.name}</h3><strong>{creatorPrice(p.data)}</strong><p>{p.status}</p><span>{p.subjects.map(s=>s.name).join(' · ')}</span></div></Link></article>
 }
 export function CreatorProductList({subjectId,creatorId,mine=false,title}:{subjectId?:string;creatorId?:string;mine?:boolean;title?:string}){
  const auth=useAuth(),interests=useInterests()
@@ -37,7 +37,7 @@ export function CreatorProductDetail(){
  const back=typeof candidate==='string'&&/^\/subculture(?:\/|\?|$)/.test(candidate)?candidate:'/subculture/products'
  const p=state.data
  return <section className="content-wrap section-pad sc-live sc-taste-detail"><Link className="sc-live-back" to={back}>← 둘러보던 목록</Link>
-  {state.loading?<LoadingState/>:state.error?<ErrorState error={state.error} retry={()=>void state.reload()}/>:p&&<div className="sc-taste-product-detail"><div className="sc-taste-product-photo"><ContentImage url={null} kind="product" alt={p.data.name+' · 공개 대표 이미지 미등록'}/><p>공개된 상품 이미지를 준비하고 있어요.</p></div><section className="sc-taste-product-description">
+  {state.loading?<LoadingState/>:state.error?<ErrorState error={state.error} retry={()=>void state.reload()}/>:p&&<div className="sc-taste-product-detail"><div className="sc-taste-product-photo"><ContentImage url={p.imageUrl} kind="product" alt={p.data.name} loading="eager" fetchPriority="high"/>{p.imageUrl?<TasteImageCredit image={p}/>:<p>공개된 상품 이미지를 준비하고 있어요.</p>}</div><section className="sc-taste-product-description">
    <Link className="sc-taste-product-creator" to={'/subculture/creators/'+p.creatorId}>{p.creator.name} →</Link><h1>{p.data.name}</h1><p>{p.data.summary}</p><strong className="sc-taste-product-price">{creatorPrice(p.data)}</strong>{p.data.price&&<small>{p.data.price.checkedOn} 확인 · {p.data.price.note||'옵션·배송 조건은 판매 원문에서 확인하세요.'}</small>}
    <div className="sc-taste-chips">{p.subjects.map(s=><Link key={s.id} to={'/subculture/subjects/'+s.id}>{s.name}{s.workName&&' · '+s.workName}</Link>)}</div>
    <div className="sc-taste-sale-location"><span className="sc-taste-evidence">{p.status}</span><h2>행사 판매 여부는 별도 확인해요</h2><p>작가의 공개 판매 기록이에요. 이 상품이 다음 참가 행사에서 판매된다는 뜻은 아니에요.</p><Link to={'/subculture/creators/'+p.creatorId}>작가의 참가 행사 보기 →</Link></div>

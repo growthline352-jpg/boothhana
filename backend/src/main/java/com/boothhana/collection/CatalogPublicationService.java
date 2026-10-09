@@ -16,8 +16,9 @@ import static com.boothhana.collection.CatalogModels.*;
 @Service
 @Transactional(readOnly=true)
 public class CatalogPublicationService {
-    private final JdbcTemplate db;private final JsonMapper json;private final CatalogMediaService media;private final CatalogOperatingGroups groups;
-    public CatalogPublicationService(JdbcTemplate db,JsonMapper json,CatalogMediaService media) {this.db=db;this.json=json;this.media=media;this.groups=new CatalogOperatingGroups(db,json);}
+    private final JdbcTemplate db;private final JsonMapper json;private final CatalogMediaService media;private final CatalogOperatingGroups groups;private final com.boothhana.collection.graph.EntityMediaService entityMedia;
+    public CatalogPublicationService(JdbcTemplate db,JsonMapper json,CatalogMediaService media) {this(db,json,media,null);}
+    @org.springframework.beans.factory.annotation.Autowired public CatalogPublicationService(JdbcTemplate db,JsonMapper json,CatalogMediaService media,com.boothhana.collection.graph.EntityMediaService entityMedia) {this.db=db;this.json=json;this.media=media;this.entityMedia=entityMedia;this.groups=new CatalogOperatingGroups(db,json);}
     /** Compound correction flows call this before acquiring their event-row lock. */
     @Transactional(propagation=org.springframework.transaction.annotation.Propagation.MANDATORY)
     public void lockForPublication(){groups.lockPublication();}
@@ -256,6 +257,7 @@ public class CatalogPublicationService {
             p.put("salesSummaryOrigin","COLLECTED");
         participants.removeIf(p->excluded.contains(((Number)p.get("id")).longValue()));
         for(var p:participants) { if(hiddenSales.contains(((Number)p.get("id")).longValue())) {p.put("sales",null);p.put("productIds",Map.of());p.put("productRows",List.of());} publishedParticipants.add(((Number)p.get("id")).longValue());if(p.get("sales")!=null) publishedSales.add(((Number)p.get("id")).longValue());var products=(Map<String,Number>)p.get("productIds");if(products!=null) products.values().forEach(v->publishedProducts.add(v.longValue()));}
+        if(entityMedia!=null){var productRows=new ArrayList<Map<String,Object>>();for(var participant:participants)if(participant.get("productRows") instanceof List<?> products)for(var product:products)if(product instanceof Map<?,?>)productRows.add((Map<String,Object>)product);entityMedia.attachLegacyProducts(productRows);}
         var assets=allAssets.getOrDefault(id,List.of()).stream().filter(a->"APPROVED".equals(a.rightsState())&&"STORED".equals(a.storageState())&&a.storedUrl()!=null)
             .filter(a->a.participantId()==null||publishedParticipants.contains(a.participantId()))
             .filter(a->a.productId()==null||publishedProducts.contains(a.productId()))

@@ -56,7 +56,7 @@ public class InterestFeed {
      if(!Set.of("EVENT_LISTED","EVENT_SALE_CONFIRMED").contains(Objects.toString(product.get("evidenceScope"),"")))continue;
      String status=saleLabel(product,obj(row.get("verification")));
      if(!general)reasons.add(status);
-     var item=new LinkedHashMap<String,Object>();item.put("eventId",id);item.put("eventName",obj(event.get("event")).get("name"));item.put("participantId",pid);item.put("participantName",person.get("registrationName"));item.put("id",productId);item.put("data",product);item.put("verification",row.get("verification"));item.put("status",status);item.put("images",maps(event.get("assets")).stream().filter(a->number(a.get("productId"))==productId&&number(a.get("participantId"))==pid).toList());if(productRows.size()<24)productRows.add(item);
+     var item=new LinkedHashMap<String,Object>();item.put("eventId",id);item.put("eventName",obj(event.get("event")).get("name"));item.put("participantId",pid);item.put("participantName",person.get("registrationName"));item.put("id",productId);item.put("data",product);item.put("verification",row.get("verification"));item.put("status",status);item.put("images",maps(event.get("assets")).stream().filter(a->number(a.get("productId"))==productId&&number(a.get("participantId"))==pid).toList());for(String field:List.of("imageUrl","imageSourceUrl","imageCredit"))item.put(field,row.get(field));if(productRows.size()<24)productRows.add(item);
     }
    }
    if(general||!reasons.isEmpty()){var summary=new LinkedHashMap<String,Object>();summary.put("id",id);summary.put("event",event.get("event"));summary.put("banner",event.get("banner"));summary.put("reasons",reasons);eventRows.add(summary);}

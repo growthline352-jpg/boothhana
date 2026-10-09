@@ -27,7 +27,7 @@ final class CollectorTokenFilter extends OncePerRequestFilter {
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain) throws ServletException,IOException {
         String path=request.getServletPath();
         if(!path.startsWith("/api/internal/subculture/")) { chain.doFilter(request,response);return; }
-        boolean imageBody="POST".equals(request.getMethod()) && (path.matches("/api/internal/subculture/v4/assets/[0-9]+/content") || path.matches("/api/internal/subculture/v4/floorplans/versions/[0-9a-fA-F-]{36}/content"));
+        boolean imageBody="POST".equals(request.getMethod()) && (path.matches("/api/internal/subculture/v4/assets/[0-9]+/content") || path.matches("/api/internal/subculture/v4/floorplans/versions/[0-9a-fA-F-]{36}/content") || path.matches("/api/internal/subculture/v6/media/[0-9a-fA-F-]{36}/content"));
         boolean hasBody=!"GET".equals(request.getMethod()) && !"HEAD".equals(request.getMethod());
         int maxBody=imageBody?10*1024*1024:MAX_BODY;
         if(token==null||token.length()<32) { error(response,503,"COLLECTOR_NOT_CONFIGURED");return; }

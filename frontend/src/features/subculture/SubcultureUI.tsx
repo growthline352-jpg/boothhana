@@ -1,12 +1,13 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router'
 import { DiscoveryIcon as Icon } from '../discovery/DiscoveryIcon'
 import { ContentImage } from '../../components/ui/ContentImage'
+import { contentImageUrl } from '../../components/ui/contentImageSource'
 import { SaveButton } from '../library/SaveButton'
 import { eventDateLabel } from '../discovery/browse'
-import { labels } from '../catalog/Shared'
+import { labels, SafeLink } from '../catalog/Shared'
 import { FollowButton } from './FollowButton'
-import { newInterest, type Creator, type Subject, type Feed } from './api'
+import { newInterest, type Creator, type Subject, type Feed, type EntityImage } from './api'
 import './subcultureExperience.css'
 
 export const subcultureEventsHref='/discover?category=subculture&period=all&sort=recent'
@@ -19,16 +20,22 @@ export function TasteSectionTitle({title,note,children}:{title:string;note?:stri
 export function TasteEmpty({title,body,children}:{title:string;body?:string;children?:ReactNode}){
  return <div className="sc-taste-empty"><Icon name="search" size={28}/><h2>{title}</h2>{body&&<p>{body}</p>}{children}</div>
 }
-export function TastePortrait({name,kind='character'}:{name:string;kind?:'character'|'creator'|'work'}){
- return <span className={'sc-taste-portrait is-'+kind} aria-label={name+' · 대표 이미지 미등록'}><span aria-hidden="true">{Array.from(name.trim())[0]||'?'}</span></span>
+export function TastePortrait({name,kind='character',imageUrl,className='',fallbackNote,loading='lazy'}:{name:string;kind?:'character'|'creator'|'work';imageUrl?:string|null;className?:string;fallbackNote?:string;loading?:'lazy'|'eager'}){
+ const source=contentImageUrl(imageUrl),[failedSource,setFailedSource]=useState<string|null>(null)
+ const fallback=!source||failedSource===source
+ return <span className={'sc-taste-portrait is-'+kind+(className?' '+className:'')} aria-label={fallback?name+' · 대표 이미지 미등록':undefined}>{fallback?<><span aria-hidden="true">{Array.from(name.trim())[0]||'?'}</span>{fallbackNote&&<small aria-hidden="true">{fallbackNote}</small>}</>:<img src={source} alt={name+' 대표 이미지'} loading={loading} decoding="async" referrerPolicy="no-referrer" onError={()=>setFailedSource(source)}/>}</span>
+}
+export function TasteImageCredit({image}:{image:EntityImage}){
+ if(!contentImageUrl(image.imageUrl)||!image.imageSourceUrl&&!image.imageCredit)return null
+ return <small className="sc-taste-image-credit">{image.imageSourceUrl?<SafeLink url={image.imageSourceUrl}>{image.imageCredit||'이미지 출처'} ↗</SafeLink>:image.imageCredit}</small>
 }
 export function TasteSubjectCard({subject}:{subject:Subject}){
  const location=useLocation()
- return <article className="sc-taste-subject-card"><Link to={'/subculture/subjects/'+subject.id} state={{subcultureReturnTo:location.pathname+location.search}}><TastePortrait name={subject.name} kind={subject.kind==='WORK'?'work':'character'}/><small>{subject.workName||subject.medium||'작품'} · {subject.kind==='CHARACTER'?'캐릭터':'작품'}</small><h3>{subject.name}</h3><span>관련 행사·굿즈·작가 보기 <Icon name="chevron" size={15}/></span></Link><FollowButton entry={newInterest(subject)}/></article>
+ return <article className="sc-taste-subject-card"><Link to={'/subculture/subjects/'+subject.id} state={{subcultureReturnTo:location.pathname+location.search}}><TastePortrait name={subject.name} kind={subject.kind==='WORK'?'work':'character'} imageUrl={subject.imageUrl}/><small>{subject.workName||subject.medium||'작품'} · {subject.kind==='CHARACTER'?'캐릭터':'작품'}</small><h3>{subject.name}</h3><span>관련 행사·굿즈·작가 보기 <Icon name="chevron" size={15}/></span></Link><FollowButton entry={newInterest(subject)}/></article>
 }
 export function TasteCreatorCard({creator}:{creator:Creator}){
  const location=useLocation()
- return <article className="sc-taste-creator-card"><Link className="sc-taste-creator-cover" to={'/subculture/creators/'+creator.id} state={{subcultureReturnTo:location.pathname+location.search}}><TastePortrait name={creator.name} kind="creator"/></Link><div className="sc-taste-creator-copy"><small>{creator.kind==='CIRCLE'?'서클':'작가·서클'}</small><h3><Link to={'/subculture/creators/'+creator.id} state={{subcultureReturnTo:location.pathname+location.search}}>{creator.name}</Link></h3><p>참가 행사와 공개된 작업을 살펴보세요.</p><Link to={'/subculture/creators/'+creator.id} state={{subcultureReturnTo:location.pathname+location.search}}>작가 둘러보기 <Icon name="arrow" size={15}/></Link><FollowButton entry={newInterest(undefined,creator)}/></div></article>
+ return <article className="sc-taste-creator-card"><Link className="sc-taste-creator-cover" to={'/subculture/creators/'+creator.id} state={{subcultureReturnTo:location.pathname+location.search}}><TastePortrait name={creator.name} kind="creator" imageUrl={creator.imageUrl}/></Link><div className="sc-taste-creator-copy"><small>{creator.kind==='CIRCLE'?'서클':'작가·서클'}</small><h3><Link to={'/subculture/creators/'+creator.id} state={{subcultureReturnTo:location.pathname+location.search}}>{creator.name}</Link></h3><p>참가 행사와 공개된 작업을 살펴보세요.</p><Link to={'/subculture/creators/'+creator.id} state={{subcultureReturnTo:location.pathname+location.search}}>작가 둘러보기 <Icon name="arrow" size={15}/></Link><FollowButton entry={newInterest(undefined,creator)}/></div></article>
 }
 export function TasteEventCard({row,from}:{row:Feed['events'][number];from:string}){
  return <article className="sc-taste-event-card"><Link to={'/discover/'+row.id} state={{subcultureReturnTo:from}}><ContentImage url={row.banner?.url} kind="event" eventType={row.event.subcategory} alt={row.event.name+' 대표 이미지'}/><div><small>{labels[row.event.subcategory]||'행사'}</small><h3>{row.event.name}</h3><strong>{eventDateLabel(row.event.occurrences)}</strong><p>{row.event.venueName||row.event.region}</p>{!!row.reasons.length&&<span className="sc-taste-evidence">{row.reasons.join(' · ')}</span>}</div></Link><SaveButton target={{type:'EVENT',eventId:row.id,id:row.id,participantId:null}} compact/></article>

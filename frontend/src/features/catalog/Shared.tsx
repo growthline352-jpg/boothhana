@@ -24,10 +24,10 @@ function productPrice(product:Product){
  if(product.price.currency==='KRW'&&Number.isFinite(amount))return amount===0?'무료':`${amount.toLocaleString('ko-KR')}원`
  return `${Number.isFinite(amount)?amount.toLocaleString('ko-KR'):product.price.amount} ${product.price.currency}`
 }
-export function ProductCard({product,images=[],verification,reportTarget,memoryTarget,day='',hall=''}:{memoryTarget?:MemoryTarget;day?:string;hall?:string;reportTarget?:Target;product:Product;images?:PublicAsset[];verification?:ProductCheck}){
+export function ProductCard({product,images=[],imageUrl,imageSourceUrl,imageCredit,verification,reportTarget,memoryTarget,day='',hall=''}:{memoryTarget?:MemoryTarget;day?:string;hall?:string;reportTarget?:Target;product:Product;images?:PublicAsset[];imageUrl?:string|null;imageSourceUrl?:string|null;imageCredit?:string|null;verification?:ProductCheck}){
  const inactive=['SOLD_OUT','CANCELED'].includes(product.saleState),stale=verification?.state==='NOT_RECONFIRMED'
  return <article data-product-id={memoryTarget?.id} tabIndex={-1} className="catalog-product">
-  <div className="catalog-product-media"><ContentImage url={images[0]?.url} kind="product" alt={product.name}/></div>
+  <div className="catalog-product-media"><ContentImage url={images[0]?.url??imageUrl} kind="product" alt={product.name}/></div>
   <div className="catalog-product-body"><h3>{product.name}</h3>{memoryTarget&&<SaveButton target={memoryTarget} day={day} hall={hall} compact/>}
    <p className="visit-product-price">{productPrice(product)}</p>
    <div className="visit-product-badges"><span className="chip muted">{scopes[product.evidenceScope]}</span><span className={`chip ${inactive?'warning':'muted'}`}>{saleStates[product.saleState]||saleStates.UNKNOWN}</span></div>
@@ -41,6 +41,7 @@ export function ProductCard({product,images=[],verification,reportTarget,memoryT
     <p>{product.subjects.join(' · ')}</p><small>수집 당시 안내이며 현장·실시간 재고를 보장하지 않습니다.</small>
     {product.warnings.length>0&&<div className="catalog-product-warnings">{product.warnings.map((warning,i)=><p key={i}>{warning}</p>)}</div>}
     {product.sources.map((source,i)=><p key={i}><SafeLink url={source.url}>판매 정보 출처 {i+1}</SafeLink></p>)}
+    {!images[0]&&imageUrl&&imageSourceUrl&&<p><SafeLink url={imageSourceUrl}>{imageCredit||'이미지 출처'}</SafeLink></p>}
    </details>{reportTarget&&<ReportLink target={reportTarget} label="상품 정보 신고"/>}{reportTarget&&images[0]&&<ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:reportTarget.eventId,id:images[0].id}} label="이미지 문제 신고"/>}
   </div></article>
 }

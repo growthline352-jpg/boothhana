@@ -259,10 +259,21 @@ class Repair:
             if sha:candidate['sha256']=sha
             if self.apply:
                 self.budget()
-                asset=known.get((image['url'],page)) or self.api.request('POST',f'{PATH}/events/{target["id"]}/assets',{
+                prior=known.get((image['url'],page))
+                # Legacy candidates were recorded while approval was manual.
+                # Re-register only after this attempt has matched the current
+                # event/edition, refetched the official page and verified bytes.
+                # Existing rejections and explicit review notes stay untouched.
+                refresh_pending=(self.automatic and prior and prior['rightsState']=='PENDING'
+                    and not str(prior.get('rightsNote') or '').strip()
+                    and state=='VERIFIED_BYTES_NOT_EDITION' and evidence
+                    and isinstance(sha,str) and re.fullmatch(r'[a-f0-9]{64}',sha)
+                    and sha not in PLACEHOLDER_SHA256)
+                asset=(prior if prior and not refresh_pending else self.api.request('POST',f'{PATH}/events/{target["id"]}/assets',{
                     'participantId':None,'productId':None,'image':{'type':'BANNER','imageUrl':image['url'],
                     'pageUrl':page,'rightsEvidence':'공식 원문에서 확인한 해당 행사 이미지. 자동 승인 정책 적용.' if self.automatic else '공식 원문 이미지 후보. 해당 회차·사용 승인 별도 검토.',
-                    'caption':event['name'][:1000]}})
+                    'caption':event['name'][:1000]}}))
+                known[(image['url'],page)]=asset
                 candidate['assetId']=asset['id']
                 candidate['rightsState']=asset['rightsState']
             candidates.append(candidate)
@@ -361,6 +372,9 @@ class Repair:
                 ready=[c for c in candidates if c.get('rightsState')=='APPROVED' and c.get('sha256') and c.get('posterEvidence')]
                 for candidate in ready:
                     asset=self.api.request('GET',f'{PATH}/assets/{candidate["assetId"]}')
+                    # A re-approved legacy asset is already in this snapshot.
+                    # Refresh its revision/rights too before upload verification.
+                    target['assets']=[asset if a['id']==asset['id'] else a for a in target['assets']]
                     if not any(a['id']==asset['id'] for a in target['assets']):target['assets'].append(asset)
                     state,stored=self.store(target,asset)
                     if state=='VERIFIED':return state,{**note,'stored':stored,'nextAction':'공개 이미지 검증 완료'}

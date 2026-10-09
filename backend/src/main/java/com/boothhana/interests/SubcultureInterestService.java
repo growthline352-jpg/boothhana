@@ -11,10 +11,12 @@ import static com.boothhana.interests.InterestRules.*;
 @Service @Transactional(readOnly=true)
 public class SubcultureInterestService {
  @org.springframework.beans.factory.annotation.Value("${app.collection.graph.enabled:false}") private boolean graphEnabled;
- private final JdbcTemplate db; private final JsonMapper json; private final CatalogPublicationService publications;
- public SubcultureInterestService(JdbcTemplate db,JsonMapper json,CatalogPublicationService publications){this.db=db;this.json=json;this.publications=publications;}
+ private final JdbcTemplate db; private final JsonMapper json; private final CatalogPublicationService publications; private final com.boothhana.collection.graph.EntityMediaService media;
+ public SubcultureInterestService(JdbcTemplate db,JsonMapper json,CatalogPublicationService publications){this(db,json,publications,null);}
+ @org.springframework.beans.factory.annotation.Autowired public SubcultureInterestService(JdbcTemplate db,JsonMapper json,CatalogPublicationService publications,com.boothhana.collection.graph.EntityMediaService media){this.db=db;this.json=json;this.publications=publications;this.media=media;}
+ private Map<String,Object> withImage(String kind,Map<String,Object> value){if(media!=null)media.attach(kind,List.of(value));return value;}
  public Settings settings(long owner){var versions=db.queryForList("select revision from subculture_interest_settings where user_id=?",owner);var entries=db.queryForList("select * from subculture_interest where user_id=? order by created_at,id",owner).stream().map(r->new Entry((UUID)r.get("id"),(UUID)r.get("subject_id"),(Long)r.get("exhibitor_id"),r.get("custom_name").toString(),r.get("custom_work").toString(),r.get("medium").toString(),(UUID)r.get("custom_work_id"))).toList();return new Settings(versions.isEmpty()?0:((Number)versions.getFirst().get("revision")).longValue(),entries);}
- public Map<String,Object> view(long owner){var state=settings(owner);var publicCache=new HashMap<Long,Optional<Map<String,Object>>>();var rows=new ArrayList<Map<String,Object>>();for(var e:state.entries()){var row=new LinkedHashMap<String,Object>();row.put("id",e.id());row.put("subjectId",e.subjectId());row.put("exhibitorId",e.exhibitorId());row.put("customName",e.customName());row.put("customWork",e.customWork());row.put("medium",e.medium());row.put("customWorkId",e.customWorkId());row.put("label",e.customName());row.put("workName",e.customWork());row.put("available",false);try{if(e.subjectId()!=null){var subject=subject(e.subjectId());row.put("label",subject.get("name"));row.put("workName",Objects.toString(subject.get("workName"),""));row.put("kind",subject.get("kind"));row.put("available",true);}else if(e.exhibitorId()!=null){row.put("label",creator(e.exhibitorId(),publicCache).get("name"));row.put("kind","CREATOR");row.put("available",true);}}catch(ApiException ex){if(ex.status.value()!=404)throw ex;row.put("label","현재 공개되지 않은 관심 대상");}rows.add(row);}return Map.of("revision",state.revision(),"entries",rows);}
+ public Map<String,Object> view(long owner){var state=settings(owner);var publicCache=new HashMap<Long,Optional<Map<String,Object>>>();var rows=new ArrayList<Map<String,Object>>();for(var e:state.entries()){var row=new LinkedHashMap<String,Object>();row.put("id",e.id());row.put("subjectId",e.subjectId());row.put("exhibitorId",e.exhibitorId());row.put("customName",e.customName());row.put("customWork",e.customWork());row.put("medium",e.medium());row.put("customWorkId",e.customWorkId());row.put("label",e.customName());row.put("workName",e.customWork());row.put("available",false);try{if(e.subjectId()!=null){var subject=subject(e.subjectId());row.put("label",subject.get("name"));row.put("workName",Objects.toString(subject.get("workName"),""));row.put("kind",subject.get("kind"));for(String field:List.of("imageUrl","imageSourceUrl","imageCredit"))row.put(field,subject.get(field));row.put("available",true);}else if(e.exhibitorId()!=null){var creator=creator(e.exhibitorId(),publicCache);row.put("label",creator.get("name"));for(String field:List.of("imageUrl","imageSourceUrl","imageCredit"))row.put(field,creator.get(field));row.put("kind","CREATOR");row.put("available",true);}}catch(ApiException ex){if(ex.status.value()!=404)throw ex;row.put("label","현재 공개되지 않은 관심 대상");}rows.add(row);}return Map.of("revision",state.revision(),"entries",rows);}
  @Transactional public Settings save(long owner,Settings input){var entries=entries(input);db.queryForList("select pg_advisory_xact_lock(hashtextextended(?,0))","interest:"+owner);var before=settings(owner);if(before.revision()!=input.revision())throw ApiException.conflict("다른 화면에서 관심을 변경했어요. 다시 불러온 뒤 저장해 주세요.");
   for(Entry e:entries){if(e.customWorkId()!=null&&!"WORK".equals(subject(e.customWorkId()).get("kind")))throw ApiException.badRequest("캐릭터의 출처 작품을 확인해 주세요.");if(e.subjectId()!=null){boolean existing=before.entries().stream().anyMatch(old->Objects.equals(old.subjectId(),e.subjectId()));if(!existing)subject(e.subjectId());}if(e.exhibitorId()!=null&&!before.entries().stream().anyMatch(old->Objects.equals(old.exhibitorId(),e.exhibitorId())))creator(e.exhibitorId());}
   for(Entry e:entries)if(!db.queryForList("select id from subculture_interest where id=? and user_id<>?",e.id(),owner).isEmpty())throw ApiException.conflict("이미 사용 중인 관심 ID입니다.");
@@ -27,27 +29,27 @@ public class SubcultureInterestService {
   String term="%"+q.replace("!","!!").replace("%","!%").replace("_","!_")+"%";
   var args=new ArrayList<Object>(List.of(kind,kind,term,term,term));
   String alias="";if(graphEnabled){alias=" or exists(select 1 from collection_subject_identity a where a.subject_id=s.id and a.name ilike ? escape '!')";args.add(term);}args.add(page*40);
-  return db.queryForList("""
+  var rows=db.queryForList("""
    select s.id,s.kind,s.name,s.work_id as "workId",w.name as "workName",s.medium,s.source_url as "sourceUrl",s.revision
    from subculture_subject s left join subculture_subject w on w.id=s.work_id
    where s.active and (s.work_id is null or w.active) and (?='' or s.kind=?)
    and (s.name ilike ? escape '!' or w.name ilike ? escape '!' or s.aliases::text ilike ? escape '!'
-   """+alias+") order by s.name,s.id limit 40 offset ?",args.toArray());
+   """+alias+") order by s.name,s.id limit 40 offset ?",args.toArray());return media==null?rows:media.attach("SUBJECT",rows);
  }
  public Map<String,Object> subject(UUID id){var rows=db.queryForList("""
  select s.id,s.kind,s.name,s.work_id as "workId",w.name as "workName",s.medium,s.source_url as "sourceUrl",s.revision
  from subculture_subject s left join subculture_subject w on w.id=s.work_id
  where s.id=? and s.active and (s.work_id is null or w.active)
- """,id);if(rows.isEmpty())throw ApiException.notFound("공개된 작품·캐릭터를 찾지 못했습니다.");return rows.getFirst();}
+ """,id);if(rows.isEmpty())throw ApiException.notFound("공개된 작품·캐릭터를 찾지 못했습니다.");return withImage("SUBJECT",rows.getFirst());}
  @SuppressWarnings("unchecked") static Map<String,Object> obj(Object v){return v instanceof Map<?,?>?(Map<String,Object>)v:Map.of();}
  @SuppressWarnings("unchecked") static List<Map<String,Object>> maps(Object v){return v instanceof List<?>?(List<Map<String,Object>>)v:List.of();}
  static long number(Object v){return v instanceof Number n?n.longValue():-1;}
  // Existing exhibitor IDs are reused. Collected profiles are NEVER returned without a matching public member.
  public Map<String,Object> creator(long id){return creator(id,new HashMap<>());}
  private Map<String,Object> creator(long id,Map<Long,Optional<Map<String,Object>>> cache){
-  if(graphEnabled){var published=db.queryForList("select data_json,active from collection_creator_publication where exhibitor_id=?",id);if(!published.isEmpty()){if(!Boolean.TRUE.equals(published.getFirst().get("active")))throw ApiException.notFound("현재 공개된 작가 정보가 없습니다.");var value=new LinkedHashMap<String,Object>(json.readValue(published.getFirst().get("data_json").toString(),Map.class));value.put("id",id);return value;}}
+  if(graphEnabled){var published=db.queryForList("select data_json,active from collection_creator_publication where exhibitor_id=?",id);if(!published.isEmpty()){if(!Boolean.TRUE.equals(published.getFirst().get("active")))throw ApiException.notFound("현재 공개된 작가 정보가 없습니다.");var value=new LinkedHashMap<String,Object>(json.readValue(published.getFirst().get("data_json").toString(),Map.class));value.put("id",id);return withImage("CREATOR",value);}}
   var rows=db.queryForList("select p.event_id,pm.participant_id,e.profile_json from subculture_exhibitor e join subculture_participant_member pm on pm.exhibitor_id=e.id join subculture_participant p on p.id=pm.participant_id join subculture_catalog_publication pub on pub.event_id=p.event_id where e.id=? and p.review_state<>'EXCLUDED' order by pub.published_at desc limit 20",id);
-  for(var r:rows){var snapshot=cache.computeIfAbsent(number(r.get("event_id")),publications::findPublicDetail);if(snapshot.isEmpty())continue;Map<String,Object> raw=json.readValue(r.get("profile_json").toString(),Map.class);for(var p:maps(snapshot.get().get("participants")))if(number(p.get("id"))==number(r.get("participant_id")))for(var member:maps(obj(p.get("participant")).get("members")))if(sameMember(raw,member)){var result=new LinkedHashMap<String,Object>(member);result.put("id",id);return result;}}
+  for(var r:rows){var snapshot=cache.computeIfAbsent(number(r.get("event_id")),publications::findPublicDetail);if(snapshot.isEmpty())continue;Map<String,Object> raw=json.readValue(r.get("profile_json").toString(),Map.class);for(var p:maps(snapshot.get().get("participants")))if(number(p.get("id"))==number(r.get("participant_id")))for(var member:maps(obj(p.get("participant")).get("members")))if(sameMember(raw,member)){var result=new LinkedHashMap<String,Object>(member);result.put("id",id);return withImage("CREATOR",result);}}
   throw ApiException.notFound("현재 공개된 작가 정보를 찾지 못했습니다.");
  }
  static boolean sameMember(Map<String,Object> a,Map<String,Object> b){return Objects.equals(a.get("name"),b.get("name"))&&Objects.equals(a.get("profileUrl"),b.get("profileUrl"));}
@@ -93,7 +95,7 @@ public class SubcultureInterestService {
    """.formatted(legacyGate)+marks+")",ids.toArray());
   Map<Long,Map<String,Object>> found=new HashMap<>();
   for(var row:rows)if(row.get("data_json")!=null){long id=number(row.get("id"));var value=new LinkedHashMap<String,Object>(json.readValue(row.get("data_json").toString(),Map.class));value.put("id",id);found.put(id,value);}
-  return ids.stream().map(found::get).filter(Objects::nonNull).toList();
+  var values=ids.stream().map(found::get).filter(Objects::nonNull).toList();return media==null?values:media.attach("CREATOR",values);
  }
  public List<Map<String,Object>> adminSubjects(){return db.queryForList("select id,kind,name,work_id as \"workId\",medium,aliases::text as \"aliasesJson\",source_url as \"sourceUrl\",active,revision from subculture_subject order by reviewed_at desc limit 100");}
  public List<Map<String,Object>> adminLinks(UUID subjectId){return db.queryForList("select id,subject_id as \"subjectId\",kind,target_id as \"targetId\",event_id as \"eventId\",participant_id as \"participantId\",source_url as \"sourceUrl\",evidence,active,revision from subculture_subject_link where subject_id=? order by reviewed_at desc limit 100",subjectId);}
