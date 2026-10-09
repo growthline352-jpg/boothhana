@@ -71,3 +71,10 @@ class SocialSourceTests(unittest.TestCase):
     def test_context_reuses_booth_links_and_approved_creator_accounts(self):
         context={'creator':{'data':{'profileUrl':'https://comicw.net/creator/1'}},'creatorProvenance':[{'officialLinks':[PROFILE],'sources':[{'url':'https://comicw.net/event/1','access':'ORIGINAL'}]}],'publication':{'data':{'socialAccounts':[{'profileUrl':'https://x.com/artist'}]}},'creatorSources':[{'socialAccounts':[{'profileUrl':PROFILE}]}]}
         self.assertEqual(4,len(context_urls(context)));self.assertIn(PROFILE,context_urls(context))
+    def test_public_postype_sale_sheet_images_are_attached_even_with_little_body_text(self):
+        from public_sources import PublicSources
+        def fetch(url,hosts,**kwargs):
+            if url.endswith('/robots.txt'):raise MediaError('HTML HTTP 404')
+            return '<title>작가 판매표</title><img src="https://cdn.example.com/sale.png"><img src>','a'*64
+        url='https://artist.postype.com/post/123';doc=PublicSources([],fetch=fetch)([url])[0]
+        self.assertTrue(doc['available']);self.assertEqual([{'imageUrl':'https://cdn.example.com/sale.png','pageUrl':url}],doc['images'])

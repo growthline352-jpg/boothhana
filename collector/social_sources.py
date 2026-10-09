@@ -170,7 +170,7 @@ class SocialSources:
             if stop in ids:
                 count=ids.index(stop);docs=docs[:count];summary=summary[:count];ids=ids[:count];next_page=None
             receipt={'profileUrl':base,'accountId':account_id,'sourceUrl':url,'headPostId':head,'postIds':ids,'nextPageUrl':next_page}
-            docs.insert(0,{**self.document(url,api,{'authorId':account_id,'posts':summary,'nextPageUrl':next_page},digest,next_page=next_page),'socialPageReceipt':receipt})
+            docs.insert(0,{**self.document(url,api,{'authorId':account_id,'postUrls':[d['url'] for d in docs],'nextPageUrl':next_page},digest,next_page=next_page),'socialPageReceipt':receipt})
         docs.append(self.document(base,profile_api,profile,phash))
         for doc in docs:doc.update(profileUrl=base,platformAccountId=account_id)
         return docs

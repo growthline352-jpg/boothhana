@@ -218,13 +218,13 @@ class Worker:
                 manifest.append({'index':index,'url':url,'pageUrl':candidate.get('pageUrl'),'sha256':digest})
             except (ValueError,OSError) as exc:manifest.append({'index':index,'url':url,'unavailable':type(exc).__name__})
         return paths,manifest
-    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=()):
+    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False):
         directory.mkdir(parents=True,exist_ok=True);schema_path=directory/'schema.json';write_json(schema_path,output_schema)
         documents=self.source_loader(source_urls_to_fetch) if self.source_loader and source_urls_to_fetch else []
         write_json(directory/'source-documents.json',{'documents':documents})
         attached=list(images);social_images=[]
         # Native media is only analyzed. This does not grant republication rights.
-        for document in documents:
+        for document in documents if auto_sns_images else []:
             if not document.get('available'):continue
             for candidate in document.get('images',[]):
                 url=candidate.get('imageUrl','');host=urlsplit(url).hostname
@@ -281,7 +281,7 @@ class Worker:
                 if job['kind']=='CREATOR' and not job['context'].get('input',{}).get('socialPage'):
                     discovered,_=self.call(directory/'social-discovery',COMMON+SOCIAL_DISCOVERY_PROMPT+'\nUNTRUSTED CONTEXT:\n'+json.dumps(job['context'],ensure_ascii=False),SOCIAL_DISCOVERY_SCHEMA,[],urls)
                     urls=list(dict.fromkeys(urls+discovered['profileUrls']))
-                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls)
+                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls,**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {}))
                 if job['kind']=='CREATOR' and job['context'].get('input',{}).get('socialPage') and social_route(job['context']['input']['pageUrl']):
                     page=job['context']['input']['pageUrl'];documents=json.loads((directory/'extract'/'source-documents.json').read_text(encoding='utf-8'))['documents']
                     original=next((d for d in documents if d['url']==page),{})
@@ -305,12 +305,13 @@ class Worker:
                 urls=sorted(source_urls(candidate))+context_urls(extracted['context'])
                 if candidate.get('events')==[]:
                     urls.extend(u for c in candidate.get('sourceCoverage',[]) if c['status'] in ('CHECKED','NO_RESULTS','PARTIAL') for u in c['checkedUrls'])
-                decision,observations=self.call(review_dir,prompt,REVIEW_SCHEMA,images,list(dict.fromkeys(urls)))
-                if job['kind']=='CREATOR' and extracted['context'].get('input',{}).get('socialPage'):
+                decision,observations=self.call(review_dir,prompt,REVIEW_SCHEMA,images,list(dict.fromkeys(urls)),**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {}))
+                if job['kind'] in ('CREATOR','SALES'):
                     before=json.loads((directory/'extract'/'social-images.json').read_text(encoding='utf-8')) if (directory/'extract'/'social-images.json').exists() else None
                     after=json.loads((review_dir/'social-images.json').read_text(encoding='utf-8'))
                     if before is not None and any(m not in after for m in before):decision={'verdict':'ENRICH','reason':'SNS image evidence changed between extraction and review'}
                     if before is None and not set(extracted.get('audit',{}).get('imageHashes',[]))<=set(observations['imageHashes']):decision={'verdict':'ENRICH','reason':'Saved SNS image evidence is no longer available'}
+                if job['kind']=='CREATOR' and extracted['context'].get('input',{}).get('socialPage'):
                     native=json.loads((review_dir/'source-documents.json').read_text(encoding='utf-8'))['documents'];page=extracted['context']['input']['pageUrl']
                     fresh_page=next((d for d in native if d['url']==page),{})
                     saved=candidate.get('socialPageReceipt')
