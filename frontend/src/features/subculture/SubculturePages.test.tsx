@@ -20,7 +20,7 @@ describe('subculture discovery context',()=>{
   const html=render(<SubcultureResults creatorId="1"/>)
   expect(html).not.toContain('이 취향을 그리는 작가')
   expect(html).not.toContain('/subculture/creators/1')
-  expect(html).toContain('관심으로 찾은 행사')
+  expect(html).toContain('다음 참가 행사')
  })
  it('keeps other related creators on a creator detail',()=>{
   fixture.data={...feed,creators:[creator,{...creator,id:2,name:'다른 작가'}]}

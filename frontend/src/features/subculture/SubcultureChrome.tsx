@@ -4,6 +4,7 @@ import { DiscoveryIcon as Icon } from '../discovery/DiscoveryIcon'
 import { categories, categoryHref } from '../discovery/categories'
 import { currentSiteCategory } from '../discovery/site'
 import './subcultureChrome.css'
+import './subcultureExperience.css'
 
 export function SubcultureBrand() {
   return <span className="sc-subculture-logo"><img className="sc-subculture-symbol" src="/assets/categories/subculture-3d.webp" alt=""/><span className="sc-subculture-wordmark"><strong>부스하나</strong><span>서브컬처<i className="sc-brand-divider"/>SUBCULTURE</span></span></span>

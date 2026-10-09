@@ -1,4 +1,6 @@
 import {discoveryFeatures} from '../discovery/features'
+import { currentSiteCategory } from '../discovery/site'
+import { subcultureEventsHref } from '../subculture/SubcultureUI'
 import {VisitPreparation} from './VisitPreparation'
 import {DiscoveryIcon} from '../discovery/DiscoveryIcon'
 import {compareHref} from '../discovery/compare'
@@ -32,6 +34,7 @@ const kindNames:Record<string,string>={EVENT:'행사',PARTICIPANT:'업체·서�
 const EventPurchasePlan=lazy(()=>import('./PurchasePlanPage').then(module=>({default:module.EventPurchasePlan})))
 
 export function LibraryPage(){
+ const subculture=currentSiteCategory()==='subculture',eventsHref=subculture?subcultureEventsHref:'/discover'
  const library=useLibrary(),auth=useAuth(),[params,setParams]=useSearchParams(),[message,setMessage]=useState(''),[importing,setImporting]=useState(false)
  const guard=useRef(false),trigger=useRef<HTMLElement|null>(null)
  const owner=library?.owner||'loading',guest=owner==='guest',q=(params.get('q')||'').slice(0,100),eventId=params.get('event')||'',kind=params.get('type')||'',visited=params.get('visited')==='1',group=params.get('group')==='event',item=params.get('item')||''
@@ -79,7 +82,7 @@ export function LibraryPage(){
  },[ready,state.loading,state.error,state.data,page,total,params,setParams])
  const sectionGroups=group?[...new Set(rows.map(x=>x.target.eventId))].map(id=>({id,name:rows.find(x=>x.target.eventId===id)?.current?.memory.eventName||'현재 공개되지 않는 행사',items:rows.filter(x=>x.target.eventId===id)})):[{id:0,name:'',items:rows}]
  return <section className="content-wrap section-pad memory-page">
-  <header className="memory-page-heading"><div><p className="eyebrow">MY COLLECTION</p><h1>내 보관함</h1><p>{booths?'선택한 행사의 부스와 구매 메모를 정리하세요.':'가보기 전에 발견하고, 다녀온 뒤에도 다시 찾아보세요.'}</p></div><div className="row-actions"><Link className="btn primary" to="/discover">행사 찾기</Link></div></header>
+  <header className="memory-page-heading"><div><p className="eyebrow">{subculture?'MAKE IT A DAY':'MY COLLECTION'}</p><h1>{subculture?'나의 다음 방문':'내 보관함'}</h1><p>{booths?'선택한 행사의 부스와 구매 메모를 정리하세요.':subculture?'만나고 싶은 것들을 모아, 나만의 하루를 만들어보세요.':'가보기 전에 발견하고, 다녀온 뒤에도 다시 찾아보세요.'}</p></div><div className="row-actions"><Link className="btn primary" to={eventsHref}>행사 찾기</Link></div></header>
   <nav className="row-actions" aria-label="보관함 보기"><Link className="btn secondary" to="/library" aria-current={!params.has('offline')&&!booths?'page':undefined}>{booths?'← 전체 보관함':'저장한 항목'}</Link>{!booths&&<Link className="btn secondary" to="/library?offline=1" aria-current={params.has('offline')?'page':undefined}>오프라인 저장한 행사</Link>}</nav>
   {params.has('offline')?<iframe title="보관함에 오프라인 저장한 행사" src={`/offline/index.html?embedded=1${/^[1-9]\d*$/.test(params.get('offlineEvent')||'')?'#'+params.get('offlineEvent'):''}`} style={{width:'100%',height:'75vh',minHeight:480,border:0,marginTop:20}}/>:<>
   {!booths&&<p className="memory-offline-hint">인터넷 없이 볼 행사는 아래의 행사 카드에서 <strong>오프라인 정보 저장</strong>을 눌러 주세요. 함께 저장한 부스·상품 표시도 포함됩니다.</p>}
@@ -94,7 +97,7 @@ export function LibraryPage(){
   {ready&&!guest&&/^[1-9]\d*$/.test(eventId)&&<nav className="memory-event-views" aria-label="선택한 행사의 보관함"><Link className={`btn ${booths?'secondary':'primary'}`} aria-current={!booths?'page':undefined} to={`/library?event=${eventId}`}>저장한 항목</Link><Link className={`btn ${booths?'primary':'secondary'}`} aria-current={booths?'page':undefined} to={libraryBoothsHref(Number(eventId))}>부스·구매 메모</Link></nav>}
   {booths?<Suspense fallback={<p role="status">저장한 부스를 열고 있어요.</p>}><EventPurchasePlan key={`${owner}:${eventId}`} eventId={Number(eventId)} focusId={params.get('focus')||''} onDeleted={()=>void purchaseIndex.reload()}/></Suspense>:owner==='error'?null:owner==='loading'||state.loading?<LoadingState label="저장한 기억을 불러오고 있어요"/>:state.error?<><ErrorState error={state.error} retry={()=>void state.reload()}/><p>현재 공개 상태를 확인할 수 없어 오래된 이미지나 설명을 대신 표시하지 않습니다. 기기·계정의 저장 기록은 삭제하지 않았어요.</p></>:<>
    <div className="memory-list-heading"><h2>{total}개의 관심 기록</h2><small>{guest?'기기 임시 기록 · 저장일로부터 90일':'행사가 끝나도 계정 저장 기록은 유지돼요.'}</small></div>
-   {!rows.length?<div className="memory-empty"><span aria-hidden="true">▱</span><h2>{q||kind||eventId||visited?'이 조건으로 찾은 기록이 없어요.':'기억하고 싶은 곳을 하나 저장해 보세요.'}</h2><p>행사·부스·상품의 저장 버튼을 누르면 업체와 행사 맥락이 함께 남아요.</p>{q||kind||eventId||visited?<button className="btn secondary" onClick={()=>setParams({})}>조건 초기화</button>:<Link className="btn primary" to="/discover">행사 둘러보기</Link>}</div>:sectionGroups.map(g=><section key={g.id}>{g.name&&<div className="memory-group-actions"><h2 className="memory-group-title">{g.name}</h2>{!guest&&<Link className="btn secondary" to={libraryBoothsHref(g.id)}>저장한 부스 보기</Link>}</div>}<div className="memory-grid">{g.items.map(e=><MemoryCard key={e.id} entry={e} guest={guest} open={open}/>)}</div></section>)}
+   {!rows.length?<div className="memory-empty"><span aria-hidden="true">▱</span><h2>{q||kind||eventId||visited?'이 조건으로 찾은 기록이 없어요.':'기억하고 싶은 곳을 하나 저장해 보세요.'}</h2><p>행사·부스·상품의 저장 버튼을 누르면 업체와 행사 맥락이 함께 남아요.</p>{q||kind||eventId||visited?<button className="btn secondary" onClick={()=>setParams({})}>조건 초기화</button>:<Link className="btn primary" to={eventsHref}>행사 둘러보기</Link>}</div>:sectionGroups.map(g=><section key={g.id}>{g.name&&<div className="memory-group-actions"><h2 className="memory-group-title">{g.name}</h2>{!guest&&<Link className="btn secondary" to={libraryBoothsHref(g.id)}>저장한 부스 보기</Link>}</div>}<div className="memory-grid">{g.items.map(e=><MemoryCard key={e.id} entry={e} guest={guest} open={open}/>)}</div></section>)}
    {total>24&&<nav className="catalog-pager" aria-label="보관함 페이지"><button className="btn secondary" disabled={!page} onClick={()=>update({page:String(page-1)})}>이전</button><span>{page+1} / {Math.ceil(total/24)}</span><button className="btn secondary" disabled={(page+1)*24>=total} onClick={()=>update({page:String(page+1)})}>다음</button></nav>}
   </>}
   {ready&&item&&selected.loading&&<div className="notice-banner" role="status">메모·방문 기록을 불러오고 있어요.<button type="button" className="btn secondary" onClick={close}>취소</button></div>}

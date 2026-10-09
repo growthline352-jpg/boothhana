@@ -1,5 +1,6 @@
 import { SubjectAdmin } from '../features/subculture/SubjectAdmin'
 import { SubcultureSearch } from '../features/subculture/SubcultureSearch'
+import { FollowingPage } from '../features/subculture/FollowingPage'
 import { NotificationPage } from '../features/subculture/NotificationPage'
 import { CreatorProductList,CreatorProductDetail } from '../features/subculture/CreatorProductPages'
 import { SubcultureHome,SubcultureBrowse,SubcultureIdentity } from '../features/subculture/SubculturePages'
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
     { path:'account/notifications',element:<NotificationPage/> },
     { path:'subculture',element:<SubcultureHome/> },
     { path:'subculture/search',element:<SubcultureSearch/> },
+    { path:'subculture/following',element:<FollowingPage/> },
     { path:'subculture/products',element:<CreatorProductList/> },
     { path:'subculture/products/:id',element:<CreatorProductDetail/> },
     { path:'subculture/subjects',element:<SubcultureBrowse kind="subjects"/> },
