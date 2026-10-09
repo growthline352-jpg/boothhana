@@ -265,7 +265,7 @@ class CollectionGraphIntegrationTests {
  @Test void discoveryReceivesLegacyIdentityAndKeepsManualCorrections(){
   db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{edition}','null'),overrides_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","[TEST] Canonical remembered title")),event);
   String day=data.occurrences().getFirst().startDate();
-  graph.seed(new Seed("DISCOVERY","canonical-identity",Map.of("scope",Map.of("startDate",day,"endDate",day)),true,"test"));
+  graph.seed(new Seed("DISCOVERY","canonical-identity",Map.of("scope",Map.of("region","SEOUL_GYEONGGI","timezone","Asia/Seoul","startDate",day,"endDate",day)),true,"test"));
   var job=graph.claim();var context=value(job.get("context"));
   var existing=(List<Map<String,Object>>)context.get("existingEvents");
   var known=existing.stream().filter(e->((Number)e.get("id")).longValue()==event).findFirst().orElseThrow();
