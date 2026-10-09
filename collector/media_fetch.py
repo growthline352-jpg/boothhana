@@ -9,6 +9,7 @@ from rules import public_url
 MAX_BYTES=10*1024*1024
 MAX_HTML_BYTES=4*1024*1024
 MAX_PIXELS=25_000_000
+PUBLIC_SOURCE_USER_AGENT='BoothHanaCollectorBot/6 (+https://boothana.kr/support)'
 class MediaError(ValueError): pass
 
 def normalize_image_content_type(value: str):
@@ -71,7 +72,7 @@ def inspect_image(data: bytes,content_type: str,max_pixels: int=MAX_PIXELS):
     except (UnidentifiedImageError,OSError,Image.DecompressionBombError,Image.DecompressionBombWarning) as exc: raise MediaError('Invalid image') from exc
     return hashlib.sha256(data).hexdigest()
 
-def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PIXELS,*,source_trace=None,url_guard=None,user_agent='BoothHana-Approved-Image-Fetcher/4'):
+def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PIXELS,*,source_trace=None,url_guard=None,user_agent=PUBLIC_SOURCE_USER_AGENT):
     deadline=time.monotonic()+timeout
     for _ in range(4):
         if url_guard is not None and not url_guard(url):raise MediaError('Image source policy denied')
@@ -121,7 +122,7 @@ def fetch_html(url: str,hosts: list[str],timeout: int=30,*,allow_plain: bool=Fal
         connection=PinnedHTTPS(host,addresses[0],min(10,remaining))
         try:
             path=request_target(parsed)
-            connection.request('GET',path,headers={'User-Agent':'BoothHana-Approved-Floorplan-Fetcher/1','Accept':','.join(sorted(accepted)),'Accept-Encoding':'identity','Cache-Control':'no-cache'})
+            connection.request('GET',path,headers={'User-Agent':PUBLIC_SOURCE_USER_AGENT,'Accept':','.join(sorted(accepted)),'Accept-Encoding':'identity','Cache-Control':'no-cache'})
             response=connection.getresponse()
             if response.status in (301,302,303,307,308):
                 target=response.getheader('Location')

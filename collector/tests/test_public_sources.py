@@ -3,7 +3,7 @@ import io,hashlib
 from html import escape
 from unittest.mock import patch
 from public_sources import PublicSources,illustar_notice
-from media_fetch import MediaError,fetch_html
+from media_fetch import MediaError,fetch_html,PUBLIC_SOURCE_USER_AGENT
 
 class EvidenceResponse(io.BytesIO):
     status=200
@@ -21,6 +21,20 @@ class EvidenceConnection:
 
 URL='https://example.com/item'
 class PublicSourceTests(unittest.TestCase):
+    def test_declared_collector_identity_matches_the_robot_policy_and_http_request(self):
+        routes={'/robots.txt':('User-agent: Fetch\nDisallow: /\n\nUser-agent: *\nDisallow: /private\n','text/plain'),
+                '/item':('<title>Public item</title><p>'+('actual public evidence '*10)+'</p>','text/html')}
+        requests=[]
+        with patch('media_fetch.public_addresses',return_value=['93.184.216.34']),patch('media_fetch.PinnedHTTPS',side_effect=lambda *args:EvidenceConnection(routes,requests)):
+            docs=PublicSources([])([URL,'https://example.com/private'])
+        self.assertTrue(docs[0]['available']);self.assertFalse(docs[1]['available'])
+        self.assertEqual(['/robots.txt','/item'],[p for p,_ in requests])
+        self.assertTrue(all(h['User-Agent']==PUBLIC_SOURCE_USER_AGENT for _,h in requests))
+        calls=[]
+        def denied(url,hosts,**kwargs):
+            calls.append(url);return 'User-agent: BoothHanaCollectorBot\nDisallow: /','hash'
+        self.assertFalse(PublicSources([],denied)([URL])[0]['available'])
+        self.assertEqual(['https://example.com/robots.txt'],calls)
     def test_real_transport_accepts_robots_and_official_json_evidence(self):
         routes={
             '/robots.txt':('User-agent: *\nAllow: /','text/plain'),
