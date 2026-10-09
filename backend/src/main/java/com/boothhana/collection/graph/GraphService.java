@@ -159,7 +159,12 @@ public class GraphService {
     db.update("update collection_job set last_error=? where id=? and state='PENDING'",item.reason(),next.get("id"));
    }
   }
-  require(!approved.isEmpty(),"승인할 행사가 없습니다.");var result=new LinkedHashMap<>(value);result.put("events",approved);return result;
+  require(!approved.isEmpty(),"승인할 행사가 없습니다.");
+  // Only published SearchResult fields participate in the aggregate source check.
+  // Evidence/lead metadata for deferred events stays in the immutable extraction.
+  var result=new LinkedHashMap<String,Object>();
+  for(String key:List.of("schemaVersion","searchStatus","summary","queries","sourceCoverage"))if(value.containsKey(key))result.put(key,value.get(key));
+  result.put("events",approved);return result;
  }
  @Transactional public Object fail(UUID id,Failure in){var row=leased(id,in.leaseToken());String reason=text(in.reason());require(reason.length()<=2000,"오류 설명 길이 초과");int hours=Math.min(24,1<<Math.min(5,((Number)row.get("attempts")).intValue()-1));db.update("update collection_job set state='WAITING',lease_token=null,lease_until=null,available_at=now()+(? * interval '1 hour'),last_error=?,updated_at=now() where id=?",hours,reason,id);return Map.of("retryAfterHours",hours);}
  public Object status(){return db.queryForList("select kind,state,count(*) as count,min(available_at) as next_at from collection_job group by kind,state order by kind,state");}
