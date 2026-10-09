@@ -169,7 +169,8 @@ export async function api<T>(path: string, options?: ApiRequestInit): Promise<T>
       }
       if (response.status === 401 && session === sessionGeneration) {
         if (path === '/api/me') invalidateCsrfToken() // AuthSession establishes the identity boundary.
-        else if (!expiredSession) {
+        // Invalid login credentials and guest lookup credentials are separate from the account session.
+        else if (!expiredSession && !path.startsWith('/api/auth/') && !path.startsWith('/api/public/')) {
           // Let an already pending /api/me finish and establish the confirmed identity.
           // Advancing its session generation here would turn an anonymous result into an error.
           invalidateCsrfToken(); clearReadCache(); remoteCache.clear(); expiredSession = true

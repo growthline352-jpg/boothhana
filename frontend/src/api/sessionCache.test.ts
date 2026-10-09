@@ -101,4 +101,14 @@ describe('application-wide read reuse', () => {
     await expect(api('/api/me/items')).rejects.toMatchObject({status:401})
     finish(unauthorized());await anonymous
   })
+  it.each(['/api/auth/admin/login', '/api/public/support/guest/read'])('a rejected credential check at %s permits another attempt without expiring the account', async path => {
+    let attempts=0
+    const fetch=vi.fn().mockImplementation(async(url:string)=>url.endsWith('/csrf')?json({token:'csrf'}):++attempts===1?json({code:'INVALID_CREDENTIALS',message:'확인 필요'},401):json({ok:true}));vi.stubGlobal('fetch',fetch)
+    const expired=vi.fn(),unsubscribe=onSessionExpired(expired)
+    try {
+      await expect(api(path,{method:'POST',body:'{}',readOnly:true,reuse:false})).rejects.toMatchObject({status:401})
+      await expect(api(path,{method:'POST',body:'{}',readOnly:true,reuse:false})).resolves.toEqual({ok:true})
+      expect(expired).not.toHaveBeenCalled();expect(attempts).toBe(2)
+    } finally { unsubscribe() }
+  })
 })
