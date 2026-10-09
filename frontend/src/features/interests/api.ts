@@ -36,6 +36,6 @@ export function onboardingReturn(path: string | null): string {
       const next = decodeURIComponent(decoded); if (next === decoded) break; decoded = next
     }
     const url = new URL(path, 'https://boothhana.invalid')
-    return url.origin === 'https://boothhana.invalid' && /^\/(?:|account|discover(?:\/[^/]+){0,3}|events(?:\/[^/]+)?|booths\/[^/]+(?:\/reserve)?|products\/[^/]+|reservations(?:\/[^/]+)?|library(?:\/[A-Za-z0-9_/-]+)?|support(?:\/[A-Za-z0-9_/-]+)?|creator(?:\/[A-Za-z0-9_/-]+)?|admin(?:\/[A-Za-z0-9_/-]+)?)$/.test(url.pathname) ? path : '/'
+    return url.origin === 'https://boothhana.invalid' && /^\/(?:|account(?:\/(?:interests|notifications))?|subculture(?:\/(?:search|following|(?:subjects|creators|products)(?:\/[A-Za-z0-9_-]+)?))?|discover(?:\/[^/]+){0,3}|events(?:\/[^/]+)?|booths\/[^/]+(?:\/reserve)?|products\/[^/]+|reservations(?:\/[^/]+)?|library(?:\/[A-Za-z0-9_/-]+)?|support(?:\/[A-Za-z0-9_/-]+)?|creator(?:\/[A-Za-z0-9_/-]+)?|admin(?:\/[A-Za-z0-9_/-]+)?)$/.test(url.pathname) ? path : '/'
   } catch { return '/' }
 }

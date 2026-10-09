@@ -23,6 +23,7 @@ import { HomeFeed, homeSectionRegion, homeSectionHref } from './homeFeed'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
 import { currentSiteCategory } from './site'
+import { TasteTitle,TasteExploreNav } from '../subculture/SubcultureUI'
 import { PopularEvents } from './PopularEvents'
 import { useRecommendationViewer } from './useRecommendationViewer'
 import { EventCalendar } from './EventCalendar'
@@ -105,12 +106,14 @@ export function DiscoveryPage() {
     <section className={`popga-home${isHome ? '' : ' is-results'}`} aria-label={isHome ? `${category.label} 추천` : `${category.label} 행사 검색`}>
       <div className="discovery-container">
         {isHome && currentSiteCategory() && <h1 className="discovery-sr-only">부스하나 {category.label}</h1>}
+        {!isHome&&category.key==='subculture'&&<TasteTitle title="행사 찾기" body="좋아하는 것을 직접 만날 수 있는 일정을 살펴보세요."/>}
         <form className="popga-search" role="search" onSubmit={submit}>
           <DiscoveryIcon name="search" size={21}/>
           <input type="search" value={draft} onChange={e => setDraft(e.target.value)} maxLength={100}
             placeholder={category.searchHint} aria-label={`${category.label} 행사 검색`} disabled={!category.enabled}/>
           <button type="submit" disabled={!category.enabled}>검색</button>
         </form>
+        {!isHome&&category.key==='subculture'&&<TasteExploreNav q={state.q}/>}
 
         {isHome && <><div className="popga-dashboard">
           <aside className="daily-note" aria-labelledby="daily-note-heading">

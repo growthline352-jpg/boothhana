@@ -52,7 +52,8 @@ export function safeReturnTo(value: unknown): string {
   if (typeof value !== 'string') return categoryHref('subculture')
   try {
     const u = new URL(value, 'https://boothhana.invalid')
-    if (u.origin !== 'https://boothhana.invalid' || !['/', '/discover'].includes(u.pathname)) return categoryHref('subculture')
+    const subculturePath=/^\/subculture(?:\/(?:search|following|(?:subjects|creators|products)(?:\/[A-Za-z0-9_-]+)?))?$/.test(u.pathname)
+    if (u.origin !== 'https://boothhana.invalid' || !(['/', '/discover'].includes(u.pathname)||subculturePath)) return categoryHref('subculture')
     return u.pathname + u.search
   } catch { return categoryHref('subculture') }
 }

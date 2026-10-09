@@ -7,6 +7,8 @@ import { BookingBadge } from './BookingBadge'
 import { boothListReturn, boothVisit, eventSection, type EventSection } from './detailNavigation'
 import { OwnershipPanel, EventHistory } from '../support/OwnershipPanels'
 import { EventComments } from './EventComments'
+import { EventEditionReviews } from '../subculture/EventEditionReviews'
+import { subcultureEventsHref } from '../subculture/SubcultureUI'
 import { PageMetadata } from '../../app/PageMetadata'
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
@@ -97,7 +99,7 @@ function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;
   const openMap=()=>void navigate(catalogEventPath(eventId,context,'map',row.id))
   return <section className="content-wrap section-pad visit-page">
     <nav className="discovery-back-link" aria-label="현재 위치">
-      <Link to="/">홈</Link>{' / '}<Link to={categoryHref(categoryForType(event.subcategory).key)}>행사 목록</Link>{' / '}<Link to={eventReturn}>{event.name}</Link>{' / '}<span aria-current="page">부스 상세</span>
+      <Link to="/">홈</Link>{' / '}<Link to={categoryForType(event.subcategory).key==='subculture'?subcultureEventsHref:categoryHref(categoryForType(event.subcategory).key)}>행사 목록</Link>{' / '}<Link to={eventReturn}>{event.name}</Link>{' / '}<span aria-current="page">부스 상세</span>
     </nav>
     <BoothDetail eventId={Number(eventId)} event={event} row={row} assets={value.assets.filter(asset=>asset.participantId===row.id)} day={state.day} hall={state.hall} eventNotice={status.notice} onMap={openMap} onVisitChange={(day,hall)=>{const next=new URLSearchParams(params);next.set('day',day);if(hall)next.set('hall',hall);else next.delete('hall');setParams(next,{replace:true,preventScrollReset:true,state:location.state})}} onClose={()=>void navigate(eventReturn)}/>
     {relatedPreview.length>0&&<section className="booth-related" aria-label="같은 행사 추천 부스">
@@ -140,8 +142,9 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   const [today,setToday]=useState(()=>seoulToday())
   useEffect(()=>{const id=window.setInterval(()=>setToday(seoulToday()),60_000);return()=>clearInterval(id)},[])
   const status=eventStatus(e,today),days=visitDays(e)
-  const storedReturn=(location.state as {catalogReturnTo?:unknown}|null)?.catalogReturnTo
-  const back=storedReturn?safeReturnTo(storedReturn):categoryHref(categoryForType(e.subcategory).key)
+  const navigationState=location.state as {catalogReturnTo?:unknown;subcultureReturnTo?:unknown}|null
+  const storedReturn=navigationState?.catalogReturnTo??navigationState?.subcultureReturnTo
+  const back=storedReturn?safeReturnTo(storedReturn):categoryForType(e.subcategory).key==='subculture'?subcultureEventsHref:categoryHref(categoryForType(e.subcategory).key)
   const mapHeading=useRef<HTMLDivElement>(null),mapActionPending=useRef(false)
   const sectionNav=useRef<HTMLElement>(null),sectionActionPending=useRef(false)
   const [message,setMessage]=useState('')
@@ -158,7 +161,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
     if(subject)qs.set('subject',subject);if(category)qs.set('category',category)
     const nextSection=patch.tab==='map'?'map':patch.tab==='info'?'home':patch.tab==='booths'?'booths':section
     qs.set('section',nextSection)
-    setParams(qs,{replace:true,preventScrollReset:true})
+    setParams(qs,{replace:true,preventScrollReset:true,state:location.state})
   }
   const chooseSection=(next:EventSection)=>{
     if(next===section){sectionNav.current?.scrollIntoView({block:'start',behavior:'auto'});return}
@@ -167,7 +170,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
     if(memoryMode!=='all')qs.set('my',memoryMode)
     if(subject)qs.set('subject',subject);if(category)qs.set('category',category)
     qs.set('section',next)
-    setParams(qs,{replace:true,preventScrollReset:true})
+    setParams(qs,{replace:true,preventScrollReset:true,state:location.state})
   }
   useEffect(()=>{
     if(!sectionActionPending.current)return
@@ -181,7 +184,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   const resetFilters=()=>{
     const next=resetVisitFilters(params,e)
     if(section!=='home')next.set('section',section)
-    setParams(next,{replace:true,preventScrollReset:true})
+    setParams(next,{replace:true,preventScrollReset:true,state:location.state})
     setMessage('방문일은 유지하고 검색·전시관·내 관심 조건을 모두 해제했어요.')
   }
   const open=(id:number)=>void navigate(catalogBoothPath(currentEventId,id,{day:state.day,hall:state.hall}),{state:{catalogEventReturnTo:location.pathname+location.search}})
@@ -195,7 +198,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
     return()=>cancelAnimationFrame(frame)
   },[section,state.focus,state.booth])
   const visitChange=(day:string)=>{update({day,hall:'',focus:null,booth:null});setMessage('방문일 기준으로 참가 부스와 위치를 바꿨어요.')}
-  const operatingVenueSelect=operatingChoices.length>1&&<label className={section==='home'?'field event-visit-day':'field'}><span>운영 행사·전시장</span><select className="select" value={currentEventId} onChange={ev=>{const next=new URLSearchParams(params);next.set('operatingEvent',ev.target.value);next.delete('hall');next.delete('focus');setParams(next,{replace:true,preventScrollReset:true})}}>{operatingChoices.map(row=><option key={row.id} value={row.id}>{row.event.name} · {row.event.venueName||'장소 미확인'}</option>)}</select></label>
+  const operatingVenueSelect=operatingChoices.length>1&&<label className={section==='home'?'field event-visit-day':'field'}><span>운영 행사·전시장</span><select className="select" value={currentEventId} onChange={ev=>{const next=new URLSearchParams(params);next.set('operatingEvent',ev.target.value);next.delete('hall');next.delete('focus');setParams(next,{replace:true,preventScrollReset:true,state:location.state})}}>{operatingChoices.map(row=><option key={row.id} value={row.id}>{row.event.name} · {row.event.venueName||'장소 미확인'}</option>)}</select></label>
   const official=e.sources.find(s=>['OFFICIAL','ORGANIZER_SOCIAL'].includes(s.kind)&&s.access==='ORIGINAL'&&publicLink(s.url))
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page event-detail-redesign">
@@ -208,12 +211,12 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
         <div><dt>입장</dt><dd>{e.admission||'입장 조건 미확인 · 무료 여부는 주최 공지를 확인하세요.'}</dd></div></dl>
       {section==='home'&&days.length>1&&<label className="field event-visit-day"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(day=><option key={day} value={day}>{dateLabel(day)}{day===today?' · 오늘':''}</option>)}</select></label>}
       {section==='home'&&operatingVenueSelect}
-      {section==='home'&&<FirstVisitSummary event={e}/>}
+      {section==='home'&&categoryForType(e.subcategory).key!=='subculture'&&<FirstVisitSummary event={e}/>}
       <div className="visit-primary-actions">{hasBooths&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}<Link className="btn secondary" to={itineraryHref(currentEventId,state.day)}>이 행사로 일정 만들기</Link>{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
       <div className="visit-utility-actions">{discoveryFeatures.comparison&&<Link to={compareHref([currentEventId])}>다른 행사와 비교</Link>}{usableAddress(e.address)&&<><SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(e.address!)}`}>장소 지도 ↗</SafeLink><button type="button" onClick={()=>void copyAddress()}>주소 복사</button></>}
         <SaveButton target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall}/><ShareQr target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall} title={e.name}/><ReportLink target={{namespace:'CATALOG',type:'EVENT',eventId:currentEventId,id:currentEventId,day:state.day,hall:state.hall}} viewedVersion={currentValue.publishedAt}/></div>
     </div></header>
-    <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths','부스'],['map','배치도'],['reviews','후기']] as const).filter(([key])=>(key!=='booths'||hasBooths)&&(key!=='map'||hasFloorplans)).map(([key,label])=><button key={key} type="button" aria-current={section===key?'page':undefined} className={section===key?'is-current':''} onClick={()=>chooseSection(key)}>{label}</button>)}</nav>
+    <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths',categoryForType(e.subcategory).key==='subculture'?'참가 부스·굿즈':'부스'],['map','배치도'],['reviews',categoryForType(e.subcategory).key==='subculture'?'이번·지난 회차 후기':'후기']] as const).filter(([key])=>(key!=='booths'||hasBooths)&&(key!=='map'||hasFloorplans)).map(([key,label])=><button key={key} type="button" aria-current={section===key?'page':undefined} className={section===key?'is-current':''} onClick={()=>chooseSection(key)}>{label}</button>)}</nav>
     {browsingBooths&&<section id="visit-browse" className="visit-controls" aria-label="방문 조건 및 부스 검색"><div className="visit-controls-head"><div><p className="eyebrow">{section==='map'?'배치도':'참가 부스'}</p><h2>{section==='map'?'날짜별 배치도':'부스 찾기'}</h2></div></div>
     <div className="visit-condition-row">
       <label className="field"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(d=><option key={d} value={d}>{dateLabel(d)}{d===today?' · 오늘':''}</option>)}{!days.length&&<option value="">일정 미확인</option>}</select></label>
@@ -223,7 +226,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
       <label className="field visit-search"><span>{section==='map'?'배치도에서 부스 찾기':'부스·번호·작가·상품 찾기'}</span><input className="input" type="search" value={state.q} maxLength={100} placeholder="B1, 작가명, 달토끼 키링" onChange={ev=>update({q:ev.target.value,focus:null})}/></label>
     </div><p role="status" className="visit-feedback">{message}</p>
     {params.get('day')&&params.get('day')!==state.day&&<p className="visit-important-note">링크의 날짜는 현재 공개된 운영일이 아니어서 가장 가까운 운영일을 표시합니다.</p>}</section>}
-    {browsingBooths&&<><div className="visit-facet-row"><label className="field"><span>작품·취향 주제</span><select className="select" value={subject} onChange={ev=>{const n=new URLSearchParams(params);if(ev.target.value)n.set('subject',ev.target.value);else n.delete('subject');setParams(n,{replace:true,preventScrollReset:true})}}><option value="">전체 주제</option>{subject&&!subjectOptions.includes(subject)&&<option value={subject}>{subject}</option>}{subjectOptions.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label className="field"><span>취급 품목</span><select className="select" value={category} onChange={ev=>{const n=new URLSearchParams(params);if(ev.target.value)n.set('category',ev.target.value);else n.delete('category');setParams(n,{replace:true,preventScrollReset:true})}}><option value="">전체 품목</option>{category&&!categoryOptions.includes(category)&&<option value={category}>{category}</option>}{categoryOptions.map(v=><option key={v} value={v}>{v}</option>)}</select></label></div><div className="memory-mode-switch" role="group" aria-label="내 관심 기준"><span>이 행사에서</span>{([['all','전체 부스'],['saved','저장한 부스'],['visited','방문 표시한 부스']] as const).map(([key,label])=><button type="button" key={key} className="btn secondary" aria-pressed={memoryMode===key} disabled={key!=='all'&&!memoryReady} onClick={()=>{const n=new URLSearchParams(params);if(key==='all')n.delete('my');else n.set('my',key);setParams(n,{replace:true,preventScrollReset:true})}}>{label}</button>)}<Link to={`/library?event=${currentEventId}`}>이 행사 보관함 →</Link></div>
+    {browsingBooths&&<><div className="visit-facet-row"><label className="field"><span>작품·취향 주제</span><select className="select" value={subject} onChange={ev=>{const n=new URLSearchParams(params);if(ev.target.value)n.set('subject',ev.target.value);else n.delete('subject');setParams(n,{replace:true,preventScrollReset:true,state:location.state})}}><option value="">전체 주제</option>{subject&&!subjectOptions.includes(subject)&&<option value={subject}>{subject}</option>}{subjectOptions.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label className="field"><span>취급 품목</span><select className="select" value={category} onChange={ev=>{const n=new URLSearchParams(params);if(ev.target.value)n.set('category',ev.target.value);else n.delete('category');setParams(n,{replace:true,preventScrollReset:true,state:location.state})}}><option value="">전체 품목</option>{category&&!categoryOptions.includes(category)&&<option value={category}>{category}</option>}{categoryOptions.map(v=><option key={v} value={v}>{v}</option>)}</select></label></div><div className="memory-mode-switch" role="group" aria-label="내 관심 기준"><span>이 행사에서</span>{([['all','전체 부스'],['saved','저장한 부스'],['visited','방문 표시한 부스']] as const).map(([key,label])=><button type="button" key={key} className="btn secondary" aria-pressed={memoryMode===key} disabled={key!=='all'&&!memoryReady} onClick={()=>{const n=new URLSearchParams(params);if(key==='all')n.delete('my');else n.set('my',key);setParams(n,{replace:true,preventScrollReset:true,state:location.state})}}>{label}</button>)}<Link to={`/library?event=${currentEventId}`}>이 행사 보관함 →</Link></div>
     {(state.q||state.hall||subject||category||memoryMode!=='all')&&<div className="visit-active-filters"><span>현재 조건 · {[state.q?`검색: ${state.q}`:'',state.hall,subject,category,memoryMode==='saved'?'저장한 부스':memoryMode==='visited'?'방문 표시한 부스':''].filter(Boolean).join(' / ')}</span><button type="button" onClick={resetFilters}>조건 해제</button></div>}
     {memoryMode!=='all'&&<p className="item-meta">{memoryMode==='saved'?'상품을 저장한 업체도 함께 보여요. 배치도는 저장한 부스를 강조하며 다른 부스 위치를 바꾸지 않아요.':'선택한 방문일에 직접 표시한 기록만 보여요. QR 스캔은 방문 기록이 아닙니다.'}</p>}</>}
     {memoryBlocked&&browsingBooths&&<div className="visit-memory-state" role={memoryError?'alert':'status'}>
@@ -243,9 +246,9 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
       {e.discoveryLinks?.filter(l=>l.url).map((l,i)=><p key={`l${i}`}><SafeLink url={l.url}>{({PARTICIPANTS:'공식 참가 명단',FLOOR_PLAN:'공식 배치도 게시물',SALES:'공식 판매 안내',OFFICIAL:'행사 공식 안내'} as Record<string,string>)[l.kind]||'행사 관련 안내'}</SafeLink>{l.note&&` · ${l.note}`}</p>)}
       <small>공개본 갱신: {new Date(currentValue.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}. 수집 후 변경될 수 있으므로 방문 전 주최 측 최신 공지를 확인하세요.</small>
     </section>
-    <div hidden={section!=='home'}><VisitorGuide value={currentValue} day={state.day}/></div>
+    <div hidden={section!=='home'}>{categoryForType(e.subcategory).key==='subculture'&&<FirstVisitSummary event={e}/>}<VisitorGuide value={currentValue} day={state.day}/></div>
     <div hidden={section!=='home'}><Link className="btn secondary" to={`/creator/catalog/events/${currentEventId}/booths/new`}>내 부스 등록</Link><OwnershipPanel eventId={currentEventId}/><Link className="btn secondary" to="/library">내 보관함에서 오프라인 정보 저장</Link><EventHistory key={`history-${eventId}`} eventId={Number(eventId)}/></div>
-    <div hidden={section!=='reviews'}><EventComments key={eventId} eventId={Number(eventId)}/></div>
+    <div hidden={section!=='reviews'}>{categoryForType(e.subcategory).key==='subculture'?<EventEditionReviews key={eventId} eventId={Number(eventId)} name={e.name}/>:<EventComments key={eventId} eventId={Number(eventId)}/>}</div>
   </section>
 }
 function ParticipantCard({eventId,row,day,hall,assets,showMap}:{eventId:number;row:PublicParticipant;day:string;hall:string;assets:PublicEvent['assets'];showMap?:(id:number)=>void}) {

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { InterestSettings } from '../features/interests/InterestSettings'
+import { currentSiteCategory } from '../features/discovery/site'
+import { useInterests } from '../features/subculture/InterestProvider'
 import { authApi } from '../api'
 import { createImageUploadTask, validateImageFile, type ImageUploadTask } from '../api/image-upload'
 import { useAuth } from '../app/useAuth'
@@ -23,8 +25,14 @@ function Shortcut({ to, icon, title, description }: { to: string; icon: IconName
   </Link>
 }
 
+function SubcultureAccountPreferences(){
+  const interests=useInterests()
+  return <section className="sc-account-preferences"><AccountLink to="/subculture/following" title={'관심 캐릭터·작가'+(!interests.loading&&!interests.error?' '+(interests.settings?.entries.length||0):'')} description="내 관심과 연결된 정보 확인"/><AccountLink to="/account/interests" title="관심 작품·캐릭터" description="등록된 작품·캐릭터 선택과 직접 입력"/><AccountLink to="/account/notifications" title="관심 소식·알림 설정" description="사이트 알림함과 선택형 웹 푸시"/></section>
+}
+
 export function AccountPage() {
   const auth = useAuth()
+  const subculture=currentSiteCategory()==='subculture'
   const lock = useRef(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -84,7 +92,7 @@ export function AccountPage() {
   }
   const imageUrl = previewUrl || (removeImage ? null : user?.profileImageUrl)
   return <section className="content-wrap section-pad account-page">
-    <header className="account-heading"><h1>내 정보</h1></header>
+    <header className="account-heading">{subculture&&<span className="sc-taste-eyebrow">MY BOOTHHANA</span>}<h1>{subculture?'마이페이지':'내 정보'}</h1>{subculture&&<p>관심 소식과 방문 계획을 나에게 맞게 관리하세요.</p>}</header>
 
     <section className={`account-welcome${user ? ' is-member' : ''}`} aria-label="계정 정보">
       {auth.loading ? <div className="account-welcome-copy"><span className="account-eyebrow">내 계정</span><h2 role="status">계정 정보를 확인하고 있어요.</h2></div>
@@ -93,7 +101,7 @@ export function AccountPage() {
             : <><div className="account-welcome-copy"><span className="account-eyebrow">부스하나 계정</span><h2>로그인하고, 내 행사를 이어서 보세요</h2><p>저장한 행사와 예약·문의 내역을 한곳에서 확인할 수 있어요.</p></div><a className="account-welcome-action" href={auth.loginUrl}>카카오로 로그인 <DiscoveryIcon name="arrow" size={17}/></a></>}
     </section>
 
-    {user && <section className="account-profile-section" aria-labelledby="account-profile-title">
+    {user && <details className="sc-account-profile-editor" open={subculture?undefined:true}><summary>프로필 편집</summary><section className="account-profile-section" aria-labelledby="account-profile-title">
       <div className="account-profile-heading"><h2 id="account-profile-title">프로필 설정</h2><p>닉네임과 프로필 사진은 이 계정으로 로그인할 때마다 유지됩니다.</p></div>
       <form className="account-profile-form" onSubmit={event => void saveProfile(event)}>
         <div className="account-profile-image-row">
@@ -107,14 +115,14 @@ export function AccountPage() {
         <label className="account-profile-name">닉네임<input value={nickname} onChange={event => { setNickname(event.target.value); setProfileMessage('') }} minLength={2} maxLength={20} required disabled={profileBusy} autoComplete="nickname" /></label>
         <div className="account-profile-footer"><button type="submit" disabled={profileBusy}>{profileBusy ? '저장 중…' : '변경사항 저장'}</button>{profileMessage && <p role={profileMessage === '프로필을 저장했습니다.' ? 'status' : 'alert'}>{profileMessage}</p>}</div>
       </form>
-    </section>}
+    </section></details>}
 
-    {user && <><AccountLink to="/account/interests" title="관심 작품·캐릭터" description="캐릭터·작가 설정과 직접 입력"/><AccountLink to="/account/notifications" title="관심 소식" description="알림함과 이 기기 푸시 설정"/><InterestSettings key={user.id}/></>}
+    {user && <>{subculture?<SubcultureAccountPreferences/>:<><AccountLink to="/account/interests" title="관심 작품·캐릭터" description="캐릭터·작가 설정과 직접 입력"/><AccountLink to="/account/notifications" title="관심 소식" description="알림함과 이 기기 푸시 설정"/></>}{subculture?<details className="sc-account-event-preferences"><summary>행사 유형 세부 설정</summary><InterestSettings key={user.id}/></details>:<InterestSettings key={user.id}/>}</>}
 
     <section className="account-quick-section" aria-labelledby="account-quick-title">
       <h2 id="account-quick-title">자주 찾는 메뉴</h2>
       <div className="account-shortcuts">
-        <Shortcut to="/library" icon="bookmark" title="내 보관함" description="저장한 행사와 부스, 오프라인 자료" />
+        <Shortcut to="/library" icon="bookmark" title={subculture?'내 방문 준비':'내 보관함'} description="저장한 행사와 부스, 오프라인 자료" />
         <Shortcut to="/reservations" icon="ticket" title="내 예약" description="예약과 수령 내역" />
       </div>
     </section>

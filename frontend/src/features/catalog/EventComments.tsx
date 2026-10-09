@@ -7,8 +7,9 @@ import './event-comments.css'
 
 type Comment = { id:string; eventId?:number; authorId:number; authorName:string; body:string; createdAt:string }
 type Result = { items:Comment[]; total:number }
-export function EventComments({eventId}:{eventId:number}) {
- const {user,loading,loginUrl}=useAuth(),[page,setPage]=useState(0),[body,setBody]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('')
+export function EventComments({eventId,draft,onDraftChange}:{eventId:number;draft?:string;onDraftChange?:(body:string)=>void}) {
+ const {user,loading,loginUrl}=useAuth(),[page,setPage]=useState(0),[localBody,setLocalBody]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ const body=draft??localBody,setBody=onDraftChange??setLocalBody
  const request=useRef<{id:string;body:string}|null>(null),guard=useRef(false)
  const list=useRemote(()=>api<Result>(`/api/public/catalog/events/${eventId}/comments?page=${page}`),[eventId,page])
  async function send(e:FormEvent){
