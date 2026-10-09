@@ -22,6 +22,9 @@
 .sc-taste-subject-card>a { display:block; }
 .sc-taste-portrait { display:grid; place-items:center; aspect-ratio:1; border-radius:14px; background:#f0ede6; color:#6b665a; width:100%; overflow:hidden; }
 .sc-taste-portrait>span { font-size:clamp(36px,5vw,64px); font-weight:650; }
+.sc-taste-portrait>img { display:block; width:100%; height:100%; min-height:0; min-width:0; object-fit:contain; }
+.sc-taste-portrait.is-creator>img { object-fit:cover; }
+.sc-taste-image-credit { display:block; margin-top:8px; font-size:12px; color:var(--sc-exp-muted); overflow-wrap:anywhere; }
 .sc-taste-portrait.is-creator { background:#e9ede7; color:#586457; }
 .sc-taste-portrait.is-work { background:#e9edf0; color:#5b6472; }
 .sc-taste-subject-card small { display:block; margin-top:16px; padding-right:24px; }
@@ -71,14 +74,14 @@
 .sc-taste-goods-grid .visit-product-badges .chip { font-size:11px; }
 .sc-taste-goods-grid .visit-product-evidence { font-size:12px; }
 .sc-taste-product-art { aspect-ratio:1; background:#f4f2ef; border-radius:10px; overflow:hidden; }
-.sc-taste-product-art .content-image { width:100%; height:100%; object-fit:cover; }
+.sc-taste-product-art>img { width:100%; height:100%; object-fit:contain; }
 .sc-taste-product-card { min-width:0; }
 .sc-taste-product-card>a>div:last-child { padding:16px 0; }
 .sc-taste-product-card h3 { font-size:18px; line-height:1.5; margin:6px 0 12px; }
 .sc-taste-product-card p,.sc-taste-product-card span { font-size:12px; }
 .sc-taste-product-detail { display:grid; grid-template-columns:1.1fr 1fr; gap:56px; margin-top:20px; align-items:start; }
 .sc-taste-product-photo { position:sticky; top:110px; }
-.sc-taste-product-photo>.content-image { aspect-ratio:1; width:100%; border-radius:14px; object-fit:cover; }
+.sc-taste-product-photo>img { aspect-ratio:1; width:100%; border-radius:14px; object-fit:contain; background:#f4f2ef; }
 .sc-taste-product-photo>p { text-align:center; font-size:12px; }
 .sc-live .sc-taste-product-description h1 { font-size:34px; margin:14px 0; }
 .sc-taste-product-creator { display:inline-flex; align-items:center; min-height:44px; color:#777; }

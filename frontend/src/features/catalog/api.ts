@@ -9,7 +9,7 @@ export interface Member {name: string; kind: string; aliases: string[]; profileU
 export interface ImageCandidate {type: string; imageUrl: string; pageUrl: string; caption: string | null; rightsEvidence: string | null}
 export interface Identity {sourceSystem: string; entryId: string | null; detailUrl: string | null}
 export interface ProductCheck {state: string; lastSeenAt: string | null}
-export interface ProductRow {id: number | null; data: Product; verification?: ProductCheck}
+export interface ProductRow {id: number | null; data: Product; verification?: ProductCheck; imageUrl?:string|null; imageSourceUrl?:string|null; imageCredit?:string|null}
 export interface Participant {identity?: Identity | null; sourceEntryId: string | null; registrationName: string; kind: string; members: Member[]; locations: Location[]; subjects: string[]; description?: string | null; officialLinks: string[]; sources: EventSource[]; images: ImageCandidate[]; warnings: string[]}
 export interface Product {identity?: Identity | null; sourceEntryId: string | null; name: string; summary: string; memberName: string | null; categories: string[]; subjects: string[]; evidenceScope: EvidenceScope; price: {amount: string; currency: string; checkedOn: string; note: string | null} | null; saleState: string; productUrl: string | null; sources: EventSource[]; images: ImageCandidate[]; warnings: string[]}
 export interface Sales {summary: string; evidenceScope: EvidenceScope; categories: string[]; subjects: string[]; salesMethod: string | null; sources: EventSource[]; images: ImageCandidate[]; products: Product[]; warnings: string[]}

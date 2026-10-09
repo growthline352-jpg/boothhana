@@ -149,7 +149,10 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
           return <ProductCard
             key={entry.id ?? `${entry.data.sourceEntryId ?? entry.data.name}-${index}`}
             product={entry.data}
-            images={exactImages.length ? exactImages : fallbackImages}
+            images={exactImages.length ? exactImages : entry.imageUrl ? [] : fallbackImages}
+            imageUrl={entry.imageUrl}
+            imageSourceUrl={entry.imageSourceUrl}
+            imageCredit={entry.imageCredit}
             verification={entry.verification}
             memoryTarget={entry.id === null ? undefined : { type: 'PRODUCT', eventId, id: entry.id, participantId: row.id }}
             reportTarget={entry.id === null ? undefined : { namespace: 'CATALOG', type: 'PRODUCT', eventId, id: entry.id }}

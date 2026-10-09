@@ -27,3 +27,5 @@
 @media(max-width:760px){.sc-home .sc-taste-intro h1{white-space:normal;font-size:28px}.sc-home .sc-taste-card h2{font-size:15px}.sc-home .sc-taste-card .sc-live-follow{top:10px;right:10px}.sc-home .sc-taste-intro>p,.sc-home .sc-home-shortcuts small{font-size:13px}.sc-home .sc-taste-character>span,.sc-home .sc-taste-card small,.sc-home .sc-taste-bottom{font-size:12px}.sc-home .sc-taste-placeholder{height:150px}}
 .sc-home .sc-work-switch .sc-more-characters[aria-pressed=true]{color:white}
 .sc-home .sc-live-heart{display:inline-grid;place-items:center}
+.sc-home .sc-taste-character>.sc-taste-placeholder{aspect-ratio:auto;display:flex;overflow:hidden}.sc-home .sc-taste-character>.sc-taste-placeholder>img{display:block;width:100%;height:100%;object-fit:contain}.sc-home .sc-taste-character>.sc-taste-placeholder>span{font-size:42px}
+@media(max-width:760px){.sc-home .sc-taste-character>.sc-taste-placeholder>span{font-size:32px}}

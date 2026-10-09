@@ -1,11 +1,12 @@
 import { api, publicRead } from '../../api/client'
 import type { EventData, Product, ProductCheck, PublicAsset } from '../catalog/api'
-export type Subject={id:string;kind:'WORK'|'CHARACTER';name:string;workId:string|null;workName:string|null;medium:string;sourceUrl:string;revision:number}
-export type Creator={id:number;name:string;kind:string;profileUrl:string|null}
-export type CreatorProduct={id:string;creatorId:number;creator:Creator;data:Product;subjects:{id:string;name:string;workName:string}[];status:string}
-export type Interest={id:string;subjectId:string|null;exhibitorId:number|null;customName:string;customWork:string;medium:string;customWorkId:string|null;label?:string;workName?:string;available?:boolean;kind?:string}
+export type EntityImage={imageUrl?:string|null;imageSourceUrl?:string|null;imageCredit?:string|null}
+export type Subject=EntityImage&{id:string;kind:'WORK'|'CHARACTER';name:string;workId:string|null;workName:string|null;medium:string;sourceUrl:string;revision:number}
+export type Creator=EntityImage&{id:number;name:string;kind:string;profileUrl:string|null}
+export type CreatorProduct=EntityImage&{id:string;creatorId:number;creator:Creator;data:Product;subjects:{id:string;name:string;workName:string}[];status:string}
+export type Interest=EntityImage&{id:string;subjectId:string|null;exhibitorId:number|null;customName:string;customWork:string;medium:string;customWorkId:string|null;label?:string;workName?:string;available?:boolean;kind?:string}
 export type Settings={revision:number;entries:Interest[]}
-export type Feed={personalized:boolean;unlinked:boolean;events:{id:number;event:EventData;banner:PublicAsset|null;reasons:string[]}[];goods:{id:number;eventId:number;eventName:string;participantId:number;participantName:string;data:Product;verification:ProductCheck|null;status:string;images:PublicAsset[]}[];creators:Creator[];page:number;hasMore:boolean}
+export type Feed={personalized:boolean;unlinked:boolean;events:{id:number;event:EventData;banner:PublicAsset|null;reasons:string[]}[];goods:(EntityImage&{id:number;eventId:number;eventName:string;participantId:number;participantName:string;data:Product;verification:ProductCheck|null;status:string;images:PublicAsset[]})[];creators:Creator[];page:number;hasMore:boolean}
 const base='/api/public/subculture'
 export const subcultureApi={
  products:(params:URLSearchParams)=>publicRead<{items:CreatorProduct[];hasMore:boolean;page:number}>(`${base}/products?${params}`),
@@ -20,4 +21,4 @@ export const subcultureApi={
  feed:(member:boolean,params:URLSearchParams)=>api<Feed>(`${member?'/api/me/subculture':base}/home?${params}`,{cache:'no-store'}),
 }
 export const interestKey=(entry:Pick<Interest,'subjectId'|'exhibitorId'|'customName'|'customWork'|'medium'|'customWorkId'>)=>entry.subjectId?'subject:'+entry.subjectId:entry.exhibitorId?'creator:'+entry.exhibitorId:'custom:'+JSON.stringify([entry.customName.normalize('NFKC').replace(/\s/g,'').toLowerCase(),(entry.customWorkId||entry.customWork).normalize('NFKC').replace(/\s/g,'').toLowerCase(),entry.medium])
-export const newInterest=(subject?:Subject,creator?:Creator):Interest=>({id:crypto.randomUUID(),subjectId:subject?.id??null,exhibitorId:creator?.id??null,customName:'',customWork:'',medium:'',customWorkId:null,label:subject?.name??creator?.name,workName:subject?.workName??'',kind:subject?.kind??'CREATOR'})
+export const newInterest=(subject?:Subject,creator?:Creator):Interest=>({id:crypto.randomUUID(),subjectId:subject?.id??null,exhibitorId:creator?.id??null,customName:'',customWork:'',medium:'',customWorkId:null,label:subject?.name??creator?.name,workName:subject?.workName??'',kind:subject?.kind??'CREATOR',imageUrl:(subject??creator)?.imageUrl??null,imageSourceUrl:(subject??creator)?.imageSourceUrl??null,imageCredit:(subject??creator)?.imageCredit??null})

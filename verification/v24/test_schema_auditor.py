@@ -4,7 +4,7 @@ S=importlib.util.spec_from_file_location('schema_auditor_v24',Path(__file__).wit
 ROOT=Path(__file__).resolve().parents[2]
 class SchemaAuditorTests(unittest.TestCase):
  def test_current_ddl_names_and_typed_columns(self):
-        got=M.inventory(ROOT);self.assertEqual(got['tableCount'],79);self.assertEqual(got['columnCount'],671);self.assertEqual(got['readinessColumnsMismatch'],[])
+        got=M.inventory(ROOT);self.assertEqual(got['tableCount'],80);self.assertEqual(got['columnCount'],711);self.assertEqual(got['readinessColumnsMismatch'],[])
         self.assertEqual(got['tables']['subculture_event_candidate']['publication_withdrawn']['udt'],'bool')
         self.assertTrue(got['tables']['subculture_event_candidate']['publication_withdrawn']['notNull'])
         for table,key,key_type in [('personal_itinerary','id','uuid'),('purchase_plan','event_id','int8')]:

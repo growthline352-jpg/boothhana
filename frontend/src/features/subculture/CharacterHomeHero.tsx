@@ -6,6 +6,7 @@ import { DiscoveryIcon as Icon } from '../discovery/DiscoveryIcon'
 import { useInterests } from './InterestProvider'
 import { FollowButton } from './FollowButton'
 import { newInterest, subcultureApi, type Interest } from './api'
+import { TastePortrait } from './SubcultureUI'
 import './characterHomeHero.css'
 
 export function CharacterHomeHero() {
@@ -57,8 +58,6 @@ export function CharacterHomeHero() {
 
 function CharacterCard({entry}: {entry: Interest}) {
   const name = entry.label || entry.customName || '관심 캐릭터', linked = !!entry.subjectId && entry.available !== false
-  // Subject APIs currently provide identity and provenance, not approved portraits.
-  // A neutral name tile must never substitute an unrelated product/character image.
-  const contents = <><div className="sc-taste-placeholder" aria-hidden="true"><span>{Array.from(name)[0]}</span><small>캐릭터 이미지 준비 중</small></div><small>{entry.workName || entry.customWork || '출처 작품 미확인'}</small><h2>{name}</h2><span>{linked ? '캐릭터 알아보기' : '관심 정보 확인'} <Icon name="chevron" size={13}/></span></>
+  const contents = <><TastePortrait name={name} imageUrl={linked?entry.imageUrl:null} className="sc-taste-placeholder" fallbackNote="캐릭터 이미지 준비 중" loading="eager"/><small>{entry.workName || entry.customWork || '출처 작품 미확인'}</small><h2>{name}</h2><span>{linked ? '캐릭터 알아보기' : '관심 정보 확인'} <Icon name="chevron" size={13}/></span></>
   return <article className="sc-taste-card"><Link className="sc-taste-character" to={linked ? '/subculture/subjects/' + entry.subjectId : '/account/interests'}>{contents}</Link><FollowButton entry={entry}/>{!linked && <p className="sc-taste-pending">{entry.subjectId ? '현재 비공개' : '직접 입력 · 정보 연결 대기'}</p>}</article>
 }
