@@ -247,10 +247,12 @@ class CollectionGraphIntegrationTests {
   String day=data.occurrences().getFirst().startDate();var input=Map.<String,Object>of("scope",Map.of("region","SEOUL_GYEONGGI","timezone","Asia/Seoul","startDate",day,"endDate",day));
   graph.seed(new Seed("DISCOVERY","partial-test",input,true,"test"));var job=graph.claim();var first=value(data);var second=value(data);second.put("name","[TEST] Deferred event");second.put("edition","Deferred 2026");
   String deferredSource="https://example.com/deferred-edition";second.put("sources",List.of(new Source(deferredSource,"OFFICIAL","ORIGINAL","Unconfirmed edition")));
-  var result=Map.of("schemaVersion","1","searchStatus","COMPLETE","summary","Two event candidates","queries",List.of("test"),"events",List.of(first,second),
-   "eventEvidence",List.of(Map.of("eventIndex",0,"sourceUrl",source),Map.of("eventIndex",1,"sourceUrl",deferredSource)),
-   "unverifiedLeads",List.of(Map.of("sourceUrl","https://example.com/unverified-lead")));var e=extract(job,result);
-  var decisions=List.of(new EventDecision(0,"APPROVE","Exact edition",audit()),new EventDecision(1,"ENRICH","Schedule conflict",audit()));
+  var freshRef=new LinkedHashMap<String,Object>();freshRef.put("eventIndex",0);freshRef.put("existingEventId",null);freshRef.put("identityReason","Unconfirmed new edition");
+  var result=Map.of("schemaVersion","1","searchStatus","COMPLETE","summary","Two event candidates","queries",List.of("test"),"events",List.of(second,first),
+   "eventEvidence",List.of(Map.of("eventIndex",0,"sourceUrl",deferredSource),Map.of("eventIndex",1,"sourceUrl",source)),
+   "unverifiedLeads",List.of(Map.of("sourceUrl","https://example.com/unverified-lead")),
+   "existingEventRefs",List.of(freshRef,Map.of("eventIndex",1,"existingEventId",event,"identityReason","Same exact edition")));var e=extract(job,result);
+  var decisions=List.of(new EventDecision(0,"ENRICH","Schedule conflict",audit()),new EventDecision(1,"APPROVE","Exact edition",audit()));
   graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"APPROVE","Independent decisions",audit(),decisions));
   assertThat(db.queryForObject("select count(*) from subculture_event_candidate where name='[TEST] Deferred event'",Integer.class)).isZero();
   assertThat(db.queryForObject("select count(*) from collection_job where kind='DISCOVERY' and input_json->'eventHint'->>'name'='[TEST] Deferred event'",Integer.class)).isEqualTo(1);
