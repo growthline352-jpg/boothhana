@@ -74,6 +74,65 @@ class EntityMediaIntegrationTests {
    assertThatThrownBy(()->media.content(id(extracted),0,"image/png",digest,bytes.length,new ByteArrayInputStream(bytes))).isInstanceOf(ApiException.class);}
   assertThat(storage.puts).isZero();assertThat(media.publicImages("SUBJECT",List.of(character.toString()))).isEmpty();
  }
+ ExtractionInput reference(String permission,boolean official){
+  var input=extraction("SUBJECT",character.toString(),permission);var c=input.candidate();
+  return new ExtractionInput(input.extractionId(),input.kind(),input.targetId(),input.targetHash(),new Candidate(c.imageUrl(),c.pageUrl(),c.imageHash(),c.caption(),c.credit(),c.identityEvidence(),permission,c.usageEvidence(),c.usageSourceUrl(),page,"Publisher character introduction identifies the exact character and parent work",official),input.audit());
+ }
+ @Test void officialReferenceDisplaysWithoutPermissionApprovalOrFileStorage()throws Exception{
+  var extracted=media.extract(reference("UNKNOWN",true));assertThat(media.publicImages("SUBJECT",List.of(character.toString()))).isEmpty();
+  var decision=review(extracted,"REFERENCE",audit(true,"d".repeat(64)));var checked=media.review(id(extracted),decision);
+  assertThat(media.review(id(extracted),decision).get("revision")).isEqualTo(checked.get("revision"));
+  assertThat(checked.get("usageStatus")).isEqualTo("UNKNOWN");assertThat(checked.get("rightsState")).isEqualTo("PENDING");assertThat(checked.get("storageState")).isEqualTo("PENDING");assertThat(checked.get("storedUrl")).isNull();
+  assertThat(interests.subject(character).get("imageUrl")).isEqualTo("https://example.com/image.png");assertThat(interests.subject(character).get("imageSourceUrl")).isEqualTo(page);
+  assertThatThrownBy(()->media.content(id(extracted),1,"image/png",digest,bytes.length,new ByteArrayInputStream(bytes))).isInstanceOf(ApiException.class);assertThat(storage.puts).isZero();
+ }
+ @Test void forbiddenUnofficialAndMissingIdentityReferencesNeverBecomePublic(){
+  for(var input:List.of(reference("FORBIDDEN",true),reference("UNKNOWN",false),extraction("SUBJECT",character.toString(),"UNKNOWN"))){
+   assertThatThrownBy(()->{var extracted=media.extract(input);media.review(id(extracted),review(extracted,"REFERENCE",audit(true)));}).isInstanceOf(ApiException.class);
+  }
+  assertThat(media.publicImages("SUBJECT",List.of(character.toString()))).isEmpty();
+ }
+ @Test void referenceCannotOutliveTargetRevisionEvenWhenManuallyOwned(){
+  var extracted=media.extract(reference("UNKNOWN",true));media.review(id(extracted),review(extracted,"REFERENCE",audit(true)));
+  db.update("update subculture_entity_media set reviewed_by=? where id=?",owner,id(extracted));
+  db.update("update subculture_subject set revision=revision+1 where id=?",character);
+  assertThat(media.publicImages("SUBJECT",List.of(character.toString()))).isEmpty();
+ }
+ @Test void storedImageWinsOverReferenceAndReferenceDoesNotRequireStorageConfiguration()throws Exception{
+  var extracted=media.extract(reference("UNKNOWN",true));media.review(id(extracted),review(extracted,"REFERENCE",audit(true)));
+  var referencesOnly=new EntityMediaService(db,json,storage,"");ReflectionTestUtils.setField(referencesOnly,"enabled",true);
+  assertThat(referencesOnly.publicImages("SUBJECT",List.of(character.toString())).get(character.toString()).get("imageUrl")).isEqualTo("https://example.com/image.png");
+  var complete=stored("SUBJECT",character.toString());assertThat(media.publicImages("SUBJECT",List.of(character.toString())).get(character.toString()).get("imageUrl")).isEqualTo(complete.get("storedUrl"));
+ }
+ @Test void newerVerifiedReferenceReplacesAnOlderStillValidReference(){
+  var old=media.extract(reference("UNKNOWN",true));media.review(id(old),review(old,"REFERENCE",audit(true)));
+  db.update("update subculture_entity_media set reviewed_at=now()-interval '1 hour' where id=?",id(old));
+  var input=reference("UNKNOWN",true);var c=input.candidate();String changed="https://example.com/new-image.png";
+  var newer=new Candidate(changed,c.pageUrl(),c.imageHash(),c.caption(),c.credit(),c.identityEvidence(),c.usageStatus(),c.usageEvidence(),c.usageSourceUrl(),c.identitySourceUrl(),c.identitySourceEvidence(),true);
+  var fresh=media.extract(new ExtractionInput(input.extractionId(),input.kind(),input.targetId(),input.targetHash(),newer,input.audit()));media.review(id(fresh),review(fresh,"REFERENCE",audit(true)));
+  assertThat(media.publicImages("SUBJECT",List.of(character.toString())).get(character.toString()).get("imageUrl")).isEqualTo(changed);
+ }
+ @Test void alternateOfficialIdentityMustBeReadInBothAudits(){
+  var input=reference("UNKNOWN",true);var alternate="https://publisher.com/official-character";var c=input.candidate();
+  var candidate=new Candidate(c.imageUrl(),c.pageUrl(),c.imageHash(),c.caption(),c.credit(),c.identityEvidence(),c.usageStatus(),c.usageEvidence(),c.usageSourceUrl(),alternate,c.identitySourceEvidence(),true);
+  var extraction=audit(false);var opened=List.of(page,usage,alternate);var docs=List.of(new SourceDocument(page,"a".repeat(64),Instant.now().toString()),new SourceDocument(usage,"c".repeat(64),Instant.now().toString()),new SourceDocument(alternate,"e".repeat(64),Instant.now().toString()));
+  var proof=new Audit(extraction.model(),extraction.promptVersion(),extraction.schemaVersion(),true,opened,Map.of(),List.of(digest),docs);
+  var extracted=media.extract(new ExtractionInput(input.extractionId(),input.kind(),input.targetId(),input.targetHash(),candidate,proof));
+  assertThatThrownBy(()->media.review(id(extracted),review(extracted,"REFERENCE",audit(true)))).isInstanceOf(ApiException.class);
+  var fresh=new Audit(proof.model(),"entity-media-review-3",proof.schemaVersion(),true,opened,Map.of(),List.of(digest),docs);
+  assertThat(media.review(id(extracted),review(extracted,"REFERENCE",fresh)).get("reviewVerdict")).isEqualTo("REFERENCE");
+ }
+ @Test void expiredReferenceIsQueuedForFreshReviewAndFailureWithdrawsOnlyItsRevision(){
+  var extracted=media.extract(reference("UNKNOWN",true));var checked=media.review(id(extracted),review(extracted,"REFERENCE",audit(true)));
+  db.update("update subculture_entity_media set reviewed_at=now()-interval '8 days' where id=?",id(extracted));
+  assertThat(media.publicImages("SUBJECT",List.of(character.toString()))).isEmpty();
+  assertThat(media.targets("SUBJECT","",100).get("items").toString()).contains(character.toString());
+  var fresh=media.extract(reference("UNKNOWN",true));assertThat(id(fresh)).isNotEqualTo(id(extracted));
+  var reviewed=media.review(id(fresh),review(fresh,"REFERENCE",audit(true)));
+  media.failed(id(fresh),new FailureInput(0,"stale failure"));assertThat(media.detail(id(fresh)).get("active")).isEqualTo(true);
+  media.failed(id(fresh),new FailureInput(((Number)reviewed.get("revision")).longValue(),"source no longer available"));
+  assertThat(media.detail(id(fresh)).get("active")).isEqualTo(false);assertThat(media.publicImages("SUBJECT",List.of(character.toString()))).isEmpty();
+ }
  @Test void unverifiedOrChangedSourcesAndSameExtractionPromptAreRejected(){
   var extracted=media.extract(extraction("SUBJECT",character.toString(),"PERMITTED"));assertThatThrownBy(()->media.review(id(extracted),review(extracted,"APPROVE",audit(true,"d".repeat(64))))).isInstanceOf(ApiException.class);
   assertThatThrownBy(()->media.review(id(extracted),review(extracted,"APPROVE",audit(false)))).isInstanceOf(ApiException.class);
