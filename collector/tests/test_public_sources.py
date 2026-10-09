@@ -1,5 +1,6 @@
 import unittest,json,zlib
 import io,hashlib
+from html import escape
 from unittest.mock import patch
 from public_sources import PublicSources,illustar_notice
 from media_fetch import MediaError,fetch_html
@@ -58,6 +59,28 @@ class PublicSourceTests(unittest.TestCase):
     def test_blocked_source_is_not_fetched(self):
         def fetch(*a,**k):raise AssertionError('must not fetch')
         self.assertFalse(PublicSources(['example.com'],fetch)([URL])[0]['available'])
+    def test_public_article_literals_are_decoded_and_refetched_without_execution(self):
+        url='https://kakaoent.com/pr/detail/519';calls=[]
+        body='<p>'+('공식 웹소설 작품 소개 '*20)+'</p><a href="/pr/detail/294">관련 원문</a><script>do_not_execute()</script>'
+        state='window.__NUXT__=(function(a,b){return {data:[{detailData:{newsIdx:519,title:'+json.dumps('작품 &ldquo;소개&rdquo;')+',summary:b,content:'+json.dumps(escape(body),ensure_ascii=False)+'}}]}}(false,null));'
+        def fetch(address,hosts,**kwargs):
+            calls.append(address)
+            if address.endswith('/robots.txt'):return 'User-agent: *\nAllow: /','policy'
+            return '<div id="__nuxt"></div><script>'+state+'</script>','original-html-sha'
+        reader=PublicSources([],fetch);first=reader([url])[0];second=reader([url])[0]
+        self.assertTrue(first['available'],first);self.assertTrue(second['available'],second)
+        self.assertEqual('original-html-sha',first['sha256']);self.assertEqual(2,calls.count(url))
+        self.assertIn('공식 웹소설 작품 소개',first['text']);self.assertNotIn('do_not_execute',first['text'])
+        self.assertEqual('작품 “소개”',first['title']);self.assertIn('https://kakaoent.com/pr/detail/294',first['links'])
+    def test_embedded_article_requires_matching_identity_and_literal_body(self):
+        for state in [
+            'window.__NUXT__={detailData:{newsIdx:518,title:"wrong article",summary:null,content:"'+('wrong body '*20)+'"}};',
+            'window.__NUXT__={detailData:{newsIdx:519,title:"expression",summary:null,content:run_code()}};']:
+            def fetch(address,hosts,**kwargs):
+                if address.endswith('/robots.txt'):return 'User-agent: *\nAllow: /','policy'
+                return '<script>'+state+'</script>','hash'
+            self.assertFalse(PublicSources([],fetch)(['https://kakaoent.com/pr/detail/519'])[0]['available'])
+            self.assertFalse(PublicSources([],fetch)(['https://example.com/pr/detail/519'])[0]['available'])
     def test_official_spa_notice_uses_only_public_endpoint(self):
         calls=[];payload={'info':{'title':'공식 행사 안내','body':'<p>'+('실제 안내 내용 '*30)+'</p>'}}
         compressed=zlib.compress(json.dumps(payload,ensure_ascii=False).encode())
