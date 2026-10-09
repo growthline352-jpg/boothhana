@@ -19,7 +19,7 @@ create table if not exists subculture_entity_media (
  object_key text, sha256 char(64), content_type text, byte_size bigint,
  active boolean not null default true, reviewed_by bigint references app_user(id),
  revision bigint not null default 0, last_attempt_at timestamptz, error text not null default '',
- created_at timestamptz not null default now(), stored_at timestamptz,
+ created_at timestamptz not null default clock_timestamp(), stored_at timestamptz,
  check((target_kind='SUBJECT' and subject_id is not null and target_id=subject_id::text and creator_id is null and product_id is null)
     or (target_kind='CREATOR' and creator_id is not null and target_id=creator_id::text and subject_id is null and product_id is null)
     or (target_kind='PRODUCT' and product_id is not null and target_id=product_id::text and subject_id is null and creator_id is null)),

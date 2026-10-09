@@ -100,6 +100,11 @@ class EntityMediaIntegrationTests {
   db.update("update subculture_subject set active=true where id=?",work);db.update("update subculture_subject set source_url='https://example.com/corrected',revision=revision+1 where id=?",character);assertThat(media.publicImages("SUBJECT",List.of(character.toString()))).isEmpty();
   assertThatThrownBy(()->media.content(id(complete),1,"image/png",digest,bytes.length,new ByteArrayInputStream(bytes))).isInstanceOf(ApiException.class);
  }
+ @Test void largePublicCatalogImageReadsAreSplitWithoutLosingVerifiedImages()throws Exception{
+  var complete=stored("SUBJECT",character.toString());var ids=new ArrayList<String>();ids.add(character.toString());
+  for(int i=0;i<3000;i++)ids.add(UUID.randomUUID().toString());
+  assertThat(media.publicImages("SUBJECT",ids).get(character.toString()).get("imageUrl")).isEqualTo(complete.get("storedUrl"));
+ }
  @Test void olderValidAndManualSelectionsArePreservedAndRightsRevocationHidesThem()throws Exception{
   var first=stored("SUBJECT",character.toString());var input=extraction("SUBJECT",character.toString(),"PERMITTED");var modified=new Candidate("https://example.com/other.png",page,digest,"Second valid image","Other author",input.candidate().identityEvidence(),"PERMITTED",input.candidate().usageEvidence(),usage);
   var second=media.extract(new ExtractionInput(UUID.randomUUID(),input.kind(),input.targetId(),input.targetHash(),modified,input.audit()));second=media.review(id(second),review(second,"APPROVE",audit(true)));second=media.content(id(second),1,"image/png",digest,bytes.length,new ByteArrayInputStream(bytes));
@@ -133,9 +138,11 @@ class EntityMediaIntegrationTests {
   db.update("update subculture_event_candidate set publication_withdrawn=true where id=?",catalog.get("event"));assertThatThrownBy(()->media.context("PRODUCT",product)).isInstanceOf(ApiException.class);
  }
  @Test void apiUsesCollectorAuthenticationAndAllowsBoundedImageBodies()throws Exception{
-  var approved=approved("SUBJECT",character.toString());http.perform(get("/api/internal/subculture/v6/media/context").param("kind","SUBJECT").param("targetId",character.toString())).andExpect(status().isUnauthorized());
+  var approved=approved("SUBJECT",character.toString());String contextPath="/api/internal/subculture/v6/media/context";String contentPath="/api/internal/subculture/v6/media/"+id(approved)+"/content";
+  http.perform(get(contextPath).servletPath(contextPath).param("kind","SUBJECT").param("targetId",character.toString())).andExpect(status().isUnauthorized());
+  http.perform(get(contextPath).servletPath(contextPath).header("Authorization","Bearer media-isolated-test-token-1234567890").param("kind","SUBJECT").param("targetId",character.toString())).andExpect(status().isOk());
   // Accepted binary path reaches byte verification, instead of the generic JSON-only collector rejection.
-  http.perform(post("/api/internal/subculture/v6/media/"+id(approved)+"/content").header("Authorization","Bearer media-isolated-test-token-1234567890").header("X-Asset-Revision",1).header("X-Image-SHA256",digest).header("X-Image-Size",bytes.length).contentType("image/png").content(new byte[]{1,2,3})).andExpect(status().isBadRequest());
+  http.perform(post(contentPath).servletPath(contentPath).header("Authorization","Bearer media-isolated-test-token-1234567890").header("X-Asset-Revision",1).header("X-Image-SHA256",digest).header("X-Image-Size",bytes.length).contentType("image/png").content(new byte[]{1,2,3})).andExpect(status().isBadRequest());
  }
  @Test void mediaTableIsProtectedByActualRlsAndBrowserRolesHaveNoGrants(){assertThat(db.queryForObject("select relrowsecurity from pg_class where oid='subculture_entity_media'::regclass",Boolean.class)).isTrue();assertThat(db.queryForObject("select has_table_privilege('anon','subculture_entity_media','SELECT,INSERT,UPDATE,DELETE') or has_table_privilege('authenticated','subculture_entity_media','SELECT,INSERT,UPDATE,DELETE')",Boolean.class)).isFalse();}
 }

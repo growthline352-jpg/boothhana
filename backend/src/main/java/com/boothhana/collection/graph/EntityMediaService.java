@@ -119,10 +119,22 @@ public class EntityMediaService {
  }
  private Set<String> identityUrls(Object value){var result=new LinkedHashSet<String>();collectIdentityUrls(value,result);return result;}
  private void collectIdentityUrls(Object value,Set<String> found){
-  if(value instanceof Map<?,?> map)map.forEach((key,item)->{String field=key.toString();if(Set.of("sourceUrl","profileUrl","productUrl","url").contains(field)&&item instanceof String text&&!text.isBlank()){try{url(text);found.add(text);}catch(ApiException ignored){}}
-   else if(Set.of("officialLinks","links").contains(field)&&item instanceof List<?> values)for(Object link:values)if(link instanceof String text){try{url(text);found.add(text);}catch(ApiException ignored){}}
-   else if(!Set.of("images","banners","existingMedia").contains(field))collectIdentityUrls(item,found);});
-  else if(value instanceof List<?> list)list.forEach(item->collectIdentityUrls(item,found));
+  if(value instanceof Map<?,?> map){
+   map.forEach((key,item)->{
+    String field=key.toString();
+    if(Set.of("images","banners","existingMedia").contains(field))return;
+    if(Set.of("sourceUrl","profileUrl","productUrl","url").contains(field)&&item instanceof String text&&!text.isBlank()){
+     try{url(text);found.add(text);}catch(ApiException ignored){}
+    } else if(Set.of("officialLinks","links").contains(field)&&item instanceof List<?> values){
+     for(Object link:values){
+      if(link instanceof String text){try{url(text);found.add(text);}catch(ApiException ignored){}}
+      else collectIdentityUrls(link,found);
+     }
+    } else collectIdentityUrls(item,found);
+   });
+  } else if(value instanceof List<?> list){
+   list.forEach(item->collectIdentityUrls(item,found));
+  }
  }
  private Map<String,String> audit(Audit audit,String imageHash){
   require(audit!=null&&GraphService.MODEL.equals(audit.model())&&audit.openedUrls()!=null&&audit.openedUrls().size()<=500&&audit.imageHashes()!=null&&audit.imageHashes().contains(imageHash)
@@ -198,14 +210,19 @@ public class EntityMediaService {
   if(((Number)row.get("revision")).longValue()!=revision||row.get("reviewed_by")!=null)throw ApiException.conflict("이미지 승인 상태가 변경되었습니다.");
   String key="verified/subculture/"+kind.toLowerCase(Locale.ROOT)+"/"+id+"/"+digest+ImageUploadRules.extension(type);
   storage.put(key,type,bytes,digest);storage.verify(key,type,size,digest);
-  db.update("update subculture_entity_media set object_key=?,sha256=?,byte_size=?,content_type=?,storage_state='STORED',stored_at=now(),last_attempt_at=now(),error='',revision=revision+1 where id=?",key,digest,size,type,id);return detail(id);
+  db.update("update subculture_entity_media set object_key=?,sha256=?,byte_size=?,content_type=?,storage_state='STORED',stored_at=clock_timestamp(),last_attempt_at=clock_timestamp(),error='',revision=revision+1 where id=?",key,digest,size,type,id);return detail(id);
  }
  @Transactional public Map<String,Object> failed(UUID id,FailureInput input){require(input!=null&&input.revision()>=0&&input.reason()!=null&&input.reason().length()<=1000,"이미지 오류 형식 확인 필요");db.update("update subculture_entity_media set storage_state='FAILED',last_attempt_at=now(),error=?,revision=revision+1 where id=? and revision=? and storage_state<>'STORED' and reviewed_by is null",input.reason(),id,input.revision());return detail(id);}
  /** Bounds every result page and checks current target visibility/snapshot; never returns source candidates. */
  public Map<String,Map<String,Object>> publicImages(String kind,Collection<String> ids){
+  if(ids.size()>3000){
+   var unique=new ArrayList<String>(new LinkedHashSet<>(ids));var result=new LinkedHashMap<String,Map<String,Object>>();
+   for(int start=0;start<unique.size();start+=3000)result.putAll(publicImages(kind,unique.subList(start,Math.min(start+3000,unique.size()))));
+   return result;
+  }
   if(!enabled||ids.isEmpty()||base.isBlank())return Map.of();require(ids.size()<=3000&&KINDS.contains(kind),"이미지 조회 범위 오류");ids.forEach(id->targetId(kind,id));
   String marks=String.join(",",Collections.nCopies(ids.size(),"?"));var args=new ArrayList<Object>();args.add(kind);args.addAll(ids);
-  var rows=db.queryForList("select distinct on(m.target_id) m.target_id,m.object_key,m.page_url,m.credit,m.sha256 from subculture_entity_media m join ("+targetSql(kind)+") t on t.target_id=m.target_id where m.target_kind=? and m.target_id in ("+marks+") and m.active and m.rights_state='APPROVED' and m.review_verdict='APPROVE' and m.storage_state='STORED' and m.object_key is not null and (m.reviewed_by is not null or m.target_snapshot_json=t.snapshot) order by m.target_id,(m.reviewed_by is not null) desc,m.created_at,m.id",args.toArray());
+  var rows=db.queryForList("select distinct on(m.target_id) m.target_id,m.object_key,m.page_url,m.credit,m.sha256 from subculture_entity_media m join ("+targetSql(kind)+") t on t.target_id=m.target_id where m.target_kind=? and m.target_id in ("+marks+") and m.active and m.rights_state='APPROVED' and m.review_verdict='APPROVE' and m.storage_state='STORED' and m.object_key is not null and (m.reviewed_by is not null or m.target_snapshot_json=t.snapshot) order by m.target_id,(m.reviewed_by is not null) desc,m.stored_at asc nulls last,m.created_at,m.id",args.toArray());
   var result=new LinkedHashMap<String,Map<String,Object>>();for(var row:rows)result.put(text(row.get("target_id")),Map.of("imageUrl",base+"/"+row.get("object_key"),"imageSourceUrl",row.get("page_url"),"imageCredit",row.get("credit")));return result;
  }
  public List<Map<String,Object>> attach(String kind,List<Map<String,Object>> values){
