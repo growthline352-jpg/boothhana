@@ -15,7 +15,7 @@ import '../catalog/catalog.css'
 import '../visit/visit.css'
 import './subculture.css'
 
-export function SubcultureHome(){const auth=useAuth();return <><SubcultureResults/>{auth.status==='authenticated'&&<CreatorProductList key={auth.user?.id+':'+auth.generation} mine/>}</>}
+export { SubcultureHome } from './SubcultureHome'
 export function SubcultureResults({subjectId,creatorId}:{subjectId?:string;creatorId?:string}){
  const auth=useAuth(),interests=useInterests(),[params,setParams]=useSearchParams(),location=useLocation()
  const page=Math.max(0,Math.min(1000,Number(params.get('page'))||0)),interest=params.get('interestId')||''
