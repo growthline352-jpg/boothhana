@@ -297,6 +297,18 @@ class EntityMediaWorkerTests(unittest.TestCase):
         self.assertEqual('DEFERRED', result['status'])
         self.assertEqual('PUBLIC_IMAGE_HASH_MISMATCH', result['attempts'][0]['reason'])
 
+    def test_permitted_alternate_identity_failed_upload_resumes_from_both_saved_audits(self):
+        def sources(urls):
+            return [document(url) if url != IDENTITY else {'url': url, 'available': False} for url in urls]
+        self.worker(source_loader=sources).run_target(CONTEXT, [SEED])
+        self.api.saved.update(storageState='FAILED', storedUrl=None)
+        saved = copy.deepcopy(self.api.saved)
+        self.api.calls, self.model_calls = [], []
+        result = self.worker(source_loader=sources).run_target({**CONTEXT, 'existingMedia': [saved]})
+        self.assertEqual('VERIFIED', result['status'])
+        self.assertEqual([], self.model_calls)
+        self.assertTrue(any(c[1].endswith('/content') for c in self.api.calls))
+
     def test_failed_upload_cannot_resume_after_license_original_changes(self):
         self.worker().run_target(CONTEXT, [SEED])
         self.api.saved.update(storageState='FAILED', storedUrl=None)

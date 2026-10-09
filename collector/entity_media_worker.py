@@ -484,7 +484,9 @@ class EntityMediaWorker:
                         candidate = receipt.get('candidate', {})
                         prior_documents = receipt.get('extractionAudit', {}).get('sourceDocuments', [])
                         prior_hashes = self._hashes(prior_documents)
-                        identity = next((url for url in identity_urls(context['target']) if url in prior_hashes), None)
+                        selected = candidate.get('identitySourceUrl')
+                        reviewed_hashes = self._hashes(receipt.get('reviewAudit', {}).get('sourceDocuments', []))
+                        identity = selected if selected and selected in prior_hashes and selected in reviewed_hashes else next((url for url in identity_urls(context['target']) if url in prior_hashes and url in reviewed_hashes), None)
                         if not identity:
                             raise RunError('RESUME_IDENTITY_AUDIT_MISSING')
                         documents, _ = self._documents(context, candidate.get('pageUrl'), candidate.get('usageSourceUrl'), identity)

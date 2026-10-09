@@ -104,6 +104,14 @@ class EntityMediaIntegrationTests {
   assertThat(referencesOnly.publicImages("SUBJECT",List.of(character.toString())).get(character.toString()).get("imageUrl")).isEqualTo("https://example.com/image.png");
   var complete=stored("SUBJECT",character.toString());assertThat(media.publicImages("SUBJECT",List.of(character.toString())).get(character.toString()).get("imageUrl")).isEqualTo(complete.get("storedUrl"));
  }
+ @Test void newerVerifiedReferenceReplacesAnOlderStillValidReference(){
+  var old=media.extract(reference("UNKNOWN",true));media.review(id(old),review(old,"REFERENCE",audit(true)));
+  db.update("update subculture_entity_media set reviewed_at=now()-interval '1 hour' where id=?",id(old));
+  var input=reference("UNKNOWN",true);var c=input.candidate();String changed="https://example.com/new-image.png";
+  var newer=new Candidate(changed,c.pageUrl(),c.imageHash(),c.caption(),c.credit(),c.identityEvidence(),c.usageStatus(),c.usageEvidence(),c.usageSourceUrl(),c.identitySourceUrl(),c.identitySourceEvidence(),true);
+  var fresh=media.extract(new ExtractionInput(input.extractionId(),input.kind(),input.targetId(),input.targetHash(),newer,input.audit()));media.review(id(fresh),review(fresh,"REFERENCE",audit(true)));
+  assertThat(media.publicImages("SUBJECT",List.of(character.toString())).get(character.toString()).get("imageUrl")).isEqualTo(changed);
+ }
  @Test void alternateOfficialIdentityMustBeReadInBothAudits(){
   var input=reference("UNKNOWN",true);var alternate="https://publisher.com/official-character";var c=input.candidate();
   var candidate=new Candidate(c.imageUrl(),c.pageUrl(),c.imageHash(),c.caption(),c.credit(),c.identityEvidence(),c.usageStatus(),c.usageEvidence(),c.usageSourceUrl(),alternate,c.identitySourceEvidence(),true);
