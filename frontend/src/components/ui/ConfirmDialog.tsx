@@ -12,7 +12,7 @@ export function ConfirmDialog({title,description,confirmLabel,busy=false,error='
   const trigger=document.activeElement instanceof HTMLElement?document.activeElement:null
   return openCatalogDialog(ref.current,cancelRef.current,trigger)
  },[])
- return createPortal(<dialog ref={ref} className="confirm-dialog" aria-labelledby={id} aria-describedby={id+'-description'} aria-busy={busy} onCancel={event=>{event.preventDefault();if(!busy)cancel()}}>
+ return createPortal(<dialog ref={ref} className="confirm-dialog" aria-labelledby={id} aria-describedby={id+'-description'} aria-busy={busy} onCancel={event=>{event.preventDefault();event.stopPropagation();if(!busy)cancel()}}>
   <h2 id={id}>{title}</h2><p id={id+'-description'}>{description}</p>
   {error&&<p role="alert">{error}</p>}
   <div className="row-actions"><button ref={cancelRef} type="button" className="btn secondary" disabled={busy} onClick={cancel}>취소</button><button type="button" className="btn primary" disabled={busy} onClick={confirm}>{busy?'처리 중…':confirmLabel}</button></div>

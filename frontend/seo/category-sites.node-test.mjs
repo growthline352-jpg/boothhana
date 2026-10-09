@@ -184,3 +184,9 @@ test('private purchase planning stays noindex on the portal without fetching acc
  assert.equal(page.meta.title,'부스 구매 계획 | 부스하나');assert.match(page.meta.robots,/^noindex/)
  assert.equal(categoryRedirect({origin:'https://subculture.boothana.kr',path:'/purchase-plan',search:'?event=173',enabled:true}),'https://boothana.kr/purchase-plan?event=173')
 })
+
+test('character hero filters stay on the subculture root after refresh', () => {
+ for (const search of ['?work=game&characterSlide=1', '?characters=browse&characterPage=2', '?page=1&interestId=abc&catalogPage=2&work=game']) {
+  assert.equal(categoryRedirect({origin:'https://subculture.boothana.kr',path:'/',search,enabled:true}), '')
+ }
+})

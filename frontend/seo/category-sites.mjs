@@ -38,7 +38,7 @@ export function categoryRedirect({ origin, path, search = '', category = null, e
     params.delete('category')
     // The subculture root owns these feed controls. They are not legacy search filters.
     if (siteCategory === 'subculture' && path === '/' && !explicit &&
-        [...params.keys()].every(key => ['page', 'interestId', 'catalogPage'].includes(key))) return ''
+        [...params.keys()].every(key => ['page', 'interestId', 'catalogPage', 'work', 'characters', 'characterPage', 'characterSlide'].includes(key))) return ''
     const homeStateOnly = [...params.keys()].every(key => ['region', 'openingRegion', 'closingRegion'].includes(key))
     // Local home tabs must retain the mounted page, including when the final tab is cleared.
     // Canonical metadata still points home aliases at the category root.

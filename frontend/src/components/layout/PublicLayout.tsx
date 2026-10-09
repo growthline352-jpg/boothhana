@@ -1,3 +1,4 @@
+import { SubcultureHeader, SubcultureMobileNav, SubcultureFooter } from '../../features/subculture/SubcultureChrome'
 import {InterestProvider} from '../../features/subculture/InterestProvider'
 import {currentSiteCategory} from '../../features/discovery/site'
 import {itineraryHref} from '../../features/itinerary/links'
@@ -47,30 +48,8 @@ export function PublicLayout() {
     catch { setError('로그아웃하지 못했습니다. 다시 시도해 주세요.') }
     finally { lock.current = false; setBusy(false) }
   }
-  return <InterestProvider><div className="page-shell public-shell" data-category={current ?? 'subculture'}>
-    <RouteMetadata />
-    <OnboardingGate />
-    <a className="discovery-skip" href="#public-main">본문으로 바로가기</a>
-    <header className="discovery-header">
-      <div className="discovery-header-inner">
-        <Link className="brand discovery-brand" to="/" aria-label="부스하나 홈">
-          {subculture ? <span className="sc-production-brand"><img src="/assets/categories/subculture-3d.webp" alt=""/><strong>부스하나<small>서브컬처 · SUBCULTURE</small></strong></span> : <span className="brand-logo"><img src="/assets/brand/logo.png" alt="부스하나" /></span>}
-        </Link>
-        <nav className={'discovery-category-nav'+(subculture?' sc-production-nav':'')} aria-label={subculture?"서브컬처 탐색":"행사 분야"}>
-          {subculture?<><Link className="discovery-category-link" to="/subculture">발견</Link><Link className="discovery-category-link" to="/discover?category=subculture">행사 찾기</Link><Link className="discovery-category-link" to="/subculture/subjects">작품·캐릭터</Link><Link className="discovery-category-link" to="/subculture/creators">작가·서클</Link></>:<>
-          {categories.map(category => <Link key={category.key} to={categoryHref(category.key)}
-            className={`discovery-category-link${current === category.key ? ' is-current' : ''}`}
-            aria-current={current === category.key ? 'page' : undefined}>
-            <DiscoveryIcon name={category.icon} size={18} /><span>{category.label}{!category.enabled&&<small className="discovery-soon">준비 중</small>}</span>
-          </Link>)}</>}
-        </nav>
-        <div className="discovery-header-tools">
-          <NavLink className="memory-header-link" aria-label="내 일정" to={itineraryHref()}><DiscoveryIcon name="calendar" size={18}/><span>내 일정</span></NavLink>
-          <NavLink className="memory-header-link" aria-label="내 보관함" to="/library"><svg width="19" height="21" viewBox="0 0 18 20" aria-hidden="true"><path d="M4 2h10v16l-5-3-5 3Z" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>내 보관함</span></NavLink>
-          <NavLink className="discovery-reservations" aria-label="내 예약" to="/reservations"><DiscoveryIcon name="ticket" size={18}/><span>내 예약</span></NavLink>
-          
-          <details className="discovery-menu" ref={menu}>
-            <summary aria-label="서비스 메뉴"><DiscoveryIcon name="menu"/></summary>
+  const accountMenu = <details className="discovery-menu" ref={menu}>
+            <summary aria-label="서비스 메뉴">{subculture ? (user?.displayName?.slice(0,1) || '나') : <DiscoveryIcon name="menu"/>}</summary>
             <nav className="discovery-menu-panel" aria-label="서비스 메뉴">
               <div className={`discovery-menu-account is-${status}`}>
                 <ProfileAvatar className="discovery-menu-avatar" name={loading ? '…' : user?.displayName || '내'} imageUrl={user?.profileImageUrl} />
@@ -107,24 +86,47 @@ export function PublicLayout() {
               {user && <button className="discovery-logout-action" disabled={busy} onClick={() => void signOut()}>{busy ? '로그아웃 중…' : '로그아웃'}</button>}
             </nav>
           </details>
+  return <InterestProvider><div className={'page-shell public-shell'+(subculture?' sc-site':'')} data-category={current ?? 'subculture'}>
+    <RouteMetadata />
+    <OnboardingGate />
+    <a className="discovery-skip" href="#public-main">본문으로 바로가기</a>
+    {subculture ? <SubcultureHeader accountMenu={accountMenu}/> : <header className="discovery-header">
+      <div className="discovery-header-inner">
+        <Link className="brand discovery-brand" to="/" aria-label="부스하나 홈">
+          {subculture ? <span className="sc-production-brand"><img src="/assets/categories/subculture-3d.webp" alt=""/><strong>부스하나<small>서브컬처 · SUBCULTURE</small></strong></span> : <span className="brand-logo"><img src="/assets/brand/logo.png" alt="부스하나" /></span>}
+        </Link>
+        <nav className={'discovery-category-nav'+(subculture?' sc-production-nav':'')} aria-label={subculture?"서브컬처 탐색":"행사 분야"}>
+          {subculture?<><Link className="discovery-category-link" to="/subculture">발견</Link><Link className="discovery-category-link" to="/discover?category=subculture">행사 찾기</Link><Link className="discovery-category-link" to="/subculture/subjects">작품·캐릭터</Link><Link className="discovery-category-link" to="/subculture/creators">작가·서클</Link></>:<>
+          {categories.map(category => <Link key={category.key} to={categoryHref(category.key)}
+            className={`discovery-category-link${current === category.key ? ' is-current' : ''}`}
+            aria-current={current === category.key ? 'page' : undefined}>
+            <DiscoveryIcon name={category.icon} size={18} /><span>{category.label}{!category.enabled&&<small className="discovery-soon">준비 중</small>}</span>
+          </Link>)}</>}
+        </nav>
+        <div className="discovery-header-tools">
+          <NavLink className="memory-header-link" aria-label="내 일정" to={itineraryHref()}><DiscoveryIcon name="calendar" size={18}/><span>내 일정</span></NavLink>
+          <NavLink className="memory-header-link" aria-label="내 보관함" to="/library"><svg width="19" height="21" viewBox="0 0 18 20" aria-hidden="true"><path d="M4 2h10v16l-5-3-5 3Z" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg><span>내 보관함</span></NavLink>
+          <NavLink className="discovery-reservations" aria-label="내 예약" to="/reservations"><DiscoveryIcon name="ticket" size={18}/><span>내 예약</span></NavLink>
+
+{accountMenu}
         </div>
       </div>
-    </header>
+    </header>}
     {error && <p className="discovery-auth-error" role="alert">{error}</p>}
     <AuthStatusNotice />
     <main id="public-main" tabIndex={-1}><Outlet /></main>
-    <nav className="public-mobile-nav" aria-label="자주 쓰는 메뉴">
+    {subculture ? <SubcultureMobileNav/> : <nav className="public-mobile-nav" aria-label="자주 쓰는 메뉴">
       <Link to={categoryHref(current ?? 'subculture')} aria-current={location.pathname==='/'||location.pathname.startsWith('/discover')?'page':undefined}><DiscoveryIcon name="search"/><span>행사 찾기</span></Link>
       <NavLink to={itineraryHref()}><DiscoveryIcon name="calendar"/><span>일정 만들기</span></NavLink>
       <NavLink to="/library"><DiscoveryIcon name="bookmark"/><span>내 보관함</span></NavLink>
       <NavLink to="/account"><DiscoveryIcon name="menu"/><span>내 정보</span></NavLink>
-    </nav>
-    <footer className="discovery-footer"><div className="discovery-container discovery-footer-inner">
+    </nav>}
+    {subculture ? <SubcultureFooter feedback={openFeedback} consent={<AnalyticsConsent/>}/> : <footer className="discovery-footer"><div className="discovery-container discovery-footer-inner">
       <div><Link to="/" className="discovery-footer-brand">부스하나<span>취향을 따라, 오프라인으로.</span></Link>
         <p>서울·경기의 서브컬처·박람회·축제·팝업과 참가 부스·상품을 찾아보세요.</p>
         <small>방문 전 주최 측의 최신 일정과 이용 조건을 확인해 주세요.</small></div>
       <nav aria-label="푸터 메뉴">{categories.map(c => <Link key={c.key} to={categoryHref(c.key)}>{c.label}{!c.enabled && ' · 준비 중'}</Link>)}<Link to="/events">예약 가능한 행사</Link><Link to="/library">내 보관함</Link><Link to="/support">고객센터</Link><Link to="/about">회사소개</Link><button type="button" className="feedback-footer-button" onClick={openFeedback}>이런 개선이 필요해요</button><AnalyticsConsent /></nav>
-    </div></footer>
+    </div></footer>}
     <FeedbackWidget open={feedbackOpen} setOpen={setFeedbackOpen}/>
   </div></InterestProvider>
 }

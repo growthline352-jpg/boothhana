@@ -11,4 +11,14 @@ test('empty booth reset clears saved-only, search and hall while preserving day'
 for(const [label,library] of [['loading',{...defaultLibrary,loading:true}],['error',{...defaultLibrary,error:'일시 오류'}],['identity checking',{...defaultLibrary,owner:'loading',loading:false}],['missing provider',null]])test(`saved-only ${label} is not shown as an empty booth list`,()=>{const x=setup({kind:'catalog',search:'section=booths&my=saved&day=2026-10-03',library}),tree=x.render();const list=find(tree,n=>n.props['aria-label']==='참가 부스 목록');assert.equal(list,undefined);assert.ok(text(tree).includes('기록을 확인하기 전에는 부스가 없다고 판단하지 않습니다.'))});
 test('ordinary public booths remain usable when private memory lookup fails',()=>{const x=setup({kind:'catalog',search:'day=2026-10-03&section=booths',library:{...defaultLibrary,error:'network'}}),tree=x.render();assert.equal(Boolean(find(tree,n=>n.props['aria-label']==='참가 부스 목록').props.hidden),false)});
 test('unverified personal map is not rendered with previous account highlights',()=>{const x=setup({kind:'catalog',search:'section=map&my=saved&view=map',maps:{plans:[{id:'synthetic-map',state:'READY'}],managedAssetIds:[]},library:{...defaultLibrary,loading:true,index:[{target:{eventId:1,participantId:20},visitedDays:[]}]}}),tree=x.render();assert.equal(find(tree,n=>typeof n.type==='function'&&n.props.savedParticipantIds),undefined);assert.equal(find(tree,n=>n.props.className==='visit-map-section'),undefined);assert.ok(text(tree).includes('기록을 확인하기 전에는 부스가 없다고 판단하지 않습니다.'))});
-test('public mobile navigation exposes library and account destinations',()=>{const x=setup({kind:'layout'}),tree=x.render();const nav=find(tree,n=>n.props.className==='public-mobile-nav');assert.ok(nav);for(const route of ['/library','/account'])assert.ok(nodes(nav).some(n=>n.props.to===route));assert.equal(nodes(nav).some(n=>n.props.href==='/offline/index.html'),false)});
+for(const category of ['subculture','exhibitions','festivals'])test(`${category} mobile navigation exposes library and account destinations`,()=>{
+ const x=setup({kind:'layout',search:'category='+category}),tree=x.render();
+ const {SubcultureMobileNav}=x.h.load('frontend/src/features/subculture/SubcultureChrome.tsx');
+ const nested=find(tree,n=>n.type===SubcultureMobileNav);
+ // This source harness does not expand function components automatically.
+ const nav=nested?x.h.render(nested.type,nested.props):find(tree,n=>n.props.className==='public-mobile-nav');
+ assert.ok(nav);for(const route of ['/library','/account'])assert.ok(nodes(nav).some(n=>n.props.to===route));
+ assert.equal(nodes(nav).some(n=>n.props.href==='/offline/index.html'),false);
+ assert.equal(Boolean(nested),category==='subculture');
+ if(nested){assert.equal(nav.props['aria-label'],'주요 메뉴');assert.ok(nodes(nav).some(n=>n.props.to==='/subculture/search'))}
+});
