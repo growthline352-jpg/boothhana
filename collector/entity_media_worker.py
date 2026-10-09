@@ -52,7 +52,7 @@ EXTRACTION_PROMPT = '''첨부된 실제 이미지를 보고 대상에 대응하�
 원문 pageUrl과 대상의 기존 identitySource 양쪽 자료로 정체성을 확인한다. 작품·캐릭터의 소속, 동명 작가/서클, 공동 판매표의 귀속, 개별 상품 옵션을 분리한다.
 상품 판매표 전체와 다른 옵션의 사진, 로고, 기본 아바타를 해당 상품/작가 이미지로 선택하지 말라. 다른 캐릭터이면 UNRESOLVED로 남긴다.
 사용 조건 원문으로 BoothHana가 이미지를 다운로드·저장·재게시할 수 있는 명시적 허락/적용 라이선스가 확인될 때만 PERMITTED.
-Commons는 해당 파일의 imageinfo/extmetadata와 파일 설명의 라이선스를 대조한다. Commons 전역 footer/본문 텍스트의 CC0를 이미지 파일의 허락으로 오인하지 말라. 출처 표시·동일 조건 등 의무가 있으면 credit에 필요한 표시를 남겨야 한다.
+Commons는 개별 파일 설명 HTML에 표시된 해당 이미지의 라이선스·저자·출처를 대조한다. 허용된 imageinfo/extmetadata가 함께 있으면 추가로 대조하되 API 호출 자체는 필수 조건이 아니다. Commons 전역 footer/본문 텍스트의 CC0를 이미지 파일의 허락으로 오인하지 말라. 출처 표시·동일 조건 등 의무가 있으면 credit에 필요한 표시를 남겨야 한다.
 공식 사이트라는 사실, 원문 공개, 핫링크 가능, 이미지 분석 가능은 재게시 허락이 아니다. 미확인은 UNKNOWN, 명시적 금지는 FORBIDDEN.
 usageEvidence에 실제 조건과 적용 근거를 기록한다. 별도 조건 원문을 발견하면 그 정확한 usageSourceUrl을 반환한다. 아직 못 읽었으면 허락을 확정하지 말라.
 caption·credit·identityEvidence를 근거에 맞게 작성한다. 동일성 자체가 불명확하면 status=UNRESOLVED,candidate=null.
@@ -61,7 +61,7 @@ REVIEW_PROMPT = '''너는 앞선 추출과 별도 실행하는 독립 검토자�
 대상의 기존 원문과 이미지 원문 양쪽으로 동명이인·작품 소속·캐릭터·공동 부스 귀속·상품 옵션·대표 이미지 적합성을 확인한다.
 작가/서클의 상품 사진을 초상으로, 판매표의 다른 옵션을 이 상품으로, 팬 그림을 공식 캐릭터 대표 이미지로 만들면 REJECT.
 재게시 권한은 원문의 명시적 허락/라이선스와 이 이미지·사용 목적에 적용되는 근거가 필요하다. 공식/공개/분석 허용만으로 APPROVE하지 않는다.
-Commons 전역 footer의 CC0를 파일 자체의 권한으로 쓰면 ENRICH. 해당 파일 metadata·라이선스·저자·필수 출처표시가 정확히 대응해야 한다.
+Commons 전역 footer의 CC0를 파일 자체의 권한으로 쓰면 ENRICH. 개별 파일 설명 HTML의 이미지별 라이선스·저자·필수 출처표시가 정확히 대응해야 한다. 원문 HTML만으로 이 근거가 충분하면 승인할 수 있으며 API 조회는 필수 조건이 아니다.
 동일성과 명시적 재게시 권한이 모두 입증되고 candidate.usageStatus=PERMITTED이면 APPROVE. 다른 대상/명시적 금지는 REJECT.
 같은 대상이지만 권리·귀속·원문 근거가 부족하면 ENRICH. UNKNOWN은 승인할 수 없다. 구체적인 reason을 남긴다.'''
 
@@ -382,7 +382,7 @@ class EntityMediaWorker:
                 'context': context, 'lead': lead, 'identitySource': identity,
                 'imageUrl': image_url, 'pageUrl': page, 'usageSourceUrl': usage, 'imageHash': image[2],
             }, ensure_ascii=False)
-            result, audit = self._call(phase, prompt, EXTRACTION_SCHEMA, [attached], documents, 'entity-media-extract-1')
+            result, audit = self._call(phase, prompt, EXTRACTION_SCHEMA, [attached], documents, 'entity-media-extract-2')
             if result['status'] != 'CANDIDATE' or not result['candidate']:
                 raise RunError('IDENTITY_UNRESOLVED')
             candidate = result['candidate']
@@ -414,7 +414,7 @@ class EntityMediaWorker:
         prompt = REVIEW_PROMPT + '\nUNTRUSTED REVIEW INPUT:\n' + json.dumps({
             'context': context, 'candidate': candidate, 'identitySource': identity, 'imageHash': fresh_image[2],
         }, ensure_ascii=False)
-        decision, reviewed = self._call(review_dir, prompt, REVIEW_SCHEMA, [attached], fresh, 'entity-media-review-1')
+        decision, reviewed = self._call(review_dir, prompt, REVIEW_SCHEMA, [attached], fresh, 'entity-media-review-2')
         if candidate['usageStatus'] == 'FORBIDDEN':
             decision = {'verdict': 'REJECT', 'reason': '명시적 사용 금지. ' + decision['reason'][:1900]}
         elif candidate['usageStatus'] != 'PERMITTED' and decision['verdict'] == 'APPROVE':
