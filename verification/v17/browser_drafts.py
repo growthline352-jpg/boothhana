@@ -130,7 +130,13 @@ async def run(dist):
                         await expect(page.get_by_role('button', name='저장 중…', exact=True)).to_be_disabled()
                         assert state['saves'] == 1, 'Duplicate create across revalidation'
                         save_ready.set()
-                        await expect(page.get_by_text('저장이 완료되었습니다. 목록에서 결과를 확인해 주세요.', exact=True)).to_be_visible()
+                        if path.startswith('/admin'):
+                            # A successful admin save returns to its list immediately;
+                            # the editor's completion message disappears on navigation.
+                            await expect(page).to_have_url(origin + '/admin/events')
+                            await expect(page.get_by_role('heading', name='예약·참가신청 행사', exact=True)).to_be_visible()
+                        else:
+                            await expect(page.get_by_text('저장이 완료되었습니다. 목록에서 결과를 확인해 주세요.', exact=True)).to_be_visible()
                         passed.append(path + ': in-flight create stays locked across ordinary tab return')
                         state['auth_status'] = 401; await recheck()
                         await expect(page.get_by_role('heading', name='로그인이 필요합니다')).to_be_visible()

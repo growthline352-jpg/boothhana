@@ -45,7 +45,10 @@ def with_batch(value):
 def schema(kind):
     stage=json.loads((ROOT/'schemas/stage-result.schema.json').read_text(encoding='utf-8'))
     events=json.loads((ROOT/'schemas/event-result-v4.schema.json').read_text(encoding='utf-8'))
-    if kind=='DISCOVERY':return events
+    if kind=='DISCOVERY':
+        events['properties']['existingEventRefs']=arr(obj({'eventIndex':{'type':'integer','minimum':0},'existingEventId':{'type':['integer','null'],'minimum':1},'identityReason':{'type':'string','minLength':1,'maxLength':1000}}),events['properties']['events'].get('maxItems',1000))
+        events['required'].append('existingEventRefs')
+        return events
     if kind=='EVENT':return events['properties']['events']['items']
     if kind in ('PARTICIPANTS','SALES'):return with_batch(stage)
     sales=next(x for x in stage['properties']['sales']['anyOf'] if x.get('type')=='object')
@@ -124,6 +127,17 @@ unresolved에는 이 상품의 캐릭터 식별/연결을 완료하는 데 실�
 텍스트만으로 정체성이 확정되면 basis=TEXT를 사용한다. 상품에 관련된 확정 연결과 미확정 연결을 구분해서 반환한다.
 '''
 PROMPTS['DISCOVERY']+=' input.eventHint가 있으면 보완 대상으로 지정된 그 행사 회차만 조사하고 다른 행사를 결과에 섞지 말라. 힌트는 정답이 아니라 검증 대상이다.'
+PROMPTS['DISCOVERY']+='''
+context.existingEvents는 같은 탐색 기간에 이미 등록된 행사다. 원문과 대조해 동일 회차인지 먼저 확인한다. 제목의 번역·띄어쓰기·부제 차이나 기존 edition=null을 보완하려는 이유만으로 새 회차를 만들지 않는다.
+events의 각 행마다 existingEventRefs에 eventIndex, existingEventId, identityReason을 정확히 한 번 기록한다. 동일 회차가 공식 근거와 기존 자료에서 확인되면 해당 기존 id를 선택한다. 신규 행사는 existingEventId=null로 기록한다. 같은 기존 id를 여러 행에 반복하지 않는다.
+행사 내용에는 최신 원문으로 확인한 명칭·회차·주최·장소·일정을 반환한다. 기존 edition=null이나 이름의 번역 차이는 별도 행사를 만드는 이유가 아니다. identityReason에는 날짜·주최·장소·원문으로 동일 회차 또는 신규 회차를 판단한 근거를 적는다.
+기존 수동 정정과 충돌하거나 동일 회차인지 확인할 수 없으면 새 행사로 확정하지 말고 unverifiedLeads에 기존 id와 구체적인 사유를 남긴다. 원문으로 같은 회차의 일정·장소 변경이 명확하게 확인되면 기존 id로 최신 사실을 보완한다.
+이름이나 일정 하나만 같다고 동일 회차로 취급하지 말고 주최·장소·원문을 함께 대조한다. 별도 행사임이 확인되면 신규 식별값을 반환한다.
+'''
+REVIEW_PROMPT+='''
+DISCOVERY 검토에서는 candidate.existingEventId/identityReason을 context.existingEvents와 대조한다. 같은 회차인데 번역·부제·회차 보완만으로 existingEventId=null을 선택했거나, 다른 회차의 id를 선택한 후보는 ENRICH로 돌린다.
+기존 id를 선택한 경우 날짜·주최·장소·공식 원문으로 같은 회차인지 독립적으로 확인한다. 기존 edition=null 자체는 보완 사유가 아니다. 같은 이름만으로 별도 회차를 합치지 않고, 기존 수동 정정을 공식 근거 없이 바꾸지 않는다.
+'''
 PROMPTS['RELATIONS']+=' series.officialUrl도 검토자가 본문을 직접 확인할 수 있어야 한다. 홈페이지가 JavaScript 전용이면 반복 회차를 실제 열람한 안정적인 공식 행사 목록 URL(공식 공개 API 포함)을 사용한다. 이름뿐인 추정 홈페이지를 확정하지 않는다. seriesCandidates가 비어 있다는 사실 자체는 unresolved 사유가 아니며 검증된 신규 시리즈는 id=null로 생성한다. 일반 행사에 전체 주제의 부재를 증명하려고 참가 작가/상품 전체를 조사하지 않는다. 공식 행사 소개가 종합 행사라고 확인되면 행사 전체의 특정 주제를 지정하지 않으며, 미열람한 특정 주제 공지가 실제 남아 있을 때만 unresolved에 남긴다.'
 for _kind in ('PARTICIPANTS','SALES','CREATOR'):
     PROMPTS[_kind]+='''
@@ -239,8 +253,11 @@ class Worker:
                 return decision,observations
             event_decisions=[]
             if job['kind']=='DISCOVERY' and extracted['result'].get('events'):
+                references={r['eventIndex']:r for r in extracted['result'].get('existingEventRefs',[])}
                 for index,event in enumerate(extracted['result']['events']):
-                    decision,observations=review(event,directory/('review-event-'+str(index)))
+                    reference=references.get(index,{})
+                    candidate={**event,'existingEventId':reference.get('existingEventId'),'identityReason':reference.get('identityReason','')}
+                    decision,observations=review(candidate,directory/('review-event-'+str(index)))
                     event_decisions.append({'index':index,**decision,'audit':observations})
                 outcomes={d['verdict'] for d in event_decisions}
                 verdict={'verdict':'APPROVE' if 'APPROVE' in outcomes else 'ENRICH' if 'ENRICH' in outcomes else 'REJECT','reason':'행사별 독립 검토: '+', '.join(str(d['index'])+':'+d['verdict'] for d in event_decisions)}

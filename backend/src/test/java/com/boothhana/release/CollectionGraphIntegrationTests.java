@@ -247,10 +247,12 @@ class CollectionGraphIntegrationTests {
   String day=data.occurrences().getFirst().startDate();var input=Map.<String,Object>of("scope",Map.of("region","SEOUL_GYEONGGI","timezone","Asia/Seoul","startDate",day,"endDate",day));
   graph.seed(new Seed("DISCOVERY","partial-test",input,true,"test"));var job=graph.claim();var first=value(data);var second=value(data);second.put("name","[TEST] Deferred event");second.put("edition","Deferred 2026");
   String deferredSource="https://example.com/deferred-edition";second.put("sources",List.of(new Source(deferredSource,"OFFICIAL","ORIGINAL","Unconfirmed edition")));
-  var result=Map.of("schemaVersion","1","searchStatus","COMPLETE","summary","Two event candidates","queries",List.of("test"),"events",List.of(first,second),
-   "eventEvidence",List.of(Map.of("eventIndex",0,"sourceUrl",source),Map.of("eventIndex",1,"sourceUrl",deferredSource)),
-   "unverifiedLeads",List.of(Map.of("sourceUrl","https://example.com/unverified-lead")));var e=extract(job,result);
-  var decisions=List.of(new EventDecision(0,"APPROVE","Exact edition",audit()),new EventDecision(1,"ENRICH","Schedule conflict",audit()));
+  var freshRef=new LinkedHashMap<String,Object>();freshRef.put("eventIndex",0);freshRef.put("existingEventId",null);freshRef.put("identityReason","Unconfirmed new edition");
+  var result=Map.of("schemaVersion","1","searchStatus","COMPLETE","summary","Two event candidates","queries",List.of("test"),"events",List.of(second,first),
+   "eventEvidence",List.of(Map.of("eventIndex",0,"sourceUrl",deferredSource),Map.of("eventIndex",1,"sourceUrl",source)),
+   "unverifiedLeads",List.of(Map.of("sourceUrl","https://example.com/unverified-lead")),
+   "existingEventRefs",List.of(freshRef,Map.of("eventIndex",1,"existingEventId",event,"identityReason","Same exact edition")));var e=extract(job,result);
+  var decisions=List.of(new EventDecision(0,"ENRICH","Schedule conflict",audit()),new EventDecision(1,"APPROVE","Exact edition",audit()));
   graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"APPROVE","Independent decisions",audit(),decisions));
   assertThat(db.queryForObject("select count(*) from subculture_event_candidate where name='[TEST] Deferred event'",Integer.class)).isZero();
   assertThat(db.queryForObject("select count(*) from collection_job where kind='DISCOVERY' and input_json->'eventHint'->>'name'='[TEST] Deferred event'",Integer.class)).isEqualTo(1);
@@ -260,6 +262,38 @@ class CollectionGraphIntegrationTests {
  }
  @Test void tablesDenyDirectBrowserRoles(){for(String table:List.of("collection_job","collection_extraction","collection_verdict","collection_product","collection_product_subject","collection_creator_publication","collection_migration","collection_image_part","collection_subject_identity","collection_creator_identity","collection_identity_history")){assertThat(db.queryForObject("select relrowsecurity from pg_class where oid=cast(? as regclass)",Boolean.class,table)).isTrue();assertThat(db.queryForObject("select has_table_privilege('anon',?,'SELECT') or has_table_privilege('authenticated',?,'SELECT')",Boolean.class,table,table)).isFalse();}}
 
+ @Test void discoveryReceivesLegacyIdentityAndKeepsManualCorrections(){
+  db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{edition}','null'),overrides_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","[TEST] Canonical remembered title")),event);
+  String day=data.occurrences().getFirst().startDate();
+  graph.seed(new Seed("DISCOVERY","canonical-identity",Map.of("scope",Map.of("region","SEOUL_GYEONGGI","timezone","Asia/Seoul","startDate",day,"endDate",day)),true,"test"));
+  var job=graph.claim();var context=value(job.get("context"));
+  var existing=(List<Map<String,Object>>)context.get("existingEvents");
+  var known=existing.stream().filter(e->((Number)e.get("id")).longValue()==event).findFirst().orElseThrow();
+  var canonical=value(known.get("data"));
+  assertThat(canonical.get("name")).isEqualTo("[TEST] Canonical remembered title");
+  assertThat(canonical.get("edition")).isNull();
+  assertThat(canonical.get("organizer")).isEqualTo(data.organizer());
+  db.update("update subculture_event_candidate set publication_withdrawn=true where id=?",event);
+  assertThatThrownBy(()->extract(job,Map.of("schemaVersion","1","searchStatus","PARTIAL","summary","none","queries",List.of("test"),"events",List.of(),"sourceCoverage",List.of(Map.of("channel","ORGANIZER_OFFICIAL","status","PARTIAL","queries",List.of("test"),"checkedUrls",List.of(source),"notes","checked"))))).isInstanceOf(ApiException.class).hasMessageContaining("변경");
+ }
+ @Test void discoveryReusesIdAcrossEditionAndNameChangesWithoutLosingManualTitle(){
+  db.update("update subculture_event_candidate set payload_json=jsonb_set(payload_json,'{edition}','null'),overrides_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","[TEST] Protected manual title")),event);
+  String day=data.occurrences().getFirst().startDate();
+  graph.seed(new Seed("DISCOVERY","reuse-id",Map.of("scope",Map.of("region","SEOUL_GYEONGGI","timezone","Asia/Seoul","startDate",day,"endDate",day)),true,"test"));var job=graph.claim();
+  long before=db.queryForObject("select count(*) from subculture_event_candidate",Long.class);
+  var candidate=value(data);candidate.put("name","[TEST] Latest translated official title");
+  var result=Map.of("schemaVersion","1","searchStatus","COMPLETE","summary","Known event updated","queries",List.of("test"),"events",List.of(candidate),"existingEventRefs",List.of(Map.of("eventIndex",0,"existingEventId",event,"identityReason","Same official edition, organizer, venue and dates")));
+  var e=extract(job,result);graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"APPROVE","Same existing event independently verified",audit(),List.of(new EventDecision(0,"APPROVE","Same edition",audit()))));
+  assertThat(db.queryForObject("select count(*) from subculture_event_candidate",Long.class)).isEqualTo(before);
+  assertThat(db.queryForObject("select payload_json->>'edition' from subculture_event_candidate where id=?",String.class,event)).isEqualTo("2026");
+  assertThat(db.queryForObject("select name from subculture_event_candidate where id=?",String.class,event)).isEqualTo("[TEST] Protected manual title");
+  assertThat(db.queryForObject("select count(*) from collection_job where kind='EVENT' and target_id=?",Integer.class,Long.toString(event))).isEqualTo(1);
+ }
+ @Test void discoveryCannotReuseIdOutsideCapturedCandidates(){
+  var candidate=value(data);var context=Map.<String,Object>of("existingEvents",List.of(Map.of("id",event)));
+  var result=Map.<String,Object>of("events",List.of(candidate),"existingEventRefs",List.of(Map.of("eventIndex",0,"existingEventId",event+1000000,"identityReason","Claimed identity")));
+  assertThatThrownBy(()->GraphProjection.existingEventTargets(result,context)).isInstanceOf(ApiException.class).hasMessageContaining("문맥");
+ }
  ProductData option(String name,String entry,String url,List<Source> sources,Identity identity){return new ProductData(entry,name,"Original product option","Identity Maker",List.of(),List.of(),"GENERAL_CATALOG",null,"UNKNOWN",url,sources,List.of(),List.of(),identity);}
  Map<String,Object> productWindow(int offset,int total){var result=makerResult("Identity Maker",source);var goods=new ArrayList<ProductData>();for(int i=offset;i<Math.min(total,offset+100);i++)goods.add(option("Option "+i,null,null,List.of(new Source(source,"OFFICIAL","ORIGINAL","Exact named option")),null));result.put("goods",goods);result.put("coverage",offset+goods.size()<total?"PARTIAL":"COMPLETE");result.put("pageBatch",Map.of("sourceUrl",source,"sourceHash","a".repeat(64),"offset",offset,"total",total,"labels",goods.stream().map(ProductData::name).toList()));return result;}
  Audit pageAudit(String digest){return new Audit("gpt-6.1-sol","graph-4","graph-4",false,List.of(source),Map.of(),List.of(),List.of(new SourceDocument(source,digest,Instant.now().toString())));}

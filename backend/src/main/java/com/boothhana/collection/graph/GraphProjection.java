@@ -37,12 +37,26 @@ public class GraphProjection {
   if(row.containsKey("sources")){var sources=maps(row.get("sources"));boolean original=false;for(var s:sources)if("ORIGINAL".equals(s.get("access"))&&!text(s.get("evidence")).isBlank()){urls.add(normalizedUrl(text(s.get("url"))));original=true;}require(original,"개별 항목의 원문 근거가 필요합니다.");}
   for(var entry:row.entrySet()){if(Set.of("sourceUrl","evidenceUrl","officialUrl").contains(entry.getKey())&&entry.getValue()!=null&&!text(entry.getValue()).isBlank())urls.add(normalizedUrl(text(entry.getValue())));else if(!entry.getKey().equals("sources"))collectSources(entry.getValue(),urls);}
  }else if(value instanceof List<?> list)list.forEach(x->collectSources(x,urls));}
+ public static Map<Integer,Long> existingEventTargets(Map<String,Object> result,Map<String,Object> context){
+  if(!result.containsKey("existingEventRefs"))return Map.of();
+  var events=maps(result.get("events"));var refs=maps(result.get("existingEventRefs"));require(refs.size()==events.size(),"모든 행사에 기존 ID 또는 신규 판정이 필요합니다.");
+  var known=new HashSet<Long>();for(var e:maps(context.get("existingEvents")))known.add(number(e.get("id")));
+  var seen=new HashSet<Integer>();var selected=new HashSet<Long>();var targets=new LinkedHashMap<Integer,Long>();
+  for(var ref:refs){
+   Object index=ref.get("eventIndex");require(index instanceof Integer||index instanceof Long,"행사 참조 순서 오류");long value=number(index);require(value>=0&&value<events.size()&&seen.add((int)value),"행사 참조가 중복되거나 범위를 벗어났습니다.");
+   String reason=text(ref.get("identityReason"));require(!reason.isBlank()&&reason.length()<=1000,"행사 동일성 판단 근거가 필요합니다.");
+   Object id=ref.get("existingEventId");if(id==null)continue;require(id instanceof Integer||id instanceof Long,"기존 행사 ID 형식 오류");long existing=number(id);
+   require(existing>0&&known.contains(existing)&&selected.add(existing),"조사 문맥에 없는 행사 또는 중복 ID를 선택할 수 없습니다.");targets.put((int)value,existing);
+  }
+  return targets;
+ }
  public Map<String,Object> apply(String kind,String target,Map<String,Object> input,Map<String,Object> context,Map<String,Object> result,UUID verdict,boolean baseline,Consumer<Seed> enqueue){
   var cycle=ZonedDateTime.now(ZoneId.of("Asia/Seoul"));String generation=cycle.toLocalDate()+":"+(cycle.getHour()/6);
   if(kind.equals("RELATIONS"))return GraphEventRelations.apply(db,json,identities,Long.parseLong(target),context,result,verdict);
   if(kind.equals("DISCOVERY")){
-   SearchResult search=as(result,SearchResult.class);require(search.events().stream().allMatch(e->com.boothhana.interests.SubcultureScope.TYPES.contains(e.subcategory())),"서브컬처 범위가 아닙니다.");
-   var now=Instant.now().toString();var receipt=events.ingest(new Batch("1",verdict.toString(),now,now,"CLI",true,as(input.get("scope"),Scope.class),search));require(receipt.rejected()==0,"발견 결과에 유효하지 않은 행사가 있습니다.");
+   var legacy=new LinkedHashMap<>(result);legacy.remove("existingEventRefs");
+   SearchResult search=as(legacy,SearchResult.class);require(search.events().stream().allMatch(e->com.boothhana.interests.SubcultureScope.TYPES.contains(e.subcategory())),"서브컬처 범위가 아닙니다.");
+   var now=Instant.now().toString();var receipt=events.ingest(new Batch("1",verdict.toString(),now,now,"CLI",true,as(input.get("scope"),Scope.class),search),existingEventTargets(result,context));require(receipt.rejected()==0,"발견 결과에 유효하지 않은 행사가 있습니다.");
    for(var ref:receipt.candidates())enqueue.accept(new Seed("EVENT",Long.toString(ref.id()),Map.of(),baseline,generation));return Map.of("verdict","APPROVE","events",receipt.candidates(),"needsEnrichment",!"COMPLETE".equals(search.searchStatus()));
   }
   if(kind.equals("EVENT")){
