@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CharacterHomeHero } from './CharacterHomeHero'
 import { SubcultureHeader, SubcultureMobileNav } from './SubcultureChrome'
+import { isDiscoveryResults } from '../discovery/browse'
+import { categoryRedirect } from '../../../seo/category-sites.mjs'
 import type { Interest, Subject } from './api'
 const f = vi.hoisted(() => ({status: 'authenticated', entries: [] as Interest[], subjects: [] as Subject[]}))
 vi.mock('../../app/useAuth', () => ({useAuth: () => ({status: f.status, loading: false, generation: 1})}))
@@ -45,5 +47,16 @@ describe('selected character hero', () => {
     expect(html).toContain('/assets/categories/subculture-3d.webp')
     for (const label of ['캐릭터 탐색', '캐릭터·작가 검색', '알림', '내 방문', '마이']) expect(html).toContain(label)
     expect(html).not.toContain('박람회'); expect(html).not.toContain('일정 만들기')
+  })
+  it('opens event results after the category redirect instead of the legacy landing', () => {
+    const html = render() + renderToStaticMarkup(<MemoryRouter><SubcultureHeader accountMenu={null}/></MemoryRouter>)
+    const links = [...html.matchAll(/href="(\/discover\?[^\"]+)"/g)]
+    expect(links.length).toBeGreaterThanOrEqual(2)
+    for (const match of links) {
+      const link = new URL(match[1].replaceAll('&amp;', '&'), 'https://subculture.boothana.kr')
+      const redirect = categoryRedirect({origin: link.origin, path: link.pathname, search: link.search, enabled: true})
+      const destination = new URL(redirect || link.href, link.origin)
+      expect(isDiscoveryResults(destination.pathname, destination.searchParams)).toBe(true)
+    }
   })
 })
