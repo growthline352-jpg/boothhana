@@ -51,6 +51,7 @@ DISCOVERY_PROMPT = '''대상의 대표 이미지 후보를 여러 공식 출처�
 사용 조건이 별도 페이지에 있으면 usageSourceUrl을 기록하고, 없으면 원문 pageUrl을 기록한다. 공개 게시 자체를 재게시 허락으로 취급하지 말라.
 없는 후보는 status=DEFERRED,candidates=[]로 남긴다. 아직 원문을 못 읽은 결과를 완료로 표시하지 말라.'''
 EXTRACTION_PROMPT = '''첨부된 실제 이미지를 보고 대상에 대응하는 대표 이미지인지 추출하라. nativeImages는 이 원문 HTML에 실제 포함된 이미지이지 동일성 정답이 아니다.
+첨부 파일은 수집기가 이번 호출 직전에 원문의 native 이미지 URL에서 직접 다운로드하고 MIME·실제 바이트 SHA를 검사한 원본이다. 웹 도구가 이미지 URL의 픽셀을 표시하지 못해도 첨부 원본을 시각적으로 대조할 수 있다. 별도 웹 이미지 렌더링 성공을 추가 필수 조건으로 삼지 말라. 원문 이름·이미지 연결과 첨부의 외형이 틀리면 여전히 UNRESOLVED이다.
 원문 pageUrl과 대상의 기존 identitySource 양쪽 자료로 정체성을 확인한다. 작품·캐릭터의 소속, 동명 작가/서클, 공동 판매표의 귀속, 개별 상품 옵션을 분리한다.
 기존 작품/캐릭터 출처가 접근 불가하면 선택한 identitySource의 실제 공식 소개로 같은 대상을 확인한다. 기존 URL을 읽었다고 위조하지 말라. 출판사·제작사·권리자 원문의 공식성, 캐릭터 이름과 소속 작품을 identitySourceEvidence에 기록한다. 원문 pageUrl이 실제 공식 자료이면 sourceIsOfficial=true, 팬 사이트·불명확한 귀속은 false. 작품 로고만으로 캐릭터를 확인하지 말라.
 상품 판매표 전체와 다른 옵션의 사진, 로고, 기본 아바타를 해당 상품/작가 이미지로 선택하지 말라. 다른 캐릭터이면 UNRESOLVED로 남긴다.
@@ -61,6 +62,8 @@ usageEvidence에 실제 조건과 적용 근거를 기록한다. 별도 조건 �
 caption·credit·identityEvidence를 근거에 맞게 작성한다. 동일성 자체가 불명확하면 status=UNRESOLVED,candidate=null.
 첨부 바이트 SHA와 URL은 서버가 기록한다. 모델이 해시를 만들거나 이미지 URL을 바꾸지 않는다.'''
 REVIEW_PROMPT = '''너는 앞선 추출과 별도 실행하는 독립 검토자다. 후보를 정답으로 여기지 말고 새로 첨부된 실제 이미지와 새로 읽은 원문을 대조하라.
+새 첨부는 검토 직전에 수집기가 원문의 native URL을 다시 다운로드한 실제 파일이다. 수집기는 새 원문의 이미지 연결·MIME·SHA를 검사하고 추출 이미지와 바이트 SHA가 같을 때만 이 호출을 실행한다. 따라서 실제 첨부의 픽셀과 새 원문의 이름/작품/native 연결로 독립 대조한다. 웹 도구가 같은 이미지 URL을 렌더링하지 못했다는 이유만으로 ENRICH하지 말라. 다른 캐릭터·부정확한 원문 연결·공식성 부족·금지 조건은 여전히 거절/보류한다.
+대상과 소속 작품이 같다면 공식 원작 만화 초상도 캐릭터 대표 이미지가 될 수 있다. 원작/애니메이션/게임/극장판의 출처와 판본을 정확히 남기고 다른 캐릭터·팬 그림을 혼동하지 말라.
 대상의 기존 원문과 이미지 원문 양쪽으로 동명이인·작품 소속·캐릭터·공동 부스 귀속·상품 옵션·대표 이미지 적합성을 확인한다.
 작가/서클의 상품 사진을 초상으로, 판매표의 다른 옵션을 이 상품으로, 팬 그림을 공식 캐릭터 대표 이미지로 만들면 REJECT.
 재게시 권한은 원문의 명시적 허락/라이선스와 이 이미지·사용 목적에 적용되는 근거가 필요하다. 공식/공개/분석 허용만으로 APPROVE하지 않는다.
@@ -397,7 +400,7 @@ class EntityMediaWorker:
                 'context': context, 'lead': lead, 'identitySource': identity,
                 'imageUrl': image_url, 'pageUrl': page, 'usageSourceUrl': usage, 'imageHash': image[2],
             }, ensure_ascii=False)
-            result, audit = self._call(phase, prompt, EXTRACTION_SCHEMA, [attached], documents, 'entity-media-extract-3')
+            result, audit = self._call(phase, prompt, EXTRACTION_SCHEMA, [attached], documents, 'entity-media-extract-4')
             if result['status'] != 'CANDIDATE' or not result['candidate']:
                 raise RunError('IDENTITY_UNRESOLVED')
             candidate = result['candidate']
@@ -431,7 +434,7 @@ class EntityMediaWorker:
         prompt = REVIEW_PROMPT + '\nUNTRUSTED REVIEW INPUT:\n' + json.dumps({
             'context': context, 'candidate': candidate, 'identitySource': identity, 'imageHash': fresh_image[2],
         }, ensure_ascii=False)
-        decision, reviewed = self._call(review_dir, prompt, REVIEW_SCHEMA, [attached], fresh, 'entity-media-review-3')
+        decision, reviewed = self._call(review_dir, prompt, REVIEW_SCHEMA, [attached], fresh, 'entity-media-review-4')
         if candidate['usageStatus'] == 'FORBIDDEN':
             decision = {'verdict': 'REJECT', 'reason': '명시적 사용 금지. ' + decision['reason'][:1900]}
         elif candidate['usageStatus'] != 'PERMITTED' and decision['verdict'] == 'APPROVE':
