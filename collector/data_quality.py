@@ -102,6 +102,10 @@ def _fill_schedule(original, observed):
         return deepcopy(original)
     def valid_clock(value):
         return bool(re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d',str(value)))
+    def valid_hours(row):
+        start,end=row.get('startTime'),row.get('endTime')
+        return (all(_blank(value) or valid_clock(value) for value in (start,end)) and
+                (row['startDate']!=row['endDate'] or _blank(start) or _blank(end) or start<end))
     def compatible(row, incoming):
         return all(_blank(row.get(key)) or _blank(incoming.get(key)) or incoming[key]==row[key]
                    for key in ('startTime','endTime'))
@@ -112,14 +116,15 @@ def _fill_schedule(original, observed):
         if _schedule_days([row]) == _schedule_days(incoming) and incoming:
             # Splitting a range is safe only when every existing clock is preserved.
             clocks_match=all(compatible(row,item) for item in incoming)
-            complete=all(all(valid_clock(item.get(key)) for key in ('startTime','endTime')) for item in incoming)
+            complete=all(valid_hours(item) and all(valid_clock(item.get(key)) for key in ('startTime','endTime')) for item in incoming)
             if clocks_match and complete:
                 result.extend(deepcopy(sorted(incoming,key=lambda item:item['startDate'])));continue
         exact=next((item for item in observed if (item['startDate'],item['endDate'])==(start,end)),None)
         kept=deepcopy(row)
-        if exact and compatible(row,exact) and all(_blank(exact.get(key)) or valid_clock(exact[key]) for key in ('startTime','endTime')):
+        if exact and compatible(row,exact) and valid_hours(exact):
             for key in ('startTime','endTime'):
                 if _blank(kept.get(key)) and not _blank(exact.get(key)):kept[key]=exact[key]
+            if not valid_hours(kept):kept=deepcopy(row)
         result.append(kept)
     return result
 
