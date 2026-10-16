@@ -54,7 +54,7 @@ def missing_reasons(event: dict) -> list[str]:
     if _blank(event.get('admission')): reasons.append('MISSING_ADMISSION')
     if _placeholder_description(event): reasons.append('MISSING_DESCRIPTION')
     occurrences = event.get('occurrences') or []
-    if any(_blank(row.get('startTime')) or _blank(row.get('endTime')) for row in occurrences): reasons.append('MISSING_HOURS')
+    if not occurrences or any(_blank(row.get('startTime')) or _blank(row.get('endTime')) for row in occurrences): reasons.append('MISSING_HOURS')
     links = event.get('discoveryLinks') or []
     if event.get('eventFormat') == 'MULTI_BOOTH' and not any(row.get('kind') == 'PARTICIPANTS' and row.get('url') and row.get('status') == 'PUBLISHED' for row in links):
         reasons.append('MISSING_PARTICIPANT_SOURCE')
@@ -80,7 +80,41 @@ def same_event(original: dict, observed: dict) -> bool:
     if _norm(original.get('name')) != _norm(observed.get('name')): return False
     original_dates = {(row.get('startDate'), row.get('endDate')) for row in original.get('occurrences') or []}
     observed_dates = {(row.get('startDate'), row.get('endDate')) for row in observed.get('occurrences') or []}
-    return bool(original_dates and original_dates & observed_dates)
+    return bool(original_dates and original_dates & observed_dates) or bool(_schedule_days(original.get('occurrences')) and
+        _schedule_days(original.get('occurrences')) == _schedule_days(observed.get('occurrences')))
+
+def _schedule_days(rows):
+    """Bounded date coverage; overlapping or invalid intervals cannot supply hours."""
+    result=set()
+    try:
+        for row in rows or []:
+            start,end=date.fromisoformat(row['startDate']),date.fromisoformat(row['endDate'])
+            span=(end-start).days
+            if not 0<=span<=366:return set()
+            days={start+timedelta(days=n) for n in range(span+1)}
+            if days & result:return set()
+            result.update(days)
+    except (ValueError,TypeError,KeyError):return set()
+    return result
+
+def _fill_schedule(original, observed):
+    result=[]
+    for row in original:
+        start,end=row['startDate'],row['endDate']
+        incoming=[item for item in observed if start<=item['startDate']<=item['endDate']<=end]
+        if _schedule_days([row]) == _schedule_days(incoming) and incoming:
+            # Splitting a range is safe only when every existing clock is preserved.
+            compatible=all(all(_blank(row.get(key)) or item.get(key)==row.get(key) for key in ('startTime','endTime')) for item in incoming)
+            complete=all(all(not _blank(item.get(key)) and re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d',str(item[key])) for key in ('startTime','endTime')) for item in incoming)
+            if compatible and complete:
+                result.extend(deepcopy(sorted(incoming,key=lambda item:item['startDate'])));continue
+        exact=next((item for item in observed if (item['startDate'],item['endDate'])==(start,end)),None)
+        kept=deepcopy(row)
+        if exact:
+            for key in ('startTime','endTime'):
+                if _blank(kept.get(key)) and not _blank(exact.get(key)):kept[key]=exact[key]
+        result.append(kept)
+    return result
 
 def _unique(existing: list, incoming: list, key, limit: int) -> list:
     result = deepcopy(existing)
@@ -106,12 +140,7 @@ def merge_enrichment(original: dict, observed: dict) -> dict:
     if merged.get('eventFormat') == 'UNKNOWN' and observed.get('eventFormat') in ('MULTI_BOOTH', 'SINGLE_HOST'):
         merged['eventFormat'] = observed['eventFormat']
 
-    incoming_occurrences = {(row.get('startDate'), row.get('endDate')): row for row in observed.get('occurrences') or []}
-    for row in merged.get('occurrences') or []:
-        incoming = incoming_occurrences.get((row.get('startDate'), row.get('endDate')))
-        if not incoming: continue
-        for field in ('startTime', 'endTime'):
-            if _blank(row.get(field)) and not _blank(incoming.get(field)): row[field] = incoming[field]
+    merged['occurrences'] = _fill_schedule(merged.get('occurrences') or [], observed.get('occurrences') or [])
 
     merged['subjects'] = _unique(merged.get('subjects') or [], observed.get('subjects') or [], _norm, 20)
     merged['sources'] = _unique(merged.get('sources') or [], observed.get('sources') or [], lambda row: row.get('url'), 5)

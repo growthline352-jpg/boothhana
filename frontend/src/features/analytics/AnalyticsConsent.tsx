@@ -3,6 +3,7 @@ import { useLocation } from 'react-router'
 import { publicPage, setMeasurement, pauseMeasurement, type Consent } from './measurement'
 import { readConsent, saveConsent } from './consent'
 import './analytics.css'
+import { trackPublicLink } from './actions'
 
 export function AnalyticsConsent() {
   const location = useLocation()
@@ -30,6 +31,15 @@ export function AnalyticsConsent() {
       pauseMeasurement()
     }
   }, [])
+  useEffect(() => {
+    const click = (event: MouseEvent) => {
+      if (event.defaultPrevented || !(event.target instanceof Element)) return
+      const link = event.target.closest<HTMLAnchorElement>('a[href]')
+      if (link) trackPublicLink(link.href, window.location.href, link.classList.contains('catalog-external-link'))
+    }
+    document.addEventListener('click', click, true)
+    return () => document.removeEventListener('click', click, true)
+  }, [])
   const choose = (value: Exclude<Consent, null>) => {
     saveConsent(value)
     setConsent(value); setOpen(false)
@@ -48,7 +58,7 @@ export function AnalyticsConsent() {
     <button type="button" aria-expanded={consent === null || open} aria-controls="analytics-notice" onClick={() => setOpen(!open)}>방문 통계 설정</button>
     {(consent === null || open) && <div id="analytics-notice" className="analytics-notice" role="region" aria-label="선택적 방문 통계">
       <strong>서비스 개선을 위한 방문 통계</strong>
-      <p>동의하면 Google Analytics가 쿠키를 사용해 기기·브라우저 정보와 공개 페이지 방문을 측정합니다. 검색어, 문의 내용, 계정 정보는 보내지 않습니다. 광고 추적은 사용하지 않으며 거절해도 서비스 이용에 영향이 없습니다. 선택은 부스하나의 서브컬처·박람회·축제에서 함께 적용되며, 하단 설정에서 언제든 바꿀 수 있습니다.</p>
+      <p>동의하면 Google Analytics가 쿠키를 사용해 기기·브라우저 정보, 공개 페이지 방문, Google·네이버 등 유입 출처와 저장·지도·공식 안내·일정 시작 행동을 측정합니다. 검색어, 외부 URL 원문, 문의 내용, 계정 정보는 보내지 않습니다. 광고 추적은 사용하지 않으며 거절해도 서비스 이용에 영향이 없습니다. 선택은 부스하나의 모든 분야에서 함께 적용되며, 하단 설정에서 언제든 바꿀 수 있습니다.</p>
       <div><button type="button" className="btn secondary" onClick={() => choose('denied')}>거절</button><button type="button" className="btn primary" onClick={() => choose('granted')}>분석 허용</button></div>
     </div>}
   </div>

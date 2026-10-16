@@ -14,7 +14,8 @@ case "${1:-}" in
   discovery) job=(python daily_popups.py --config /etc/boothhana/collector.json --regional-only); limit=100m ;;
   popup-inventory) job=(python daily_popups.py --config /etc/boothhana/collector.json --official-only); limit=25m ;;
   doctor) job=(python doctor.py --config /etc/boothhana/collector.json --coverage); limit=3m ;;
-  *) echo 'Usage: run-tunnel-collector.sh weekly|floorplans|images|images-store|popups|discovery|popup-inventory|doctor' >&2; exit 1 ;;
+  recheck) job=(python recheck.py --config /etc/boothhana/collector.json --limit 25); limit=40m ;;
+  *) echo 'Usage: run-tunnel-collector.sh weekly|floorplans|images|images-store|popups|discovery|popup-inventory|doctor|recheck' >&2; exit 1 ;;
 esac
 exec 9>collector.lock
 if ! flock -w 900 9; then

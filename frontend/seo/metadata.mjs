@@ -212,7 +212,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     if (validParticipant) {
       const boothName = text(participant.participant.registrationName, 100)
       const eventName = text(catalog.event.name, 100)
-      title = `${boothName} · ${eventName} | 부스하나`
+      title = `${boothName} 부스 · ${eventName} | 부스하나`
       const topics = [...(participant.participant.subjects || []), ...(participant.sales?.subjects || []), ...(participant.sales?.categories || [])].map(value => text(value, 60)).filter(Boolean)
       description = text(participant.sales?.summary, 170) || `${eventName}의 ${boothName} 부스 위치${topics.length ? `와 ${topics.slice(0, 3).join('·')} 상품 정보` : '와 공개 상품 정보'}를 확인하세요.`
       image = imageUrl(selectedParticipantImage(catalog, participant)?.url) || imageUrl(selectedBanner(catalog)?.url) || image

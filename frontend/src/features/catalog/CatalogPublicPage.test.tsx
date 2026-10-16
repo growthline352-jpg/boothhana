@@ -36,6 +36,12 @@ function summaryAt(query = '') {
 }
 
 describe('same-day operating venues in event information', () => {
+  it('places visit preparation actions before long admission facts and retains the selected venue', () => {
+    const html=summaryAt('?day=2026-10-10&operatingEvent=102')
+    expect(html.indexOf('aria-label="행사 방문 준비"')).toBeLessThan(html.indexOf('class="visit-facts"'))
+    expect(html).toContain('map.kakao.com/?q=')
+    expect(html).toContain('공식 관람 안내')
+  })
   it('allows venue selection on the information tab when neither popup has booths', () => {
     const html = summaryAt()
     expect(html).toContain('운영 행사·전시장')

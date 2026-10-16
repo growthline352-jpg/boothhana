@@ -35,10 +35,10 @@ it('starts without a choice and never implicitly grants analytics', () => {
   local().set(CONSENT_KEY, 'invalid')
   expect(readConsent()).toBeNull()
 })
-it.each(['granted', 'denied'] as const)('retains %s across all four sites and reloads', async value => {
+it.each(['granted', 'denied'] as const)('retains %s across all five sites and reloads', async value => {
   saveConsent(value)
   expect(assignments[0]).toContain('Max-Age=31536000; Path=/; Domain=boothana.kr; Secure; SameSite=Lax')
-  for (host of ['boothana.kr', 'subculture.boothana.kr', 'expo.boothana.kr', 'festival.boothana.kr']) {
+  for (host of ['boothana.kr', 'subculture.boothana.kr', 'expo.boothana.kr', 'festival.boothana.kr', 'popup.boothana.kr']) {
     // New module simulates a fresh page/tab rather than relying on memory.
     vi.resetModules()
     expect((await import('./consent')).readConsent()).toBe(value)

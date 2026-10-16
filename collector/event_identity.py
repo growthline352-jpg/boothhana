@@ -32,7 +32,7 @@ def numbered_editions(value):
 
 # Every date token must carry its year, or inherit it from the actually quoted
 # event heading. Never inherit the candidate's guessed year.
-DATE = re.compile(r'(?<!\d)(?:(?P<year>(?:19|20)\d{2})\s*(?:년\s*|[./-]\s*))?'
+DATE = re.compile(r'(?<![\d:])(?:(?P<year>(?:19|20)\d{2})\s*(?:년\s*|[./-]\s*))?'
                   r'(?P<month>\d{1,2})\s*(?:월\s*|[./]\s*|-(?=\d{1,2}(?!\d)))'
                   r'(?P<day>\d{1,2})(?!\d)(?:\s*일)?')
 WEEKDAY = r'(?:\((?:[월화수목금토일](?:요일)?|Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)\.?\))?'
@@ -44,7 +44,7 @@ MONTH_NAME = r'Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Ju
 ENGLISH_DATE = re.compile(r'(?<!\w)(?P<month>'+MONTH_NAME+r')\.?\s+(?P<day>\d{1,2})(?!\d)(?:st|nd|rd|th)?(?:,?\s+(?P<year>(?:19|20)\d{2}))?', re.I)
 DAY_MONTH_DATE = re.compile(r'(?<!\w)(?P<day>\d{1,2})(?:st|nd|rd|th)?\s+(?P<month>'+MONTH_NAME+r')\.?\s+(?P<year>(?:19|20)\d{2})(?!\d)', re.I)
 IGNORED_LABEL = re.compile(r'예매|예약|모집|신청|접수|판매|게시|작성|등록|수정|발행|공지일|티켓\s*오픈|booking|reservation|registration|published|updated|ticket\s*(?:sales?|open)|sales?\s*(?:period|dates?)', re.I)
-EVENT_LABEL = re.compile(r'(?:행사|운영|진행|관람|전시|공연)\s*(?:개최\s*)?(?:기간|일정|일시|일자|날짜|일(?=\s|[:：]|\d|$))|개최\s*(?:기간|일정|일시|일자|날짜|일(?=\s|[:：]|\d|$))|event\s*dates?', re.I)
+EVENT_LABEL = re.compile(r'축제\s*안내|(?:행사|운영|진행|관람|전시|공연)\s*(?:개최\s*)?(?:기간|일정|일시|일자|날짜|일(?=\s|[:：]|\d|$))|개최\s*(?:기간|일정|일시|일자|날짜|일(?=\s|[:：]|\d|$))|event\s*dates?', re.I)
 ISO_TIMESTAMP = re.compile(r'(?<!\d)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?(?![\d:])', re.I)
 
 

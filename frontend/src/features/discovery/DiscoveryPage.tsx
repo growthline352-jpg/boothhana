@@ -1,4 +1,5 @@
 import {itineraryHref} from '../itinerary/links'
+import { trackPublicAction } from '../analytics/actions'
 import {discoveryFeatures} from './features'
 import {compareIds,compareHref,toggleComparison,editionId} from './compare'
 import './explore.css'
@@ -69,7 +70,7 @@ export function DiscoveryPage() {
   }
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (category.enabled) { if (isCalendar) update({ q: draft.trim().slice(0, 100) }); else navigate(searchResultsHref(params, category.key, draft)) }
+    if (category.enabled) { trackPublicAction('event_search'); if (isCalendar) update({ q: draft.trim().slice(0, 100) }); else navigate(searchResultsHref(params, category.key, draft)) }
   }
   const reset = () => { setDraft(''); const next = new URLSearchParams({ period: 'all', view: isCalendar ? 'calendar' : 'results' }); if (!currentSiteCategory()) next.set('category', category.key); if (isCalendar && params.get('month')) next.set('month', params.get('month')!); setParams(next) }
   const toggleView = (calendar: boolean) => calendar

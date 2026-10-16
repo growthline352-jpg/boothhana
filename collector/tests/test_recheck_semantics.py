@@ -16,6 +16,20 @@ import weekly
 
 
 class RecheckSemanticsTests(unittest.TestCase):
+    def test_native_festival_hours_after_a_booking_link_keep_each_date_clock(self):
+        from observation_validation import value_supported
+        text='DDP디자인페어\n2026-10-14 ~ 2026-10-18\n예약하기\n축제 안내\n세부정보\n기간: 2026-10-14 ~ 2026-10-18\n시간: 10.14(수) 14:00~20:00 / 10.15(목)-10.17(토) 11:00~20:00 / 10.18(일) 11:00~18:00'
+        evidence=text[text.index('기간:'):]
+        rows=[dict(startDate=a,endDate=b,startTime=c,endTime=d) for a,b,c,d in [
+          ('2026-10-14','2026-10-14','14:00','20:00'),('2026-10-15','2026-10-17','11:00','20:00'),('2026-10-18','2026-10-18','11:00','18:00')]]
+        self.assertTrue(value_supported('occurrences',rows,evidence,text,{},self.url))
+        rows[1]['startTime']='14:00'
+        self.assertFalse(value_supported('occurrences',rows,evidence,text,{},self.url))
+    def test_booking_period_still_overrides_an_earlier_festival_heading(self):
+        from observation_validation import value_supported
+        text='축제 안내\n예약 기간: 2026-10-14 ~ 2026-10-18\n시간: 매일 11:00~20:00'
+        rows=[dict(startDate='2026-10-14',endDate='2026-10-18',startTime='11:00',endTime='20:00')]
+        self.assertFalse(value_supported('occurrences',rows,text,text,{},self.url))
     def setUp(self):
         self.url='https://example.com/event/2026'
         self.event=dict(name='2026 테스트 행사',organizer='주최',edition='2026',

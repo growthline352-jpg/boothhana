@@ -132,6 +132,7 @@ test('booth pages have their own canonical metadata and crawlable product conten
   const path = '/discover/13/booths/26'
   const meta = pageMetadata({ path, siteUrl, catalog, participant })
   assert.match(meta.title, /Hio Doll/)
+  assert.match(meta.title, /부스 ·/)
   assert.equal(meta.canonical, `${siteUrl}${path}`)
   assert.ok(meta.schema['@graph'].some(node => node['@id'] === `${siteUrl}${path}#booth`))
   assert.ok(meta.schema['@graph'].some(node => node['@type'] === 'Event'))

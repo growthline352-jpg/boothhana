@@ -10,6 +10,28 @@ def event(name='행사'):
       'operationStatus':{'state':'UNKNOWN','note':None,'sourceUrl':None,'checkedOn':None}}
 
 class DataQualityTests(unittest.TestCase):
+ def test_split_official_hours_fill_a_range_without_changing_its_dates(self):
+  from copy import deepcopy
+  old=event();old['occurrences'][0].update(startDate='2026-10-14',endDate='2026-10-18')
+  new=deepcopy(old);new['occurrences']=[dict(startDate=a,endDate=b,startTime=c,endTime=d) for a,b,c,d in [
+   ('2026-10-14','2026-10-14','14:00','20:00'),('2026-10-15','2026-10-17','11:00','20:00'),('2026-10-18','2026-10-18','11:00','18:00')]]
+  merged=merge_enrichment(old,new)
+  self.assertEqual(merged['occurrences'],new['occurrences'])
+  self.assertIsNone(old['occurrences'][0]['startTime'])
+  self.assertNotIn('MISSING_HOURS',missing_reasons(merged))
+ def test_split_schedule_rejects_missing_days_overlap_and_existing_clock_conflicts(self):
+  from copy import deepcopy
+  old=event();old['occurrences'][0].update(startDate='2026-10-14',endDate='2026-10-18')
+  new=deepcopy(old);new['occurrences']=[dict(startDate='2026-10-14',endDate='2026-10-15',startTime='11:00',endTime='18:00'),dict(startDate='2026-10-17',endDate='2026-10-18',startTime='11:00',endTime='18:00')]
+  with self.assertRaises(ValueError):merge_enrichment(old,new)
+  new['occurrences'][1]['startDate']='2026-10-15'
+  with self.assertRaises(ValueError):merge_enrichment(old,new)
+  new['occurrences'][1]['startDate']='2026-10-16'
+  old['occurrences'][0]['startTime']='10:00'
+  self.assertEqual(merge_enrichment(old,new)['occurrences'],old['occurrences'])
+ def test_empty_schedule_is_missing_hours(self):
+  old=event();old['occurrences']=[]
+  self.assertIn('MISSING_HOURS',missing_reasons(old))
  def test_missing_fields_are_explicit(self):
   self.assertEqual(missing_reasons(event()),['MISSING_ADDRESS','MISSING_ADMISSION','MISSING_HOURS','MISSING_PARTICIPANT_SOURCE','MISSING_FLOORPLAN_SOURCE','MISSING_SALES_SOURCE','MISSING_CURRENT_BANNER','MISSING_VISITOR_GUIDE','MISSING_INTEREST_SUBJECTS'])
  def test_merge_only_fills_gaps_and_preserves_identity(self):
