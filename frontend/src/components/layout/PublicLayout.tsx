@@ -18,7 +18,7 @@ import '../../features/discovery/discovery.css'
 export function PublicLayout() {
   const { user, loading, status, loginUrl, logout, refresh } = useAuth()
   const location = useLocation()
-  const current = activeCategory(location.pathname, location.search)
+  const current = activeCategory(location.pathname, location.search) ?? currentSiteCategory()
   const subculture=current==='subculture'||currentSiteCategory()==='subculture'||location.pathname.startsWith('/subculture')||['/account/interests','/account/notifications'].includes(location.pathname)
   const menu = useRef<HTMLDetailsElement>(null)
   const lock = useRef(false)

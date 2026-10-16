@@ -5,7 +5,8 @@ import { MemoryEditor } from './LibraryPage'
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import type { MemoryEntry,MemoryIndex,MemoryTarget } from './types'
 
-const f=vi.hoisted(()=>({cells:[] as unknown[],cursor:0,owner:'member:1',loading:false,index:[] as MemoryIndex[],remove:vi.fn(),save:vi.fn()}))
+const f=vi.hoisted(()=>({cells:[] as unknown[],cursor:0,owner:'member:1',loading:false,index:[] as MemoryIndex[],remove:vi.fn(),save:vi.fn(),track:vi.fn()}))
+vi.mock('../analytics/actions',()=>({trackPublicAction:f.track}))
 vi.mock('react',async original=>({...await original<typeof import('react')>(),useEffect:()=>{},
  useState:(value:unknown)=>{const n=f.cursor++;if(!(n in f.cells))f.cells[n]=value;return [f.cells[n],(next:unknown)=>{f.cells[n]=next}]},
  useRef:(value:unknown)=>{const n=f.cursor++;if(!(n in f.cells))f.cells[n]={current:value};return f.cells[n]},
@@ -23,7 +24,7 @@ function render(){f.cursor=0;return nodes(SaveButton({target}))}
 function clickSave(){(render().find(n=>n.props['aria-pressed']!==undefined)!.props.onClick as ()=>void)()}
 function dialog(){return render().find(n=>n.type===ConfirmDialog)}
 async function confirm(){await (dialog()!.props.confirm as ()=>void)();await Promise.resolve();await Promise.resolve()}
-beforeEach(()=>{f.cells=[];f.cursor=0;f.owner='member:1';f.loading=false;f.index=[row];f.remove.mockReset().mockResolvedValue(undefined);f.save.mockReset().mockResolvedValue(undefined)})
+beforeEach(()=>{f.cells=[];f.cursor=0;f.owner='member:1';f.loading=false;f.index=[row];f.track.mockClear();f.remove.mockReset().mockResolvedValue(undefined);f.save.mockReset().mockResolvedValue(undefined)})
 describe('bookmark removal confirmation',()=>{
  it('waits for confirmation and cancellation preserves the saved item',()=>{
   clickSave();expect(dialog()).toBeDefined();expect(f.remove).not.toHaveBeenCalled()
@@ -47,6 +48,11 @@ describe('bookmark removal confirmation',()=>{
  })
  it('saves a new item directly without removal confirmation',async()=>{
   f.index=[];clickSave();await Promise.resolve();expect(f.save).toHaveBeenCalledWith({target,day:'',hall:''});expect(dialog()).toBeUndefined()
+  expect(f.track).toHaveBeenCalledWith('save_item',{eventId:4,participantId:500,itemType:'PRODUCT'})
+ })
+ it('does not report a failed save as a successful action',async()=>{
+  f.index=[];f.save.mockRejectedValueOnce(new Error('저장 실패'));clickSave();await Promise.resolve();await Promise.resolve()
+  expect(f.track).not.toHaveBeenCalled()
  })
 })
 

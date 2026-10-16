@@ -6,6 +6,7 @@ import { useLibrary } from './LibraryProvider'
 import { targetKey } from './memory'
 import {libraryBoothsHref} from './purchaseModel'
 import type { MemoryIndex,MemoryTarget } from './types'
+import { trackPublicAction } from '../analytics/actions'
 
 export function SaveButton({target,day='',hall='',compact=false}:{target:MemoryTarget;day?:string;hall?:string;compact?:boolean}) {
  const auth=useAuth(),library=useLibrary(),guard=useRef(false),[busy,setBusy]=useState(false),[message,setMessage]=useState('')
@@ -17,7 +18,7 @@ export function SaveButton({target,day='',hall='',compact=false}:{target:MemoryT
   if(confirmed&&(!removal||removal.owner!==library.owner||removal.row.id!==saved?.id||removal.row.revision!==saved.revision)){setRemoval(null);setMessage('저장 상태가 바뀌었어요. 다시 확인해 주세요.');return}
   if(saved&&!confirmed){setMessage('');setRemoval({row:saved,owner:library.owner});return}
   const owner=library.owner;guard.current=true;setBusy(true);setMessage('')
-  try{if(saved)await library.remove(saved);else await library.save({target,day,hall});setRemoval(null);setMessage(saved?'저장을 해제했어요.':owner==='guest'?'이 기기에 90일간 임시 저장했어요. 로그인 후 보관함에서 가져올 수 있어요.':'계정 보관함에 저장했어요.')}
+  try{if(saved)await library.remove(saved);else {await library.save({target,day,hall});trackPublicAction('save_item',{eventId:target.eventId,participantId:target.participantId??undefined,itemType:target.type})}setRemoval(null);setMessage(saved?'저장을 해제했어요.':owner==='guest'?'이 기기에 90일간 임시 저장했어요. 로그인 후 보관함에서 가져올 수 있어요.':'계정 보관함에 저장했어요.')}
   catch(e){setMessage(e instanceof Error?e.message:'저장하지 못했어요. 다시 확인해 주세요.')}
   finally{guard.current=false;setBusy(false)}
  }

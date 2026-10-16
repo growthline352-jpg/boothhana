@@ -1,4 +1,5 @@
 import {itineraryHref} from '../itinerary/links'
+import { trackPublicAction } from '../analytics/actions'
 import {discoveryFeatures} from '../discovery/features'
 import {FirstVisitSummary} from './FirstVisitSummary'
 import {compareHref} from '../discovery/compare'
@@ -100,7 +101,7 @@ function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;
   const status=eventStatus(event,seoulToday())
   const related=value.participants.filter(participant=>participant.id!==row.id&&attendance(participant,state.day,state.hall)!=='other')
   const relatedPreview=related.slice(0,4)
-  const openMap=()=>void navigate(catalogEventPath(eventId,context,'map',row.id))
+  const openMap=()=>{trackPublicAction('floorplan_open',{eventId:Number(eventId),participantId:row.id});void navigate(catalogEventPath(eventId,context,'map',row.id))}
   return <section className="content-wrap section-pad visit-page">
     <nav className="discovery-back-link" aria-label="현재 위치">
       <Link to="/">홈</Link>{' / '}<Link to={categoryForType(event.subcategory).key==='subculture'?subcultureEventsHref:categoryHref(categoryForType(event.subcategory).key)}>행사 목록</Link>{' / '}<Link to={eventReturn}>{event.name}</Link>{' / '}<span aria-current="page">부스 상세</span>
@@ -168,6 +169,8 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
     setParams(qs,{replace:true,preventScrollReset:true,state:location.state})
   }
   const chooseSection=(next:EventSection)=>{
+    if(next!==section&&next==='booths')trackPublicAction('booth_list_open',{eventId:currentEventId})
+    if(next!==section&&next==='map')trackPublicAction('floorplan_open',{eventId:currentEventId})
     if(next===section){sectionNav.current?.scrollIntoView({block:'start',behavior:'auto'});return}
     sectionActionPending.current=true
     const qs=visitParams({...state,tab:next==='map'?'map':next==='booths'?'booths':'info',focus:null})
@@ -193,6 +196,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   }
   const open=(id:number)=>void navigate(catalogBoothPath(currentEventId,id,{day:state.day,hall:state.hall}),{state:{catalogEventReturnTo:location.pathname+location.search}})
   const showMap=(id:number)=>{
+    trackPublicAction('floorplan_open',{eventId:currentEventId,participantId:id})
     mapActionPending.current=true;setMessage('');update({tab:'map',focus:id,booth:null,q:''})
   }
   useEffect(()=>{
@@ -204,11 +208,19 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
   const visitChange=(day:string)=>{update({day,hall:'',focus:null,booth:null});setMessage('방문일 기준으로 참가 부스와 위치를 바꿨어요.')}
   const operatingVenueSelect=operatingChoices.length>1&&<label className={section==='home'?'field event-visit-day':'field'}><span>운영 행사·전시장</span><select className="select" value={currentEventId} onChange={ev=>{const next=new URLSearchParams(params);next.set('operatingEvent',ev.target.value);next.delete('hall');next.delete('focus');setParams(next,{replace:true,preventScrollReset:true,state:location.state})}}>{operatingChoices.map(row=><option key={row.id} value={row.id}>{row.event.name} · {row.event.venueName||'장소 미확인'}</option>)}</select></label>
   const official=e.sources.find(s=>['OFFICIAL','ORGANIZER_SOCIAL'].includes(s.kind)&&s.access==='ORIGINAL'&&publicLink(s.url))
+  const mapQuery=usableAddress(e.address)?e.address:e.venueName
+  const primaryActions=<div className="visit-primary-actions" aria-label="행사 방문 준비">
+    {hasBooths&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}
+    {hasFloorplans&&<button type="button" className="btn secondary" onClick={()=>chooseSection('map')}>배치도 보기</button>}
+    {mapQuery&&<SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(mapQuery)}`}>{usableAddress(e.address)?'장소 지도 ↗':'장소명으로 지도 검색 ↗'}</SafeLink>}
+    {official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}
+  </div>
   const copyAddress=async()=>{try{await navigator.clipboard.writeText(e.address!);setMessage('주소를 복사했어요.')}catch{setMessage(`공개 주소: ${e.address} — 길게 눌러 복사해 주세요.`)}}
   return <section className="content-wrap section-pad visit-page event-detail-redesign">
     <Link className="discovery-back-link" to={back} state={{catalogRestore:true}}>← {categoryForType(e.subcategory).label} 목록</Link>
     <header className="visit-summary"><figure className="visit-poster"><ContentImage url={banner?.url} kind="event" eventType={e.subcategory} alt={`${e.name} 대표 이미지`}/>{banner&&<figcaption><ReportLink target={{namespace:'CATALOG',type:'ASSET',eventId:currentEventId,id:banner.id}} label="이미지 문제 신고"/></figcaption>}</figure><div className="visit-summary-copy"><div className="visit-summary-kicker"><p className="eyebrow">{labels[e.subcategory]} · 행사 안내</p><span className={`chip visit-status is-${status.state}`}>{status.label}</span></div><h1>{e.name}</h1><BookingBadge event={e} day={state.day}/>
       {status.notice&&<p className="visit-important-note" role="status">{status.notice} {status.operation.sourceUrl&&<SafeLink url={status.operation.sourceUrl}>상태 안내 원문</SafeLink>}{status.operation.checkedOn&&<small> · {status.operation.checkedOn} 확인</small>}</p>}
+      {primaryActions}
       <dl className="visit-facts"><div><dt>행사일</dt><dd>{eventDateLabel(e.occurrences)}</dd></div>
         <div><dt>행사 시간</dt><dd>{eventTimeLabels(e.occurrences).map(label=><div key={label}>{label}</div>)}</dd></div>
         <div><dt>장소</dt><dd>{e.venueName||'장소 미공개·미확인'}{e.address&&<small>{e.address}</small>}</dd></div>
@@ -216,8 +228,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null}:{
       {section==='home'&&days.length>1&&<label className="field event-visit-day"><span>방문일</span><select className="select" value={state.day} onChange={ev=>visitChange(ev.target.value)}>{days.map(day=><option key={day} value={day}>{dateLabel(day)}{day===today?' · 오늘':''}</option>)}</select></label>}
       {section==='home'&&operatingVenueSelect}
       {section==='home'&&categoryForType(e.subcategory).key!=='subculture'&&<FirstVisitSummary event={e}/>}
-      <div className="visit-primary-actions">{hasBooths&&<button type="button" className="btn primary" onClick={()=>chooseSection('booths')}>소개된 부스 {currentValue.participants.length}곳 보기</button>}<Link className="btn secondary" to={itineraryHref(currentEventId,state.day)}>이 행사로 일정 만들기</Link>{official&&<SafeLink url={official.url}>공식 관람 안내 ↗</SafeLink>}</div>
-      <div className="visit-utility-actions">{discoveryFeatures.comparison&&<Link to={compareHref([currentEventId])}>다른 행사와 비교</Link>}{usableAddress(e.address)&&<><SafeLink url={`https://map.kakao.com/?q=${encodeURIComponent(e.address!)}`}>장소 지도 ↗</SafeLink><button type="button" onClick={()=>void copyAddress()}>주소 복사</button></>}
+      <div className="visit-utility-actions"><Link className="btn secondary" to={itineraryHref(currentEventId,state.day)}>이 행사로 일정 만들기</Link>{discoveryFeatures.comparison&&<Link to={compareHref([currentEventId])}>다른 행사와 비교</Link>}{usableAddress(e.address)&&<button type="button" onClick={()=>void copyAddress()}>주소 복사</button>}
         <SaveButton target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall}/><ShareQr target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall} title={e.name}/><ReportLink target={{namespace:'CATALOG',type:'EVENT',eventId:currentEventId,id:currentEventId,day:state.day,hall:state.hall}} viewedVersion={currentValue.publishedAt}/></div>
     </div></header>
     <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths',categoryForType(e.subcategory).key==='subculture'?'참가 부스·굿즈':'부스'],['map','배치도'],['reviews',categoryForType(e.subcategory).key==='subculture'?'이번·지난 회차 후기':'후기']] as const).filter(([key])=>(key!=='booths'||hasBooths)&&(key!=='map'||hasFloorplans)).map(([key,label])=><button key={key} type="button" aria-current={section===key?'page':undefined} className={section===key?'is-current':''} onClick={()=>chooseSection(key)}>{label}</button>)}</nav>

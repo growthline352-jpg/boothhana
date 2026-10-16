@@ -1,7 +1,7 @@
 import { CONSENT_KEY, type Consent } from './measurement'
 
 const COOKIE_KEY = 'boothhana_analytics_consent_v1'
-const sharedHosts = ['boothana.kr', 'subculture.boothana.kr', 'expo.boothana.kr', 'festival.boothana.kr']
+const sharedHosts = ['boothana.kr', 'subculture.boothana.kr', 'expo.boothana.kr', 'festival.boothana.kr', 'popup.boothana.kr']
 type Saved = { value: Exclude<Consent, null>; updatedAt: number }
 const memory = new Map<string, Saved>()
 const parse = (value: unknown): Consent => value === 'granted' || value === 'denied' ? value : null

@@ -12,7 +12,7 @@
 .public-shell .event-detail-redesign .visit-facts>div{display:grid;grid-template-columns:68px minmax(0,1fr);gap:10px;padding:9px 0;border-left:0}
 .public-shell .event-detail-redesign .visit-facts dt{font-size:13px;font-weight:700}
 .public-shell .event-detail-redesign .visit-facts dd{font-size:14px;line-height:1.6}
-.public-shell .event-detail-redesign .visit-primary-actions{display:flex;align-items:center;gap:15px;margin:15px 0 0}
+.public-shell .event-detail-redesign .visit-primary-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0}
 .public-shell .event-detail-redesign .visit-primary-actions .btn{width:auto;min-height:42px}
 .public-shell .event-detail-redesign .visit-utility-actions{margin-top:14px}
 .public-shell .event-detail-redesign .visit-main-tabs{position:sticky;top:var(--detail-header-height,76px);scroll-margin-top:var(--detail-header-height,76px);z-index:12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:0 0 22px;padding:5px;border:1px solid #cbd5df;border-radius:11px;background:#e8edf2}
@@ -39,6 +39,8 @@
  .public-shell .event-detail-redesign .visit-facts{grid-template-columns:1fr;gap:0}
  .public-shell .event-detail-redesign .visit-poster img{height:210px}
  .public-shell .event-detail-redesign .visit-primary-actions{flex-wrap:wrap}
+ .public-shell .event-detail-redesign .visit-primary-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .public-shell .event-detail-redesign .visit-primary-actions>*{min-width:0;min-height:44px;padding:10px 8px;text-align:center;font-size:13px;overflow-wrap:anywhere}
  .public-shell .event-detail-redesign .visit-condition-row{grid-template-columns:repeat(2,minmax(0,1fr))}
  .public-shell .event-detail-redesign .visit-search{grid-column:1/-1}
 }
