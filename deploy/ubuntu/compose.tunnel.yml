@@ -12,7 +12,10 @@ services:
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/gcs-service-account.json
       CODEX_API_KEY: ""
       X_BEARER_TOKEN: ""
-      DB_POOL_SIZE: "5"
+      # Concurrent public crawls and collector work share this bounded pool.
+      # Production DB allows 60 connections; 10 leaves headroom for other clients.
+      DB_POOL_SIZE: "10"
+      DB_CONNECTION_TIMEOUT_MS: "10000"
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/urandom
     volumes:
       - ./secrets/gcs-service-account.json:/run/secrets/gcs-service-account.json:ro
