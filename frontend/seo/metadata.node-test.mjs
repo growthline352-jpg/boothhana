@@ -194,6 +194,119 @@ const browseTemplate = '<!-- BOOTH_META_START --><!-- BOOTH_META_END --><div id=
 const publicJson = value => new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } })
 const directorySearch = 'period=all&sort=recent'
 
+test('an eight-second API response still serves a complete, indexable directory', async () => {
+  const fetcher = (url, { signal }) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(publicJson({ total: 21, items: [catalog] })), 8000)
+    signal.addEventListener('abort', () => { clearTimeout(timer); reject(signal.reason) }, { once: true })
+  })
+  const page = await renderPage({ path: '/discover', search: directorySearch, template: browseTemplate,
+    siteUrl: 'https://subculture.boothana.kr', apiBase: 'https://api.example', fetcher })
+  assert.equal(page.status, 200)
+  assert.match(page.meta.robots, /^index,follow/)
+  assert.match(page.html, /href="https:\/\/subculture\.boothana\.kr\/discover\/13"/)
+  assert.match(page.html, /rel="next"/)
+})
+
+test('simultaneous crawls share only the same unfinished source and read fresh data afterward', async () => {
+  let calls = 0, release
+  const gate = new Promise(resolve => { release = resolve })
+  const fetcher = async url => {
+    calls++
+    await gate
+    const page = Number(new URL(url).searchParams.get('page'))
+    return publicJson({ total: 41, items: [{ ...catalog, id: page ? 14 : 13 }] })
+  }
+  const input = { path: '/discover', search: directorySearch, template: browseTemplate,
+    siteUrl: 'https://subculture.boothana.kr', apiBase: 'https://api.example', fetcher }
+  const burst = Array.from({ length: 8 }, () => renderPage(input))
+  const next = renderPage({ ...input, search: directorySearch + '&page=1' })
+  const otherCategory = renderPage({ ...input, siteUrl: 'https://expo.boothana.kr' })
+  assert.equal(calls, 3, 'page and category are part of the coalescing key')
+  release()
+  for (const page of await Promise.all(burst)) {
+    assert.equal(page.status, 200)
+    assert.match(page.html, /href="https:\/\/subculture\.boothana\.kr\/discover\/13"/)
+  }
+  assert.match((await next).html, /href="https:\/\/subculture\.boothana\.kr\/discover\/14"/)
+  assert.equal((await otherCategory).status, 200)
+  await renderPage(input)
+  assert.equal(calls, 4, 'completed responses must never be retained')
+})
+
+test('a timed-out attempt gets a fresh signal and can recover, including a stalled response body', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  for (const stalledBody of [false, true]) {
+    const signals = []
+    const fetcher = async (url, { signal }) => {
+      signals.push(signal)
+      if (signals.length > 1) {
+        assert.equal(signal.aborted, false)
+        return publicJson({ total: 21, items: [catalog] })
+      }
+      if (stalledBody) return new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"items":'))
+        signal.addEventListener('abort', () => controller.error(signal.reason), { once: true })
+      } }), { headers: { 'content-type': 'application/json' } })
+      return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }))
+    }
+    const rendered = renderPage({ path: '/discover', search: directorySearch, template: browseTemplate,
+      siteUrl: 'https://subculture.boothana.kr', apiBase: 'https://api.example', fetcher })
+    await new Promise(setImmediate)
+    t.mock.timers.tick(12000)
+    await new Promise(setImmediate)
+    t.mock.timers.tick(250)
+    const page = await rendered
+    assert.equal(signals.length, 2)
+    assert.notEqual(signals[0], signals[1])
+    assert.equal(page.status, 200)
+    assert.match(page.meta.robots, /^index,follow/)
+    assert.match(page.html, /href="https:\/\/subculture\.boothana\.kr\/discover\/13"/)
+  }
+})
+
+test('repeated timeouts are bounded, logged, evicted, and never become a successful empty directory', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const warnings = t.mock.method(console, 'warn', () => {})
+  let calls = 0, recovered = false
+  const fetcher = async (url, { signal }) => {
+    calls++
+    if (recovered) return publicJson({ total: 1, items: [catalog] })
+    return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }))
+  }
+  const input = { path: '/discover', search: directorySearch, template: browseTemplate,
+    siteUrl: 'https://subculture.boothana.kr', apiBase: 'https://api.example', fetcher }
+  const rendered = renderPage(input)
+  await new Promise(setImmediate)
+  t.mock.timers.tick(12000)
+  await new Promise(setImmediate)
+  t.mock.timers.tick(250)
+  await new Promise(setImmediate)
+  t.mock.timers.tick(12000)
+  const failed = await rendered
+  assert.equal(calls, 2)
+  assert.equal(failed.status, 503)
+  assert.equal(failed.meta.robots, 'noindex,follow')
+  assert.doesNotMatch(failed.html, /data-seo-fallback/)
+  assert.equal(warnings.mock.calls.length, 1)
+  assert.equal(JSON.parse(warnings.mock.calls[0].arguments[0]).reason, 'timeout')
+  assert.equal(JSON.parse(warnings.mock.calls[0].arguments[0]).attempts, 2)
+  recovered = true
+  assert.equal((await renderPage(input)).status, 200)
+  assert.equal(calls, 3, 'a failed read must not poison the next request')
+})
+
+test('a withdrawn publication is not served from an earlier successful read', async () => {
+  let calls = 0
+  const fetcher = async () => ++calls === 1 ? publicJson(catalog) : new Response('', { status: 410 })
+  const input = { path: '/discover/13', template: browseTemplate, siteUrl, apiBase: 'https://api.example', fetcher }
+  assert.equal((await renderPage(input)).status, 200)
+  const withdrawn = await renderPage(input)
+  assert.equal(withdrawn.status, 404)
+  assert.equal(withdrawn.meta.robots, 'noindex,follow')
+  assert.doesNotMatch(withdrawn.html, /41회 서울 프로젝트돌/)
+  assert.equal(calls, 2)
+})
+
 test('unfiltered all-period directory pages have independent indexable canonical URLs', () => {
   for (const origin of ['https://subculture.boothana.kr', 'https://expo.boothana.kr', 'https://festival.boothana.kr', 'https://popup.boothana.kr']) {
   for (const page of [0, 1, 2]) {

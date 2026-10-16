@@ -4,8 +4,11 @@ import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryRedirect, requestS
 import { naverVerificationFor } from '../seo/naver-verification.mjs'
 
 const MAX_RESPONSE = 4 * 1024 * 1024
-// Leave time for template loading and HTML generation within the 10-second hosting limit.
-const PUBLIC_FETCH_TIMEOUT = 6500
+// Two independent attempts plus backoff fit within the 30-second function limit.
+const PUBLIC_FETCH_TIMEOUT = 12000
+const RETRY_DELAY = 250
+// Share only unfinished reads in this instance, never cache a completed publication.
+const pendingSources = new WeakMap()
 const DIRECTORY_PAGE_SIZE = 20
 /** Configured API origin only; never request Host, user URLs, cookies or redirects. */
 export function apiOrigin(raw) {
@@ -59,56 +62,79 @@ function platformListing(rows) {
     }]
   })
 }
-async function fetchPublic(origin, path, signal, fetcher) {
+class PublicSourceError extends Error {
+  constructor(reason, status = 0) { super(reason); this.reason = reason; this.status = status }
+}
+async function readPublicSource(origin, path, fetcher) {
+  const started = performance.now()
   for (let attempt = 0; attempt < 2; attempt++) {
-    let response
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), PUBLIC_FETCH_TIMEOUT)
+    let failure
     try {
-      response = await fetcher(`${origin}${path}`, {
-        signal, redirect: 'error', credentials: 'omit', headers: { Accept: 'application/json' },
+      const response = await fetcher(`${origin}${path}`, {
+        signal: controller.signal, redirect: 'error', credentials: 'omit',
+        headers: { Accept: 'application/json' },
       })
+      if (!response.ok) {
+        if (response.body) await response.body.cancel().catch(() => {})
+        throw new PublicSourceError('http', response.status)
+      }
+      const data = await readBoundedJson(response)
+      const elapsedMs = Math.round(performance.now() - started)
+      if (attempt || elapsedMs >= 6500) console.info(JSON.stringify({
+        event: attempt ? 'seo_source_recovered' : 'seo_source_slow', source: path, attempts: attempt + 1, elapsedMs,
+      }))
+      return data
     } catch (error) {
-      if (attempt || signal.aborted) throw error
-      continue
+      failure = error instanceof PublicSourceError ? error : new PublicSourceError(
+        controller.signal.aborted ? 'timeout' : error instanceof TypeError ? 'network' : 'invalid_response')
+    } finally {
+      clearTimeout(timer)
+      controller.abort()
     }
-    if (!attempt && [500, 502, 503, 504].includes(response.status)) {
-      if (response.body) await response.body.cancel().catch(() => {})
-      continue
+    const retryable = ['timeout', 'network'].includes(failure.reason) || [500, 502, 503, 504].includes(failure.status)
+    if (attempt || !retryable) {
+      if (![404, 410].includes(failure.status)) console.warn(JSON.stringify({
+        event: 'seo_source_failed', source: path, reason: failure.reason,
+        upstreamStatus: failure.status, attempts: attempt + 1, elapsedMs: Math.round(performance.now() - started),
+      }))
+      throw failure
     }
-    return response
+    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
   }
 }
-async function fetchJson(origin, path, signal, fetcher) {
-  const response = await fetchPublic(origin, path, signal, fetcher)
-  if (!response.ok) throw new Error(`Public SEO source returned ${response.status}`)
-  return readBoundedJson(response)
+function fetchJson(origin, path, fetcher) {
+  let pending = pendingSources.get(fetcher)
+  if (!pending) { pending = new Map(); pendingSources.set(fetcher, pending) }
+  const key = `${origin}${path}`
+  if (!pending.has(key)) pending.set(key, readPublicSource(origin, path, fetcher).finally(() => pending.delete(key)))
+  return pending.get(key)
 }
 async function fetchBrowseListing(origin, path, search, fetcher, siteUrl) {
   const params = new URLSearchParams(search)
   const directoryPage = catalogDirectoryPage(path, search)
   if (directoryPage === null && [...params.keys()].some(key => key !== 'category')) return { listing: [], pagination: null }
-  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), PUBLIC_FETCH_TIMEOUT)
-  try {
-    if (path === '/events') {
-      const rows = await fetchJson(origin, '/api/public/events', controller.signal, fetcher)
-      if (!Array.isArray(rows)) throw new Error('Invalid public event listing')
-      return { listing: platformListing(rows), pagination: null }
-    }
-    const hostCategory = categorySite(siteUrl)
-    const requested = hostCategory || params.get('category') || 'subculture'
-    if (!Object.hasOwn(CATALOG_CATEGORY, requested)) return { listing: [], pagination: null }
-    const categories = path === '/' && !hostCategory ? Object.values(CATALOG_CATEGORY) : [CATALOG_CATEGORY[requested]]
-    const page = directoryPage ?? 0
-    const size = directoryPage !== null ? DIRECTORY_PAGE_SIZE : path === '/' ? 12 : 24
-    const results = await Promise.all(categories.map(category => fetchJson(origin, `/api/public/catalog/events?category=${category}&page=${page}&size=${size}&sort=RECENT&grouped=true`, controller.signal, fetcher)))
-    const unique = new Map()
-    for (const result of results) {
-      if (!Array.isArray(result?.items) || !Number.isSafeInteger(result.total) || result.total < 0) throw new Error('Invalid catalog listing')
-      if (directoryPage !== null && page > 0 && page * size >= result.total) return { listing: [], pagination: null, notFound: true }
-      if (page * size < result.total && !result.items.length) throw new Error('Incomplete catalog listing')
-      for (const row of catalogListing(result.items)) unique.set(row.urlPath, row)
-    }
-    return { listing: [...unique.values()].slice(0, 36), pagination: directoryPage !== null ? { page, size, total: results[0].total } : null }
-  } finally { clearTimeout(timer); controller.abort() }
+  if (path === '/events') {
+    const rows = await fetchJson(origin, '/api/public/events', fetcher)
+    if (!Array.isArray(rows)) throw new Error('Invalid public event listing')
+    return { listing: platformListing(rows), pagination: null }
+  }
+  const hostCategory = categorySite(siteUrl)
+  const requested = hostCategory || params.get('category') || 'subculture'
+  if (!Object.hasOwn(CATALOG_CATEGORY, requested)) return { listing: [], pagination: null }
+  const categories = path === '/' && !hostCategory ? Object.values(CATALOG_CATEGORY) : [CATALOG_CATEGORY[requested]]
+  const page = directoryPage ?? 0
+  const size = directoryPage !== null ? DIRECTORY_PAGE_SIZE : path === '/' ? 12 : 24
+  const results = await Promise.all(categories.map(category => fetchJson(origin, `/api/public/catalog/events?category=${category}&page=${page}&size=${size}&sort=RECENT&grouped=true`, fetcher)))
+  const unique = new Map()
+  for (const result of results) {
+    if (!Array.isArray(result?.items) || !Number.isSafeInteger(result.total) || result.total < 0) throw new Error('Invalid catalog listing')
+    if (directoryPage !== null && page > 0 && page * size >= result.total) return { listing: [], pagination: null, notFound: true }
+    if (page * size < result.total && !result.items.length) throw new Error('Incomplete catalog listing')
+    for (const row of catalogListing(result.items)) unique.set(row.urlPath, row)
+  }
+  return { listing: [...unique.values()].slice(0, 36), pagination: directoryPage !== null ? { page, size, total: results[0].total } : null }
 }
 export async function renderPage({ path, search = '', template, siteUrl, verification = '', naverVerification = '', apiBase, fetcher = fetch, splitSites = false }) {
   path = normalizePath(path)
@@ -130,26 +156,20 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
   if (match) {
     if (!origin || !Number.isSafeInteger(Number(match[1]))) { unavailable = true; status = 503 }
     else {
-      const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), PUBLIC_FETCH_TIMEOUT)
       try {
-        const response = await fetchPublic(origin, `/api/public/catalog/events/${match[1]}`, controller.signal, fetcher)
-        if (!response.ok) { unavailable = true; status = response.status === 404 || response.status === 410 ? 404 : 503 }
-        else {
-          catalog = await readBoundedJson(response)
-          if (Number(catalog?.id) !== Number(match[1]) || typeof catalog?.event?.name !== 'string' || !catalog.event.name.trim()) throw new Error('Invalid public event')
-          if (Number(catalog.id) === 1 && catalog.event.name === '제35회 디. 페스타 (토요일)') {
-            catalog = { ...catalog, event: { ...catalog.event, name: '제35회 디. 페스타', occurrences: [
-              ...catalog.event.occurrences,
-              { startDate: '2026-10-04', endDate: '2026-10-04', startTime: '11:00', endTime: '16:00' },
-            ] } }
-          }
-          if (match[2]) {
-            participant = catalog.participants?.find(row => Number(row?.id) === Number(match[2])) || null
-            if (!participant) { unavailable = true; status = 404 }
-          }
+        catalog = await fetchJson(origin, `/api/public/catalog/events/${match[1]}`, fetcher)
+        if (Number(catalog?.id) !== Number(match[1]) || typeof catalog?.event?.name !== 'string' || !catalog.event.name.trim()) throw new Error('Invalid public event')
+        if (Number(catalog.id) === 1 && catalog.event.name === '제35회 디. 페스타 (토요일)') {
+          catalog = { ...catalog, event: { ...catalog.event, name: '제35회 디. 페스타', occurrences: [
+            ...catalog.event.occurrences,
+            { startDate: '2026-10-04', endDate: '2026-10-04', startTime: '11:00', endTime: '16:00' },
+          ] } }
         }
-      } catch { catalog = null; unavailable = true; status = 503 }
-      finally { clearTimeout(timer); controller.abort() }
+        if (match[2]) {
+          participant = catalog.participants?.find(row => Number(row?.id) === Number(match[2])) || null
+          if (!participant) { unavailable = true; status = 404 }
+        }
+      } catch (error) { catalog = null; unavailable = true; status = [404, 410].includes(error.status) ? 404 : 503 }
     }
   }
   if (catalog && !unavailable) {

@@ -1,8 +1,9 @@
 {
+  "regions": ["sin1"],
   "functions": {
     "api/page.mjs": {
       "includeFiles": "seo-template/index.html",
-      "maxDuration": 10
+      "maxDuration": 30
     },
     "api/sitemap.mjs": {
       "maxDuration": 30
