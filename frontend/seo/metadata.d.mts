@@ -26,6 +26,7 @@ export function categoryFor(event: { subcategory?: string } | null | undefined):
 export function catalogDirectoryPage(path: string, search?: string): number | null
 export function catalogDirectoryHref(page?: number, category?: string): string
 export function pageMetadata(input?: { path?: string; search?: string; siteUrl?: string; verification?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[]; unavailable?: boolean; splitSites?: boolean }): PageMeta
+export function clientPageMetadata(input?: Parameters<typeof pageMetadata>[0] & { pending?: boolean; currentCanonical?: string }): PageMeta | null
 export function renderMetadata(meta: PageMeta): string
 export function renderCrawlableContent(input?: { path?: string; search?: string; catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; listing?: PublicListingMeta[]; pagination?: { page: number; size: number; total: number } | null; siteUrl?: string; splitSites?: boolean }): string
 export function injectMetadata(template: string, meta: PageMeta): string

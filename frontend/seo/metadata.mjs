@@ -1,5 +1,6 @@
 import { taxonomy } from './taxonomy.mjs'
 import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryOrigin, splitSitesEnabled } from './category-sites.mjs'
+import { renderHomeGuide } from './home-guide.mjs'
 /** Shared server/SPA metadata. Only PUBLIC catalog responses may be supplied here. */
 export const SITE_TITLE = '부스하나 | 서울·경기 행사·부스·상품 찾기'
 export const SITE_DESCRIPTION = '서울·경기 서브컬처·박람회·축제·팝업과 참가 부스, 상품을 찾아 저장하세요. 방문을 준비하고 다녀온 뒤에도 다시 찾을 수 있습니다.'
@@ -166,6 +167,22 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 
+/** Preserve this URL's server metadata until the public detail request settles.
+ * SPA navigation has no server head for the new URL: clear the previous entity
+ * with neutral metadata, without declaring a loading request to be missing.
+ */
+export function clientPageMetadata({ pending = false, currentCanonical = '', ...input } = {}) {
+  const path = normalizePath(input.path || '/')
+  const detail = /^\/discover\/[1-9]\d*(?:\/booths\/[1-9]\d*)?$/.test(path)
+  if (pending && !input.unavailable && detail) {
+    const canonical = `${siteOrigin(input.siteUrl)}${path}`
+    if (currentCanonical === canonical) return null
+    const meta = pageMetadata({ ...input, catalog: null, participant: null })
+    return { ...meta, robots: siteOrigin(input.siteUrl) ? 'index,follow' : meta.robots, schema: null }
+  }
+  return pageMetadata(input)
+}
+
 export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', naverVerification = '', catalog = null, participant = null, listing = [], unavailable = false, splitSites = false } = {}) {
   path = normalizePath(path)
   let origin = siteOrigin(siteUrl)
@@ -286,7 +303,7 @@ export function renderCrawlableContent({ path = '/', search = '', catalog = null
     const directoryPage = catalogDirectoryPage(path, search)
     if ((path === '/' || path === '/discover') && directoryPage === null && [...params.keys()].some(key => key !== 'category')) return ''
     if (path === '/' && siteUrl === PORTAL_ORIGIN && splitSites && !params.size) {
-      return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.label)}</a></h2></section>`).join('')}</main>`
+      return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>서브컬처, 박람회, 축제, 팝업. 관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.label)}</a></h2></section>`).join('')}${renderHomeGuide()}</main>`
     }
     const category = categorySite(siteUrl) || params.get('category') || 'subculture'
     if ((path === '/' || path === '/discover') && !Object.hasOwn(CATEGORY_SITES, category)) return ''

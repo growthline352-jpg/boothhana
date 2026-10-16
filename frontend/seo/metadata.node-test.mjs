@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { pageMetadata, renderCrawlableContent, renderMetadata } from './metadata.mjs'
+import { clientPageMetadata, pageMetadata, renderCrawlableContent, renderMetadata } from './metadata.mjs'
 import { renderPage } from '../api/page.mjs'
 import { naverVerificationFor } from './naver-verification.mjs'
 
@@ -51,6 +51,46 @@ const catalog = {
   assets: [{ type: 'BOOTH_CUT', participantId: 26, url: 'https://cdn.example/booth.jpg' }],
 }
 const listing = [{ id: 13, name: '41회 서울 프로젝트돌', venue: '세텍', startDate: '2026-09-30', urlPath: '/discover/13' }]
+
+test('pending details and transient failures preserve the complete server head for this URL', () => {
+  for (const path of ['/discover/13', '/discover/13/booths/26']) {
+    const server = pageMetadata({ path, siteUrl, catalog, participant })
+    assert.match(server.robots, /^index,follow/)
+    assert.equal(clientPageMetadata({ path, siteUrl, pending: true, currentCanonical: server.canonical }), null)
+    // Retry/loading states also preserve a server 404 or 503 until new evidence arrives.
+    assert.equal(clientPageMetadata({ path, siteUrl, pending: true, currentCanonical: `${siteUrl}${path}` }), null)
+    const loaded = clientPageMetadata({ path, siteUrl, catalog, participant })
+    assert.deepEqual(loaded, server)
+    const missing = clientPageMetadata({ path, siteUrl, pending: true, unavailable: true, currentCanonical: server.canonical })
+    assert.equal(missing.robots, 'noindex,follow')
+    assert.equal(missing.schema, null)
+  }
+})
+
+test('pending SPA navigation clears the previous entity without adding noindex', () => {
+  const meta = clientPageMetadata({ path: '/discover/14/booths/27', siteUrl, pending: true,
+    currentCanonical: `${siteUrl}/discover/13/booths/26`, catalog, participant })
+  assert.equal(meta.canonical, `${siteUrl}/discover/14/booths/27`)
+  assert.equal(meta.robots, 'index,follow')
+  assert.equal(meta.schema, null)
+  assert.ok(!meta.title.includes('Hio Doll'))
+  assert.equal(clientPageMetadata({ path: '/library', siteUrl, pending: true }).robots, 'noindex,follow')
+  assert.equal(pageMetadata({ path: '/discover/14', siteUrl }).robots, 'noindex,follow')
+})
+
+test('portal HTML includes brand copy and complete category directories even while the guide is closed', async () => {
+  const template = '<html><head><!-- BOOTH_META_START --><!-- BOOTH_META_END --></head><body><div id="root"></div></body></html>'
+  const page = await renderPage({ path: '/', siteUrl: 'https://boothana.kr', splitSites: true, template,
+    apiBase: '', fetcher: async () => { throw new Error('Portal must not depend on the catalog API') } })
+  assert.equal(page.status, 200)
+  assert.match(page.html, /부스하나\(Boothana\)/)
+  assert.match(page.html, /<details class="home-guide"><summary>/)
+  assert.doesNotMatch(page.html, /<details[^>]*\bopen\b/)
+  for (const host of ['subculture', 'expo', 'festival', 'popup']) {
+    assert.ok(page.html.includes(`href="https://${host}.boothana.kr/discover?period=all&amp;sort=recent"`))
+  }
+  assert.match(page.html, /href="\/about"/)
+})
 
 test('D.Festa Sunday event URL redirects to its combined event while booth URLs stay separate', async () => {
   const template = '<html><head></head><body></body></html>'
