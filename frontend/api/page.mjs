@@ -74,7 +74,7 @@ async function readPublicSource(origin, path, fetcher) {
     try {
       const response = await fetcher(`${origin}${path}`, {
         signal: controller.signal, redirect: 'error', credentials: 'omit',
-        headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' },
+        headers: { Accept: 'application/json' },
       })
       if (!response.ok) {
         if (response.body) await response.body.cancel().catch(() => {})
