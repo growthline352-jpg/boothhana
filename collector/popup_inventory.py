@@ -3,7 +3,7 @@ from datetime import datetime,timedelta,timezone
 from pathlib import Path
 import hashlib,json,time
 from popup_http import OfficialHttp
-from popup_catalog_sources import DIRECTORIES,directories,bootstrap,inventory_page,event_record
+from popup_catalog_sources import DIRECTORIES,directories,bootstrap,inventory_page,event_record,OfficialSourceUnpublished
 from event_queue import normalize_name
 from discovery_work import _write as atomic_write,work_key
 from data_quality import missing_reasons,merge_enrichment
@@ -303,6 +303,9 @@ class OfficialInventory:
             if branch['state']=='COMPLETE':branch['lastSuccessAt']=now_string()
             if unresolved:branch['issues'].append(f'{len(unresolved)} official entries await detail/retry')
             delay=6 if branch['state']=='PARTIAL' else 24
+        except OfficialSourceUnpublished as exc:
+            # Preserve the previous snapshot; no feed is not proof of no events.
+            branch['state']='PARTIAL';branch['issues'].append(str(exc)[:200]);delay=6
         except TimeoutError as exc:
             branch['state']='PARTIAL';branch['issues'].append(str(exc)[:200]);delay=6
         except Exception as exc:

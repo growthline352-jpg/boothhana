@@ -41,6 +41,7 @@ describe('same-day operating venues in event information', () => {
     expect(html.indexOf('aria-label="행사 방문 준비"')).toBeLessThan(html.indexOf('class="visit-facts"'))
     expect(html).toContain('map.kakao.com/?q=')
     expect(html).toContain('공식 관람 안내')
+    expect(detailAt('?day=2026-10-10&operatingEvent=102')).toContain('event-detail-redesign" data-analytics-event-id="102"')
   })
   it('allows venue selection on the information tab when neither popup has booths', () => {
     const html = summaryAt()

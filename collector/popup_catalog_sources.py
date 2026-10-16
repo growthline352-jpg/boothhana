@@ -4,6 +4,9 @@ import json,re
 from urllib.parse import urlencode,urljoin,urlsplit,parse_qs
 from lotte_popup_sources import Tree, class_text, parse_page, parse_detail, DETAIL_BASE, LIST_URL, POPUP, PERMANENT
 
+class OfficialSourceUnpublished(ValueError):
+    """A correctly identified branch has not published its inventory feed."""
+
 DIRECTORIES={
  'LOTTE':'https://www.lotteshopping.com/contents/shpgInfo?cstrCd=0002',
  'HYUNDAI':'https://www.ehyundai.com/newPortal/index.do',
@@ -115,11 +118,13 @@ def bootstrap(branch,read):
         if f'/api/{branch["code"]}/event/eventList.do?evt_gbn=brand' not in brand:
             raise ValueError('Starfield brand feed bootstrap changed')
     elif company=='HYUNDAI' and branch.get('mode')=='LEGACY':
-        links=[urljoin(branch['url'],n.attrs['href']) for n in root.walk() if n.tag=='a' and '/SN/SN_0101000.do' in n.attrs.get('href','')]
+        links=[urljoin(branch['url'],n.attrs['href']) for n in root.walk() if n.tag=='a' and '/SN/SN_0101000.do' in n.attrs.get('href','') and parse_qs(urlsplit(n.attrs['href']).query).get('branchCd')==[branch['code']]]
         if not links:raise ValueError('Hyundai branch shopping-news link missing')
         news=read(links[0],'news-bootstrap')
-        codes=set(re.findall(r"var\s+curtMblDmCd\s*=\s*'([A-Z0-9]+)'",news))
-        if len(codes)!=1 or '/SN/GetCmsContentsAJX.do' not in news:raise ValueError('Hyundai official feed identity changed')
+        branches=set(re.findall(r"var\s+branchCd\s*=\s*'([^']*)'",news))
+        codes=set(re.findall(r"var\s+curtMblDmCd\s*=\s*'([A-Z0-9]*)'",news))
+        if branches!={branch['code']} or len(codes)!=1 or '/SN/GetCmsContentsAJX.do' not in news:raise ValueError('Hyundai official feed identity changed')
+        if codes=={''}:raise OfficialSourceUnpublished('SOURCE_UNPUBLISHED: Hyundai branch inventory feed is not published')
         meta['mblDmCd']=codes.pop()
     return html,meta
 

@@ -20,3 +20,14 @@ it('does not measure private routes, invalid URLs or ordinary internal links',()
  trackPublicLink('javascript:alert(1)','https://boothana.kr/',true)
  expect(f.emit).not.toHaveBeenCalled()
 })
+it('attributes links to the rendered operating event rather than the group route',()=>{
+ const page='https://popup.boothana.kr/discover/101?operatingEvent=102'
+ trackPublicLink('https://map.kakao.com/?q=private',page,true,102)
+ trackPublicLink('https://boothana.kr/itinerary?event=102',page,false,102)
+ trackPublicLink('https://official.example/venue-102',page,true,102)
+ expect(f.emit.mock.calls).toEqual([['map_open',{eventId:102}],['itinerary_start',{eventId:102}],['official_link_click',{eventId:102}]])
+})
+it('ignores an invalid rendered event id',()=>{
+ trackPublicLink('https://map.kakao.com/','https://expo.boothana.kr/discover/20',false,NaN)
+ expect(f.emit).toHaveBeenCalledWith('map_open',{eventId:20})
+})

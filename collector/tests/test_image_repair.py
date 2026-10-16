@@ -314,6 +314,20 @@ class RepairTests(unittest.TestCase):
     def test_unreadable_public_file_is_not_completion(self):
         self.mock_network();job=self.job();value=target();value.update(assets=[asset()],storedHashes={'10':SHA},banner=asset())
         with patch.object(repair,'fetch_image',side_effect=TimeoutError):self.assertEqual(job.verify(value)[0],'PUBLICATION_FAILED')
+    def test_large_approved_public_poster_is_verified_without_relaxing_source_limit(self):
+        stream=io.BytesIO();Image.new('1',(6000,6000)).save(stream,format='PNG')
+        raw=stream.getvalue();sha=hashlib.sha256(raw).hexdigest()
+        with self.assertRaises(media_fetch.MediaError):media_fetch.inspect_image(raw,'image/png')
+        job=self.job();value=target();value.update(assets=[asset()],storedHashes={'10':sha},banner=asset())
+        with patch.object(repair,'fetch_image',return_value=(raw,'image/png',sha)) as fetch:
+            self.assertEqual(job.verify(value)[0],'VERIFIED')
+            self.assertEqual(fetch.call_args.kwargs['max_pixels'],repair.PUBLIC_VERIFY_MAX_PIXELS)
+            value['storedHashes']['10']='0'*64
+            self.assertEqual(job.verify(value)[0],'PUBLICATION_FAILED')
+        with self.assertRaises(media_fetch.MediaError):
+            media_fetch.inspect_image(raw,'image/jpeg',max_pixels=repair.PUBLIC_VERIFY_MAX_PIXELS)
+        with self.assertRaises(media_fetch.MediaError):
+            media_fetch.inspect_image(raw,'image/png',max_pixels=35_000_000)
     def test_detail_poster_without_matching_list_poster_is_not_complete(self):
         self.mock_network();job=self.job();value=target();value.update(assets=[asset()],storedHashes={'10':SHA},banner=asset())
         for listing in ({},{'banner':None},{'banner':{'id':99,'url':PUBLIC}},{'banner':{'id':10,'url':URL}}):
