@@ -21,6 +21,10 @@ from event_identity import identity_label,name_matches,numbered_editions
 import uuid
 
 PATH='/api/internal/subculture/v4'
+# Legacy approved posters can exceed the source-ingestion 25MP limit. Public
+# verification reads bounded encoded bytes, verifies format and the stored hash;
+# it never decodes/resizes pixels or changes the source-ingestion policy.
+PUBLIC_VERIFY_MAX_PIXELS=40_000_000
 class BudgetExpired(RunError):pass
 class SourceFetchFailed(RunError):pass
 RETRY_HOURS={'VERIFIED':24,'WAITING_REVIEW':12,'WAITING_HOST':24,'NO_IMAGE_FOUND':72,
@@ -212,8 +216,8 @@ class Repair:
         if list_banner.get('id')!=banner['id'] or list_banner.get('url')!=url:
             return 'PUBLICATION_FAILED',dict(reason='Public search/list banner differs from detail',assetId=banner['id'])
         try:
-            raw,mime,sha=fetch_image(url,[urlsplit(url).hostname],self.timeout())
-            if inspect_image(raw,mime)!=expected or sha!=expected:
+            raw,mime,sha=fetch_image(url,[urlsplit(url).hostname],self.timeout(),max_pixels=PUBLIC_VERIFY_MAX_PIXELS)
+            if inspect_image(raw,mime,max_pixels=PUBLIC_VERIFY_MAX_PIXELS)!=expected or sha!=expected:
                 return 'PUBLICATION_FAILED',dict(reason='Public image SHA256 mismatch',assetId=banner['id'])
         except BudgetExpired:raise
         except Exception as error:

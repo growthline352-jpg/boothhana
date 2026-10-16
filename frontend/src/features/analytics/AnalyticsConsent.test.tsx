@@ -4,7 +4,7 @@ import type { Consent } from './measurement'
 
 const fixture = vi.hoisted(() => ({
   cells: [] as unknown[], cursor: 0, effects: [] as (() => void | (() => void))[],
-  consent: null as Consent, measure: vi.fn(), pause: vi.fn(),
+  consent: null as Consent, measure: vi.fn(), pause: vi.fn(), link: vi.fn(),
 }))
 vi.mock('react', async original => ({
   ...await original<typeof import('react')>(),
@@ -23,6 +23,7 @@ vi.mock('./consent', () => ({
 vi.mock('./measurement', () => ({
   publicPage: () => ({}), setMeasurement: fixture.measure, pauseMeasurement: fixture.pause,
 }))
+vi.mock('./actions', () => ({ trackPublicLink: fixture.link }))
 import { AnalyticsConsent } from './AnalyticsConsent'
 type Node = ReactElement<Record<string, unknown>>
 function nodes(value: ReactNode): Node[] {
@@ -78,4 +79,23 @@ it('synchronizes on returning to a tab and removes listeners on unmount', () => 
   cleanup()
   expect(remove).toHaveBeenCalledTimes(3)
   expect(fixture.pause).toHaveBeenCalledOnce()
+})
+it('captures nested link clicks with the rendered operating event and cleans up', () => {
+  const handlers = new Map<string, (event: { target: unknown; defaultPrevented: boolean }) => void>()
+  const add = vi.fn((name: string, fn: (event: { target: unknown; defaultPrevented: boolean }) => void) => handlers.set(name, fn))
+  const remove = vi.fn()
+  class ClickTarget { closest() { return link } }
+  const link = { href: 'https://official.example/venue-102', classList: { contains: () => true },
+    closest: () => ({ dataset: { analyticsEventId: '102' } }) }
+  vi.stubGlobal('Element', ClickTarget)
+  vi.stubGlobal('document', { addEventListener: add, removeEventListener: remove })
+  render()
+  const cleanup = fixture.effects[2]()!
+  handlers.get('click')!({ target: new ClickTarget(), defaultPrevented: false })
+  expect(fixture.link).toHaveBeenCalledWith(link.href, 'https://boothana.kr/', true, 102)
+  handlers.get('click')!({ target: new ClickTarget(), defaultPrevented: true })
+  expect(fixture.link).toHaveBeenCalledTimes(1)
+  expect(add).toHaveBeenCalledWith('click', expect.any(Function), true)
+  cleanup()
+  expect(remove).toHaveBeenCalledWith('click', expect.any(Function), true)
 })

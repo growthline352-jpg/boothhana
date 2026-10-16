@@ -10,6 +10,23 @@ def event(name='행사'):
       'operationStatus':{'state':'UNKNOWN','note':None,'sourceUrl':None,'checkedOn':None}}
 
 class DataQualityTests(unittest.TestCase):
+ def test_exact_schedule_does_not_combine_conflicting_clocks(self):
+  old=event();old['occurrences'][0]['startTime']='10:00'
+  new=event();new['occurrences'][0].update(startTime='11:00',endTime='18:00')
+  self.assertEqual(merge_enrichment(old,new)['occurrences'],old['occurrences'])
+ def test_overlapping_exact_schedule_cannot_supply_hours(self):
+  from copy import deepcopy
+  old=event();new=event();new['occurrences'][0].update(startTime='10:00',endTime='18:00')
+  duplicate=deepcopy(new['occurrences'][0]);duplicate['endTime']='20:00'
+  new['occurrences'].append(duplicate)
+  self.assertEqual(merge_enrichment(old,new)['occurrences'],old['occurrences'])
+ def test_partial_exact_schedule_can_fill_a_compatible_clock(self):
+  old=event();old['occurrences'][0]['startTime']='10:00'
+  new=event();new['occurrences'][0]['endTime']='18:00'
+  self.assertEqual(merge_enrichment(old,new)['occurrences'][0],dict(old['occurrences'][0],endTime='18:00'))
+ def test_invalid_exact_clock_remains_missing(self):
+  old=event();new=event();new['occurrences'][0]['endTime']='25:00'
+  self.assertEqual(merge_enrichment(old,new)['occurrences'],old['occurrences'])
  def test_split_official_hours_fill_a_range_without_changing_its_dates(self):
   from copy import deepcopy
   old=event();old['occurrences'][0].update(startDate='2026-10-14',endDate='2026-10-18')

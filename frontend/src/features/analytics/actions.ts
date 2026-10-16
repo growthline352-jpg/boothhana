@@ -6,14 +6,15 @@ export function trackPublicAction(action: PublicAction, context: ActionContext =
   try { if (readConsent() === 'granted') emitPublicAction(action, context) } catch { /* Measurement never interrupts the action. */ }
 }
 
-export function trackPublicLink(href: string, current: string, official = false) {
+export function trackPublicLink(href: string, current: string, official = false, renderedEventId?: number) {
   if (!publicPage(current)) return
   try {
     const url = new URL(href, current)
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return
     const page = new URL(current)
-    const eventId = Number(page.pathname.match(/^\/discover\/([1-9]\d*)/)?.[1]) || undefined
-    if (url.origin === 'https://boothana.kr' && url.pathname === '/itinerary' || url.origin === page.origin && url.pathname === '/itinerary')
+    const eventId = Number.isSafeInteger(renderedEventId) && renderedEventId! > 0
+      ? renderedEventId : Number(page.pathname.match(/^\/discover\/([1-9]\d*)(?:\/|$)/)?.[1]) || undefined
+    if ((url.origin === 'https://boothana.kr' || url.origin === page.origin) && url.pathname === '/itinerary')
       trackPublicAction('itinerary_start', { eventId })
     else if (['map.kakao.com', 'map.naver.com', 'maps.google.com'].includes(url.hostname)) trackPublicAction('map_open', { eventId })
     else if (official && url.origin !== page.origin) trackPublicAction('official_link_click', { eventId })

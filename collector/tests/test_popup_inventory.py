@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import weekly
 from popup_inventory import OfficialInventory, InventoryState, matching_event
-from popup_catalog_sources import directories, inventory_page, event_record
+from popup_catalog_sources import directories, inventory_page, event_record, bootstrap, OfficialSourceUnpublished
 from popup_http import OfficialHttp
 from media_fetch import MediaError
 
@@ -124,6 +124,30 @@ class PopupInventoryTests(unittest.TestCase):
         html='<a href="https://thehyundaiseoul.ehyundai.com/">더현대 서울</a><a href="/newPortal/DP/DP000000_V.do?branchCd=B00140000">더현대 서울</a>'
         row=directories('HYUNDAI',html)[0]
         self.assertEqual(row['mode'],'WEEKLY');self.assertEqual(row['region'],'SEOUL')
+
+    def test_hyundai_unpublished_feed_preserves_inventory_and_retries(self):
+        branch={**self.branch,'key':'HYUNDAI:B00141000','company':'HYUNDAI','code':'B00141000','name':'미아점','mode':'LEGACY'}
+        branch['items']={'old':{'id':'old','outcome':'STAGED'}}
+        html='<a href="/newPortal/SN/SN_0101000.do?branchCd=B00141000">행사 안내</a>'
+        news="var branchCd = 'B00141000'; var curtMblDmCd = ''; /SN/GetCmsContentsAJX.do"
+        with self.assertRaises(OfficialSourceUnpublished):bootstrap(branch,lambda url,key:news if key=='news-bootstrap' else html)
+        collector=self.collector();collector.state.branches()[branch['key']]=branch
+        with patch('popup_inventory.bootstrap',side_effect=OfficialSourceUnpublished('SOURCE_UNPUBLISHED')),patch('popup_inventory.inventory_page') as page:
+            collector.scan_branch(branch)
+        self.assertEqual(branch['state'],'PARTIAL');self.assertIn('old',branch['items'])
+        self.assertIn('SOURCE_UNPUBLISHED',branch['issues']);self.assertTrue(branch['nextAttemptAt']);page.assert_not_called()
+
+    def test_hyundai_selects_exact_branch_and_rejects_crossed_feed_identity(self):
+        branch={**self.branch,'company':'HYUNDAI','code':'B00141000','mode':'LEGACY'}
+        html='<a href="/newPortal/SN/SN_0101000.do?branchCd=B00122000">다른 점</a><a href="/newPortal/SN/SN_0101000.do?branchCd=B00141000">미아점</a>'
+        calls=[]
+        def read(url,key):
+            calls.append(url)
+            return "var branchCd = 'B00141000'; var curtMblDmCd = 'MIA'; /SN/GetCmsContentsAJX.do" if key=='news-bootstrap' else html
+        self.assertEqual(bootstrap(branch,read)[1],{'mblDmCd':'MIA'})
+        self.assertTrue(calls[-1].endswith('branchCd=B00141000'))
+        with self.assertRaisesRegex(ValueError,'identity changed'):
+            bootstrap(branch,lambda url,key:"var branchCd = 'B00122000'; var curtMblDmCd = ''; /SN/GetCmsContentsAJX.do" if key=='news-bootstrap' else html)
 
     def test_lotte_two_directory_widgets_merge_known_buildings_without_eval(self):
         first={'cstrCd':'0340','cstrDspNm':'김포공항점','lrclsDtlCdNm':'백화점','mdclsDtlCdNm':'서울지역'}

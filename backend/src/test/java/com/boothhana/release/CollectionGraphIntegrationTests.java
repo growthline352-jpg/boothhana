@@ -48,6 +48,43 @@ class CollectionGraphIntegrationTests {
  }
  @SuppressWarnings("unchecked") Map<String,Object> value(Object x){return json.readValue(json.writeValueAsString(x),Map.class);}
  Audit audit(){return new Audit("gpt-6.1-sol","graph-1","graph-1",true,List.of(source),Map.of(),List.of());}
+ @Test void claimsImminentEventsBeforeOlderCreatorAndDistantEventWork(){
+  db.update("update collection_job set attempts=0");
+  long creator=maker("Background author",source);
+  var background=graph.seed(new Seed("CREATOR",Long.toString(creator),Map.of(),true,"priority"));
+  db.update("update collection_job set available_at=now()-interval '10 days' where id=?",background.get("id"));
+  var distant=graph.seed(new Seed("EVENT",Long.toString(event),Map.of(),true,"distant"));
+  String near=LocalDate.now(ZoneId.of("Asia/Seoul")).plusDays(1).toString(),key=UUID.randomUUID().toString().replace("-","").repeat(2);
+  var nearData=value(data);nearData.put("occurrences",List.of(Map.of("startDate",near,"endDate",near,"startTime","10:00","endTime","18:00")));
+  long nearId=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json) values(?,?,?,'ONLY_EVENT',cast(? as date),cast(? as date),cast(? as jsonb),?,'[]') returning id",Long.class,key,key,"[TEST] imminent",near,near,json.writeValueAsString(nearData),key);
+  var imminent=graph.seed(new Seed("EVENT",Long.toString(nearId),Map.of(),true,"near"));
+  assertThat(graph.claim().get("id")).isEqualTo(imminent.get("id"));
+  // The pending creator remains eligible for a reserved background slot.
+  db.update("update collection_job set attempts=7 where id=?",imminent.get("id"));
+  assertThat(graph.claim().get("id")).isEqualTo(background.get("id"));
+  assertThat(db.queryForObject("select attempts from collection_job where id=?",Integer.class,distant.get("id"))).isZero();
+ }
+ @Test void rotatesThroughBoothAndSalesWorkWithoutWaitingForCreatorBacklog(){
+  db.update("update collection_job set attempts=0");
+  long creator=maker("Queued author",source);
+  var background=graph.seed(new Seed("CREATOR",Long.toString(creator),Map.of(),true,"priority"));
+  db.update("update collection_job set available_at=now()-interval '10 days' where id=?",background.get("id"));
+  var sources=List.of(new Source(source,"OFFICIAL","ORIGINAL","Booth source"));
+  var participant=new Participant(null,"[TEST] priority booth","CIRCLE",List.of(),List.of(),List.of(),"Booth",List.of(),sources,List.of(),List.of());
+  long booth=db.queryForObject("insert into subculture_participant(event_id,identity_key,registration_name,payload_json,payload_hash) values(?,?,'[TEST] priority booth',cast(? as jsonb),?) returning id",Long.class,event,"c".repeat(64),json.writeValueAsString(participant),"d".repeat(64));
+  var eventJob=graph.seed(new Seed("EVENT",Long.toString(event),Map.of(),true,"priority"));
+  var booths=graph.seed(new Seed("PARTICIPANTS",Long.toString(event),Map.of(),true,"priority"));
+  var sales=graph.seed(new Seed("SALES",Long.toString(booth),Map.of(),true,"priority"));
+  assertThat(graph.claim().get("id")).isEqualTo(eventJob.get("id"));
+  assertThat(graph.claim().get("id")).isEqualTo(booths.get("id"));
+  assertThat(graph.claim().get("id")).isEqualTo(sales.get("id"));
+ }
+ @Test void priorityDoesNotBypassRetryBackoff(){
+  db.update("update collection_job set attempts=0");
+  var delayed=graph.seed(new Seed("EVENT",Long.toString(event),Map.of(),true,"retry"));
+  db.update("update collection_job set available_at=now()+interval '6 hours' where id=?",delayed.get("id"));
+  assertThat(graph.claim().get("empty")).isEqualTo(true);
+ }
  Map<String,Object> seed(String kind,String target){var queued=graph.seed(new Seed(kind,target,Map.of(),true,UUID.randomUUID().toString()));db.update("update collection_job set available_at=now() where id=?",queued.get("id"));return graph.claim();}
  UUID id(Map<String,Object> job){return (UUID)job.get("id");}UUID token(Map<String,Object> job){return (UUID)job.get("leaseToken");}
  Map<String,Object> extract(Map<String,Object> job,Object result){return value(graph.extract(id(job),new Extraction(token(job),UUID.randomUUID(),job.get("contextHash").toString(),value(result),audit())));}

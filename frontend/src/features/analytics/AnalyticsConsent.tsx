@@ -35,7 +35,10 @@ export function AnalyticsConsent() {
     const click = (event: MouseEvent) => {
       if (event.defaultPrevented || !(event.target instanceof Element)) return
       const link = event.target.closest<HTMLAnchorElement>('a[href]')
-      if (link) trackPublicLink(link.href, window.location.href, link.classList.contains('catalog-external-link'))
+      if (link) {
+        const eventId = Number(link.closest<HTMLElement>('[data-analytics-event-id]')?.dataset.analyticsEventId)
+        trackPublicLink(link.href, window.location.href, link.classList.contains('catalog-external-link'), eventId)
+      }
     }
     document.addEventListener('click', click, true)
     return () => document.removeEventListener('click', click, true)
