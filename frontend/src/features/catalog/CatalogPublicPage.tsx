@@ -10,6 +10,7 @@ import { EventComments } from './EventComments'
 import { EventEditionReviews } from '../subculture/EventEditionReviews'
 import { subcultureEventsHref } from '../subculture/SubcultureUI'
 import { PageMetadata } from '../../app/PageMetadata'
+import { ApiError } from '../../api/client'
 import { SaveButton } from '../library/SaveButton'
 import { ShareQr } from '../library/ShareQr'
 import { useLibrary } from '../library/LibraryProvider'
@@ -72,8 +73,8 @@ function LoadEvent({eventId}:{eventId:string}) {
   const [slow,setSlow]=useState(false)
   useEffect(()=>{if(!state.loading){setSlow(false);return}const timer=window.setTimeout(()=>setSlow(true),7_000);return()=>window.clearTimeout(timer)},[state.loading,eventId])
   usePageScroll(!state.loading)
-  if(state.loading)return <><PageMetadata /><a className="btn secondary" href={`/library?offline=1&offlineEvent=${eventId}`}>통신이 느린가요? 저장 자료 바로 열기</a><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'행사 안내를 불러오고 있어요'}/></>
-  if(state.error||!state.data)return <section className="content-wrap section-pad"><PageMetadata unavailable /><ErrorState error={state.error||new Error('공개 안내를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to="/discover">다른 행사 찾기</Link><a className="btn secondary" href={`/library?offline=1&offlineEvent=${eventId}`}>저장 자료 바로 열기</a></section>
+  if(state.loading)return <><PageMetadata pending /><a className="btn secondary" href={`/library?offline=1&offlineEvent=${eventId}`}>통신이 느린가요? 저장 자료 바로 열기</a><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'행사 안내를 불러오고 있어요'}/></>
+  if(state.error||!state.data)return <section className="content-wrap section-pad"><PageMetadata pending unavailable={isMissingPublicResource(state.error)} /><ErrorState error={state.error||new Error('공개 안내를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to="/discover">다른 행사 찾기</Link><a className="btn secondary" href={`/library?offline=1&offlineEvent=${eventId}`}>저장 자료 바로 열기</a></section>
   return <><PageMetadata catalog={state.data.display} /><CatalogEventDetail eventId={eventId} value={state.data.display} alternate={state.data.alternate} members={state.data.members}/></>
 }
 function LoadBooth({eventId,participantId}:{eventId:string;participantId:string}) {
@@ -81,10 +82,13 @@ function LoadBooth({eventId,participantId}:{eventId:string;participantId:string}
   const [slow,setSlow]=useState(false)
   useEffect(()=>{if(!state.loading){setSlow(false);return}const timer=window.setTimeout(()=>setSlow(true),7_000);return()=>window.clearTimeout(timer)},[state.loading,eventId])
   usePageScroll(!state.loading)
-  if(state.loading)return <><PageMetadata/><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'부스 정보를 불러오고 있어요'}/></>
+  if(state.loading)return <><PageMetadata pending/><LoadingState label={slow?'서버를 준비하고 있어요. 첫 접속은 최대 1분 정도 걸릴 수 있어요.':'부스 정보를 불러오고 있어요'}/></>
   const row=state.data?.participants.find(participant=>String(participant.id)===participantId)
-  if(state.error||!state.data||!row)return <section className="content-wrap section-pad"><PageMetadata unavailable/><ErrorState error={state.error||new Error('공개 중인 부스 정보를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to={catalogEventPath(eventId,{})}>행사 상세로</Link></section>
+  if(state.error||!state.data||!row)return <section className="content-wrap section-pad"><PageMetadata pending unavailable={isMissingPublicResource(state.error)||(!state.error&&!!state.data&&!row)}/><ErrorState error={state.error||new Error('공개 중인 부스 정보를 찾지 못했습니다.')} retry={()=>void state.reload()}/><Link className="btn secondary" to={catalogEventPath(eventId,{})}>행사 상세로</Link></section>
   return <><PageMetadata catalog={state.data} participant={row}/><CatalogBoothPage eventId={eventId} value={state.data} row={row}/></>
+}
+function isMissingPublicResource(error: unknown) {
+  return error instanceof ApiError && [404,410].includes(error.status)
 }
 function CatalogBoothPage({eventId,value,row}:{eventId:string;value:PublicEvent;row:PublicParticipant}) {
   const location=useLocation(),navigate=useNavigate(),[params,setParams]=useSearchParams()

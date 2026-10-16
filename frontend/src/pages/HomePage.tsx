@@ -5,6 +5,7 @@ import { categories, categoryHref } from '../features/discovery/categories'
 import { categorySitesActive, currentSiteCategory } from '../features/discovery/site'
 import { PopularEvents } from '../features/discovery/PopularEvents'
 import { DiscoveryIcon } from '../features/discovery/DiscoveryIcon'
+import { HomeGuide } from './HomeGuide'
 /** The public home is the real category feed, never a seeded marketing demo. */
 export function HomePage() {
   const location = useLocation()
@@ -17,5 +18,6 @@ export function HomePage() {
       <div className="category-portal-content"><h2>{category.label}<DiscoveryIcon name="arrow" size={22}/></h2></div>
     </a>)}</div>
     <PopularEvents/>
+    <HomeGuide/>
   </section>
 }
