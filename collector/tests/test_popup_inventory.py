@@ -149,6 +149,25 @@ class PopupInventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'identity changed'):
             bootstrap(branch,lambda url,key:"var branchCd = 'B00122000'; var curtMblDmCd = ''; /SN/GetCmsContentsAJX.do" if key=='news-bootstrap' else html)
 
+    def test_republished_hyundai_feed_fetches_fresh_inventory_inside_daily_cache_window(self):
+        from datetime import datetime,timezone
+        branch={**self.branch,'key':'HYUNDAI:B00141000','company':'HYUNDAI','code':'B00141000','name':'미아점','mode':'LEGACY',
+                'inventoryComplete':True,'lastInventorySuccessAt':datetime.now(timezone.utc).isoformat(),
+                'cursor':{'page':2},'feedTotals':{'0':1},'feedSeen':{'0':['old']},'feedFirstPages':{'0':'old'},'scanItems':{'old':{}},
+                'items':{'old':{'id':'old','outcome':'STAGED'}}}
+        collector=self.collector();collector.state.branches()[branch['key']]=branch
+        with patch('popup_inventory.bootstrap',side_effect=OfficialSourceUnpublished('SOURCE_UNPUBLISHED')):
+            collector.scan_branch(branch)
+        self.assertIn('old',branch['items'])
+        row=dict(id='fresh',title='새 팝업',url='https://www.ehyundai.com/fresh')
+        with patch('popup_inventory.bootstrap',return_value=('html',{'mblDmCd':'REPUBLISHED'})),patch('popup_inventory.inventory_page',return_value=([row],1,None)) as pages,patch('popup_inventory.event_record',return_value=(self.event,None)),redirect_stdout(io.StringIO()):
+            collector.scan_branch(branch)
+        pages.assert_called_once()
+        self.assertEqual(pages.call_args.args[1],{})
+        self.assertIn('fresh',branch['items'])
+        self.assertIn('old',branch['history'])
+        self.assertTrue(branch['inventoryComplete'])
+
     def test_lotte_two_directory_widgets_merge_known_buildings_without_eval(self):
         first={'cstrCd':'0340','cstrDspNm':'김포공항점','lrclsDtlCdNm':'백화점','mdclsDtlCdNm':'서울지역'}
         second={**first,'lrclsDtlCdNm':'쇼핑몰'}

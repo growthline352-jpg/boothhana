@@ -305,6 +305,9 @@ class OfficialInventory:
             delay=6 if branch['state']=='PARTIAL' else 24
         except OfficialSourceUnpublished as exc:
             # Preserve the previous snapshot; no feed is not proof of no events.
+            # A republished feed must start a new snapshot even within the daily
+            # cache window, without resuming offsets from its previous version.
+            branch.update(inventoryComplete=False,cursor={},scanItems={},feedTotals={},feedSeen={},feedFirstPages={})
             branch['state']='PARTIAL';branch['issues'].append(str(exc)[:200]);delay=6
         except TimeoutError as exc:
             branch['state']='PARTIAL';branch['issues'].append(str(exc)[:200]);delay=6

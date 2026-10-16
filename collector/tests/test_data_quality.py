@@ -10,6 +10,23 @@ def event(name='행사'):
       'operationStatus':{'state':'UNKNOWN','note':None,'sourceUrl':None,'checkedOn':None}}
 
 class DataQualityTests(unittest.TestCase):
+ def test_partial_clocks_cannot_create_reversed_or_zero_length_hours(self):
+  for start,end in [('18:00','10:00'),('10:00','10:00')]:
+   with self.subTest(start=start,end=end):
+    old=event();old['occurrences'][0]['startTime']=start
+    new=event();new['occurrences'][0]['endTime']=end;new['address']='확인한 주소'
+    merged=merge_enrichment(old,new)
+    self.assertEqual(merged['occurrences'],old['occurrences'])
+    self.assertEqual(merged['address'],'확인한 주소')
+ def test_split_schedule_cannot_supply_reversed_single_day_hours(self):
+  from copy import deepcopy
+  old=event();old['occurrences'][0]['endDate']='2026-10-02'
+  new=deepcopy(old);new['occurrences']=[dict(startDate=day,endDate=day,startTime='18:00',endTime='10:00') for day in ('2026-10-01','2026-10-02')]
+  self.assertEqual(merge_enrichment(old,new)['occurrences'],old['occurrences'])
+ def test_partial_multiday_overnight_hours_remain_supported(self):
+  old=event();old['occurrences'][0].update(endDate='2026-10-02',startTime='22:00')
+  new=event();new['occurrences'][0].update(endDate='2026-10-02',endTime='02:00')
+  self.assertEqual(merge_enrichment(old,new)['occurrences'][0],dict(old['occurrences'][0],endTime='02:00'))
  def test_exact_schedule_does_not_combine_conflicting_clocks(self):
   old=event();old['occurrences'][0]['startTime']='10:00'
   new=event();new['occurrences'][0].update(startTime='11:00',endTime='18:00')
