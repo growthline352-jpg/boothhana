@@ -91,10 +91,10 @@ API·수집기·runner를 함께 적용해야 한다. 현재 서버 예약·설�
 2026-10-17 방문 준비 보완은 수집기의 날짜별 운영시간 병합과 원문 날짜·시간 검증을 수정합니다. `recheck`는 이미 등록된 공식 원문을 다시 읽고, 변경된 문서의 확인된 항목만 기존 관측·승인 절차로 보완합니다. 실패와 미공개는 정상 완료로 감추지 않고 항목별 상태와 다음 확인 시각을 기록합니다. 기존 이미지·발견 작업과 같은 잠금을 사용하며 호출 대상은 한 번에 25개입니다.
 
 ```cron
-35 2 * * * /bin/bash /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh recheck
+35 * * * * /bin/bash /home/bpdeploy/boothhana/shared/run-tunnel-collector.sh recheck
 ```
 
-적용 시 기존 crontab을 보존하고 이 행만 중복 없이 추가합니다. `logs/recheck.status`와 실행 로그에서 실제 성공·부분 완료를 확인합니다. 수집기 이미지 교체는 API 이미지와 그래프 작업을 재시작하지 않고 다음 배치부터 적용합니다. 이미 누락된 DDP 운영시간은 공식 원문 재검증과 날짜 범위 보존 검증 후 별도 관측으로 반영합니다.
+매시간 최대 25개 대상을 처리하여 최초 적체를 순환합니다. 각 행사의 다음 확인 시각(임박 행사 24시간, 먼 행사 168시간, 접근 실패 시 지수 지연)은 서버가 유지하므로 매시간 같은 대상을 반복 수집하지 않습니다. 적용 시 기존 crontab을 보존하고 이 행만 중복 없이 추가합니다. `logs/recheck.status`와 실행 로그에서 실제 성공·부분 완료를 확인합니다. 수집기 이미지 교체는 API 이미지와 그래프 작업을 재시작하지 않고 다음 배치부터 적용합니다. 이미 누락된 DDP 운영시간은 공식 원문 재검증과 날짜 범위 보존 검증 후 별도 관측으로 반영합니다.
 
 Vercel `VITE_API_BASE_URL`, `SEO_API_BASE_URL`은 `https://api.boothana.kr`로 설정하고 재배포한다.
 카카오 콜백에 `https://api.boothana.kr/login/oauth2/code/kakao`를 추가한다.
