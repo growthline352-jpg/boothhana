@@ -23,7 +23,7 @@ export function referralOrigin(value: string): string {
     if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return ''
     const host = url.hostname.toLowerCase()
     const providers: [RegExp, string][] = [
-      [/^(?:[^.]+\.)?google\.(?:com|co\.kr|co\.jp|co\.uk)$/, 'https://www.google.com/'],
+      [/^(?:(?:www|m|images|news)\.)?google\.(?:com|co\.kr|co\.jp|co\.uk)$/, 'https://www.google.com/'],
       [/(^|\.)naver\.com$/, 'https://www.naver.com/'],
       [/(^|\.)daum\.net$/, 'https://www.daum.net/'],
       [/(^|\.)bing\.com$/, 'https://www.bing.com/'],

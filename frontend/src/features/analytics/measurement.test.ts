@@ -14,7 +14,7 @@ it('keeps only recognized referral providers and strips personal paths and queri
   expect(referralOrigin('https://www.google.co.kr/search?q=private-email#token')).toBe('https://www.google.com/')
   expect(referralOrigin('https://m.search.naver.com/search.naver?query=private')).toBe('https://www.naver.com/')
   expect(referralOrigin('https://expo.boothana.kr/discover/9?q=private')).toBe('https://expo.boothana.kr/')
-  for(const url of ['https://google.com.evil.test/','https://www.google.com@evil.test/','https://private-company.example/secret','javascript:alert(1)',''])expect(referralOrigin(url)).toBe('')
+  for(const url of ['https://google.com.evil.test/','https://www.google.com@evil.test/','https://docs.google.com/private-document','https://search.google.com/search-console','https://private-company.example/secret','javascript:alert(1)',''])expect(referralOrigin(url)).toBe('')
 })
 it('sends sanitized attribution and closed action fields only after consent', async () => {
   const win: Record<string, any> = {location:{href:'https://expo.boothana.kr/discover/20?q=private'}}
