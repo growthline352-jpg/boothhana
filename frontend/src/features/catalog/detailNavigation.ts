@@ -1,3 +1,4 @@
+import { eventSectionHref, parseEventPage } from '../../../seo/event-pages.mjs'
 import type { EventData } from '../collection/api'
 import type { PublicParticipant } from './api'
 import { attendance, defaultDay, parseVisit, visitDays } from '../visit/visit'
@@ -29,5 +30,6 @@ export function boothListReturn(path: string, day: string, hall: string) {
   for (const key of ['view', 'focus', 'booth', 'day', 'hall']) params.delete(key)
   if (day) params.set('day', day)
   if (hall) params.set('hall', hall)
-  return `${pathname}?${params}`
+  const id=parseEventPage(pathname)?.eventId
+  return id?eventSectionHref(id,'booths',params):`${pathname}?${params}`
 }

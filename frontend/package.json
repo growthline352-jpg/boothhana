@@ -10,7 +10,7 @@
     "preview:public": "node scripts/preview-public.mjs",
     "test": "vitest run src",
     "test:preview": "node --test scripts/preview-public.test.mjs",
-    "test:seo": "node --test seo/metadata.node-test.mjs seo/sitemap.node-test.mjs seo/category-sites.node-test.mjs",
+    "test:seo": "node --test seo/metadata.node-test.mjs seo/sitemap.node-test.mjs seo/category-sites.node-test.mjs seo/event-pages.node-test.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "build:hosting": "pnpm run build && pnpm run test:seo && node scripts/prepare-hosting.mjs && node scripts/test-page-handler.mjs"

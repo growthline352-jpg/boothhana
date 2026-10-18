@@ -38,7 +38,7 @@ export async function publishedEvents({ apiBase, fetcher = fetch, timeoutMs = 20
       const id = Number(row?.id)
       if (!Number.isSafeInteger(id) || id < 1 || typeof row?.event?.name !== 'string' || !row.event.name.trim()) continue
       if (category && categoryFor(row.event) !== category) continue // Emit only events belonging to this field, including legacy popup types.
-      unique.set(id, { id, publishedAt: validPublishedAt(row.publishedAt) })
+      unique.set(id, { id, publishedAt: validPublishedAt(row.publishedAt), ...(row.sections ? {sections:row.sections}: {}) })
     }
     return [...unique.values()].sort((left, right) => left.id - right.id)
   } finally { clearTimeout(timer) }
@@ -53,9 +53,13 @@ export function renderSitemap(siteUrl, events, splitSites = false) {
   events = events.filter(event => Number(event.id) !== 7)
   const newest = events.map(event => event.publishedAt).filter(Boolean).sort().at(-1) || ''
   const siteCategory = categorySite(origin)
+  const eventUrls=events.flatMap(event=>[
+    {loc:`${origin}/discover/${event.id}`,lastmod:event.publishedAt},
+    ...['booths','map','reviews'].filter(section=>event.sections?.[section]===true).map(section=>({loc:`${origin}/discover/${event.id}/${section}`})),
+  ])
   const urls = siteCategory ? [
     { loc: `${origin}/`, lastmod: newest },
-    ...events.map(event => ({ loc: `${origin}/discover/${event.id}`, lastmod: event.publishedAt })),
+    ...eventUrls,
   ] : splitSites && origin === PORTAL_ORIGIN ? [
     { loc: `${origin}/`, lastmod: newest }, { loc: `${origin}/events`, lastmod: newest },
     { loc: `${origin}/about` },
@@ -67,8 +71,9 @@ export function renderSitemap(siteUrl, events, splitSites = false) {
     { loc: `${origin}/discover?category=festivals`, lastmod: newest },
     { loc: `${origin}/discover?category=popups`, lastmod: newest },
     { loc: `${origin}/events`, lastmod: newest },
-    ...events.map(event => ({ loc: `${origin}/discover/${event.id}`, lastmod: event.publishedAt })),
+    ...eventUrls,
   ]
+  if(urls.length>MAX_URLS)throw new Error('Sitemap URL limit exceeded')
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(entry => `  <url><loc>${xml(entry.loc)}</loc>${entry.lastmod ? `<lastmod>${xml(entry.lastmod)}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>\n`
 }
 

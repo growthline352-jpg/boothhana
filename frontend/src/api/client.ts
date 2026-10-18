@@ -219,13 +219,13 @@ function waitForColdStartRetry(signal?: AbortSignal | null) {
   })
 }
 
-/** Retry one idempotent public read when Render is still waking up. */
+/** Retry one idempotent public read for a transient transport/server failure. */
 export async function publicRead<T>(path: string, init?: ApiRequestInit): Promise<T> {
   const method = (init?.method ?? 'GET').toUpperCase()
   if (!['GET', 'HEAD'].includes(method)) throw new Error('publicRead는 읽기 요청에만 사용할 수 있습니다.')
-  const { signal: callerSignal, ...request } = init ?? {}
+  const { signal: callerSignal, timeoutMs = COLD_START_API_TIMEOUT_MS, ...request } = init ?? {}
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    try { return await api<T>(path, { ...request, method, signal: callerSignal, timeoutMs: COLD_START_API_TIMEOUT_MS }) }
+    try { return await api<T>(path, { ...request, method, signal: callerSignal, timeoutMs }) }
     catch (error) {
       if (attempt === 1 || callerSignal?.aborted || !retryablePublicRead(error)) throw error
       await waitForColdStartRetry(callerSignal)

@@ -10,7 +10,7 @@ export function usePageScroll(ready:boolean) {
   const last=useRef(''), restored=useRef(false)
   const wanted=useRef(0)
   useLayoutEffect(()=>{
-    const detail=/^\/discover\/\d+\/?$/.test(location.pathname)
+    const detail=/^\/discover\/\d+(?:\/(?:booths|map|reviews))?\/?$/.test(location.pathname)
     if(key===last.current)return
     const returnLink=Boolean((location.state as {catalogRestore?:boolean}|null)?.catalogRestore)
     wanted.current=(navigation==='POP'||returnLink)?positions.get(key)||0:0

@@ -1,3 +1,4 @@
+import { parseEventPage, legacyEventRedirect } from '../seo/event-pages.mjs'
 import { readFile } from 'node:fs/promises'
 import { catalogDirectoryPage, categoryFor, injectCrawlableContent, injectMetadata, normalizePath, pageMetadata, renderCrawlableContent, siteOrigin } from '../seo/metadata.mjs'
 import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryRedirect, requestSiteOrigin } from '../seo/category-sites.mjs'
@@ -142,36 +143,48 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
   const origin = apiOrigin(apiBase)
   const redirect = categoryRedirect({ origin: siteUrl, path, search, enabled: splitSites })
   if (redirect) return { status: 308, location: redirect }
-  if (path === '/discover/7') {
-    const query = new URLSearchParams(search)
-    const legacyBooth = query.get('booth')
-    if (legacyBooth && /^[1-9]\d*$/.test(legacyBooth)) {
-      query.delete('booth')
-      return { status: 308, location: `${siteOrigin(siteUrl)}/discover/7/booths/${legacyBooth}${query.size ? `?${query}` : ''}` }
-    }
-    if (!query.has('day')) query.set('day', '2026-10-04')
-    return { status: 308, location: `${siteOrigin(siteUrl)}/discover/1?${query}` }
+  const legacy = legacyEventRedirect(path, search)
+  if (legacy) {
+    // Consolidate old tab syntax and a wrong category host in the same redirect.
+    if (origin) try {
+      const target = new URL(legacy,'https://placeholder.invalid')
+      const page = parseEventPage(target.pathname)
+      const header = await fetchJson(origin,`/api/public/catalog/events/${page.eventId}/overview`,fetcher)
+      if(Number(header?.id)===Number(page.eventId)) {
+        const crossHost=categoryRedirect({origin:siteUrl,path:target.pathname,search:target.search,category:categoryFor(header.event),enabled:splitSites})
+        if(crossHost)return {status:308,location:crossHost}
+      }
+    } catch {}
+    return { status:308, location:`${siteOrigin(siteUrl)}${legacy}` }
   }
-  const match = /^\/discover\/([1-9]\d*)(?:\/booths\/([1-9]\d*))?$/.exec(path)
+  const match = parseEventPage(path)
   if (match) {
-    if (!origin || !Number.isSafeInteger(Number(match[1]))) { unavailable = true; status = 503 }
-    else {
-      try {
-        catalog = await fetchJson(origin, `/api/public/catalog/events/${match[1]}`, fetcher)
-        if (Number(catalog?.id) !== Number(match[1]) || typeof catalog?.event?.name !== 'string' || !catalog.event.name.trim()) throw new Error('Invalid public event')
-        if (Number(catalog.id) === 1 && catalog.event.name === '제35회 디. 페스타 (토요일)') {
-          catalog = { ...catalog, event: { ...catalog.event, name: '제35회 디. 페스타', occurrences: [
-            ...catalog.event.occurrences,
-            { startDate: '2026-10-04', endDate: '2026-10-04', startTime: '11:00', endTime: '16:00' },
-          ] } }
-        }
-        if (match[2]) {
-          participant = catalog.participants?.find(row => Number(row?.id) === Number(match[2])) || null
-          if (!participant) { unavailable = true; status = 404 }
-        }
-      } catch (error) { catalog = null; unavailable = true; status = [404, 410].includes(error.status) ? 404 : 503 }
-    }
-  }
+    if (!origin) { unavailable=true;status=503 }
+    else try {
+      const params = new URLSearchParams(search), query = new URLSearchParams()
+      const section = match.section
+      if (['booths','reviews'].includes(section)) {
+        const page = params.get('page') || '0'
+        if (!/^\d+$/.test(page) || Number(page)>10000) {const error=new Error('Invalid page');error.status=404;throw error}
+        query.set('page',String(Number(page)))
+      }
+      if (section === 'booths') {
+        query.set('size','24')
+        for (const key of ['q','day','hall','subject','category']) if(params.get(key))query.set(key,params.get(key))
+      }
+      const personal = section==='booths' && ['saved','visited'].includes(params.get('my'))
+      const endpoint = section === 'home' || personal ? 'overview' : section === 'booth' ? `booths/${match.participantId}` : section
+      catalog = await fetchJson(origin, `/api/public/catalog/events/${match.eventId}/${endpoint}${query.size?`?${query}`:''}`, fetcher)
+      if (Number(catalog?.id)!==Number(match.eventId) || typeof catalog?.event?.name!=='string' || !catalog.event.name.trim())throw new Error('Invalid public event')
+      if (Number(catalog.id)===1 && catalog.event.name==='제35회 디. 페스타 (토요일)') catalog={...catalog,event:{...catalog.event,name:'제35회 디. 페스타',occurrences:[...catalog.event.occurrences,{startDate:'2026-10-04',endDate:'2026-10-04',startTime:'11:00',endTime:'16:00'}]}}
+      if (section === 'booth') {
+        participant=catalog.participants?.find(row=>Number(row?.id)===Number(match.participantId))||null
+        if(!participant){unavailable=true;status=404}
+      }
+      const listing = section === 'booths' ? catalog.pagination : section === 'reviews' ? {...catalog.reviewsPage,size:20,page:Number(params.get('page')||0)} : null
+      if(listing && listing.page>0 && listing.page*listing.size>=listing.total){unavailable=true;status=404}
+    } catch(error) {catalog=null;unavailable=true;status=[400,404,410].includes(error.status)?404:503}
+  } else if (/^\/discover\/[0-9]+\//.test(path)) {unavailable=true;status=404}
   if (catalog && !unavailable) {
     const destination = categoryRedirect({ origin: siteUrl, path, search, category: categoryFor(catalog.event), enabled: splitSites })
     if (destination) return { status: 308, location: destination }

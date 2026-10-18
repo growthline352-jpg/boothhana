@@ -35,10 +35,17 @@ describe('booth visit context', () => {
   it('returns to the booth list with current visit context and original search filters', () => {
     const path = boothListReturn('/discover/6?view=map&focus=9&q=cat&my=saved&day=2026-10-24&hall=old', '2026-10-25', '')
     const params = new URLSearchParams(path.split('?')[1])
-    expect(params.get('section')).toBe('booths')
+    expect(path).toMatch(/^\/discover\/6\/booths\?/)
+    expect(params.has('section')).toBe(false)
     expect(params.get('day')).toBe('2026-10-25')
     expect(params.get('q')).toBe('cat')
     expect(params.get('my')).toBe('saved')
     expect(params.has('hall') || params.has('focus') || params.has('view')).toBe(false)
   })
+})
+
+it('returns to a new booth page with its search, page and day preserved',()=>{
+ const path=boothListReturn('/discover/173/booths?page=1&q=루나&day=2026-10-24','2026-10-25','1홀')
+ expect(path).toContain('/discover/173/booths?')
+ const query=new URLSearchParams(path.split('?')[1]);expect(query.get('page')).toBe('1');expect(query.get('q')).toBe('루나');expect(query.get('day')).toBe('2026-10-25');expect(query.has('section')).toBe(false)
 })

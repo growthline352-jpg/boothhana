@@ -1,3 +1,4 @@
+import { parseEventPage } from './event-pages.mjs'
 /** Fixed allowlist shared by HTML handlers and the SPA. Never trust arbitrary Host values. */
 export const PORTAL_ORIGIN = 'https://boothana.kr'
 export const CATEGORY_SITES = Object.freeze({
@@ -49,7 +50,7 @@ export function categoryRedirect({ origin, path, search = '', category = null, e
     const current = `${origin}${path}${search ? `?${new URLSearchParams(search)}` : ''}`
     return destination === current ? '' : destination
   }
-  if (/^\/discover\/[1-9]\d*(?:\/booths\/[1-9]\d*)?$/.test(path) && categoryOrigin(category) && categoryOrigin(category) !== origin) {
+  if (parseEventPage(path) && categoryOrigin(category) && categoryOrigin(category) !== origin) {
     return `${categoryOrigin(category)}${path}${params.size ? `?${params}` : ''}`
   }
   return ''

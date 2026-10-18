@@ -6,6 +6,11 @@ export interface PublicParticipantMeta {
   productRows?: { data: { name: string } }[]
 }
 export interface PublicCatalogMeta {
+  pagination?: {page:number;size:number;total:number}
+  sections?: {booths:boolean;map:boolean;reviews:boolean}
+  reviewsPage?: {items:{authorName:string;body:string;createdAt:string}[];total:number}
+  reviewCount?:number
+  publishedAt?:string
   id: number
   event: {
     name: string; description?: string; subcategory?: string; organizer?: string | null; region?: string
