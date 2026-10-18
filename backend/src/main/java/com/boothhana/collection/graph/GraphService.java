@@ -65,6 +65,10 @@ public class GraphService {
   return Map.of("afterId",cursor,"hasMore",rows.size()>in.size(),"queued",count);
  }
  @Transactional public Map<String,Object> claim(){
+  return claim(null);
+ }
+ /** Targeted repairs use the same due-time, lease, context and publication checks. */
+ @Transactional public Map<String,Object> claim(UUID requested){
   // Serialize only slot selection; target leases still use SKIP LOCKED.
   db.queryForList("select pg_advisory_xact_lock(728194306)");
   long attempts=db.queryForObject("select coalesce(sum(attempts),0) from collection_job",Long.class);
@@ -73,13 +77,13 @@ public class GraphService {
    select j.* from collection_job j
    left join subculture_participant p on j.kind='SALES' and p.id::text=j.target_id
    left join subculture_event_candidate e on e.id::text=case when j.kind in ('EVENT','PARTICIPANTS') then j.target_id when j.kind='SALES' then p.event_id::text end
-   where j.state in ('PENDING','WAITING','RUNNING','VERIFYING') and j.available_at<=now() and (j.lease_until is null or j.lease_until<now())
+   where (cast(? as uuid) is null or j.id=cast(? as uuid)) and j.state in ('PENDING','WAITING','RUNNING','VERIFYING') and j.available_at<=now() and (j.lease_until is null or j.lease_until<now())
    order by case when (j.kind=? and (e.id is null or e.ends_on>=(now() at time zone 'Asia/Seoul')::date)) or (?='BACKGROUND' and j.kind in ('CREATOR','CHARACTERS','RELATIONS')) then 0 else 1 end,
     case when e.ends_on>=(now() at time zone 'Asia/Seoul')::date and e.starts_on<=(now() at time zone 'Asia/Seoul')::date+7 then 0
          when e.ends_on>=(now() at time zone 'Asia/Seoul')::date then 1 when j.kind in ('EVENT','PARTICIPANTS','SALES') then 2 else 3 end,
     case j.kind when 'EVENT' then 0 when 'PARTICIPANTS' then 1 when 'SALES' then 2 when 'DISCOVERY' then 3 else 4 end,
     j.available_at,j.created_at,j.id for update of j skip locked limit 1
-   """,lane,lane);
+   """,requested,requested,lane,lane);
   if(rows.isEmpty())return Map.of("empty",true);
   var row=rows.getFirst();UUID id=(UUID)row.get("id"),token=UUID.randomUUID();
   Map<String,Object> context;

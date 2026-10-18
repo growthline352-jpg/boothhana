@@ -85,6 +85,19 @@ class CollectionGraphIntegrationTests {
   db.update("update collection_job set available_at=now()+interval '6 hours' where id=?",delayed.get("id"));
   assertThat(graph.claim().get("empty")).isEqualTo(true);
  }
+ @Test void targetedRepairPreservesRetryLeaseAndOtherJobs() throws Exception {
+  var first=graph.seed(new Seed("EVENT",Long.toString(event),Map.of(),true,"other"));
+  var selected=graph.seed(new Seed("PARTICIPANTS",Long.toString(event),Map.of(),true,"repair"));
+  UUID target=(UUID)selected.get("id");
+  http.perform(post("/api/internal/subculture/v6/jobs/"+target+"/claim").contentType("application/json").content("{}")).andExpect(status().isUnauthorized());
+  db.update("update collection_job set available_at=now()+interval '1 hour' where id=?",target);
+  assertThat(graph.claim(target).get("empty")).isEqualTo(true);
+  db.update("update collection_job set available_at=now() where id=?",target);
+  var claimed=graph.claim(target);assertThat(claimed.get("id")).isEqualTo(target);
+  assertThat(graph.claim(target).get("empty")).isEqualTo(true);
+  assertThat(graph.claim(UUID.randomUUID()).get("empty")).isEqualTo(true);
+  assertThat(db.queryForObject("select attempts from collection_job where id=?",Integer.class,first.get("id"))).isZero();
+ }
  Map<String,Object> seed(String kind,String target){var queued=graph.seed(new Seed(kind,target,Map.of(),true,UUID.randomUUID().toString()));db.update("update collection_job set available_at=now() where id=?",queued.get("id"));return graph.claim();}
  UUID id(Map<String,Object> job){return (UUID)job.get("id");}UUID token(Map<String,Object> job){return (UUID)job.get("leaseToken");}
  Map<String,Object> extract(Map<String,Object> job,Object result){return value(graph.extract(id(job),new Extraction(token(job),UUID.randomUUID(),job.get("contextHash").toString(),value(result),audit())));}

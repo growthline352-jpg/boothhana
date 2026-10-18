@@ -14,6 +14,7 @@ public class GraphController {
  @PostMapping("/refresh") public Object refresh(@RequestBody Bootstrap body){return service.refresh(body);}
  @PostMapping("/refresh-creators") public Object refreshCreators(@RequestBody Bootstrap body){return service.refreshCreators(body);}
  @PostMapping("/claim") public Object claim(){return service.claim();}
+ @PostMapping("/jobs/{id}/claim") public Object claimTarget(@PathVariable UUID id){return service.claim(id);}
  @PostMapping("/jobs/{id}/heartbeat") public Object heartbeat(@PathVariable UUID id,@RequestBody Lease body){return service.heartbeat(id,body.leaseToken());}
  @PostMapping("/jobs/{id}/extract") public Object extract(@PathVariable UUID id,@RequestBody Extraction body){return service.extract(id,body);}
  @PostMapping("/jobs/{id}/decide") public Object decide(@PathVariable UUID id,@RequestBody Decision body){return service.decide(id,body);}

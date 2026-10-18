@@ -92,7 +92,11 @@ class PublicSources:
                     robots[origin]=policy
                 if not robots[origin].can_fetch(PUBLIC_SOURCE_USER_AGENT,url):raise MediaError('robots disallows collection')
                 event_list=host=='api.illustar.net' and parsed.path=='/v1/event/list' and not parsed.query
-                html,digest=self.fetch(url,[host],timeout=15,**({'allow_json':True} if event_list else {}))
+                detail=re.fullmatch(r'/v1/(circle|event/info/detail)/([1-9][0-9]*)',parsed.path) if host=='api.illustar.net' and not parsed.query else None
+                html,digest=self.fetch(url,[host],timeout=15,**({'allow_json':True} if event_list or detail else {}))
+                native_images=[]
+                if detail:
+                    html,native_images=illustar_detail(url,html,detail[1],int(detail[2]))
                 if event_list:
                     data=illustar_data(html)
                     if not isinstance(data,dict) or not isinstance(data.get('eventInfo'),list):raise MediaError('Official event list format changed')
@@ -121,9 +125,32 @@ class PublicSources:
                 if len(text)<100 and not (sns_post and parser.images) or any(s in title.lower() for s in ('access denied','just a moment','captcha','로그인','login','sign in')):raise MediaError('No usable public page body')
                 value.update(available=True,title=title,sha256=digest,text=text[:50000],links=parser.links[:150],truncated=len(text)>50000)
                 if sns_post:value['images']=[{'imageUrl':u,'pageUrl':url} for u in parser.images]
+                if native_images:value['images']=native_images
             except (ValueError,OSError) as exc:value['failure']=str(exc)[:200]
             documents.append(value)
         return documents
+
+def illustar_detail(url,body,kind,expected_id):
+    """Read only public booth/event fields, never application/account metadata."""
+    data=illustar_data(body)
+    key='userBoothApplication' if kind=='circle' else 'detail'
+    row=data.get(key) if isinstance(data,dict) else None
+    identity='id' if kind=='circle' else 'event_id'
+    if not isinstance(row,dict) or str(row.get(identity))!=str(expected_id):raise MediaError('Official detail identity mismatch')
+    fields=('id','event_id','booth_no','booth_name','date_type','booth_type','zone_type','homepage','introduce','tag','goods_type','genre_type') if kind=='circle' else ('event_id','event_name','event_date','event_time','event_location','event_caution','creator_circle_booth','creator_company_booth','creator_special_zone','cosp_cosplay','stage','event_schedule_text','event_layout_text','circle_list_text')
+    public={k:row.get(k) for k in fields}
+    images=[];extra=''
+    if kind=='circle':
+        goods=row.get('goods_list')
+        if not isinstance(goods,list):raise MediaError('Official goods list format changed')
+        public['goods_list']=[{k:g[k] for k in ('id','name','goods_name','description','price','url') if k in g} for g in goods if isinstance(g,dict)]
+        image=row.get('image_info')
+        if isinstance(image,dict) and isinstance(image.get('url'),str) and canonical_audit_url(image['url']):images.append({'imageUrl':image['url'],'pageUrl':url})
+        homepage=row.get('homepage')
+        if isinstance(homepage,str) and canonical_audit_url(homepage):extra='<a href="'+escape(homepage,quote=True)+'">등록된 홈페이지 · 계정 귀속은 별도 검토</a>'
+    # HTML fragments stay untrusted page content and are parsed without execution.
+    html='<title>일러스타 공식 '+('참가 부스' if kind=='circle' else '행사 안내')+'</title><pre>'+escape(json.dumps(public,ensure_ascii=False))+'</pre>'+extra
+    return html,images
 
 def illustar_data(body):
     """Decode the site's public zlib JSON representation with a hard expansion bound."""
