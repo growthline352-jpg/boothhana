@@ -133,7 +133,9 @@ PRODUCT_RULES='''
 실제 옵션명만 사용한다. 공통 주문폼 URL/폼 ID를 모든 옵션의 productUrl/sourceEntryId/identity에 반복하지 않는다. 개별 식별 URL/ID가 없으면 null로 두고 공통 폼 주소는 sources에만 남긴다.
 선입금 종료와 품절, 과거 회차 판매와 현재 판매를 구분한다. 상품 이미지를 못 보더라도 원문으로 확인한 옵션명/가격/귀속을 버리지 않는다.
 '''
-PROMPTS['SALES']+=PRODUCT_RULES
+PROMPTS['SALES']+=PRODUCT_RULES+'''
+공동 판매표에서 서로 다른 작가의 같은 이름 상품(예: A3 Poster)은 각각 별도 상품이다. name을 원문으로 확인된 작가명 + 상품명으로 구별하고 memberName에도 그 작가명을 유지한다. 작가명이나 옵션명을 추정하거나 같은 출처의 다른 작가 상품을 합치지 않는다.
+'''
 PROMPTS['CREATOR']+=PRODUCT_RULES+'''
 productCoverage에는 실제 읽은 각 판매표의 sourceUrl과 원문의 옵션명 전체를 optionNames로 기록한다. 해당 페이지를 끝까지 못 읽으면 complete=false. 같은 출처의 옵션명을 goods.name에 각각 일치시켜 반환한다.
 기존 profile.kind가 근거 없으면 UNKNOWN으로 정정할 수 있으며 불확실한 소개/별칭만 비운다. 이미지 없음만으로 coverage=PARTIAL로 만들지 않는다. 옵션이나 조사할 다음 페이지가 실제 남은 경우에 PARTIAL이다.
