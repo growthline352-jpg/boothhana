@@ -56,7 +56,7 @@ test('path and API origin validation reject user-controlled absolute URLs', () =
 test('server emits event metadata in raw HTML without JavaScript and without cookies', async () => {
  let options, requested
  const page = await renderPage({ path: '/discover/17', template, siteUrl, apiBase, fetcher: async (url, init) => { requested = url; options = init; return json(catalog) } })
- assert.equal(page.status, 200); assert.match(page.html, /\[TEST\] 문구 행사/); assert.equal(requested, apiBase + '/api/public/catalog/events/17')
+ assert.equal(page.status, 200); assert.match(page.html, /\[TEST\] 문구 행사/); assert.equal(requested, apiBase + '/api/public/catalog/events/17/overview')
  assert.equal(options.redirect, 'error'); assert.equal(options.credentials, 'omit'); assert.deepEqual(options.headers, { Accept: 'application/json' })
 })
 test('server returns 404 on withdrawn event, 503 on outage, and always noindex', async () => {
