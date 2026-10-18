@@ -132,7 +132,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
         </figure>) : <figure className="booth-detail-fallback"><ContentImage url={null} kind="booth" alt="" loading="eager"/></figure>}
       </div>
     </div>
-    {(row.sales?.salesMethod||salesLinks.length>0||row.salesSummaryOrigin==='EDITORIAL'&&row.sales?.summary)&&<section className="booth-sales-links" aria-label="판매 안내"><h3>판매·선입금 안내</h3>{row.salesSummaryOrigin==='EDITORIAL'&&row.sales?.summary&&<p className="preserve-lines">{row.sales.summary}</p>}{row.sales?.salesMethod&&<p>{row.sales.salesMethod}</p>}{salesLinks.map((url,index)=><SafeLink key={url} url={url}>판매 안내 {index+1} ↗</SafeLink>)}<p>온라인 선입금과 현장 판매 조건은 판매자 안내에서 확인해 주세요.</p></section>}
+    {(row.sales?.salesMethod||salesLinks.length>0||row.sales?.summary)&&<section className="booth-sales-links" aria-label="판매 안내"><h3>판매·선입금 안내</h3>{row.sales?.summary&&row.sales.summary.trim()!==summary.trim()&&<p className="preserve-lines">{row.sales.summary}</p>}{row.sales?.salesMethod&&<p>{row.sales.salesMethod}</p>}{salesLinks.map((url,index)=><SafeLink key={url} url={url}>판매 안내 {index+1} ↗</SafeLink>)}<p>온라인 선입금과 현장 판매 조건은 판매자 안내에서 확인해 주세요.</p></section>}
     <section className="booth-detail-products" aria-labelledby={`booth-products-${row.id}`}>
       <div className="booth-detail-section-heading">
         <div><span>판매 상품</span><h3 id={`booth-products-${row.id}`}>이 부스에서 만날 수 있어요</h3></div>
