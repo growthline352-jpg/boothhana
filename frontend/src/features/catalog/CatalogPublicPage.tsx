@@ -85,7 +85,7 @@ function LoadEvent({eventId}:{eventId:string}) {
       if(chosen.length<=200){filters.set('ids',chosen.join(',')||'0');return publicCatalogApi.eventPage(id,section,filters.toString())}
       // A large personal list is fetched in bounded public-ID batches; never put it in a page URL.
       const requestedPage=Number(filters.get('page')||0);filters.set('page','0');filters.set('size','100')
-      const requests=[]
+      const requests:Promise<PublicEvent>[]=[]
       for(let offset=0;offset<chosen.length;offset+=100){const batch=new URLSearchParams(filters);batch.set('ids',chosen.slice(offset,offset+100).join(','));requests.push(publicCatalogApi.eventPage(id,section,batch.toString()))}
       const batches=await Promise.all(requests),first=batches[0]
       const participants=batches.flatMap(batch=>batch.participants).sort((a,b)=>a.participant.registrationName.localeCompare(b.participant.registrationName,'ko-KR'))
