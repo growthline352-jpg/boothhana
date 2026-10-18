@@ -22,3 +22,9 @@ class MediaStoreTests(unittest.TestCase):
   api=Mock();asset=self.asset();api.request.side_effect=[asset,asset,{**asset,'storageState':'STORED'}]
   with patch('catalog_media_store.fetch_image',return_value=(b'image','image/png','a'*64)):result=store_approved(api,asset_ids=[1])
   self.assertEqual(1,len(result['stored']));self.assertEqual(PREFIX+'/assets/1',api.request.call_args_list[0].args[1])
+ def test_unchanged_failed_source_backs_off_instead_of_fetching_every_poll(self):
+  api=Mock();asset=self.asset();retry_after={}
+  api.request.side_effect=[[asset],asset,asset,[asset]]
+  with patch('catalog_media_store.fetch_image',side_effect=RuntimeError('source failed')) as fetch:
+   first=store_approved(api,retry_after=retry_after);second=store_approved(api,retry_after=retry_after)
+  self.assertEqual(1,len(first['failed']));self.assertEqual([1],second['deferred']);self.assertEqual(1,fetch.call_count)
