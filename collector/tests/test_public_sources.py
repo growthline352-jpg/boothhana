@@ -21,6 +21,27 @@ class EvidenceConnection:
 
 URL='https://example.com/item'
 class PublicSourceTests(unittest.TestCase):
+    def test_native_booth_json_exposes_public_evidence_links_and_actual_image(self):
+        url='https://api.illustar.net/v1/circle/20328'
+        payload={'userBoothApplication':{'id':20328,'event_id':101,'booth_name':'24P Shift','introduce':'Public booth introduction','homepage':'https://x.com/24P_Shift','goods_list':[], 'image_info':{'url':'https://static.illustar.net/cut.png'},'user_id':99,'pay_limit':'PRIVATE','etc':'PRIVATE'}}
+        raw=json.dumps({'errorCode':0,'data':payload})
+        routes={'/robots.txt':('User-agent: *\nAllow: /','text/plain'),'/v1/circle/20328':(raw,'application/json')}
+        with patch('media_fetch.public_addresses',return_value=['93.184.216.34']),patch('media_fetch.PinnedHTTPS',side_effect=lambda *args:EvidenceConnection(routes,[])):
+            d=PublicSources([])([url])[0]
+        self.assertTrue(d['available'],d);self.assertIn('24P Shift',d['text']);self.assertNotIn('PRIVATE',d['text']);self.assertNotIn('user_id',d['text'])
+        self.assertIn('https://x.com/24P_Shift',d['links']);self.assertEqual([{'imageUrl':'https://static.illustar.net/cut.png','pageUrl':url}],d['images'])
+        self.assertEqual(hashlib.sha256(raw.encode()).hexdigest(),d['sha256'])
+    def test_native_detail_rejects_wrong_identity_and_does_not_enable_private_routes(self):
+        for path in ('/v1/circle/1','/v1/user/1','/v1/circle/1?private=true'):
+            routes={'/robots.txt':('User-agent: *\nAllow: /','text/plain'),path:(json.dumps({'errorCode':0,'data':{'userBoothApplication':{'id':2,'goods_list':[]}}}),'application/json')}
+            with self.subTest(path=path),patch('media_fetch.public_addresses',return_value=['93.184.216.34']),patch('media_fetch.PinnedHTTPS',side_effect=lambda *args:EvidenceConnection(routes,[])):
+                self.assertFalse(PublicSources([])(['https://api.illustar.net'+path])[0]['available'])
+    def test_native_event_detail_preserves_original_identity_and_public_fields(self):
+        raw=json.dumps({'errorCode':0,'data':{'detail':{'event_id':101,'event_name':'ILLUSTAR FES 14','event_location':'KINTEX','private':'SECRET'}}})
+        routes={'/robots.txt':('User-agent: *\nAllow: /','text/plain'),'/v1/event/info/detail/101':(raw,'application/json')}
+        with patch('media_fetch.public_addresses',return_value=['93.184.216.34']),patch('media_fetch.PinnedHTTPS',side_effect=lambda *args:EvidenceConnection(routes,[])):
+            d=PublicSources([])(['https://api.illustar.net/v1/event/info/detail/101'])[0]
+        self.assertTrue(d['available'],d);self.assertIn('ILLUSTAR FES 14',d['text']);self.assertNotIn('SECRET',d['text'])
     def test_declared_collector_identity_matches_the_robot_policy_and_http_request(self):
         routes={'/robots.txt':('User-agent: Fetch\nDisallow: /\n\nUser-agent: *\nDisallow: /private\n','text/plain'),
                 '/item':('<title>Public item</title><p>'+('actual public evidence '*10)+'</p>','text/html')}
