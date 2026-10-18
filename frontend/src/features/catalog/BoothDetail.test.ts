@@ -8,15 +8,19 @@ function asset(id: number, type: string, productId: number | null = null): Publi
 
 describe('published booth images', () => {
   it('shows collected official introduction and timetable images without relabeling them as booth cuts', () => {
-    expect(boothDetailImages([asset(1, 'OTHER'), asset(2, 'OTHER')]).map(image => image.id)).toEqual([1, 2])
+    expect(boothDetailImages([asset(1, 'BANNER'), asset(2, 'BANNER')]).map(image => image.id)).toEqual([1, 2])
+  })
+
+  it('does not show an event-wide banner as a booth announcement', () => {
+    expect(boothDetailImages([{ ...asset(1, 'BANNER'), participantId: null }])).toEqual([])
   })
 
   it('keeps existing booth-cut, logo and sale-sheet priority', () => {
-    expect(boothDetailImages([asset(4, 'OTHER'), asset(3, 'SALES_SHEET'), asset(2, 'LOGO'), asset(1, 'BOOTH_CUT')]).map(image => image.id)).toEqual([1, 2, 3])
+    expect(boothDetailImages([asset(4, 'BANNER'), asset(3, 'SALES_SHEET'), asset(2, 'LOGO'), asset(1, 'BOOTH_CUT')]).map(image => image.id)).toEqual([1, 2, 3])
   })
 
   it('does not substitute a product or a floor plan for the booth introduction', () => {
-    expect(boothDetailImages([asset(1, 'OTHER', 3061), asset(2, 'PRODUCT'), asset(3, 'FLOOR_PLAN')])).toEqual([])
+    expect(boothDetailImages([asset(1, 'BANNER', 3061), asset(2, 'PRODUCT'), asset(3, 'FLOOR_PLAN')])).toEqual([])
   })
 })
 
