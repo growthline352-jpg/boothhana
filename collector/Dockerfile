@@ -24,12 +24,16 @@ ENV PYTHONUNBUFFERED=1 \
     CODEX_HOME=/var/lib/boothhana-collector/codex \
     PATH=/opt/venv/bin:/usr/local/bin:/usr/bin:/bin
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
+
 WORKDIR /app/collector
 
 COPY requirements.txt /tmp/requirements.txt
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --no-cache-dir --upgrade pip \
     && /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt \
+    && /opt/venv/bin/python -m playwright install --with-deps chromium \
+    && chmod -R a+rX /opt/ms-playwright \
     && rm /tmp/requirements.txt
 
 COPY --chown=collector:collector . /app/collector

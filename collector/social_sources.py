@@ -56,8 +56,8 @@ def x_json(url, token):
     finally:connection.close()
 
 class SocialSources:
-    def __init__(self,blocked,*,public=None,fetch=fetch_html,x_fetch=x_json,token_env='X_BEARER_TOKEN'):
-        self.blocked=blocked;self.public=public or PublicSources(blocked);self.fetch=fetch;self.x_fetch=x_fetch;self.token_env=token_env;self.expected_accounts={};self.stop_posts={}
+    def __init__(self,blocked,*,public=None,fetch=fetch_html,x_fetch=x_json,token_env='X_BEARER_TOKEN',browser=None):
+        self.blocked=blocked;self.public=public or PublicSources(blocked);self.fetch=fetch;self.x_fetch=x_fetch;self.token_env=token_env;self.expected_accounts={};self.stop_posts={};self.browser=browser
     def api(self,url,platform):
         host=urlsplit(url).hostname
         if any(host==b or host.endswith('.'+b) for b in self.blocked):raise MediaError('Blocked SNS API')
@@ -85,6 +85,24 @@ class SocialSources:
             except (ValueError,OSError) as exc:
                 # Never include request/response headers, token values or arbitrary exception strings.
                 message=str(exc) if isinstance(exc,MediaError) else type(exc).__name__
+                # Only transport/credential failures use the public browser. Identity,
+                # blocked-host and invalid-cursor failures are never relaxed.
+                if route[0]=='X' and self.browser and (message=='X API credential is not configured' or re.fullmatch(r'X API HTTP (?:401|403|429|5[0-9]{2})',message)):
+                    try:
+                        base=profile_key(url)
+                        if self.expected_accounts.get(base.lower()):raise MediaError('Browser cannot reverify the saved native X account ID')
+                        p=urlsplit(url)
+                        if parse_qs(p.query).get('bh_cursor'):raise MediaError('Browser cannot continue a native API cursor')
+                        canonical='https://x.com/'+route[1]+('/status/'+route[2] if route[2] else '')
+                        fallback=self.browser(canonical)
+                        if not fallback or not any(d.get('available') for d in fallback):raise MediaError('No usable public browser evidence')
+                        if canonical!=url:
+                            root=next((d for d in fallback if d['url']==canonical),None)
+                            if root:root['url']=url
+                        for d in fallback:d['apiFailure']=message
+                        docs.extend(fallback);continue
+                    except (ValueError,OSError) as browser_exc:
+                        message+='; '+(str(browser_exc) if isinstance(browser_exc,MediaError) else type(browser_exc).__name__)
                 docs.append({'url':url,'available':False,'capturedAt':datetime.now(timezone.utc).isoformat(),'failure':message[:200]})
         return docs
     def read(self,url,route):
