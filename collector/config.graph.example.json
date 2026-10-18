@@ -9,5 +9,6 @@
   "httpTimeoutSeconds": 45,
   "pollSeconds": 30,
   "blockedSourceHosts": ["witchform.com"],
-  "xBearerTokenEnv": "X_BEARER_TOKEN"
+  "xBearerTokenEnv": "X_BEARER_TOKEN",
+  "xBrowserFallback": true
 }

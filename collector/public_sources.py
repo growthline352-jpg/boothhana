@@ -178,6 +178,9 @@ def context_urls(context):
     def add(value):
         if isinstance(value,str) and canonical_audit_url(value) and value not in result:result.append(value)
     for field in ('pageUrl','leadUrl'):add(context.get('input',{}).get(field))
+    leads=context.get('input',{}).get('leadUrls',[])
+    if isinstance(leads,list):
+        for lead in leads[:20]:add(lead)
     for key in ('creator','product','event','participant'):
         data=context.get(key,{}).get('data',{})
         for field in ('profileUrl','productUrl','officialUrl'):add(data.get(field))
