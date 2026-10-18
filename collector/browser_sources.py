@@ -71,7 +71,7 @@ def documents(url,snapshot):
   try:owner,post=target(row.get('url',''))
   except (ValueError,TypeError):continue
   # Author is taken from the article's author control, not a quoted link.
-  if not post or owner.lower()!=actor.lower() or str(row.get('author','')).lower()!=actor.lower() or row.get('repost'):continue
+  if not post or owner.lower()!=actor.lower() or str(row.get('author','')).lower()!=actor.lower() or row.get('repost') or row.get('quoted'):continue
   if pid and post!=pid:continue
   if row['url'] in seen:continue
   body=row.get('text','')
@@ -102,11 +102,14 @@ def documents(url,snapshot):
 
 # Read only the page's public author/post controls. Quote blocks are excluded.
 DOM=r'''() => {
- const posts=[...document.querySelectorAll('article')].map(a=>{
+ const posts=[...document.querySelectorAll('article')].filter(a=>!a.parentElement?.closest('article')).map(a=>{
   const author=a.querySelector('[data-testid="User-Name"] a[href*="/"]')||[...a.querySelectorAll('a[href]')].find(x=>/^\/[A-Za-z0-9_]{1,15}\/?$/.test(new URL(x.href).pathname));
   const authorPath=author ? new URL(author.href).pathname : '';
   const time=[...a.querySelectorAll('a[href]')].find(x=>x.querySelector('time'))||[...a.querySelectorAll('a[href]')].find(x=>/^\/[A-Za-z0-9_]{1,15}\/status\/[0-9]+$/.test(new URL(x.href).pathname));
-  const text=a.querySelector('[data-testid="tweetText"]')||a.querySelector('div.whitespace-pre-wrap[dir="auto"]');
+  const text=[...a.querySelectorAll('[data-testid="tweetText"],div.whitespace-pre-wrap[dir="auto"]')].find(t=>{
+   const quote=t.closest('[data-testid="quoteTweet"],[role="link"]');
+   return t.closest('article')===a&&(!quote||!a.contains(quote));
+  });
   const postPath=time?new URL(time.href).pathname:'';
   const ownImages=[...a.querySelectorAll('a[href]')].filter(x=>new URL(x.href).pathname.startsWith(postPath+'/photo/')).flatMap(x=>[...x.parentElement.querySelectorAll('img')]);
   return {url:time?.href?.split('?')[0]||'',author:authorPath.split('/')[1]||'',text:text?.innerText||'',

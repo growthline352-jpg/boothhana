@@ -80,7 +80,7 @@ class BrowserSourceTests(unittest.TestCase):
   docs=documents(PROFILE,snapshot(PROFILE));self.assertEqual(2,len(docs))
   self.assertTrue(docs[0]['browserPartial']);self.assertNotIn('socialPageReceipt',docs[0]);self.assertNotIn('nextPageUrl',docs[0])
  def test_other_authors_reposts_quotes_and_wrong_post_are_not_goods(self):
-  for change in ({'author':'other'},{'url':PROFILE+'/status/999'},{'repost':True}):
+  for change in ({'author':'other'},{'url':PROFILE+'/status/999'},{'repost':True},{'quoted':True}):
    data=snapshot();data['posts'][0].update(change)
    with self.assertRaises(MediaError):documents(POST,data)
  def test_login_challenge_and_destination_changes_are_rejected(self):
