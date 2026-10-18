@@ -119,7 +119,7 @@ test('event and booth wrong-domain requests redirect by public taxonomy, preserv
   for (const path of ['/discover/12', '/discover/12/booths/7']) {
     const page = await renderPage({ path, search: 'day=2026-10-01&view=map', template, siteUrl: 'https://festival.boothana.kr', apiBase: 'https://api.example', fetcher: async () => json(fixture) })
     assert.equal(page.status, 308)
-    assert.equal(page.location, `https://expo.boothana.kr${path}?day=2026-10-01&view=map`)
+    assert.equal(page.location, path==='/discover/12'?'https://expo.boothana.kr/discover/12/map?day=2026-10-01':`https://expo.boothana.kr${path}?day=2026-10-01&view=map`)
     const own = await renderPage({ path, template, siteUrl: 'https://expo.boothana.kr', apiBase: 'https://api.example', fetcher: async () => json(fixture) })
     assert.equal(own.status, 200)
     assert.equal(own.meta.canonical, `https://expo.boothana.kr${path}`)
@@ -150,7 +150,7 @@ test('legacy and fandom popups belong only to popup with redirects from old subc
   for(const row of [legacy,popup])for(const path of ['/discover/12','/discover/12/booths/7']) {
     const redirect = await renderPage({ path, search:'day=2026-10-01&view=map', template, siteUrl: CATEGORY_SITES.subculture.origin, apiBase: 'https://api.example', fetcher: async () => json(row) })
     assert.equal(redirect.status,308)
-    assert.equal(redirect.location, `https://popup.boothana.kr${path}?day=2026-10-01&view=map`)
+    assert.equal(redirect.location, path==='/discover/12'?'https://popup.boothana.kr/discover/12/map?day=2026-10-01':`https://popup.boothana.kr${path}?day=2026-10-01&view=map`)
     const own=await renderPage({path,template,siteUrl:CATEGORY_SITES.popups.origin,apiBase:'https://api.example',fetcher:async()=>json(row)})
     assert.equal(own.status,200)
     assert.equal(own.meta.canonical,`https://popup.boothana.kr${path}`)

@@ -1,3 +1,4 @@
+import { EVENT_SECTIONS, parseEventPage, eventSectionHref } from './event-pages.mjs'
 import { taxonomy } from './taxonomy.mjs'
 import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryOrigin, splitSitesEnabled } from './category-sites.mjs'
 import { renderHomeGuide } from './home-guide.mjs'
@@ -158,7 +159,17 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
     if (event) graph.push(event)
     graph.push(entity)
   } else if (event) {
-    webpage.mainEntity = { '@id': event['@id'] }
+    const page = parseEventPage(path)
+    if (page && !['home','booth'].includes(page.section)) {
+      webpage['@type'] = page.section === 'map' ? 'WebPage' : 'CollectionPage'
+      webpage.about = { '@id': event['@id'] }
+      crumbs.push({ name: EVENT_SECTIONS[page.section], url: canonical })
+      if (page.section === 'booths') {
+        const items = (catalog.participants || []).map((row,index)=>({ '@type':'ListItem', position:(catalog.pagination?.page || 0)*(catalog.pagination?.size || 24)+index+1, name:text(row.participant?.registrationName,160), url:`${eventCanonical}/booths/${Number(row.id)}` }))
+        const collection = { '@type':'ItemList', '@id':`${canonical}#booths`, name:title, numberOfItems:catalog.pagination?.total ?? items.length, itemListElement:items }
+        graph.push(collection); webpage.mainEntity = { '@id':collection['@id'] }
+      }
+    } else webpage.mainEntity = { '@id': event['@id'] }
     graph.push(event)
   }
   const trail = breadcrumb(crumbs, canonical)
@@ -173,7 +184,7 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
  */
 export function clientPageMetadata({ pending = false, currentCanonical = '', ...input } = {}) {
   const path = normalizePath(input.path || '/')
-  const detail = /^\/discover\/[1-9]\d*(?:\/booths\/[1-9]\d*)?$/.test(path)
+  const detail = !!parseEventPage(path)
   if (pending && !input.unavailable && detail) {
     const canonical = `${siteOrigin(input.siteUrl)}${path}`
     if (currentCanonical === canonical) return null
@@ -192,13 +203,15 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   const browse = path === '/' || path === '/discover'
   const detailMatch = /^\/discover\/([1-9]\d*)$/.exec(path)
   const boothMatch = /^\/discover\/([1-9]\d*)\/booths\/([1-9]\d*)$/.exec(path)
+  const sectionPage = parseEventPage(path)
+  const sectionMatch = sectionPage && !['home','booth'].includes(sectionPage.section) ? sectionPage : null
   const category = hostCategory || params.get('category') || 'subculture'
   const supported = Object.hasOwn(CATEGORY_SITES, category) && (!params.has('category') || Object.hasOwn(CATEGORY_SITES, params.get('category')))
   const directoryPage = catalogDirectoryPage(path, search)
   const filtered = directoryPage === null && [...params.keys()].some(key => key !== 'category')
   let title = SITE_TITLE, description = SITE_DESCRIPTION, indexable = browse && supported && !filtered && !unavailable
   let image = origin ? `${origin}/assets/brand/logo.png` : ''
-  const requestedEventId = Number(detailMatch?.[1] || boothMatch?.[1])
+  const requestedEventId = Number(detailMatch?.[1] || boothMatch?.[1] || sectionMatch?.eventId)
   const validCatalog = !unavailable && Number(catalog?.id) === requestedEventId && catalog?.event && text(catalog.event.name, 160)
   const validParticipant = validCatalog && boothMatch && Number(participant?.id) === Number(boothMatch[2]) && text(participant?.participant?.registrationName, 160)
 
@@ -231,6 +244,17 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
       title = unavailable ? '공개 행사 안내를 확인할 수 없습니다 | 부스하나' : '행사 안내 확인 중 | 부스하나'
       description = '공개된 행사 정보를 확인하고 있습니다. 잠시 후 다시 확인해 주세요.'
     }
+  } else if (sectionMatch) {
+    const label = EVENT_SECTIONS[sectionMatch.section]
+    title = validCatalog ? `${text(catalog.event.name,100)} ${label} | 부스하나` : `${label} 확인 중 | 부스하나`
+    description = validCatalog ? `${text(catalog.event.name,100)}의 ${label}를 확인하세요. 공개된 정보와 출처·갱신 시점을 함께 안내합니다.` : '공개된 행사 정보를 확인하고 있습니다.'
+    image = imageUrl(selectedBanner(catalog)?.url) || image
+    const currentPage = Number(params.get('page') || 0)
+    const pageValid = Number.isSafeInteger(currentPage) && currentPage >= 0 && currentPage <= 10000
+    const hasContent = sectionMatch.section === 'booths' ? (catalog?.pagination?.total ?? catalog?.participants?.length ?? 0) > currentPage * (catalog?.pagination?.size ?? 24)
+      : sectionMatch.section === 'reviews' ? (catalog?.reviewsPage?.total ?? catalog?.reviewCount ?? 0) > currentPage * 20
+      : catalog?.sections?.map === true || catalog?.assets?.some(asset=>asset.type === 'FLOOR_PLAN')
+    indexable = !!(validCatalog && pageValid && hasContent && [...params.keys()].every(key=>key === 'page'))
   } else if (path === '/discover') {
     title = '서울·경기 서브컬처 행사 | 부스하나'
     description = '서울·경기 동인 행사, 인형 행사, 온리전과 팝업의 일정·장소·참가 부스를 찾아보세요.'
@@ -266,9 +290,10 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   const canonicalPath = split && browse && (hostCategory || path === '/discover' || params.has('category')) && supported ? '/' : path
   if (directoryPage !== null && supported) title = `${CATEGORY_LABEL[category]} 전체 목록${directoryPage ? ` · ${directoryPage + 1}페이지` : ''} | ${CATEGORY_SITES[categorySite(origin)]?.name || '부스하나'}`
   // Complete directory pages own their canonical; personal search/filter combinations stay noindex.
-  const canonical = origin ? origin + (directoryPage !== null && supported
+  let canonical = origin ? origin + (directoryPage !== null && supported
     ? catalogDirectoryHref(directoryPage, !split && category !== 'subculture' ? category : '')
     : canonicalPath + (!split && browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '')) : ''
+  if (sectionMatch && ['booths','reviews'].includes(sectionMatch.section) && /^[1-9]\d*$/.test(params.get('page') || '') && Number(params.get('page')) <= 10000) canonical += `?page=${Number(params.get('page'))}`
   const robots = path.startsWith('/itinerary/shared/') ? 'noindex,nofollow' : indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
   const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null, listing, path, category }) : null
   return { title, description, canonical, robots, image, schema, siteName: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', verification: verificationToken(verification), naverVerification: verificationToken(naverVerification) }
@@ -332,10 +357,33 @@ export function renderCrawlableContent({ path = '/', search = '', catalog = null
       <p><a href="${eventPath}">${esc(text(event.name, 160))} 행사 상세 보기</a></p></article>
     </main>`
   }
+  const sectionPage = parseEventPage(path)
+  if (sectionPage && !['home','booth'].includes(sectionPage.section)) {
+    const section = sectionPage.section, query = new URLSearchParams(search)
+    const nav = `<nav aria-label="행사 상세 메뉴">${Object.entries(EVENT_SECTIONS).map(([key,label])=>`<a href="${eventSectionHref(catalog.id,key)}"${key===section?' aria-current="page"':''}>${esc(label)}</a>`).join(' · ')}</nav>`
+    const updated = `<p>공개본 갱신: <time datetime="${esc(catalog.publishedAt||'')}">${esc(catalog.publishedAt||'확인일 미공개')}</time>. 방문 전 주최 측 최신 안내를 확인하세요.</p>`
+    let body = ''
+    if (section==='booths'&&['saved','visited'].includes(query.get('my'))) return `<main data-seo-fallback><h1>${esc(text(event.name,160))} 내 관심 부스</h1>${nav}<p>브라우저의 보관함에서 선택한 부스를 확인하고 있습니다.</p></main>`
+    if (section === 'booths') {
+      const rows = catalog.participants || [], count = catalog.pagination?.total ?? rows.length
+      body = `<p>공개 확인된 참가 부스 ${count}곳. 소개된 정보가 전체 참가 명단을 뜻하지는 않습니다.</p><ul>${rows.map(row=>`<li><h2><a href="${eventPath}/booths/${Number(row.id)}">${esc(text(row.participant?.registrationName,160))}</a></h2><p>${esc(text(row.sales?.summary,500))}</p><p>${esc((row.participant?.subjects||[]).join(' · '))}</p><p>${(row.participant?.locations||[]).map(l=>esc([l.startDate,l.endDate,l.hall,l.zone,l.code].filter(Boolean).join(' · '))).join('<br>')}</p></li>`).join('')}</ul>`
+      const page = catalog.pagination?.page ?? 0, size = catalog.pagination?.size ?? 24
+      const href = next => eventSectionHref(catalog.id,'booths',next?`page=${next}`:'')
+      body += `<nav aria-label="참가 부스 목록 페이지">${page>0?`<a href="${href(page-1)}">이전 부스</a>`:''} <span>${page+1} / ${Math.max(1,Math.ceil(count/size))} 페이지</span> ${(page+1)*size<count?`<a href="${href(page+1)}">다음 부스</a>`:''}</nav>`
+    } else if (section === 'map') {
+      const rows = catalog.participants || [], plans = (catalog.assets || []).filter(a=>a.type==='FLOOR_PLAN')
+      body = `<p>공개된 날짜·전시장·부스 번호를 기준으로 위치를 확인하세요. 도면과 현장 운영은 변경될 수 있습니다.</p>${plans.map(plan=>`<figure><a href="${esc(imageUrl(plan.url))}"><img src="${esc(imageUrl(plan.url))}" alt="${esc(text(plan.caption,200)||'공식 행사 배치도')}" loading="lazy"></a><figcaption>${esc(text(plan.caption,300))}</figcaption></figure>`).join('')}<h2>공개 부스 위치</h2><ul>${rows.slice(0,100).map(row=>`<li><a href="${eventPath}/booths/${Number(row.id)}">${esc(text(row.participant?.registrationName,160))}</a>: ${(row.participant?.locations||[]).map(l=>esc([l.startDate,l.endDate,l.hall,l.zone,l.code].filter(Boolean).join(' · '))).join(' / ')||'위치 미확인'}</li>`).join('')}</ul><a href="${eventPath}/booths">전체 참가 부스에서 더 찾기</a>`
+    } else {
+      const reviews = catalog.reviewsPage || {items:[],total:0}, page = Number(query.get('page')||0)
+      body = `<p>이 회차에 공개된 방문 후기·질문 ${Number(reviews.total)||0}건입니다. 개인의 경험이며 현재 운영 정보와 다를 수 있습니다.</p>${reviews.items.map(review=>`<article><h2>${esc(text(review.authorName,100))}의 후기·질문</h2><time datetime="${esc(review.createdAt)}">${esc(review.createdAt)}</time><p>${esc(review.body)}</p></article>`).join('')}${!reviews.items.length?'<p>아직 공개된 후기가 없습니다.</p>':''}<nav aria-label="후기 페이지">${page>0?`<a href="${eventSectionHref(catalog.id,'reviews',page>1?`page=${page-1}`:'')}">이전 후기</a>`:''} ${(page+1)*20<reviews.total?`<a href="${eventSectionHref(catalog.id,'reviews',`page=${page+1}`)}">다음 후기</a>`:''}</nav>`
+    }
+    const sources = (event.sources||[]).filter(source=>source.access==='ORIGINAL' && /^https?:\/\//.test(source.url||''))
+    return `<main class="content-wrap section-pad" data-seo-fallback><nav aria-label="현재 위치"><a href="/">홈</a> / <a href="${eventPath}">${esc(text(event.name,160))}</a> / ${esc(EVENT_SECTIONS[section])}</nav><h1>${esc(text(event.name,160))} ${esc(EVENT_SECTIONS[section])}</h1>${nav}${body}${updated}${sources.length?`<h2>공식 확인 출처</h2><ul>${sources.map(source=>`<li><a href="${esc(source.url)}">${esc(source.url)}</a></li>`).join('')}</ul>`:''}</main>`
+  }
   const occurrence = event.occurrences?.[0]
-  const participants = Array.isArray(catalog.participants) ? catalog.participants.slice(0, 200) : []
+  const participants = Array.isArray(catalog.participants) ? catalog.participants.slice(0, 24) : []
   return `<main class="content-wrap section-pad" data-seo-fallback>
-    <article><h1>${esc(text(event.name, 160))}</h1>
+    <article><h1>${esc(text(event.name, 160))}</h1><nav aria-label="행사 상세 메뉴">${Object.entries(EVENT_SECTIONS).map(([key,label])=>`<a href="${eventSectionHref(catalog.id,key)}">${esc(label)}</a>`).join(' · ')}</nav>
     <p>${esc(text(event.description, 3000) || '공개된 행사 일정과 참가 부스를 안내합니다.')}</p>
     <dl>${occurrence ? `<dt>일정</dt><dd>${esc(occurrence.startDate)}${occurrence.endDate && occurrence.endDate !== occurrence.startDate ? ` ~ ${esc(occurrence.endDate)}` : ''}${occurrence.startTime ? ` ${esc(occurrence.startTime)}` : ''}${occurrence.endTime ? ` ~ ${esc(occurrence.endTime)}` : ''}</dd>` : ''}
     ${event.venueName || event.address ? `<dt>장소</dt><dd>${esc(text(event.venueName, 160))}${event.address ? ` · ${esc(text(event.address, 300))}` : ''}</dd>` : ''}

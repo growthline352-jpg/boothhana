@@ -42,8 +42,10 @@ export const catalogApi={
  runs:(page=0)=>api<Page<PipelineRun>>(`${base}/runs?page=${page}&size=20`),
 }
 export interface PublicAsset {offlineAllowed?: boolean; id: number; participantId: number | null; productId: number | null; type: string; url: string; caption: string | null; attribution: string; credit: string}
-export interface PublicParticipant {directRegistration?:boolean;id: number; participant: Participant; sales: Sales | null; salesSummaryOrigin?: 'EDITORIAL'|'COLLECTED'; productRows?: ProductRow[]}
-export interface PublicEvent {operatingGroup?:OperatingGroup;banner?:PublicAsset|null;id:number;mode:'INFO_ONLY';event:EventData;participants:PublicParticipant[];publishedAt:string;assets:PublicAsset[]}
+export interface PublicParticipant {compact?:boolean;searchText?:string;directRegistration?:boolean;id: number; participant: Participant; sales: Sales | null; salesSummaryOrigin?: 'EDITORIAL'|'COLLECTED'; productRows?: ProductRow[]}
+export interface PublicReview {id:string;eventId?:number;authorId:number;authorName:string;body:string;createdAt:string}
+export interface ReviewPage {items:PublicReview[];total:number;page?:number;size?:number}
+export interface PublicEvent {pageSection?:'home'|'booths'|'map'|'reviews'|'booth';pagination?:{page:number;size:number;total:number};facets?:{subjects:string[];categories:string[];halls:string[]};sections?:{booths:boolean;map:boolean;reviews:boolean};participantCount?:number;productCount?:number;reviewCount?:number;reviewsPage?:ReviewPage;operatingGroup?:OperatingGroup;banner?:PublicAsset|null;id:number;mode:'INFO_ONLY';event:EventData;participants:PublicParticipant[];publishedAt:string;assets:PublicAsset[]}
 export interface PublicEventSummary { operatingPlaces?:{eventId:number;event:EventData}[];operatingGroup?:OperatingGroup; id: number; event: EventData; participantCount: number; publishedAt?: string; banner?: PublicAsset | null }
 export interface PopularEventSummary extends PublicEventSummary { saveCount: number }
 
@@ -78,5 +80,14 @@ export const publicCatalogApi={
  event:async(id:string)=>{
   const value=await publicRead<PublicEvent>(`/api/public/catalog/events/${id}`)
   return {...value,participants:value.participants.map(presentPublicParticipant)}
+ },
+ eventPage:async(id:string,section:'home'|'booths'|'map'|'reviews',query='')=>{
+  const endpoint=section==='home'?'overview':section
+  const value=await publicRead<PublicEvent>(`/api/public/catalog/events/${id}/${endpoint}${query?`?${query}`:''}`,{timeoutMs:20_000})
+  return {...value,pageSection:section,participants:value.participants.map(row=>row.compact?row:presentPublicParticipant(row))}
+ },
+ booth:async(id:string,participant:string)=>{
+  const value=await publicRead<PublicEvent>(`/api/public/catalog/events/${id}/booths/${participant}`,{timeoutMs:20_000})
+  return {...value,pageSection:'booth' as const,participants:value.participants.map(row=>row.compact?row:presentPublicParticipant(row))}
  },
 }

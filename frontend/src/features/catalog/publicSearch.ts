@@ -18,7 +18,7 @@ export function matchesParticipantFacet(row:PublicParticipant,kind:'subject'|'ca
 export function publicParticipantSearchText(row: PublicParticipant): string {
   const p = row.participant
   const products = row.sales ? (row.productRows?.map(item => item.data) ?? row.sales.products ?? []) : []
-  const fields: (string | null | undefined)[] = [p.registrationName, ...p.subjects,
+  const fields: (string | null | undefined)[] = [row.searchText, p.registrationName, ...p.subjects,
     ...p.locations.flatMap(l => [l.code, l.hall, l.zone]),
     ...p.members.flatMap(m => [m.name, ...m.aliases]),
     row.sales?.summary, ...(row.sales?.categories ?? []), ...(row.sales?.subjects ?? []),

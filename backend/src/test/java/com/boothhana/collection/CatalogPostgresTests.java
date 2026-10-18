@@ -47,6 +47,7 @@ class CatalogPostgresTests {
         db.execute("create table support_ticket(id uuid primary key,kind varchar(24),category varchar(40),status varchar(24),client_context_json jsonb)");
         db.execute("create table catalog_operating_group(root_event_id bigint primary key,name text)");
         db.execute("create table catalog_operating_group_member(event_id bigint primary key,root_event_id bigint,position integer)");
+        db.execute("create table event_comment(id uuid primary key,event_id bigint,user_id bigint,body text,deleted boolean default false,created_at timestamptz default now())");
         db.execute("create table event(id bigint primary key,name text);insert into event values(1,'unchanged commerce sentinel')");
         media=new CatalogMediaService(db,mock(VerifiedImageStorage.class),"https://images.example.com");
         service=new CatalogService(db,json,media);publications=new CatalogPublicationService(db,json,media);discovery=new CollectionService(db,json);

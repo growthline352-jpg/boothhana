@@ -36,7 +36,11 @@ public class EventComments {
         return body;
     }
     private Map<String,Object> visible(long eventId) {
-        return publications.findPublicDetail(eventId).orElseThrow(()->ApiException.notFound("공개된 행사를 찾을 수 없습니다."));
+        return publications.overview(eventId);
+    }
+    @GetMapping("/api/public/catalog/events/{eventId}/reviews")
+    public Map<String,Object> reviews(@PathVariable long eventId,@RequestParam(defaultValue="0") int page){
+        var view=new LinkedHashMap<>(visible(eventId));var comments=listVisible(eventId,page,view);view.put("reviewsPage",comments);view.put("reviewCount",comments.get("total"));return view;
     }
     private long secondReviewEventId(long eventId) {
         if(eventId!=DFESTA_MAIN_ID) return eventId;
@@ -47,7 +51,9 @@ public class EventComments {
     }
     @GetMapping("/api/public/catalog/events/{eventId}/comments")
     public Map<String,Object> list(@PathVariable long eventId, @RequestParam(defaultValue="0") int page) {
-        var detail=visible(eventId);
+        return listVisible(eventId,page,visible(eventId));
+    }
+    private Map<String,Object> listVisible(long eventId,int page,Map<String,Object> detail){
         if(page<0 || page>10000) throw ApiException.badRequest("페이지를 확인해 주세요.");
         if(detail.get("operatingGroup") instanceof CatalogOperatingGroups.PublicGroup group){
             var ids=group.members().stream().map(CatalogOperatingGroups.Member::eventId).toList();

@@ -65,10 +65,10 @@ describe('booth tab availability', () => {
   it('opens event information for old booth-section links when no public booths exist', () => {
     for (const query of ['', '?section=booths', '?view=booths']) {
       const html = detailAt(query)
-      expect(html).not.toContain('>부스</button>')
-      expect(html).not.toContain('>배치도</button>')
+      expect(html).not.toContain('>부스</a>')
+      expect(html).not.toContain('>배치도</a>')
       expect(html).not.toContain('aria-label="참가 부스 목록"')
-      expect(html).toContain('aria-current="page" class="is-current">행사 안내</button>')
+      expect(html).toMatch(/<a[^>]*aria-current="page"[^>]*>행사 안내<\/a>/)
       expect(html).toContain('운영 행사·전시장')
     }
   })
@@ -77,7 +77,7 @@ describe('booth tab availability', () => {
       sourceEntryId: null, registrationName: '공개 부스', kind: 'BOOTH', members: [], locations: [], subjects: [],
       officialLinks: [], sources: [], images: [], warnings: [],
     } }] }, members[1]]
-    expect(detailAt('?section=booths&q=없는검색어', withBooths)).toContain('>부스</button>')
-    expect(detailAt('?section=booths&operatingEvent=102', withBooths)).not.toContain('>부스</button>')
+    expect(detailAt('?section=booths&q=없는검색어', withBooths)).toContain('>부스</a>')
+    expect(detailAt('?section=booths&operatingEvent=102', withBooths)).not.toContain('>부스</a>')
   })
 })

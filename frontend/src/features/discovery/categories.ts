@@ -63,9 +63,9 @@ export function safeEventReturnTo(value: unknown, eventId: string, fallback: str
   if (typeof value !== 'string') return fallback
   try {
     const url = new URL(value, 'https://boothhana.invalid')
-    const allowedPaths=new Set([`/discover/${eventId}`])
+    const allowedPaths=new Set(['','/booths','/map','/reviews'].map(section=>`/discover/${eventId}${section}`))
     if(operatingEventIds.includes(Number(eventId)))for(const id of operatingEventIds) {
-      if(Number.isSafeInteger(id)&&id>0)allowedPaths.add(`/discover/${id}`)
+      if(Number.isSafeInteger(id)&&id>0)for(const section of ['','/booths','/map','/reviews'])allowedPaths.add(`/discover/${id}${section}`)
     }
     return url.origin === 'https://boothhana.invalid' && allowedPaths.has(url.pathname)
       ? url.pathname + url.search : fallback

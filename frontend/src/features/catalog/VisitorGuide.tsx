@@ -24,7 +24,7 @@ export function VisitorGuide({value,day,preview=false}:{value:PublicEvent;day:st
     {key:'scheduled',label:`${day?dateLabel(day):'날짜별'} 프로그램`,programs:(guide?.programs??[]).filter(p=>p.day===day)},
     {key:'undated',label:'요일 미확인 프로그램',programs:(guide?.programs??[]).filter(p=>!p.day)},
   ].filter(group=>group.programs.length>0)
-  const products=value.participants.reduce((count,r)=>count+(r.sales?.products.length??0),0)
+  const products=value.productCount??value.participants.reduce((count,r)=>count+(r.sales?.products.length??0),0)
   const productSource=(value.event.discoveryLinks??[]).find(link=>['SALES','PARTICIPANTS'].includes(link.kind)&&link.status==='PUBLISHED'&&link.url)
   const coverage=guide?.coverage.length?guide.coverage:(value.event.discoveryLinks??[]).filter(l=>['PARTICIPANTS','SALES'].includes(l.kind)).map(l=>({kind:l.kind,status:l.status==='PUBLISHED'?'PARTIAL':l.status,note:l.note,sourceUrl:l.url,checkedOn:null}))
   return <section className="visitor-guide panel" aria-label="예매·프로그램·수집 안내">
@@ -46,7 +46,7 @@ export function VisitorGuide({value,day,preview=false}:{value:PublicEvent;day:st
     </article>)}</div></section>)}
     {!!guide?.sales.length&&<section aria-label="공식 판매 공지"><h3>공식 판매·선입금 공지</h3>{guide.sales.map(s=><article className="guide-card" key={s.id}><h4>{s.title}</h4>{s.salesMethod&&<p>{s.salesMethod}</p>}{s.salesStartsAt&&<p>판매 시작 {guideDate(s.salesStartsAt)}</p>}{s.salesEndsAt&&<p>판매 마감 {guideDate(s.salesEndsAt)}</p>}{s.pickupDay&&<p>수령일 {dateLabel(s.pickupDay)}</p>}{s.note&&<p>{s.note}</p>}<Evidence source={s.sourceUrl} checked={s.checkedOn}/></article>)}</section>}
     {!!guide?.faq.length&&<section aria-label="회차별 이용 안내"><h3>자주 묻는 질문</h3>{guide.faq.map(f=><details key={f.id}><summary>{f.question}</summary><p>{f.status==='CONFIRMED'?f.answer:'이번 회차의 안내를 확인하고 있어요. 과거 회차 규정으로 확정하지 않습니다.'}</p><Evidence source={f.sourceUrl} checked={f.checkedOn}/></details>)}</section>}
-    <section className="guide-coverage" aria-label="정보 수집 상태"><h3>현재 소개하는 정보</h3>{!preview&&<p>부스 {value.participants.length}곳 · 상품 항목 {products}개. 소개된 수이며 행사 전체 규모를 뜻하지 않습니다.</p>}
+    <section className="guide-coverage" aria-label="정보 수집 상태"><h3>현재 소개하는 정보</h3>{!preview&&<p>부스 {value.participantCount??value.participants.length}곳 · 상품 항목 {products}개. 소개된 수이며 행사 전체 규모를 뜻하지 않습니다.</p>}
       {!preview&&products===0&&<p>판매 상품은 아직 확인되지 않았어요. 판매하지 않는다는 뜻은 아닙니다. {productSource&&<SafeLink url={productSource.url}>공식 참가·판매 안내 확인 ↗</SafeLink>}</p>}
       {coverage.map((c,i)=><div key={`${c.kind}:${i}`}><strong>{kinds[c.kind]??c.kind}</strong><span className="chip muted">{statusLabels[c.status]??'확인 중'}</span>{c.note&&<p>{c.note}</p>}<Evidence source={c.sourceUrl} checked={c.checkedOn}/></div>)}
       <p>미수집과 미참가는 다릅니다. 상품의 판매 상태는 확인 당시 안내이며 현장 재고·대기시간을 보장하지 않습니다.</p>

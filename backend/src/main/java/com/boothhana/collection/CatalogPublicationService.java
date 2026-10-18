@@ -215,11 +215,13 @@ public class CatalogPublicationService {
         List<Long> ids=rows.stream().map(r->((Number)r.get("event_id")).longValue()).toList();
         Map<Long,AssetView> banners=media.publicBanners(ids);
         var operatingGroups=groups.publicGroups(ids);
+        var navigation=new CatalogEventPages(db,json,media).navigationSignals(ids);
         var items=rows.stream().map(r->{
             long id=((Number)r.get("event_id")).longValue(); Map<String,Object> item=new LinkedHashMap<>();
             item.put("id",id);item.put("event",json.readValue(r.get("event_json").toString(),EventData.class));
             if(operatingGroups.containsKey(id))item.put("operatingGroup",operatingGroups.get(id));
             item.put("participantCount",r.get("participant_count"));
+            var sections=new LinkedHashMap<>(navigation.getOrDefault(id,Map.of("map",false,"reviews",false)));sections.put("booths",((Number)r.get("participant_count")).longValue()>0);item.put("sections",sections);
             if(r.containsKey("save_count"))item.put("saveCount",r.get("save_count"));
             Object stamp=r.get("published_at");item.put("publishedAt",stamp instanceof java.sql.Timestamp t?t.toInstant().toString():String.valueOf(stamp));
             AssetView banner=banners.get(id);
@@ -233,6 +235,8 @@ public class CatalogPublicationService {
     public Map<String,Object> detail(long id) {
         return findPublicDetail(id).orElseThrow(() -> ApiException.notFound("공개된 안내를 찾을 수 없습니다."));
     }
+    /** Visibility/header lookup without loading all participant and product documents. */
+    public Map<String,Object> overview(long id) {return new CatalogEventPages(db,json,media).overview(id);}
     /** Expected absence is a value; SQL failures still propagate and roll back the caller. */
     public Optional<Map<String,Object>> findPublicDetail(long id) {
         return Optional.ofNullable(findPublicDetails(List.of(id)).get(id));

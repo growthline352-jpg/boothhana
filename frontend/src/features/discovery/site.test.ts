@@ -96,3 +96,9 @@ describe('category site routing', () => {
     expect(activeCategory('/', '')).toBeNull()
   })
 })
+
+it('accepts same-event page return paths without allowing other events or origins',()=>{
+ for(const section of ['booths','map','reviews'])expect(safeEventReturnTo(`/discover/101/${section}?page=1&q=cat`,'101','/fallback')).toBe(`/discover/101/${section}?page=1&q=cat`)
+ expect(safeEventReturnTo('/discover/102/booths','101','/fallback')).toBe('/fallback')
+ expect(safeEventReturnTo('https://evil.example/discover/101/booths','101','/fallback')).toBe('/fallback')
+})

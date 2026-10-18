@@ -63,6 +63,17 @@ public class CatalogMediaService {
         String q="select * from subculture_catalog_asset where event_id=?"+(participant==null?"":" and participant_id=?")+" order by id";
         return participant==null?db.query(q,this::asset,event):db.query(q,this::asset,event,participant);
     }
+    /** Only the selected page's live approved assets, never an entire event's image queue. */
+    public List<AssetView> pageAssets(long event,List<Long> participants,boolean map) {
+        if(participants.size()>3000)throw ApiException.badRequest("부스 이미지 조회 한도 오류");
+        var args=new ArrayList<Object>();args.add(event);
+        String scope=map?"a.participant_id is null and a.type='FLOOR_PLAN'":participants.isEmpty()?"false":"a.participant_id in ("+String.join(",",Collections.nCopies(participants.size(),"?"))+")";
+        if(!map)args.addAll(participants);
+        return db.query("""
+            select a.* from subculture_catalog_asset a where a.event_id=? and a.rights_state='APPROVED'
+            and a.storage_state='STORED' and (
+            """+scope+") and (a.product_id is null or exists(select 1 from subculture_catalog_publication pub cross join lateral jsonb_array_elements(pub.snapshot_json->'participants') x cross join lateral jsonb_each_text(coalesce(x->'productIds','{}')) g where pub.event_id=a.event_id and (x->>'id')::bigint=a.participant_id and g.value=a.product_id::text)) order by case a.type when 'BOOTH_CUT' then 0 when 'LOGO' then 1 when 'PRODUCT' then 2 when 'BANNER' then 3 else 4 end,a.id",this::asset,args.toArray());
+    }
     /** Banner-only bookkeeping for a bounded, published-event repair page. */
     public Map<Long,List<AssetView>> repairBanners(List<Long> eventIds) {
         if(eventIds.isEmpty()) return Map.of();

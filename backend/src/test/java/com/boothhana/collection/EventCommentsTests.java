@@ -41,14 +41,14 @@ class EventCommentsTests {
  }
  @Test void unpublishedEventCannotExposeComments() {
   var db=mock(JdbcTemplate.class);var publications=mock(CatalogPublicationService.class);
-  when(publications.findPublicDetail(42L)).thenReturn(Optional.empty());
+  when(publications.overview(42L)).thenThrow(ApiException.notFound("공개된 행사 없음"));
   var controller=new EventComments(db,publications,mock(CurrentUser.class),mock(SupportRateLimiter.class));
   assertThatThrownBy(()->controller.list(42,0)).isInstanceOf(ApiException.class);
   verifyNoInteractions(db);
  }
  @Test void dfestaReviewsCombineBothPublishedDaysWithoutLosingOriginalEventIds() {
   var db=mock(JdbcTemplate.class);var publications=mock(CatalogPublicationService.class);
-  when(publications.findPublicDetail(1L)).thenReturn(Optional.of(Map.of("event",Map.of("name","제35회 디. 페스타"))));
+  when(publications.overview(1L)).thenReturn(Map.of("event",Map.of("name","제35회 디. 페스타")));
   when(db.queryForList(contains("snapshot_json->'event'"),eq(String.class),eq(1L),eq(7L)))
       .thenReturn(List.of("제35회 디. 페스타 토요일","제35회 디. 페스타 일요일"));
   var sundayComment=Map.<String,Object>of("id",UUID.randomUUID(),"eventId",7L);
@@ -61,7 +61,7 @@ class EventCommentsTests {
  }
  @Test void unrelatedOrUnpublishedSecondDayDoesNotJoinReviews() {
   var db=mock(JdbcTemplate.class);var publications=mock(CatalogPublicationService.class);
-  when(publications.findPublicDetail(1L)).thenReturn(Optional.of(Map.of("event",Map.of("name","제35회 디. 페스타"))));
+  when(publications.overview(1L)).thenReturn(Map.of("event",Map.of("name","제35회 디. 페스타")));
   when(db.queryForList(contains("snapshot_json->'event'"),eq(String.class),eq(1L),eq(7L)))
       .thenReturn(List.of("제35회 디. 페스타 토요일"));
   when(db.queryForList(contains("from event_comment c"),eq(1L),eq(1L),eq(0))).thenReturn(List.of());

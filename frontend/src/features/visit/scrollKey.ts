@@ -2,7 +2,7 @@ import { isDiscoveryResults } from '../discovery/browse'
 
 /** Local section tabs and calendar selections stay in the same scroll workspace. */
 export function pageScrollKey(path: string, search: string): string {
-  if (/^\/discover\/\d+\/?$/.test(path)) return path
+  if (/^\/discover\/\d+(?:\/(?:booths|map|reviews))?\/?$/.test(path)) return path
   const params = new URLSearchParams(search)
   if ((path === '/' || path === '/discover') && !isDiscoveryResults(path, params)) {
     for (const key of ['openingRegion', 'closingRegion']) params.delete(key)

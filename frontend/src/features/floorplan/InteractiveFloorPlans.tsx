@@ -1,3 +1,6 @@
+import { useRemote } from '../../app/useRemote'
+import { ErrorState, LoadingState } from '../../components/ui/States'
+import { publicCatalogApi } from '../catalog/api'
 import { ReportLink } from '../support/ReportLink'
 import { BoothContent } from '../catalog/BoothContent'
 import { eventStatus } from '../visit/eventStatus'
@@ -76,7 +79,7 @@ export function MapView({plan,participants,onOpen,day:providedDay,hall='',query=
         if(expanded){
           const search=new URLSearchParams({day,hall,view:'map',booth:String(p.id),focus:String(p.id)})
           const shareUrl=eventId?new URL(`/discover/${eventId}?${search}`,window.location.origin).href:undefined
-          showDetails(<BoothContent eventId={Number(eventId)||undefined} viewedVersion={plan.publishedAt} row={p} day={day} hall={hall} assets={assets.filter(a=>a.participantId===p.id)} shareUrl={shareUrl} eventNotice={eventNotice}/>,p.participant.registrationName,ev.currentTarget)
+          showDetails(p.compact?<MapBoothContent eventId={eventId} participant={p.id} day={day} hall={hall} shareUrl={shareUrl} eventNotice={eventNotice}/>:<BoothContent eventId={Number(eventId)||undefined} viewedVersion={plan.publishedAt} row={p} day={day} hall={hall} assets={assets.filter(a=>a.participantId===p.id)} shareUrl={shareUrl} eventNotice={eventNotice}/>,p.participant.registrationName,ev.currentTarget)
         }else onOpen(p.id,ev.currentTarget)
       }}>부스 정보 보기</button></div>
     }):<div className="floorplan-empty-location"><strong>등록된 부스 정보가 없습니다.</strong><p>현재는 위치번호만 제공해요. 참가 정보가 들어오면 이 위치에 자동으로 연결됩니다.</p>{expanded?<small>전체화면을 닫으면 참가 부스 목록에서 계속 찾을 수 있어요.</small>:onList&&<button className="btn secondary" onClick={onList}>참가 부스 목록에서 찾기</button>}</div>}</div>)}/>
@@ -87,4 +90,13 @@ export function MapView({plan,participants,onOpen,day:providedDay,hall='',query=
     })}</div>{!matches.length&&<div className="visit-empty"><p>이 도면에서 연결된 부스 중에는 검색 결과가 없어요.</p>{onClear&&<button className="btn secondary" onClick={onClear}>검색어 지우기</button>}{onList&&<button className="btn secondary" onClick={onList}>참가 부스 목록</button>}</div>}</details>
     <p className="item-meta">{plan.credit} · <SafeLink url={plan.sourceUrl}>배치도 원문</SafeLink>{!plan.schematic&&<> · 공개 {new Date(plan.publishedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}</>}</p>
   </>
+}
+
+function MapBoothContent({eventId,participant,day,hall,shareUrl,eventNotice}:{eventId:string;participant:number;day:string;hall:string;shareUrl?:string;eventNotice?:string|null}) {
+  const state=useRemote('floorplan:booth-detail',()=>publicCatalogApi.booth(eventId,String(participant)),[eventId,participant])
+  if(state.loading)return <LoadingState label="선택한 부스 정보를 불러오고 있어요"/>
+  if(state.error||!state.data)return <ErrorState error={state.error||new Error('부스 정보를 찾지 못했어요')} retry={()=>void state.reload()}/>
+  const row=state.data.participants.find(item=>item.id===participant)
+  if(!row)return <p>현재 공개된 부스 정보가 없습니다.</p>
+  return <BoothContent eventId={Number(eventId)} row={row} day={day} hall={hall} assets={state.data.assets.filter(a=>a.participantId===participant)} shareUrl={shareUrl} eventNotice={eventNotice}/>
 }
