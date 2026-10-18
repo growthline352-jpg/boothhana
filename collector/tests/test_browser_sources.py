@@ -25,6 +25,24 @@ class BrowserSourceTests(unittest.TestCase):
    with patch('graph_worker.fetch_image',return_value=(b'checked-image','image/png','b'*64)):
     value,audit=worker.call(Path(temp)/'review','review',schema('CHARACTERS'),[],[POST],auto_sns_images=True)
    self.assertIn(image,audit['openedUrls']);require_opened(value,audit)
+ def test_more_than_four_sale_images_are_all_read_in_each_independent_phase(self):
+  import hashlib
+  urls=['https://pbs.twimg.com/media/'+str(i) for i in range(9)]
+  result={'assignments':[],'unresolved':[],'sources':[{'url':POST,'kind':'OFFICIAL','access':'ORIGINAL','evidence':'판매표'}]}
+  with tempfile.TemporaryDirectory() as temp:
+   cfg=configuration();cfg['stateDirectory']=temp;seen=[]
+   doc={'url':POST,'available':True,'sha256':'a'*64,'capturedAt':'2026-10-19T00:00:00Z','text':'공식 판매표','images':[{'imageUrl':url,'pageUrl':POST} for url in urls]}
+   def search(cfg,directory,prompt,schema_path,images,web_search):
+    self.assertLessEqual(len(images),4);seen.append((directory.parent.name,directory.name,len(images)))
+    if directory.name.startswith('images-'):
+     offset=int(directory.name.split('-')[1]);value={'observations':[{'imageIndex':offset+i,'visibleText':'옵션 '+str(offset+i),'uncertainties':[]} for i in range(len(images))]}
+    else:value=result
+    return json.dumps(value),False,{}
+   worker=Worker(cfg,api=Mock(),search=search,source_loader=lambda urls:[doc])
+   with patch('graph_worker.fetch_image',side_effect=lambda url,*a,**k:(url.encode(),'image/png',hashlib.sha256(url.encode()).hexdigest())):
+    for phase in ('extract','review'):worker.call(Path(temp)/phase,'test',schema('CHARACTERS'),[],[POST],auto_sns_images=True)
+   for phase in ('extract','review'):
+    self.assertEqual([4,4,1],[count for parent,name,count in seen if parent==phase and name.startswith('images-')])
  def queue_response(self,directory,change=None):
   for _ in range(100):
    paths=list(Path(directory).glob('*.request.json'))

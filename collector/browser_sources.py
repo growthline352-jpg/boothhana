@@ -4,7 +4,7 @@ No user browser profile, cookies, API credentials, login, challenge solving,
 unofficial mirrors, or browser-derived account-ID claims. DOM hashes are labeled
 as such. A bounded visible profile slice is always partial, never a feed cursor.
 """
-from datetime import datetime,timezone
+from datetime import datetime,timezone,timedelta
 import hashlib,json,os,re,time,uuid
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -28,7 +28,7 @@ class CaptureQueue:
  def __call__(self,url):
   target(url);self.directory.mkdir(parents=True,exist_ok=True)
   nonce=str(uuid.uuid4());requested=datetime.now(timezone.utc)
-  request={'id':nonce,'url':url,'requestedAt':requested.isoformat(),'state':'PENDING','captureMethod':'CUA_PUBLIC_DOM'}
+  request={'id':nonce,'url':url,'requestedAt':requested.isoformat(),'expiresAt':(requested+timedelta(seconds=self.wait_seconds)).isoformat(),'state':'PENDING','captureMethod':'CUA_PUBLIC_DOM'}
   path=self.directory/(nonce+'.request.json')
   def save_request():
    temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(request),encoding='utf-8');temporary.replace(path)

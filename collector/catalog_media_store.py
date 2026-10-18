@@ -3,7 +3,7 @@
 No rights changes and no direct database writes. Kept separate from LLM calls so
 an unavailable image does not lose an approved collection receipt.
 """
-import argparse,json,os
+import argparse,json,os,threading
 from pathlib import Path
 from urllib.parse import urlsplit
 from catalog_transport import Api
@@ -33,6 +33,18 @@ def store_approved(api,participant_ids=None,blocked_hosts=('witchform.com',),ass
    try:api.request('POST',PREFIX+'/assets/'+str(asset['id'])+'/failure',{'revision':asset['revision'],'reason':'CATALOG_IMAGE_STORE:'+type(exc).__name__})
    except Exception:pass
  return result
+
+def start_background(api,blocked_hosts=('witchform.com',)):
+ stop=threading.Event()
+ def run():
+  while not stop.is_set():
+   try:
+    result=store_approved(api,blocked_hosts=blocked_hosts)
+    if result['stored'] or result['failed']:print(json.dumps({'catalogImages':{'stored':len(result['stored']),'failed':len(result['failed'])}}),flush=True)
+   except Exception as exc:print('Catalog image storage deferred: '+type(exc).__name__,flush=True)
+   stop.wait(30)
+ thread=threading.Thread(target=run,name='approved-catalog-images',daemon=True);thread.start()
+ return stop,thread
 
 def main():
  parser=argparse.ArgumentParser();parser.add_argument('--config',type=Path,required=True);parser.add_argument('--participant',type=int,action='append');parser.add_argument('--asset',type=int,action='append')
