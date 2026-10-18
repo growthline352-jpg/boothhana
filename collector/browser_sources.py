@@ -75,7 +75,7 @@ def documents(url,snapshot):
   if pid and post!=pid:continue
   if row['url'] in seen:continue
   body=row.get('text','')
-  if not isinstance(body,str) or not body.strip() or len(body)>50000:continue
+  if not isinstance(body,str) or len(body)>50000:continue
   links=[]
   for link in row.get('links',[]):
    p=urlsplit(link)
@@ -84,6 +84,7 @@ def documents(url,snapshot):
   for image in row.get('images',[]):
    p=urlsplit(image)
    if p.scheme=='https' and p.hostname=='pbs.twimg.com' and p.path.startswith('/media/') and not p.username and not p.password and p.port in (None,443):images.append({'imageUrl':image,'pageUrl':row['url']})
+  if not body.strip() and not images:continue
   rows.append({'url':row['url'],'author':actor,'text':body,'links':list(dict.fromkeys(links)),'images':images})
   seen.add(row['url'])
   if len(rows)>=MAX_POSTS:break
@@ -103,15 +104,15 @@ def documents(url,snapshot):
 # Read only the page's public author/post controls. Quote blocks are excluded.
 DOM=r'''() => {
  const posts=[...document.querySelectorAll('article')].filter(a=>!a.parentElement?.closest('article')).map(a=>{
-  const author=a.querySelector('[data-testid="User-Name"] a[href*="/"]')||[...a.querySelectorAll('a[href]')].find(x=>/^\/[A-Za-z0-9_]{1,15}\/?$/.test(new URL(x.href).pathname));
+  const own=e=>{const quote=e.closest('[data-testid="quoteTweet"],[role="link"]');return e.closest('article')===a&&(!quote||!a.contains(quote));};
+  const links=[...a.querySelectorAll('a[href]')].filter(own);
+  const author=[...a.querySelectorAll('[data-testid="User-Name"] a[href*="/"]')].find(own)||links.find(x=>/^\/[A-Za-z0-9_]{1,15}\/?$/.test(new URL(x.href).pathname));
   const authorPath=author ? new URL(author.href).pathname : '';
-  const time=[...a.querySelectorAll('a[href]')].find(x=>x.querySelector('time'))||[...a.querySelectorAll('a[href]')].find(x=>/^\/[A-Za-z0-9_]{1,15}\/status\/[0-9]+$/.test(new URL(x.href).pathname));
-  const text=[...a.querySelectorAll('[data-testid="tweetText"],div.whitespace-pre-wrap[dir="auto"]')].find(t=>{
-   const quote=t.closest('[data-testid="quoteTweet"],[role="link"]');
-   return t.closest('article')===a&&(!quote||!a.contains(quote));
-  });
+  const status=/^\/[A-Za-z0-9_]{1,15}\/status\/[0-9]+$/;
+  const time=(status.test(location.pathname)?links.find(x=>new URL(x.href).pathname===location.pathname):null)||links.find(x=>x.querySelector('time'))||links.find(x=>status.test(new URL(x.href).pathname));
+  const text=[...a.querySelectorAll('[data-testid="tweetText"],div.whitespace-pre-wrap[dir="auto"]')].find(own);
   const postPath=time?new URL(time.href).pathname:'';
-  const ownImages=[...a.querySelectorAll('a[href]')].filter(x=>new URL(x.href).pathname.startsWith(postPath+'/photo/')).flatMap(x=>[...x.parentElement.querySelectorAll('img')]);
+  const ownImages=links.filter(x=>new URL(x.href).pathname.startsWith(postPath+'/photo/')).flatMap(x=>[...x.parentElement.querySelectorAll('img')].filter(own));
   return {url:time?.href?.split('?')[0]||'',author:authorPath.split('/')[1]||'',text:text?.innerText||'',
    repost:!!a.querySelector('[data-testid="socialContext"]'),
    links:text?[...text.querySelectorAll('a[href]')].map(x=>x.href):[],images:ownImages.map(i=>i.src||i.currentSrc)};

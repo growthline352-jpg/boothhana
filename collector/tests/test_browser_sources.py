@@ -76,6 +76,9 @@ class BrowserSourceTests(unittest.TestCase):
   self.assertEqual([{'imageUrl':'https://pbs.twimg.com/media/sale?format=jpg','pageUrl':POST}],doc['images'])
   self.assertNotIn('platformAccountId',doc);self.assertEqual(64,len(doc['sha256']))
   self.assertIn('not HTTP',doc['hashScope'])
+ def test_image_only_public_sale_sheet_is_still_original_evidence(self):
+  value=snapshot();value['posts'][0]['text']=''
+  self.assertEqual(1,len(documents(POST,value)[0]['images']))
  def test_visible_profile_does_not_claim_feed_completion_or_cursor(self):
   docs=documents(PROFILE,snapshot(PROFILE));self.assertEqual(2,len(docs))
   self.assertTrue(docs[0]['browserPartial']);self.assertNotIn('socialPageReceipt',docs[0]);self.assertNotIn('nextPageUrl',docs[0])
