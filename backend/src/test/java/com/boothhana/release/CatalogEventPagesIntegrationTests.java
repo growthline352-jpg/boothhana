@@ -27,7 +27,7 @@ class CatalogEventPagesIntegrationTests {
         p.add("app.gcs.project-id",()->"");p.add("app.gcs.public-bucket",()->"");p.add("app.support.private-bucket",()->"");p.add("app.storage.public-url",()->"https://assets.example.test");
     }
     @Autowired JdbcTemplate db;@Autowired JsonMapper json;@Autowired CatalogEventPages pages;@Autowired WebApplicationContext web;
-    long event,first,second;String day="2026-10-24";
+    long event,first,second;String day=java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).plusDays(5).toString();
     String encode(Object value){return json.writeValueAsString(value);}
     @BeforeEach void fixture(){
         assertThat(db.queryForObject("select current_database()",String.class)).isEqualTo("boothhana_release_test");
@@ -71,6 +71,19 @@ class CatalogEventPagesIntegrationTests {
         assertThat(pages.overview(event).get("participantCount")).isEqualTo(26L);
         db.update("delete from subculture_catalog_publication where event_id=?",event);
         assertThatThrownBy(()->pages.overview(event)).isInstanceOf(ApiException.class);
+    }
+    @Test @SuppressWarnings("unchecked") void initialVisitDayAndUnknownAttendanceMatchThePublicUi(){
+        String next=java.time.LocalDate.parse(day).plusDays(1).toString();
+        var snapshot=json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class);
+        ((Map<String,Object>)snapshot.get("event")).put("occurrences",List.of(Map.of("startDate",day,"endDate",next)));
+        for(var row:(List<Map<String,Object>>)snapshot.get("participants")){
+            long pid=((Number)row.get("id")).longValue();
+            if(pid==first||pid==second)((Map<String,Object>)row.get("participant")).put("locations",List.of(Map.of("startDate",next,"endDate",next,"code","A-1","hall","1홀","status","ASSIGNED","dateEvidence",pid==first?"UNKNOWN":"DECLARED")));
+        }
+        db.update("update subculture_catalog_publication set snapshot_json=cast(? as jsonb) where event_id=?",encode(snapshot),event);
+        var initial=people(pages.booths(event,0,100,"","","","","",""));
+        assertThat(initial).hasSize(26).extracting(p->((Number)p.get("id")).longValue()).contains(first).doesNotContain(second);
+        assertThat(people(pages.booths(event,0,100,"",next,"","","",""))).hasSize(2);
     }
     @Test void mapDoesNotShipProductsAndRevokedImagesNeverLeak(){
         var map=pages.map(event);assertThat(people(map)).hasSize(27);assertThat(encode(map)).doesNotContain("SOURCE_ONLY_TEXT","productRows");
