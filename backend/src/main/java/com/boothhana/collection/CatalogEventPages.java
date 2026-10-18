@@ -92,6 +92,19 @@ public class CatalogEventPages {
     private static String productFacet(String key){return "coalesce(("+SALES+")->'"+key+"','[]'::jsonb) || coalesce((select jsonb_agg(v) from jsonb_array_elements("+PRODUCTS+") g cross join lateral jsonb_array_elements_text(coalesce(g->'"+key+"','[]')) v),'[]'::jsonb)";}
     private static String compactSales(){return "case when ("+SALES+") is null or ("+SALES+")='null'::jsonb then null else (("+SALES+")-'products'-'sources'-'images'-'warnings') || jsonb_build_object('subjects',"+productFacet("subjects")+",'categories',"+productFacet("categories")+") end";}
     private record Filter(String sql,List<Object> args) {}
+    @SuppressWarnings("unchecked") private String visitDay(Map<String,Object> view,String requested){
+        requested=bounded(requested,10);
+        if(!requested.isEmpty())try{java.time.LocalDate.parse(requested);}catch(java.time.format.DateTimeParseException e){throw ApiException.badRequest("방문일 형식 오류");}
+        var days=new TreeSet<java.time.LocalDate>();
+        var event=(Map<String,Object>)view.get("event");
+        if(event.get("occurrences") instanceof List<?> occurrences)for(var item:occurrences)if(item instanceof Map<?,?> occurrence){
+            try{var start=java.time.LocalDate.parse(Objects.toString(occurrence.get("startDate"),""));var end=java.time.LocalDate.parse(Objects.toString(occurrence.get("endDate"),""));for(int n=0;n<=366&&!start.isAfter(end)&&days.size()<2000;n++,start=start.plusDays(1))days.add(start);}catch(java.time.format.DateTimeParseException ignored){/* Skip invalid legacy occurrences, like the public UI. */}
+        }
+        if(days.isEmpty())return "";
+        if(!requested.isEmpty()&&days.contains(java.time.LocalDate.parse(requested)))return requested;
+        var next=days.ceiling(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")));
+        return (next==null?days.last():next).toString();
+    }
     private Filter filter(String q,String day,String hall,String subject,String category,String ids){
         var sql=new StringBuilder();var args=new ArrayList<Object>();q=bounded(q,100);day=bounded(day,10);hall=bounded(hall,150);subject=bounded(subject,150);category=bounded(category,100);
         if(!day.isEmpty())try{java.time.LocalDate.parse(day);}catch(java.time.format.DateTimeParseException e){throw ApiException.badRequest("방문일 형식 오류");}
@@ -103,7 +116,7 @@ public class CatalogEventPages {
         if(!day.isBlank()||!hall.isBlank()){
             // Unknown attendance remains visible; a different confirmed day/hall does not.
             sql.append(" and (not exists(select 1 from jsonb_array_elements(coalesce(x->'participant'->'locations','[]')) l) or exists(select 1 from jsonb_array_elements(coalesce(x->'participant'->'locations','[]')) l where true");
-            if(!day.isBlank()){sql.append(" and (l->>'dateEvidence'='EVENT_PERIOD' or l->>'startDate' is null or l->>'endDate' is null or (l->>'startDate'<=? and l->>'endDate'>=?))");args.add(day);args.add(day);}
+            if(!day.isBlank()){sql.append(" and (not coalesce((l->>'dateEvidence' in ('DECLARED','ROSTER') or (l->>'dateEvidence' is null and l->>'status' in ('ASSIGNED','NOT_APPLICABLE'))),false) or l->>'startDate' is null or l->>'endDate' is null or (l->>'startDate'<=? and l->>'endDate'>=?))");args.add(day);args.add(day);}
             if(!hall.isBlank()){sql.append(" and (nullif(l->>'hall','') is null or lower(l->>'hall')=lower(?))");args.add(hall);}sql.append("))");
         }
         for(var facet:List.of(Map.entry("subjects",subject),Map.entry("categories",category)))if(!facet.getValue().isBlank()){
@@ -145,7 +158,7 @@ public class CatalogEventPages {
     }
     public Map<String,Object> booths(long id,int page,int size,String q,String day,String hall,String subject,String category,String ids){
         if(page<0||page>10000||size<1||size>100)throw ApiException.badRequest("부스 페이지 범위 오류");
-        var view=overview(id);var filter=filter(q,day,hall,subject,category,ids);long total=count(id,filter.sql(),filter.args());
+        var view=overview(id);var filter=filter(q,visitDay(view,day),hall,subject,category,ids);long total=count(id,filter.sql(),filter.args());
         var people=participants(id,filter,page,size,false);view.put("participants",people);var images=new ArrayList<Object>((List<?>)view.get("assets"));images.addAll(assets(id,people,false,true));view.put("assets",images);
         var pagination=new LinkedHashMap<String,Object>();pagination.put("page",page);pagination.put("size",size);pagination.put("total",total);view.put("pagination",pagination);
         view.put("facets",facets(id));return view;

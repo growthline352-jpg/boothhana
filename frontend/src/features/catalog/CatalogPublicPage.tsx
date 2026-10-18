@@ -80,7 +80,8 @@ function LoadEvent({eventId}:{eventId:string}) {
   const state=useRemote('catalog:event-page',async()=>{
     const fetchPage=async(id:string)=>{
       if(section!=='booths'||(memory!=='saved'&&memory!=='visited'))return publicCatalogApi.eventPage(id,section,requestQuery)
-      const chosen=[...new Set((library?.index||[]).filter(row=>row.target.eventId===Number(id)&&row.target.participantId!==null&&(memory!=='visited'||row.visitedDays.includes(day))).map(row=>row.target.participantId!))]
+      const selectedDay=memory==='visited'&&!day?parseVisit(params,(await publicCatalogApi.eventPage(id,'home')).event).day:day
+      const chosen=[...new Set((library?.index||[]).filter(row=>row.target.eventId===Number(id)&&row.target.participantId!==null&&(memory!=='visited'||row.visitedDays.includes(selectedDay))).map(row=>row.target.participantId!))]
       const filters=new URLSearchParams(requestQuery)
       if(chosen.length<=200){filters.set('ids',chosen.join(',')||'0');return publicCatalogApi.eventPage(id,section,filters.toString())}
       // A large personal list is fetched in bounded public-ID batches; never put it in a page URL.
