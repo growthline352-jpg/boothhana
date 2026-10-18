@@ -95,7 +95,7 @@ def documents(url,snapshot):
    'title':'Public X browser original','sha256':hashlib.sha256(text.encode()).hexdigest(),'text':text,
    'truncated':False,'captureMethod':'ANONYMOUS_BROWSER_DOM','hashScope':'normalized rendered public DOM; not HTTP response bytes',
    'browserPartial':not bool(pid),'profileUrl':profile,**extra}
- result=[doc(row['url'],row,images=row['images'],links=row['links']) for row in rows]
+ result=[doc(url if pid else row['url'],row,images=row['images'],links=row['links']) for row in rows]
  if not pid:result.insert(0,doc(url,{'profile':snapshot.get('profile',''),'postUrls':[r['url'] for r in rows],
   'coverage':'PARTIAL','warning':'Visible browser slice only; no native account ID or feed checkpoint.'},links=[r['url'] for r in rows]))
  return result

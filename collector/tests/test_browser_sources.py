@@ -79,6 +79,10 @@ class BrowserSourceTests(unittest.TestCase):
  def test_visible_profile_does_not_claim_feed_completion_or_cursor(self):
   docs=documents(PROFILE,snapshot(PROFILE));self.assertEqual(2,len(docs))
   self.assertTrue(docs[0]['browserPartial']);self.assertNotIn('socialPageReceipt',docs[0]);self.assertNotIn('nextPageUrl',docs[0])
+ def test_post_redirect_keeps_the_requested_evidence_url_and_actual_destination(self):
+  requested='https://x.com/ARTIST/status/123'
+  doc=documents(requested,snapshot())[0]
+  self.assertEqual(requested,doc['url']);self.assertEqual(POST,doc['transportUrl'])
  def test_other_authors_reposts_quotes_and_wrong_post_are_not_goods(self):
   for change in ({'author':'other'},{'url':PROFILE+'/status/999'},{'repost':True},{'quoted':True}):
    data=snapshot();data['posts'][0].update(change)
