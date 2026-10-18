@@ -1,6 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import type { Location, PublicParticipant } from './api'
-import { hasMappableLocation } from './BoothDetail.utils'
+import type { Location, PublicAsset, PublicParticipant } from './api'
+import { boothDetailImages, hasMappableLocation } from './BoothDetail.utils'
+
+function asset(id: number, type: string, productId: number | null = null): PublicAsset {
+  return { id, type, participantId: 5366, productId, url: `https://images.example.com/${id}.webp`, caption: '공식 안내', attribution: '공식 게시물', credit: 'LUDIA' }
+}
+
+describe('published booth images', () => {
+  it('shows collected official introduction and timetable images without relabeling them as booth cuts', () => {
+    expect(boothDetailImages([asset(1, 'OTHER'), asset(2, 'OTHER')]).map(image => image.id)).toEqual([1, 2])
+  })
+
+  it('keeps existing booth-cut, logo and sale-sheet priority', () => {
+    expect(boothDetailImages([asset(4, 'OTHER'), asset(3, 'SALES_SHEET'), asset(2, 'LOGO'), asset(1, 'BOOTH_CUT')]).map(image => image.id)).toEqual([1, 2, 3])
+  })
+
+  it('does not substitute a product or a floor plan for the booth introduction', () => {
+    expect(boothDetailImages([asset(1, 'OTHER', 3061), asset(2, 'PRODUCT'), asset(3, 'FLOOR_PLAN')])).toEqual([])
+  })
+})
 
 function participant(locations: Location[]) {
   return { participant: { locations } } as PublicParticipant

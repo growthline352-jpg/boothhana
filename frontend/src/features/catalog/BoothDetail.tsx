@@ -6,7 +6,7 @@ import { dateLabel } from '../discovery/browse'
 import { attendance, relevantLocations, visitDays } from '../visit/visit'
 import type { EventData } from '../collection/api'
 import type { ProductRow, PublicAsset, PublicParticipant } from './api'
-import { hasMappableLocation } from './BoothDetail.utils'
+import { boothDetailImages, hasMappableLocation } from './BoothDetail.utils'
 import { labels, ProductCard, SafeLink } from './Shared'
 import { ContentImage } from '../../components/ui/ContentImage'
 import { useMemo, useState, type RefObject } from 'react'
@@ -24,15 +24,6 @@ function locationLabel(row: PublicParticipant, day: string, hall: string) {
     hall: assigned?.hall || hall || '전시관 미확인',
     zone: assigned?.zone || '',
   }
-}
-
-function detailImages(assets: PublicAsset[]) {
-  const order = new Map([['BOOTH_CUT', 0], ['LOGO', 1], ['SALES_SHEET', 2]])
-  return [...assets]
-    .filter(asset => ['BOOTH_CUT', 'LOGO', 'SALES_SHEET'].includes(asset.type))
-    .sort((a, b) => (order.get(a.type) ?? 9) - (order.get(b.type) ?? 9))
-    .filter((asset, index, values) => values.findIndex(item => item.url === asset.url) === index)
-    .slice(0, 3)
 }
 
 function eventProducts(row: PublicParticipant) {
@@ -68,7 +59,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
   const halls = unique(relevantLocations(row.participant.locations, day).map(location => location.hall))
   const canOpenMap = hasMappableLocation(row, day, hall)
   const state = attendance(row, day, hall)
-  const images = detailImages(assets)
+  const images = boothDetailImages(assets)
   const members = unique(row.participant.members.map(member => member.name))
   const topics = unique([
     ...row.participant.subjects,
