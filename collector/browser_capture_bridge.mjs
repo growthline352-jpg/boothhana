@@ -10,7 +10,9 @@ export async function fulfillPending({cua,tab,directory,domSource,maxRequests=10
   for(const file of files) {
     if(done.length>=maxRequests)break;
     const request=JSON.parse(await fs.readFile(path.join(directory,file),'utf8'));
-    if(request.state!=='PENDING'||Date.now()>Date.parse(request.expiresAt||new Date(Date.parse(request.requestedAt)+180000).toISOString()))continue;
+    if(file!==request.id+'.request.json')continue;
+    const requestedAt=Date.parse(request.requestedAt),expiresAt=request.expiresAt?Date.parse(request.expiresAt):requestedAt+180000;
+    if(request.state!=='PENDING'||!Number.isFinite(requestedAt)||!Number.isFinite(expiresAt)||requestedAt>Date.now()||Date.now()>expiresAt)continue;
     if(!/^https:\/\/x\.com\/[A-Za-z0-9_]{1,15}(?:\/status\/[0-9]{1,25})?$/.test(request.url))continue;
     const destination=path.join(directory,request.id+'.response.json');
     try {await fs.access(destination);continue;}catch(error){if(error.code!=='ENOENT')throw error;}
