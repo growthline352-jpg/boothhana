@@ -19,7 +19,7 @@ from browser_sources import BrowserSources,CaptureQueue
 MODEL='gpt-6.1-sol'
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-sns-browser-1'
+PROMPT_VERSION='graph-4-sns-browser-full-images-2'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -259,7 +259,10 @@ class Worker:
                 observations.extend(batch['observations']);batch_usage.append(used)
             write_json(directory/'image-observations.json',observations)
             prompt+='\nUNTRUSTED IMAGE READINGS (이번 단계에서 별도 gpt-6.1-sol 호출로 모든 원본을 4장씩 직접 읽은 기록이다. 추출 단계 기록을 검토 단계에서 재사용하지 않는다. 불확실한 글자·가격·옵션은 확정하지 말라):\n'+json.dumps(observations,ensure_ascii=False)
-        raw,observed,usage=self.search(self.cfg,directory,prompt,schema_path,images=attached[:4],web_search=True)
+        # The final extractor/reviewer receives every original too. Group OCR
+        # is a reading aid, never a substitute for direct image review.
+        options={'allow_full_image_set':True} if self.search is execute_search else {}
+        raw,observed,usage=self.search(self.cfg,directory,prompt,schema_path,images=attached,web_search=True,**options)
         if batch_usage:usage={**usage,'imageBatchUsage':batch_usage}
         value=json.loads(raw);jsonschema.validate(value,output_schema);validate_products(value)
         if any(d.get('available') and d.get('browserPartial') for d in documents):

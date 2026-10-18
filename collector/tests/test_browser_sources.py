@@ -33,7 +33,7 @@ class BrowserSourceTests(unittest.TestCase):
    cfg=configuration();cfg['stateDirectory']=temp;seen=[]
    doc={'url':POST,'available':True,'sha256':'a'*64,'capturedAt':'2026-10-19T00:00:00Z','text':'공식 판매표','images':[{'imageUrl':url,'pageUrl':POST} for url in urls]}
    def search(cfg,directory,prompt,schema_path,images,web_search):
-    self.assertLessEqual(len(images),4);seen.append((directory.parent.name,directory.name,len(images)))
+    seen.append((directory.parent.name,directory.name,len(images)))
     if directory.name.startswith('images-'):
      offset=int(directory.name.split('-')[1]);value={'observations':[{'imageIndex':offset+i,'visibleText':'옵션 '+str(offset+i),'uncertainties':[]} for i in range(len(images))]}
     else:value=result
@@ -43,6 +43,7 @@ class BrowserSourceTests(unittest.TestCase):
     for phase in ('extract','review'):worker.call(Path(temp)/phase,'test',schema('CHARACTERS'),[],[POST],auto_sns_images=True)
    for phase in ('extract','review'):
     self.assertEqual([4,4,1],[count for parent,name,count in seen if parent==phase and name.startswith('images-')])
+    self.assertEqual([9],[count for parent,name,count in seen if name==phase])
  def queue_response(self,directory,change=None):
   for _ in range(100):
    paths=list(Path(directory).glob('*.request.json'))

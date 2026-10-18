@@ -66,6 +66,18 @@ class WorkerTests(unittest.TestCase):
    def __init__(self):self.paths=[]
    def request(self,m,p,*a,**kw):self.paths.append(p);return []
   api=API();batch=FloorplanBatch(self.cfg,self.path/'run',api=api);self.assertEqual(batch.run(True),0);self.assertIn('imminent=true',api.paths[0])
+ def test_full_image_set_is_an_explicit_graph_override_and_keeps_all_files(self):
+  script=self.path/'fake-many-images.py';script.write_text("#!/usr/bin/env python3\nimport sys,json,pathlib\na=sys.argv[1:];assert a.count('--image')==5\nfor i,x in enumerate(a):\n if x=='--image':assert pathlib.Path(a[i+1]).is_file()\npathlib.Path(a[a.index('--output-last-message')+1]).write_text('{}');sys.stdin.read()\nprint(json.dumps({'type':'turn.completed','usage':{}}))\n",encoding='utf-8')
+  if os.name=='nt':
+   fake=self.path/'fake-many-images.cmd';fake.write_text(f'@echo off\r\n"{sys.executable}" "{script}" %*\r\n',encoding='utf-8')
+  else:fake=script;fake.chmod(0o755)
+  cfg={**self.cfg,'codexExecutable':str(fake),'codexHome':str(self.path/'empty-auth')}
+  with patch.dict(os.environ,{'CODEX_API_KEY':'fake-only'}):
+   job=self.path/'default';job.mkdir()
+   with self.assertRaises(RunError):execute_search(cfg,job,'test',images=[FIX/'map.png']*5,web_search=False)
+   job=self.path/'explicit';job.mkdir()
+   raw,_,_=execute_search(cfg,job,'test',images=[FIX/'map.png']*5,web_search=False,allow_full_image_set=True)
+   self.assertEqual(b'{}',raw)
  def test_failed_discovery_does_not_skip_sources(self):
   self._failure_case()
  def _failure_case(self):

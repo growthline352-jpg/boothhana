@@ -249,7 +249,7 @@ def output_schema_for_cli(value: dict) -> dict:
     strict(result)
     return result
 
-def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | None = None, *, images: list[Path] | None = None, web_search: bool = True) -> tuple[bytes,bool,dict]:
+def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | None = None, *, images: list[Path] | None = None, web_search: bool = True, allow_full_image_set: bool = False) -> tuple[bytes,bool,dict]:
     executable=shutil.which(cfg['codexExecutable'])
     if not executable: raise RunError('Codex CLI를 찾지 못했습니다. 설치 후 codex login을 실행하세요.')
     auth_root=Path(cfg['codexHome']).expanduser() if cfg['codexHome'] else Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex'))).expanduser()
@@ -268,7 +268,8 @@ def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | No
         schema.write_text(json.dumps(schema_data,ensure_ascii=False),encoding='utf-8')
         output=home/'work/result.json'
         copied=[]
-        if images and len(images)>4: raise RunError('한 번에 첨부할 이미지 수 초과')
+        if type(allow_full_image_set) is not bool:raise RunError('잘못된 이미지 첨부 구성')
+        if images and len(images)>4 and not allow_full_image_set: raise RunError('한 번에 첨부할 이미지 수 초과')
         for index,image in enumerate(images or []):
             if image.is_symlink() or not image.is_file() or image.stat().st_size>10*1024*1024: raise RunError('잘못된 분석 이미지')
             target=home/'work'/f'image-{index}{image.suffix.lower()}'
