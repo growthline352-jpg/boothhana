@@ -128,3 +128,8 @@ html:has(.visit-page){min-width:0}
 .booth-detail-gallery figcaption a{display:inline-flex;align-items:center;min-height:32px;padding-inline:3px}
 .booth-detail>.ownership-panel{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
 @media(max-width:620px){.booth-visit-controls .field{flex:1 1 160px}}
+
+.visit-next-discovery { margin: 24px 0; padding: 22px 24px; border: 1px solid #e5e8e7; border-radius: 12px; background: #f6f8f7; }
+.visit-next-discovery h2 { margin: 0 0 8px; font-size: 19px; }
+.visit-next-discovery p { color: #5d6468; font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
+.visit-next-discovery>a { display: inline-block; margin-right: 16px; padding: 10px 0; }

@@ -127,7 +127,7 @@ async function fetchBrowseListing(origin, path, search, fetcher, siteUrl) {
   const categories = path === '/' && !hostCategory ? Object.values(CATALOG_CATEGORY) : [CATALOG_CATEGORY[requested]]
   const page = directoryPage ?? 0
   const size = directoryPage !== null ? DIRECTORY_PAGE_SIZE : path === '/' ? 12 : 24
-  const results = await Promise.all(categories.map(category => fetchJson(origin, `/api/public/catalog/events?category=${category}&page=${page}&size=${size}&sort=RECENT&grouped=true`, fetcher)))
+  const results = await Promise.all(categories.map(category => fetchJson(origin, `/api/public/catalog/events?category=${category}&page=${page}&size=${size}&sort=${directoryPage === null ? 'DATE_ASC' : 'RECENT'}&grouped=true${directoryPage === null ? `&from=${new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date())}` : ''}`, fetcher)))
   const unique = new Map()
   for (const result of results) {
     if (!Array.isArray(result?.items) || !Number.isSafeInteger(result.total) || result.total < 0) throw new Error('Invalid catalog listing')

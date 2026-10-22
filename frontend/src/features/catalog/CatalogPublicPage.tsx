@@ -26,6 +26,7 @@ import { useRemote } from '../../app/useRemote'
 import { LoadingState, ErrorState } from '../../components/ui/States'
 import { publicCatalogApi, type PublicEvent, type PublicParticipant } from './api'
 import { combineOperatingDetails, operatingEventsForDay, selectOperatingEvent, combineDfesta, isDfestaDay, DFESTA_SATURDAY_ID, DFESTA_SUNDAY_ID, DFESTA_SUNDAY } from './eventGroup'
+import { EventFollowup } from './EventFollowup'
 import { BoothDetail } from './BoothDetail'
 const InteractiveFloorPlans=lazy(()=>import('../floorplan/InteractiveFloorPlans').then(module=>({default:module.InteractiveFloorPlans})))
 import { floorplanApi } from '../floorplan/api'
@@ -270,6 +271,7 @@ export function CatalogEventDetail({eventId,value,alternate=null,members=null,se
       <div className="visit-utility-actions"><Link className="btn secondary" to={itineraryHref(currentEventId,state.day)}>이 행사로 일정 만들기</Link>{discoveryFeatures.comparison&&<Link to={compareHref([currentEventId])}>다른 행사와 비교</Link>}{usableAddress(e.address)&&<button type="button" onClick={()=>void copyAddress()}>주소 복사</button>}
         <SaveButton target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall}/><ShareQr target={{type:'EVENT',eventId:currentEventId,id:currentEventId,participantId:null}} day={state.day} hall={state.hall} title={e.name}/><ReportLink target={{namespace:'CATALOG',type:'EVENT',eventId:currentEventId,id:currentEventId,day:state.day,hall:state.hall}} viewedVersion={currentValue.publishedAt}/></div>
     </div></header>
+    <EventFollowup event={e} today={today}/>
     <nav ref={sectionNav} className="visit-main-tabs" aria-label="행사 상세 메뉴">{([['home','행사 안내'],['booths',categoryForType(e.subcategory).key==='subculture'?'참가 부스·굿즈':'부스'],['map','배치도'],['reviews',categoryForType(e.subcategory).key==='subculture'?'이번·지난 회차 후기':'후기']] as const).filter(([key])=>!!sectionOverride||((key!=='booths'||hasBooths)&&(key!=='map'||hasFloorplans))).map(([key,label])=><Link key={key} aria-current={section===key?'page':undefined} className={section===key?'is-current':''} to={eventSectionHref(eventId,key,new URLSearchParams([...params].filter(([name])=>name!=='page')))} state={location.state} preventScrollReset onClick={()=>{sectionActionPending.current=true}}>{label}</Link>)}</nav>
     {pageLoading&&<p role="status" aria-live="polite">선택한 조건의 정보를 불러오고 있어요…</p>}
     {pageError&&<ErrorState error={pageError} retry={retryPage}/>}
