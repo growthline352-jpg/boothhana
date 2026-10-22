@@ -97,4 +97,3 @@ it('allows explicitly hiding a deleted import candidate without deleting its loc
  await a.importOne(key);await a.remove(key);await vi.waitFor(()=>expect(a.read().imports).toHaveLength(1));a.hideImport(key);expect(a.read().imports).toEqual([]);expect(JSON.parse(disk.getItem(storageKey)!).plans).toHaveLength(1)
  a.bind('');const b=new OutingsAccountStore(api,disk);b.bind('member:7');await ready(b);await vi.waitFor(()=>expect(b.read().imports).toEqual([]));expect(api.save).toHaveBeenCalledTimes(1)
 })
-
