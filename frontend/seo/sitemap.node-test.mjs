@@ -9,6 +9,13 @@ test('company introduction is included once in the portal sitemap', () => {
   assert.ok(!renderSitemap('https://subculture.boothana.kr', [], true).includes('/about'))
 })
 
+test('outings has one portal sitemap entry and no personal view URLs', () => {
+  const sitemap = renderSitemap('https://boothana.kr', [], true)
+  assert.equal((sitemap.match(/<loc>https:\/\/boothana\.kr\/outings<\/loc>/g) || []).length, 1)
+  assert.doesNotMatch(sitemap, /view=plans|view=saved/)
+  assert.ok(!renderSitemap('https://popup.boothana.kr', [], true).includes('/outings'))
+})
+
 test('sitemap contains canonical category and event URLs with valid escaping', () => {
   const output = renderSitemap('https://boothhana.example', [{ id: 13, publishedAt: '2026-09-27' }])
   assert.match(output, /https:\/\/boothhana\.example\/discover\?category=exhibitions/)

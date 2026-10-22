@@ -7,6 +7,7 @@ import { SubcultureHome,SubcultureBrowse,SubcultureIdentity } from '../features/
 import { InterestSettingsPage } from '../features/subculture/InterestSettingsPage'
 import {EventComparePage} from '../features/discovery/EventComparePage'
 import {lazy,Suspense} from 'react'
+const OutingsPage=lazy(()=>import('../features/outings/OutingsPage').then(module=>({default:module.OutingsPage})))
 const ItineraryPage=lazy(()=>import('../features/itinerary/ItineraryPage').then(module=>({default:module.ItineraryPage})))
 const PurchasePlanPage=lazy(()=>import('../features/library/PurchasePlanPage').then(module=>({default:module.PurchasePlanPage})))
 const SharedItineraryPage=lazy(()=>import('../features/itinerary/SharedItineraryPage').then(module=>({default:module.SharedItineraryPage})))
@@ -42,6 +43,7 @@ import { AdminApplicationsPage, AdminEventFormPage, AdminEventsPage } from '../p
 import { EmptyState } from '../components/ui/States'
 
 export const router = createBrowserRouter([
+  { path: '/outings', element: <SupportBoundary><Suspense fallback={<p role="status">나들이 일정을 열고 있어요.</p>}><OutingsPage/></Suspense></SupportBoundary> },
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
     { path:'account/interests',element:<InterestSettingsPage/> },

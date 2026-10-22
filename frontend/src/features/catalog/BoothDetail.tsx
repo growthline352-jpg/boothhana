@@ -1,3 +1,4 @@
+import { EventFollowup } from './EventFollowup'
 import { InformationRequestButton } from '../support/InformationRequestButton'
 import { OwnershipPanel } from '../support/OwnershipPanels'
 import { SaveButton } from '../library/SaveButton'
@@ -175,6 +176,7 @@ export function BoothDetail({ eventId, event, row, assets, day, hall, eventNotic
         <p>공개된 등록 정보 기준이며 행사 당일 위치와 운영 여부가 달라질 수 있어요.</p>
       </aside>
     </div>
+    <EventFollowup event={event}/>
     <OwnershipPanel eventId={eventId} participantId={row.id}/>
   </section>
 }

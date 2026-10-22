@@ -5,6 +5,17 @@ import { renderPage } from '../api/page.mjs'
 import { naverVerificationFor } from './naver-verification.mjs'
 
 const siteUrl = 'https://boothhana.example'
+test('outings is crawlable on the portal while personal views stay noindex and do not fetch private data', async () => {
+  const template = '<!-- BOOTH_META_START --><!-- BOOTH_META_END --><div id="root"></div>'
+  for (const search of ['', '?view=plans', '?view=saved', '?view=map', '?view=plans&stage=edit']) {
+    const page = await renderPage({ path: '/outings', search, siteUrl: 'https://boothana.kr', splitSites: true, template,
+      apiBase: 'https://api.example', fetcher: async () => { throw Error('Outing metadata must not fetch account records') } })
+    assert.equal(page.status, 200)
+    assert.equal(page.meta.canonical, 'https://boothana.kr/outings')
+    assert.match(page.meta.robots, search ? /^noindex/ : /^index/)
+    if (!search) assert.match(page.html, /https:\/\/popup.boothana.kr\//)
+  }
+})
 test('company introduction is crawlable without catalog API and canonicalizes to the portal', async () => {
   const template = '<html><head><!-- BOOTH_META_START --><!-- BOOTH_META_END --></head><body><div id="root"></div></body></html>'
   for (const origin of ['https://boothana.kr', 'https://subculture.boothana.kr', 'https://expo.boothana.kr', 'https://festival.boothana.kr', 'https://popup.boothana.kr']) {
@@ -36,9 +47,9 @@ test('subculture performances and fairs have a subculture canonical on split sit
 })
 const participant = {
   id: 26,
-  participant: { registrationName: 'Hio Doll <공식>', subjects: ['인형'] },
+  participant: { registrationName: 'Hio Doll <공식>', subjects: ['인형'], members: [{ name: '달토끼' }], locations: [{ status: 'ASSIGNED', code: 'I-20', hall: '1관', startDate: '2026-09-30', endDate: '2026-09-30' }], officialLinks: ['https://circle.example/info', 'javascript:alert(1)'] },
   sales: { summary: '행사 공개 판매 상품', subjects: ['구체관절인형'], categories: [], products: [{ name: '달 토끼 & 한정' }] },
-  productRows: [{ data: { name: '달 토끼 & 한정' } }],
+  productRows: [{ data: { name: '달 토끼 & 한정', evidenceScope: 'EVENT_SALE_CONFIRMED' } }],
 }
 const catalog = {
   id: 13,
@@ -419,4 +430,42 @@ test('published detail retries a network reset but never retries a removed event
     assert.equal(removed.status, 404)
     assert.equal(removed.meta.robots, 'noindex,follow')
   }
+})
+
+test('ended event records lead to upcoming events without changing their canonical or marking the next edition as confirmed', () => {
+  const options = { path: '/discover/13', catalog, siteUrl: 'https://subculture.boothana.kr' }
+  const past = renderCrawlableContent({ ...options, day: '2026-10-22' })
+  assert.match(past, /다음에 갈 곳/)
+  assert.match(past, /period=upcoming/)
+  assert.match(past, /region=SEOUL/)
+  assert.match(past, /다음 회차의 일정·참가 정보는 별도로 확인/)
+  assert.equal(pageMetadata(options).canonical, 'https://subculture.boothana.kr/discover/13')
+  assert.doesNotMatch(renderCrawlableContent({ ...options, day: '2026-09-30' }), /다음에 갈 곳/)
+  const multiDay = structuredClone(catalog)
+  multiDay.event.occurrences.push({ startDate: '2026-10-24', endDate: '2026-10-25' })
+  const ongoing = renderCrawlableContent({ ...options, catalog: multiDay, day: '2026-10-22' })
+  assert.doesNotMatch(ongoing, /다음에 갈 곳/)
+  assert.match(ongoing, /2026-10-24 ~ 2026-10-25/)
+  assert.match(ongoing, /운영시간 미확인/)
+})
+
+
+test('booth fallback does not present profile or past-reference products as current event merchandise', () => {
+  const profile = structuredClone(participant)
+  profile.productRows[0].data.evidenceScope = 'PROFILE'
+  const content = renderCrawlableContent({ path: '/discover/13/booths/26', catalog, participant: profile })
+  assert.doesNotMatch(content, /달 토끼 &amp; 한정/)
+  assert.match(content, /이번 행사에서 판매한다고 공개 확인된 상품은 아직 없습니다/)
+})
+
+
+test('default crawlable feeds request upcoming events by date rather than recently republished past events', async () => {
+  const seen = []
+  await renderPage({ path: '/discover', template: '<!-- BOOTH_META_START --><!-- BOOTH_META_END --><div id="root"></div>', siteUrl, apiBase: 'https://api.example', fetcher: async url => {
+    seen.push(new URL(url))
+    return new Response(JSON.stringify({ items: [], total: 0 }), { headers: { 'content-type': 'application/json' } })
+  } })
+  assert.equal(seen.length, 1)
+  assert.equal(seen[0].searchParams.get('sort'), 'DATE_ASC')
+  assert.match(seen[0].searchParams.get('from'), /^\d{4}-\d{2}-\d{2}$/)
 })

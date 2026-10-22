@@ -9,6 +9,14 @@ const template = '<html><head><!-- BOOTH_META_START --><!-- BOOTH_META_END --></
 const fixture = { id: 12, event: { name: '와인 박람회', subcategory: 'WINE', venueName: '전시장', occurrences: [{ startDate: '2026-10-01', endDate: '2026-10-03' }] }, participants: [{ id: 7, participant: { registrationName: '참가 브랜드' } }] }
 const json = value => new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json' } })
 
+test('outings aliases share the portal storage origin and preserve the selected view', async () => {
+  for (const site of Object.values(CATEGORY_SITES)) {
+    const page = await renderPage({ path: '/outings', search: '?view=plans', siteUrl: site.origin, splitSites: true, template })
+    assert.equal(page.status, 308)
+    assert.equal(page.location, 'https://boothana.kr/outings?view=plans')
+  }
+})
+
 test('subculture home pagination and interest controls survive SPA and HTTP routing', async () => {
   const origin = CATEGORY_SITES.subculture.origin
   for (const search of ['page=1', 'interestId=selected', 'catalogPage=2', 'page=1&interestId=selected&catalogPage=2']) {

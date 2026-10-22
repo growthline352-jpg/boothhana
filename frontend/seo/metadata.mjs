@@ -63,6 +63,44 @@ function selectedBanner(catalog) {
 function selectedParticipantImage(catalog, participant) {
   return catalog?.assets?.find(asset => asset.participantId === participant?.id && ['BOOTH_CUT', 'PRODUCT', 'LOGO'].includes(asset.type))
 }
+function eventDates(event) {
+  return (event.occurrences || []).filter(row => DATE.test(row.startDate || '') && DATE.test(row.endDate || ''))
+}
+function eventDateText(event) {
+  return eventDates(event).map(row => `${row.startDate}${row.endDate !== row.startDate ? ` ~ ${row.endDate}` : ''}`).join(' · ')
+}
+function eventFacts(event) {
+  return [eventDateText(event), text(event.venueName || event.address, 100), text(event.admission, 120)].filter(Boolean).join(' · ')
+}
+function participantLocations(participant) {
+  return (participant.participant.locations || []).filter(row => row.status === 'ASSIGNED' && text(row.code, 40))
+}
+function publicProducts(participant) {
+  const rows = participant.productRows?.length ? participant.productRows.map(row => row.data) : participant.sales?.products || []
+  return rows.filter(row => ['EVENT_LISTED', 'EVENT_SALE_CONFIRMED'].includes(row.evidenceScope))
+}
+function safeLinks(rows) {
+  const seen = new Set()
+  return rows.flatMap(row => {
+    const raw = typeof row === 'string' ? row : row?.url
+    try {
+      const url = new URL(raw)
+      if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || seen.has(url.href)) return []
+      seen.add(url.href)
+      return [{ url: url.href, official: typeof row === 'object' && ['OFFICIAL', 'ORGANIZER_SOCIAL'].includes(row.kind) }]
+    } catch { return [] }
+  }).slice(0, 12)
+}
+function eventFollowup(event, siteUrl, day) {
+  const dates = eventDates(event), category = categoryFor(event)
+  if (!dates.length || dates.some(row => row.endDate >= day) || !category) return ''
+  const base = siteOrigin(siteUrl) ? categoryUrl(siteOrigin(siteUrl), category) : category === 'subculture' ? '/discover' : `/discover?category=${category}`
+  const next = new URL(base, 'https://local.invalid')
+  next.searchParams.set('period', 'upcoming'); next.searchParams.set('view', 'results')
+  if (['SEOUL', 'GYEONGGI'].includes(event.region)) next.searchParams.set('region', event.region)
+  const href = next.origin === 'https://local.invalid' ? next.pathname + next.search : next.href
+  return `<section class="visit-next-discovery"><h2>다음에 갈 곳을 찾아보세요</h2><p>공개된 일정이 지난 행사입니다. 이 페이지는 당시 행사와 참가 부스의 기록입니다. 다음 회차의 일정·참가 정보는 별도로 확인해 주세요.</p><a href="${esc(href)}">같은 지역의 예정 ${esc(CATEGORY_LABEL[category])} 찾기 →</a><a href="${esc(base)}">${esc(CATEGORY_LABEL[category])} 전체 둘러보기</a></section>`
+}
 function baseGraph(origin, canonical, title, description, image) {
   const websiteId = `${origin}/#website`, pageId = `${canonical}#webpage`
   const webpage = {
@@ -227,7 +265,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
       const eventName = text(catalog.event.name, 100)
       title = `${boothName} 부스 · ${eventName} | 부스하나`
       const topics = [...(participant.participant.subjects || []), ...(participant.sales?.subjects || []), ...(participant.sales?.categories || [])].map(value => text(value, 60)).filter(Boolean)
-      description = text(participant.sales?.summary, 170) || `${eventName}의 ${boothName} 부스 위치${topics.length ? `와 ${topics.slice(0, 3).join('·')} 상품 정보` : '와 공개 상품 정보'}를 확인하세요.`
+      const codes = participantLocations(participant).map(row => text(row.code, 40))
+      const members = list((participant.participant.members || []).map(row => row.name), 3)
+      description = text([eventName, eventFacts(catalog.event), codes.length ? `부스 ${[...new Set(codes)].join('·')}` : '부스 위치 미확인', members.join('·'), text(participant.sales?.summary || participant.participant.description, 170), topics.slice(0, 3).join('·')].filter(Boolean).join(' · '), 170)
       image = imageUrl(selectedParticipantImage(catalog, participant)?.url) || imageUrl(selectedBanner(catalog)?.url) || image
       indexable = true
     } else {
@@ -237,7 +277,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   } else if (detailMatch) {
     if (validCatalog) {
       title = `${text(catalog.event.name, 100)} | 부스하나`
-      description = text(catalog.event.description, 170) || `${text(catalog.event.name, 100)}의 공개 일정, 장소, 참가 부스와 판매 안내를 확인하세요.`
+      description = text(`${eventFacts(catalog.event)}${catalog.event.description ? ` · ${catalog.event.description}` : ''}`, 170) || `${text(catalog.event.name, 100)}의 공개 일정, 장소, 참가 부스와 판매 안내를 확인하세요.`
       image = imageUrl(selectedBanner(catalog)?.url) || image
       indexable = true
     } else {
@@ -265,6 +305,10 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   } else if (path.startsWith('/itinerary/shared/')) {
     title = '공유된 하루 일정 | 부스하나'
     description = '공유받은 일정과 지도를 확인하고 내 일정으로 복사하세요.'
+  } else if (path === '/outings') {
+    title = '팝업·박람회·축제 데이트 일정 만들기 | 부스하나'
+    description = '공개된 팝업·박람회·축제를 둘러보고, 장소와 이동시간을 조정해 함께 보낼 하루 일정을 만드세요. 일정은 이 브라우저에 저장됩니다.'
+    indexable = !params.size && !unavailable
   } else if (path === '/itinerary') {
     title = '내 일정 만들기 | 부스하나'
     description = '행사와 데이트 일정을 만들고 지도에서 방문할 장소와 시간을 편집하세요.'
@@ -281,7 +325,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   }
 
   if (split && validCatalog && categoryFor(catalog.event)) origin = categoryOrigin(categoryFor(catalog.event))
-  if (split && path === '/about') origin = PORTAL_ORIGIN
+  if (split && ['/about', '/outings'].includes(path)) origin = PORTAL_ORIGIN
   if (split && browse && supported && (hostCategory || path === '/discover' || params.has('category'))) {
     origin = categoryOrigin(category)
     title = `서울·경기 ${CATEGORY_SITES[category].label} 일정 | ${CATEGORY_SITES[category].name}`
@@ -319,8 +363,9 @@ function list(values, max = 12) {
   return Array.isArray(values) ? values.map(value => text(value, 100)).filter(Boolean).slice(0, max) : []
 }
 /** Real public content for non-JavaScript crawlers; React replaces this same-content fallback after loading. */
-export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], pagination = null, siteUrl = '', splitSites = false } = {}) {
+export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], pagination = null, siteUrl = '', splitSites = false, day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) } = {}) {
   path = normalizePath(path)
+  if (path === '/outings') return new URLSearchParams(search).size ? '' : '<main class="content-wrap section-pad" data-seo-fallback><h1>팝업·박람회·축제로 함께 보내는 하루</h1><p>가보고 싶은 곳을 둘러보고 날짜·순서·이동시간을 조정해 데이트와 나들이 일정을 만드세요. 일정과 보관함은 이 브라우저에 저장되며 파일로 옮길 수 있습니다.</p><a href="https://popup.boothana.kr/">팝업 둘러보기</a> · <a href="https://expo.boothana.kr/">박람회 둘러보기</a> · <a href="https://festival.boothana.kr/">축제 둘러보기</a><p><a href="/itinerary">계정에 저장한 일정</a></p></main>'
   if (path === '/about') return `<main class="content-wrap section-pad" data-seo-fallback><h1>모든 취향이 현실에서 만나는 곳.</h1><p>부스하나는 사람과 행사, 창작자와 브랜드를 연결하는 오프라인 경험 플랫폼을 만들어갑니다.</p><h2>좋아하는 것을 찾는 일이 좋아하는 세상을 넓히는 일이 되도록.</h2><p>서울·경기의 서브컬처·박람회·축제와 공개된 참가 부스·상품 정보를 탐색하고 저장하며 방문을 준비할 수 있습니다.</p><h2>정보를 연결하는 AI. 경험을 넓히는 기술.</h2><p>행사 정보의 AI 구조화, 취향에 맞는 추천과 방문 계획, 변화 알림과 외부 AI 서비스 연계를 구상하고 있습니다. 이 AI 기능들은 향후 개발 방향이며 현재 제공되는 기능이 아닙니다.</p><h2>운영사 그로스라인 (Growthline)</h2><p>대표 유창혜 · 2026년 5월 사업 시작 · 대한민국 서울 · 소프트웨어 개발 및 온라인 플랫폼</p><h2>협업 문의</h2><p>행사 정보 연계, 서비스 협업, 사업 제안을 기다립니다.</p><a href="mailto:contact@boothana.kr">contact@boothana.kr</a><section><h2>발견을 돕고, 이야기를 알리고. 비즈니스의 다음 성장을 만듭니다.</h2><h3>모종애드</h3><p>가게와 브랜드의 이야기를 바탕으로 주제와 구성안을 선택하고, AI로 이미지·영상·블로그 콘텐츠 제작을 돕는 통합 마케팅 솔루션입니다. 주제 제안과 제작에서 게시·분석으로 이어지는 흐름을 지향합니다.</p><a href="https://app.danbammsg.co.kr/home">모종애드 둘러보기</a><h3>그로스라인 홈페이지</h3><p>고객 유입부터 문의와 전환, 운영까지 사업이 멈추는 구간을 살펴보고 웹서비스와 자동화, 데이터 기반 개선으로 연결합니다. 홈페이지에서 서비스 분야와 프로젝트, 사업을 바라보는 관점을 확인하고 서비스 구축과 운영 개선을 상담할 수 있습니다.</p><a href="https://www.danbammsg.co.kr/">그로스라인 홈페이지</a></section></main>`
   if (!catalog?.event) {
     if (!['/', '/discover', '/events'].includes(path)) return ''
@@ -344,17 +389,31 @@ export function renderCrawlableContent({ path = '/', search = '', catalog = null
   }
   const event = catalog.event
   const eventPath = `/discover/${catalog.id}`
+  const dates = eventDates(event)
+  const facts = `<dl>${dates.map(row => `<dt>일정</dt><dd>${esc(row.startDate)}${row.endDate !== row.startDate ? ` ~ ${esc(row.endDate)}` : ''} · ${row.startTime && TIME.test(row.startTime) ? esc(row.startTime) : '운영시간 미확인'}${row.endTime && TIME.test(row.endTime) ? ` ~ ${esc(row.endTime)}` : ''}</dd>`).join('')}${event.venueName || event.address ? `<dt>장소</dt><dd>${esc(text(event.venueName, 160))}${event.address ? ` · ${esc(text(event.address, 300))}` : ''}</dd>` : ''}${event.admission ? `<dt>입장</dt><dd>${esc(text(event.admission, 500))}</dd>` : ''}</dl>`
+  const followup = eventFollowup(event, siteUrl, day)
+  const eventLinks = safeLinks(event.sources || [])
+  const sources = eventLinks.length ? `<section><h2>공식·참고 안내</h2><ul>${eventLinks.map(row => `<li><a href="${esc(row.url)}" rel="noopener noreferrer">${row.official ? '공식 안내' : '참고 출처'} · ${esc(new URL(row.url).hostname)}</a></li>`).join('')}</ul></section>` : ''
+  const updated = catalog.publishedAt && Number.isFinite(Date.parse(catalog.publishedAt)) ? `<p>공개본 갱신: ${esc(new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium' }).format(new Date(catalog.publishedAt)))}. 방문 전 주최 측 최신 공지를 확인하세요.</p>` : ''
   if (/\/booths\/[1-9]\d*$/.test(path) && participant?.participant) {
-    const products = participant.productRows?.map(row => row.data) || participant.sales?.products || []
+    const products = publicProducts(participant)
     const productNames = list(products.map(product => product?.name), 20)
     const subjects = list([...(participant.participant.subjects || []), ...(participant.sales?.subjects || [])], 12)
+    const locations = participantLocations(participant)
+    const members = list((participant.participant.members || []).map(row => row.name), 10)
+    const links = safeLinks(participant.participant.officialLinks || [])
     return `<main class="content-wrap section-pad" data-seo-fallback>
       <nav aria-label="현재 위치"><a href="/">홈</a> / <a href="${eventPath}">${esc(text(event.name, 160))}</a> / 부스 상세</nav>
       <article><h1>${esc(text(participant.participant.registrationName, 160))}</h1>
-      <p>${esc(text(participant.sales?.summary, 1000) || `${text(event.name, 160)} 참가 부스입니다.`)}</p>
+      <p>${esc(text(participant.participant.description || participant.sales?.summary, 1000) || `${text(event.name, 160)} 참가 부스입니다.`)}</p>
+      ${members.length ? `<p>참가자: ${members.map(esc).join(' · ')}</p>` : ''}
+      <h2>참가 행사와 위치</h2>${facts}
+      ${locations.length ? `<ul>${locations.map(row => `<li>부스 ${esc(text(row.code, 40))}${row.hall ? ` · ${esc(text(row.hall, 100))}` : ''}${DATE.test(row.startDate || '') ? ` · ${esc(row.startDate)}${DATE.test(row.endDate || '') && row.startDate !== row.endDate ? ` ~ ${esc(row.endDate)}` : ''}` : ''}</li>`).join('')}</ul>` : '<p>부스 위치 미확인 · 주최 측 최신 배치도를 확인하세요.</p>'}
       ${subjects.length ? `<p>분야: ${subjects.map(esc).join(' · ')}</p>` : ''}
-      ${productNames.length ? `<h2>공개 상품</h2><ul>${productNames.map(name => `<li>${esc(name)}</li>`).join('')}</ul>` : '<p>공개 확인된 상품 정보를 준비하고 있습니다.</p>'}
+      ${productNames.length ? `<h2>이번 행사 공개 상품</h2><ul>${productNames.map(name => `<li>${esc(name)}</li>`).join('')}</ul>` : '<p>이번 행사에서 판매한다고 공개 확인된 상품은 아직 없습니다. 판매하지 않는다는 뜻은 아니며, 참가자의 공식 안내를 확인해 주세요.</p>'}
+      ${links.length ? `<h2>참가자 공식 안내</h2><ul>${links.map(row => `<li><a href="${esc(row.url)}" rel="noopener noreferrer">${esc(new URL(row.url).hostname)} 안내 확인</a></li>`).join('')}</ul>` : ''}
       <p><a href="${eventPath}">${esc(text(event.name, 160))} 행사 상세 보기</a></p></article>
+      ${followup}${updated}
     </main>`
   }
   const sectionPage = parseEventPage(path)
@@ -380,16 +439,13 @@ export function renderCrawlableContent({ path = '/', search = '', catalog = null
     const sources = (event.sources||[]).filter(source=>source.access==='ORIGINAL' && /^https?:\/\//.test(source.url||''))
     return `<main class="content-wrap section-pad" data-seo-fallback><nav aria-label="현재 위치"><a href="/">홈</a> / <a href="${eventPath}">${esc(text(event.name,160))}</a> / ${esc(EVENT_SECTIONS[section])}</nav><h1>${esc(text(event.name,160))} ${esc(EVENT_SECTIONS[section])}</h1>${nav}${body}${updated}${sources.length?`<h2>공식 확인 출처</h2><ul>${sources.map(source=>`<li><a href="${esc(source.url)}">${esc(source.url)}</a></li>`).join('')}</ul>`:''}</main>`
   }
-  const occurrence = event.occurrences?.[0]
   const participants = Array.isArray(catalog.participants) ? catalog.participants.slice(0, 24) : []
   return `<main class="content-wrap section-pad" data-seo-fallback>
     <article><h1>${esc(text(event.name, 160))}</h1><nav aria-label="행사 상세 메뉴">${Object.entries(EVENT_SECTIONS).map(([key,label])=>`<a href="${eventSectionHref(catalog.id,key)}">${esc(label)}</a>`).join(' · ')}</nav>
     <p>${esc(text(event.description, 3000) || '공개된 행사 일정과 참가 부스를 안내합니다.')}</p>
-    <dl>${occurrence ? `<dt>일정</dt><dd>${esc(occurrence.startDate)}${occurrence.endDate && occurrence.endDate !== occurrence.startDate ? ` ~ ${esc(occurrence.endDate)}` : ''}${occurrence.startTime ? ` ${esc(occurrence.startTime)}` : ''}${occurrence.endTime ? ` ~ ${esc(occurrence.endTime)}` : ''}</dd>` : ''}
-    ${event.venueName || event.address ? `<dt>장소</dt><dd>${esc(text(event.venueName, 160))}${event.address ? ` · ${esc(text(event.address, 300))}` : ''}</dd>` : ''}
-    ${event.admission ? `<dt>입장</dt><dd>${esc(text(event.admission, 500))}</dd>` : ''}</dl>
+    ${facts}${sources}${updated}
     ${participants.length ? `<h2>공개 참가 부스</h2><ul>${participants.map(row => `<li><a href="${eventPath}/booths/${Number(row.id)}">${esc(text(row.participant?.registrationName, 160) || '부스 정보')}</a></li>`).join('')}</ul>` : ''}
-    </article></main>`
+    </article>${followup}</main>`
 }
 
 export function injectMetadata(template, meta) {

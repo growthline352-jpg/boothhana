@@ -63,9 +63,11 @@ export function renderSitemap(siteUrl, events, splitSites = false) {
   ] : splitSites && origin === PORTAL_ORIGIN ? [
     { loc: `${origin}/`, lastmod: newest }, { loc: `${origin}/events`, lastmod: newest },
     { loc: `${origin}/about` },
+    { loc: `${origin}/outings` },
   ] : [
     { loc: `${origin}/`, lastmod: newest },
     { loc: `${origin}/about` },
+    { loc: `${origin}/outings` },
     { loc: `${origin}/discover`, lastmod: newest },
     { loc: `${origin}/discover?category=exhibitions`, lastmod: newest },
     { loc: `${origin}/discover?category=festivals`, lastmod: newest },

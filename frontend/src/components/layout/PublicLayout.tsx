@@ -68,6 +68,7 @@ export function PublicLayout() {
                 <Link to="/account/notifications"><span>관심 소식</span></Link>
                 <Link to="/library"><span>내 보관함</span><small>메모·방문 기록</small></Link>
                 <Link to={itineraryHref()}><span>내 일정</span><small>행사·데이트 코스 만들기</small></Link>
+                <Link to="https://boothana.kr/outings"><span>팝업·축제 나들이</span><small>함께 보낼 하루 일정</small></Link>
                 <Link to="/reservations"><span>내 예약</span><small>예약·수령 확인</small></Link>
                 <Link to="/support/management"><span>내 행사·부스 관리</span><small>주최자·운영자 인증</small></Link>
                 <Link to="/support"><span>고객센터</span><small>문의·신고 내역</small></Link>

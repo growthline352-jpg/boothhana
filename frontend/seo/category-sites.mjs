@@ -29,7 +29,7 @@ export function categoryRedirect({ origin, path, search = '', category = null, e
   const params = new URLSearchParams(search)
   const siteCategory = categorySite(origin)
   // Personal planning screens share one origin across all event fields.
-  if (siteCategory && /^\/(?:itinerary|purchase-plan)(?:\/|$)/.test(path)) return `${PORTAL_ORIGIN}${path}${params.size ? `?${params}` : ''}`
+  if (siteCategory && /^\/(?:itinerary|purchase-plan|outings)(?:\/|$)/.test(path)) return `${PORTAL_ORIGIN}${path}${params.size ? `?${params}` : ''}`
   if (siteCategory && /^\/events(?:\/|$)/.test(path)) return `${PORTAL_ORIGIN}${path}${params.size ? `?${params}` : ''}`
   if (path === '/' || path === '/discover') {
     const explicit = params.get('category')
