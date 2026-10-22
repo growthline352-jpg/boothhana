@@ -1,5 +1,5 @@
-export type PlaceKind = 'popup' | 'exhibition' | 'festival' | 'cafe' | 'food' | 'walk' | 'custom' | 'subculture'
-export const kindLabels: Record<PlaceKind, string> = { popup: '팝업', exhibition: '박람회', festival: '축제', cafe: '카페', food: '식사', walk: '산책', custom: '직접 추가', subculture: '서브컬처' }
+export type PlaceKind = 'event' | 'popup' | 'exhibition' | 'festival' | 'cafe' | 'food' | 'walk' | 'custom' | 'subculture'
+export const kindLabels: Record<PlaceKind, string> = { event: '행사', popup: '팝업', exhibition: '박람회', festival: '축제', cafe: '카페', food: '식사', walk: '산책', custom: '직접 추가', subculture: '서브컬처' }
 export type Hours = { from: string; to: string; open: string | null; close: string | null }
 export interface Place {
   id: string; name: string; kind: PlaceKind; area: string; address: string; description: string
@@ -88,7 +88,7 @@ const str = (x: unknown, max: number): x is string => typeof x === 'string' && x
 export function validPlace(x: unknown): x is Place {
   if (!x || typeof x !== 'object') return false
   const p = x as Place
-  return str(p.id, 100) && !!p.id && str(p.name, 150) && !!p.name.trim() && Object.hasOwn(kindLabels, p.kind) &&
+  return str(p.id, 100) && !!p.id && str(p.name, 200) && !!p.name.trim() && Object.hasOwn(kindLabels, p.kind) &&
     ['sample', 'catalog', 'custom'].includes(p.source) && str(p.area, 100) && str(p.address, 500) && str(p.description, 3000) && str(p.image, 2000) &&
     (p.image === '' || /^https?:\/\//.test(p.image) || /^\/assets\//.test(p.image)) && str(p.booking, 500) &&
     finite(p.duration, 5, 720) && Number.isInteger(p.duration) && (p.cost === null || finite(p.cost, 0, 10000000)) && [true, false, null].includes(p.indoor) &&
@@ -100,10 +100,10 @@ export function validPlace(x: unknown): x is Place {
 export function validPlan(x: unknown): x is Plan {
   if (!x || typeof x !== 'object') return false
   const p = x as Plan
-  return str(p.id, 100) && !!p.id && str(p.title, 100) && validDate(p.day) && (p.start === '' || validTime(p.start)) && (p.end === '' || validTime(p.end)) && (!p.start || !p.end || p.start < p.end) &&
+  return str(p.id, 100) && !!p.id && str(p.title, 120) && validDate(p.day) && (p.start === '' || validTime(p.start)) && (p.end === '' || validTime(p.end)) && (!p.start || !p.end || p.start < p.end) &&
     str(p.updatedAt, 50) && Array.isArray(p.stops) && p.stops.length <= 30 && new Set(p.stops.map(s => s?.id)).size === p.stops.length &&
     p.stops.every(s => s && str(s.id, 100) && !!s.id && validPlace(s.place) && finite(s.duration, 5, 720) && Number.isInteger(s.duration) && (s.travel === null || finite(s.travel, 0, 360) && Number.isInteger(s.travel)) &&
-      (s.fixed === '' || validTime(s.fixed)) && str(s.note, 1000) && typeof s.done === 'boolean')
+      (s.fixed === '' || validTime(s.fixed)) && str(s.note, 2000) && typeof s.done === 'boolean')
 }
 export function readState(storage: Pick<Storage, 'getItem'>): OutingsState {
   const raw = storage.getItem(storageKey)

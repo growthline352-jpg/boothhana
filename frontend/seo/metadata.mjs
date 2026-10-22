@@ -307,7 +307,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     description = '공유받은 일정과 지도를 확인하고 내 일정으로 복사하세요.'
   } else if (path === '/outings') {
     title = '팝업·박람회·축제 데이트 일정 만들기 | 부스하나'
-    description = '공개된 팝업·박람회·축제를 둘러보고, 장소와 이동시간을 조정해 함께 보낼 하루 일정을 만드세요. 일정은 이 브라우저에 저장됩니다.'
+    description = '공개된 팝업·박람회·축제를 둘러보고, 장소와 이동시간을 조정해 함께 보낼 하루 일정을 만드세요. 로그인하면 기존 일정과 같은 계정에 저장하고 다른 기기에서도 이어서 볼 수 있습니다.'
     indexable = !params.size && !unavailable
   } else if (path === '/itinerary') {
     title = '내 일정 만들기 | 부스하나'
@@ -365,7 +365,7 @@ function list(values, max = 12) {
 /** Real public content for non-JavaScript crawlers; React replaces this same-content fallback after loading. */
 export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], pagination = null, siteUrl = '', splitSites = false, day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) } = {}) {
   path = normalizePath(path)
-  if (path === '/outings') return new URLSearchParams(search).size ? '' : '<main class="content-wrap section-pad" data-seo-fallback><h1>팝업·박람회·축제로 함께 보내는 하루</h1><p>가보고 싶은 곳을 둘러보고 날짜·순서·이동시간을 조정해 데이트와 나들이 일정을 만드세요. 일정과 보관함은 이 브라우저에 저장되며 파일로 옮길 수 있습니다.</p><a href="https://popup.boothana.kr/">팝업 둘러보기</a> · <a href="https://expo.boothana.kr/">박람회 둘러보기</a> · <a href="https://festival.boothana.kr/">축제 둘러보기</a><p><a href="/itinerary">계정에 저장한 일정</a></p></main>'
+  if (path === '/outings') return new URLSearchParams(search).size ? '' : '<main class="content-wrap section-pad" data-seo-fallback><h1>팝업·박람회·축제로 함께 보내는 하루</h1><p>가보고 싶은 곳을 둘러보고 날짜·순서·이동시간을 조정해 데이트와 나들이 일정을 만드세요. 일정은 로그인 후 계정에 저장하고 다른 기기에서도 이어서 볼 수 있습니다. 비회원 일정과 편집 초안은 이 기기에 보관합니다.</p><a href="https://popup.boothana.kr/">팝업 둘러보기</a> · <a href="https://expo.boothana.kr/">박람회 둘러보기</a> · <a href="https://festival.boothana.kr/">축제 둘러보기</a><p><a href="/itinerary">계정에 저장한 일정</a></p></main>'
   if (path === '/about') return `<main class="content-wrap section-pad" data-seo-fallback><h1>모든 취향이 현실에서 만나는 곳.</h1><p>부스하나는 사람과 행사, 창작자와 브랜드를 연결하는 오프라인 경험 플랫폼을 만들어갑니다.</p><h2>좋아하는 것을 찾는 일이 좋아하는 세상을 넓히는 일이 되도록.</h2><p>서울·경기의 서브컬처·박람회·축제와 공개된 참가 부스·상품 정보를 탐색하고 저장하며 방문을 준비할 수 있습니다.</p><h2>정보를 연결하는 AI. 경험을 넓히는 기술.</h2><p>행사 정보의 AI 구조화, 취향에 맞는 추천과 방문 계획, 변화 알림과 외부 AI 서비스 연계를 구상하고 있습니다. 이 AI 기능들은 향후 개발 방향이며 현재 제공되는 기능이 아닙니다.</p><h2>운영사 그로스라인 (Growthline)</h2><p>대표 유창혜 · 2026년 5월 사업 시작 · 대한민국 서울 · 소프트웨어 개발 및 온라인 플랫폼</p><h2>협업 문의</h2><p>행사 정보 연계, 서비스 협업, 사업 제안을 기다립니다.</p><a href="mailto:contact@boothana.kr">contact@boothana.kr</a><section><h2>발견을 돕고, 이야기를 알리고. 비즈니스의 다음 성장을 만듭니다.</h2><h3>모종애드</h3><p>가게와 브랜드의 이야기를 바탕으로 주제와 구성안을 선택하고, AI로 이미지·영상·블로그 콘텐츠 제작을 돕는 통합 마케팅 솔루션입니다. 주제 제안과 제작에서 게시·분석으로 이어지는 흐름을 지향합니다.</p><a href="https://app.danbammsg.co.kr/home">모종애드 둘러보기</a><h3>그로스라인 홈페이지</h3><p>고객 유입부터 문의와 전환, 운영까지 사업이 멈추는 구간을 살펴보고 웹서비스와 자동화, 데이터 기반 개선으로 연결합니다. 홈페이지에서 서비스 분야와 프로젝트, 사업을 바라보는 관점을 확인하고 서비스 구축과 운영 개선을 상담할 수 있습니다.</p><a href="https://www.danbammsg.co.kr/">그로스라인 홈페이지</a></section></main>`
   if (!catalog?.event) {
     if (!['/', '/discover', '/events'].includes(path)) return ''

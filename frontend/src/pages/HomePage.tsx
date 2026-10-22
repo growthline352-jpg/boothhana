@@ -17,7 +17,7 @@ export function HomePage() {
       <div className={`category-portal-media is-${category.key}`}><img src={`/assets/categories/${category.key}-3d.webp`} alt="" loading="lazy" width="640" height="640"/></div>
       <div className="category-portal-content"><h2>{category.label}<DiscoveryIcon name="arrow" size={22}/></h2></div>
     </a>)}</div>
-    <p className="row-actions"><a className="btn primary" href="/outings">팝업·박람회·축제로 하루 일정 짜기 →</a><a className="btn secondary" href="/itinerary">계정에 저장한 일정</a></p>
+    <p className="row-actions"><a className="btn primary" href="/outings">팝업·박람회·축제로 하루 일정 짜기 →</a><a className="btn secondary" href="/outings?view=plans">내 일정</a></p>
     <PopularEvents/>
     <HomeGuide/>
   </section>
