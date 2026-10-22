@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { useRemote } from '../../app/useRemote'
 import { DiscoveryIcon, type IconName } from '../discovery/DiscoveryIcon'
 import { loadCatalog, loadLegacySaved, samples } from './data'
 import { availability, dayLabel, exportPlan, importPlan, kindLabels, money, insertStop, moveStop, newPlan, newStop, today, totals, validDate, weekend, type Place, type PlaceKind, type Plan, type Stop } from './model'
@@ -36,8 +37,13 @@ export function OutingsApp() {
   const [pendingPlace, setPendingPlace] = useState<Place | null>(null)
   const appending = !!activePlan && (view === 'plans' && stage !== 'list' || addingToPlan)
   const discoveryDay = addingToPlan && activePlan ? plan.day : browseDay
-  const [source, setSource] = useState<'sample' | 'catalog'>('catalog'), [catalog, setCatalog] = useState<Place[]>([])
-  const [loading, setLoading] = useState(false), [loadError, setLoadError] = useState(''), [limited, setLimited] = useState(false), [retry, setRetry] = useState(0)
+  const [source, setSource] = useState<'sample' | 'catalog'>('catalog')
+  const catalogDay = today()
+  const catalogResult = useRemote('features/outings/catalog', () => source === 'catalog'
+    ? loadCatalog(AbortSignal.timeout(75000)) : Promise.resolve({ places: [] as Place[], limited: false }), [source, catalogDay])
+  const catalog = catalogResult.data?.places ?? [], limited = catalogResult.data?.limited ?? false
+  const loading = catalogResult.loading
+  const loadError = catalogResult.error ? '행사를 불러오지 못했어요. 잠시 후 다시 불러와 주세요.' : ''
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [sort, setSort] = useState('default')
   const [q, setQ] = useState(''), [area, setArea] = useState(''), [kind, setKind] = useState<PlaceKind | ''>(''), [indoor, setIndoor] = useState(false), [free, setFree] = useState(false)
@@ -49,18 +55,6 @@ export function OutingsApp() {
   useEffect(() => {
     if (lastView.current !== view) { heading.current?.focus({ preventScroll: true }); window.scrollTo({ top: 0 }); lastView.current = view }
   }, [view])
-  useEffect(() => {
-    if (source !== 'catalog') return
-    let active = true
-    const controller = new AbortController(); setLoading(true); setLoadError('')
-    const timeout = setTimeout(() => controller.abort(), 75000)
-    loadCatalog(controller.signal).then(data => { if (active) { setCatalog(data.places); setLimited(data.limited) } }).catch(e => {
-      if (!active) return
-      if (!controller.signal.aborted) setLoadError(e instanceof TypeError ? '행사 서버에 연결하지 못했어요. 잠시 후 다시 불러와 주세요.' : e instanceof Error ? e.message : '행사 조회에 실패했어요.')
-      else if (controller.signal.reason?.name === 'AbortError') setLoadError('연결이 지연되고 있어요. 다시 불러와 주세요.')
-    }).finally(() => { clearTimeout(timeout); if (active) setLoading(false) })
-    return () => { active = false; clearTimeout(timeout); controller.abort() }
-  }, [source, retry])
   function navigate(next: View, append = appending) { setAddingToPlan(append); setParams(next === 'discover' ? {} : { view: next }); setMessage('') }
   function patchPlan(next: Plan) { write({ ...state, plans: state.plans.map(p => p.id === next.id ? { ...next, updatedAt: new Date().toISOString() } : p) }) }
   function openPlanner(next: PlannerStage) { setAddingToPlan(next !== 'list'); setInsertionIndex(null); setParams(next === 'list' ? { view: 'plans' } : { view: 'plans', stage: next }); window.scrollTo({ top: 0 }) }
@@ -150,7 +144,7 @@ export function OutingsApp() {
         <section className="o-results"><div className="o-section-heading"><div><p className="o-results-eyebrow">{view === 'saved' ? '천천히 모아두세요' : `${dayLabel(discoveryDay)} · ${area || '모든 지역'}`}</p><h2 aria-live="polite">{view === 'saved' ? `저장한 장소 ${state.saved.length}` : filterCount ? `조건에 맞는 ${filtered.length}곳` : '어디가 끌리세요?'}{!filterCount && view !== 'saved' && <span className="o-result-count">{filtered.length}</span>}</h2></div><div className="o-result-tools"><select aria-label="행사 정렬" value={sort} onChange={e => setSort(e.target.value)}><option value="default">기본 순</option><option value="cost">비용 낮은 순</option><option value="duration">짧게 둘러보기</option></select>{view !== 'saved' && <button className="o-text-button" onClick={() => navigate(view === 'map' ? 'discover' : 'map', addingToPlan)}><DiscoveryIcon name={view === 'map' ? 'grid' : 'pin'} size={16}/>{view === 'map' ? '목록' : '지도'}</button>}</div></div>
           {view === 'saved' && <label className="o-search o-saved-search"><DiscoveryIcon name="search"/><input aria-label="보관함 검색" placeholder="저장한 장소 찾기" value={q} onChange={e => setQ(e.target.value)}/>{q && <button className="o-icon-button" aria-label="보관함 검색어 지우기" onClick={() => setQ('')}><DiscoveryIcon name="close" size={16}/></button>}</label>}
           {view === 'map' && <PlaceMap places={filtered} selected={selected?.id} onSelect={setSelected}/>}
-          {view !== 'saved' && loading && source === 'catalog' ? <div className="o-loading" role="status">공개 행사를 불러오고 있어요…</div> : view !== 'saved' && loadError && source === 'catalog' ? <div className="o-empty" role="alert"><h3>{loadError}</h3><button className="o-button secondary" onClick={() => setRetry(v => v + 1)}>다시 불러오기</button></div> : filtered.length ? <div className="o-card-grid">{ordered.map(place => <PlaceCard key={place.id} place={place} day={discoveryDay} addLabel="일정에 담기" saved={state.saved.some(p => p.id === place.id)} added={appending && plan.stops.some(s => s.place.id === place.id)} onOpen={() => setSelected(place)} onSave={() => savePlace(place)} onAdd={() => addPlace(place)}/>)}</div> : <div className="o-empty"><DiscoveryIcon name={view === 'saved' ? 'bookmark' : 'search'} size={36}/><h3>{view === 'saved' ? state.saved.length ? '검색한 장소가 없어요' : '마음에 드는 곳부터 모아보세요' : '이 조건에 맞는 장소가 아직 없어요'}</h3><p>{view === 'saved' ? state.saved.length ? '검색어를 바꾸거나 지워보세요.' : '행사 카드의 보관 버튼을 누르면 여기에 모여요.' : '동네나 날짜를 바꾸면 다른 장소를 만날 수 있어요.'}</p><button className="o-button secondary" onClick={() => { resetFilters(); if (view === 'saved' && !state.saved.length) navigate('discover') }}>{view === 'saved' && !state.saved.length ? '행사 둘러보기' : '검색 조건 초기화'}</button></div>}
+          {view !== 'saved' && loading && source === 'catalog' ? <div className="o-loading" role="status">공개 행사를 불러오고 있어요…</div> : view !== 'saved' && loadError && source === 'catalog' ? <div className="o-empty" role="alert"><h3>{loadError}</h3><button className="o-button secondary" onClick={() => void catalogResult.reload()}>다시 불러오기</button></div> : filtered.length ? <div className="o-card-grid">{ordered.map(place => <PlaceCard key={place.id} place={place} day={discoveryDay} addLabel="일정에 담기" saved={state.saved.some(p => p.id === place.id)} added={appending && plan.stops.some(s => s.place.id === place.id)} onOpen={() => setSelected(place)} onSave={() => savePlace(place)} onAdd={() => addPlace(place)}/>)}</div> : <div className="o-empty"><DiscoveryIcon name={view === 'saved' ? 'bookmark' : 'search'} size={36}/><h3>{view === 'saved' ? state.saved.length ? '검색한 장소가 없어요' : '마음에 드는 곳부터 모아보세요' : '이 조건에 맞는 장소가 아직 없어요'}</h3><p>{view === 'saved' ? state.saved.length ? '검색어를 바꾸거나 지워보세요.' : '행사 카드의 보관 버튼을 누르면 여기에 모여요.' : '동네나 날짜를 바꾸면 다른 장소를 만날 수 있어요.'}</p><button className="o-button secondary" onClick={() => { resetFilters(); if (view === 'saved' && !state.saved.length) navigate('discover') }}>{view === 'saved' && !state.saved.length ? '행사 둘러보기' : '검색 조건 초기화'}</button></div>}
           {limited && source === 'catalog' && <p className="o-helper">공개 행사가 많아 분야별 첫 1,000개를 조회했어요.</p>}
         </section>
       </div> : <PlannerWorkspace plans={state.plans} plan={plan} stage={stage} places={allPlaces} saved={state.saved} source={source} savedAt={savedAt} canUndo={canUndo}
