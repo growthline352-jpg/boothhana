@@ -2,7 +2,7 @@ import json,tempfile,unittest,uuid
 from pathlib import Path
 from unittest.mock import patch
 import jsonschema
-from graph_worker import Worker,configuration,schema,require_opened,MODEL,validate_products,MEDIA
+from graph_worker import Worker,configuration,schema,require_opened,MODEL,EXTRACTION_MODEL,validate_products,MEDIA
 from run import RunError,CliUnavailable,audit_opened_urls
 
 SOURCE='https://example.com/product'
@@ -19,7 +19,7 @@ class FakeApi:
 class GraphWorkerTests(unittest.TestCase):
     def test_watch_refreshes_all_pages_before_claiming(self):
         with tempfile.TemporaryDirectory() as temp:
-            cfg=configuration();cfg['stateDirectory']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
+            cfg=configuration();cfg['stateDirectory']=temp;cfg['codexHome']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
             calls=[]
             def request(method,path,body):
                 calls.append((path,body))
@@ -33,7 +33,7 @@ class GraphWorkerTests(unittest.TestCase):
     def test_account_failure_releases_job_then_backs_off_without_draining_queue(self):
         for reason in ('USAGE_LIMIT','AUTH_REQUIRED','INVALID_SCHEMA'):
             with self.subTest(reason=reason),tempfile.TemporaryDirectory() as temp:
-                cfg=configuration();cfg['stateDirectory']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
+                cfg=configuration();cfg['stateDirectory']=temp;cfg['codexHome']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
                 job={'id':str(uuid.uuid4()),'kind':'EVENT','leaseToken':str(uuid.uuid4())};calls=[]
                 def request(method,path,body):
                     calls.append((path,body))
@@ -44,11 +44,11 @@ class GraphWorkerTests(unittest.TestCase):
                 self.assertEqual(1,sum(path=='/claim' for path,body in calls))
                 self.assertTrue(calls[-1][0].endswith('/failure'))
                 self.assertEqual(job['leaseToken'],calls[-1][1]['leaseToken'])
-                sleep.assert_called_once_with(3600)
+                sleep.assert_called_once_with(60 if reason=='USAGE_LIMIT' else 3600)
 
     def test_drain_exits_on_account_failure_without_claiming_every_pending_job(self):
         with tempfile.TemporaryDirectory() as temp:
-            cfg=configuration();cfg['stateDirectory']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
+            cfg=configuration();cfg['stateDirectory']=temp;cfg['codexHome']=temp;worker=Worker(cfg,FakeApi(),search=lambda *a,**k:None)
             job={'id':str(uuid.uuid4()),'kind':'EVENT','leaseToken':str(uuid.uuid4())}
             with patch.object(worker,'request',side_effect=[job,{}]) as request,patch.object(worker,'process',side_effect=CliUnavailable('USAGE_LIMIT')),patch('graph_worker.time.sleep') as sleep:
                 worker.run()
@@ -67,10 +67,56 @@ class GraphWorkerTests(unittest.TestCase):
         with self.assertRaises(RunError):require_opened(result,{'openedUrls':[SOURCE]})
         require_opened(result,{'openedUrls':[SOURCE,'https://example.com/series']})
     def test_explicit_model_without_cost_ceiling(self):
-        cfg=configuration();self.assertEqual(MODEL,cfg['model']);self.assertNotIn('maxCliCalls',cfg)
+        cfg=configuration();self.assertEqual(EXTRACTION_MODEL,cfg['model']);self.assertEqual(MODEL,cfg['reviewModel']);self.assertNotIn('maxCliCalls',cfg)
         with tempfile.TemporaryDirectory() as temp:
             path=Path(temp)/'config.json';path.write_text('{"model":null}')
             with self.assertRaises(RunError):configuration(path)
+    def test_model_roles_cannot_be_null_or_silently_swapped(self):
+        for override in ({'model':None},{'reviewModel':None},{'reviewModel':EXTRACTION_MODEL},{'model':'other-model'}):
+            with tempfile.TemporaryDirectory() as temp:
+                path=Path(temp)/'config.json';path.write_text(json.dumps(override))
+                with self.assertRaises(RunError):configuration(path)
+    def test_text_extraction_uses_luna_and_all_independent_reviews_use_sol_with_truthful_audits(self):
+        calls=[]
+        def search(cfg,directory,prompt,schema_path,**kwargs):
+            calls.append((directory.name,cfg['model']));(directory/'codex.jsonl').write_text(json.dumps(page_result()))
+            return json.dumps(self.creator_result() if directory.name=='extract' else {'profileUrls':[]} if directory.name=='social-discovery' else {'verdict':'APPROVE','reason':'Verified original'}).encode(),True,{}
+        with tempfile.TemporaryDirectory() as temp:
+            cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi();job={'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'kind':'CREATOR','contextHash':'a'*64,'context':{'input':{}}}
+            Worker(cfg,api,search).process(job)
+        self.assertEqual([('social-discovery',EXTRACTION_MODEL),('extract',EXTRACTION_MODEL),('review',MODEL)],calls)
+        self.assertEqual(EXTRACTION_MODEL,api.calls[0][2]['audit']['model']);self.assertEqual(MODEL,api.calls[-1][2]['audit']['model'])
+    def test_native_sns_images_keep_both_extraction_and_review_batches_on_sol(self):
+        calls=[]
+        documents=[{'url':SOURCE,'available':True,'sha256':'a'*64,'capturedAt':'2026-10-23T00:00:00Z','text':'Native sales post','images':[{'imageUrl':f'https://cdn.example.test/{i}.png','pageUrl':SOURCE} for i in range(5)]}]
+        def search(cfg,directory,prompt,schema_path,**kwargs):
+            calls.append((directory.name,cfg['model']));(directory/'codex.jsonl').write_text(json.dumps(page_result()))
+            value={'profileUrls':[]} if directory.name=='social-discovery' else self.creator_result() if directory.name=='extract' else {'verdict':'APPROVE','reason':'Checked all original images'}
+            if directory.name.startswith('images-'):
+                start=int(directory.name.split('-')[1]);value={'observations':[{'imageIndex':i,'visibleText':'sales post','uncertainties':[]} for i in range(start,min(start+4,5))]}
+            return json.dumps(value).encode(),True,{}
+        with tempfile.TemporaryDirectory() as temp:
+            cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi();job={'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'kind':'CREATOR','contextHash':'a'*64,'context':{'input':{},'creator':{'data':{'profileUrl':SOURCE}}}}
+            with patch('graph_worker.fetch_image',return_value=(b'image','image/png','b'*64)):
+                Worker(cfg,api,search,lambda urls:documents).process(job)
+        self.assertEqual(('social-discovery',EXTRACTION_MODEL),calls[0]);self.assertEqual(7,len(calls));self.assertTrue(all(model==MODEL for _,model in calls[1:]))
+        self.assertEqual(MODEL,api.calls[0][2]['audit']['model']);self.assertEqual(MODEL,api.calls[-1][2]['audit']['model'])
+
+    def test_image_and_complex_extraction_keep_sol_without_mutating_the_base_configuration(self):
+        for image_count,complex_task in [(1,False),(5,False),(0,True)]:
+            with tempfile.TemporaryDirectory() as temp:
+                cfg=configuration();cfg['stateDirectory']=temp;calls=[];images=[]
+                for n in range(image_count):
+                    path=Path(temp)/f'image-{n}.png';path.write_bytes(b'image');images.append(path)
+                def search(config,directory,prompt,schema_path,**kwargs):
+                    calls.append(config['model']);(directory/'codex.jsonl').write_text(json.dumps(page_result()))
+                    value={'verdict':'ENRICH','reason':'Need evidence'}
+                    if directory.name.startswith('images-'):
+                        start=int(directory.name.split('-')[1]);value={'observations':[{'imageIndex':n,'visibleText':'text','uncertainties':[]} for n in range(start,min(start+4,image_count))]}
+                    return json.dumps(value).encode(),True,{}
+                _,audit=Worker(cfg,FakeApi(),search).call(Path(temp)/'call','test',{'type':'object'},images,complex_task=complex_task)
+                self.assertTrue(calls);self.assertTrue(all(m==MODEL for m in calls));self.assertEqual(MODEL,audit['model']);self.assertEqual(EXTRACTION_MODEL,cfg['model'])
+
     def test_search_snippet_is_not_direct_source_verification(self):
         with self.assertRaises(RunError):require_opened(RESULT,{'openedUrls':['https://example.com/search']})
         require_opened(RESULT,{'openedUrls':[SOURCE+'/']})
@@ -89,7 +135,7 @@ class GraphWorkerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi();calls=[]
             def search(cfg,directory,prompt,schema_path,**kwargs):
-                calls.append(directory.name);(directory/'codex.jsonl').write_text(json.dumps(page_result()))
+                calls.append(directory.name);self.assertEqual(MODEL,cfg['model']);(directory/'codex.jsonl').write_text(json.dumps(page_result()))
                 return b'{"verdict":"ENRICH","reason":"Need more evidence"}',True,{}
             context={'product':{'data':{'images':[]}}};job={'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'kind':'CHARACTERS','context':context,'extraction':{'id':str(uuid.uuid4()),'resultHash':'b'*64,'result':RESULT,'context':context}}
             Worker(cfg,api,search).process(job);self.assertEqual(['review'],calls);self.assertEqual('ENRICH',api.calls[-1][2]['verdict'])
@@ -177,7 +223,7 @@ class GraphWorkerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi();calls=[]
             result={'events':[],'searchStatus':'COMPLETE','sourceCoverage':[{'status':'NO_RESULTS','checkedUrls':[SOURCE]}]}
-            def call(directory,prompt,schema,images,urls):
+            def call(directory,prompt,schema,images,urls,**kwargs):
                 calls.append((directory.name,urls))
                 return (result if directory.name=='extract' else {'verdict':'APPROVE','reason':'Calendar has no events'}),{'openedUrls':[SOURCE]}
             worker=Worker(cfg,api,search=lambda *a,**k:None)
@@ -212,7 +258,7 @@ class GraphWorkerTests(unittest.TestCase):
             cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi()
             worker=Worker(cfg,api,search=lambda *a,**k:None)
             events=[{'name':'good','sources':RESULT['sources']},{'name':'needs update','sources':RESULT['sources']}]
-            def call(directory,*args):
+            def call(directory,*args,**kwargs):
                 if directory.name=='extract':return {'events':events},{'openedUrls':[SOURCE]}
                 good=directory.name=='review-event-0'
                 return {'verdict':'APPROVE' if good else 'ENRICH','reason':'checked'},{'openedUrls':[SOURCE],'usage':{}}

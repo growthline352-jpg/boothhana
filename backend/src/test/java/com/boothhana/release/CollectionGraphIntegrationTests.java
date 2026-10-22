@@ -48,6 +48,14 @@ class CollectionGraphIntegrationTests {
  }
  @SuppressWarnings("unchecked") Map<String,Object> value(Object x){return json.readValue(json.writeValueAsString(x),Map.class);}
  Audit audit(){return new Audit("gpt-6.1-sol","graph-1","graph-1",true,List.of(source),Map.of(),List.of());}
+ @Test void lunaExtractionIsSavedPrivatelyAndOnlySolCanApproveIt(){
+  var job=seed("EVENT",Long.toString(event));var luna=new Audit("gpt-6-luna","graph-4-luna-text-sol-review-1","graph-4",true,List.of(source),Map.of(),List.of());
+  var extracted=value(graph.extract(id(job),new Extraction(token(job),UUID.randomUUID(),job.get("contextHash").toString(),value(data),luna)));
+  assertThat(db.queryForObject("select audit_json->>'model' from collection_extraction where id=?",String.class,UUID.fromString(extracted.get("id").toString()))).isEqualTo("gpt-6-luna");
+  assertThatThrownBy(()->graph.decide(id(job),new Decision(token(job),UUID.fromString(extracted.get("id").toString()),extracted.get("resultHash").toString(),"APPROVE","Luna cannot approve",luna))).isInstanceOf(ApiException.class);
+  assertThat(db.queryForObject("select count(*) from subculture_catalog_publication where event_id=?",Integer.class,event)).isZero();
+  approve(job,extracted);assertThat(db.queryForObject("select audit_json->>'model' from collection_verdict where extraction_id=?",String.class,UUID.fromString(extracted.get("id").toString()))).isEqualTo("gpt-6.1-sol");
+ }
  @Test void claimsImminentEventsBeforeOlderCreatorAndDistantEventWork(){
   db.update("update collection_job set attempts=0");
   long creator=maker("Background author",source);
