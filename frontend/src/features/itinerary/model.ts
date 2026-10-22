@@ -1,3 +1,4 @@
+import {validOutingDetails,type OutingDetails} from './outingDetails'
 import type {PublicEventSummary} from '../catalog/api'
 import type {Occurrence} from '../collection/api'
 import {categoryForType} from '../discovery/categories'
@@ -9,11 +10,13 @@ export type Purpose = 'EVENT' | 'DATE'
 export type StopKind = 'EVENT' | 'FOOD' | 'CAFE' | 'PLACE'
 export interface Point {lat:number;lng:number}
 export interface PlanStop {
+ outing?:OutingDetails;
  id:string;kind:StopKind;name:string;address:string;point:Point|null;eventId?:number;
  start:string;duration:number;locked:boolean;note:string;url:string;image?:string;
  occurrences?:Occurrence[];venueName?:string;openingHours?:string;source:'CATALOG'|'OSM'|'KAKAO'|'MANUAL';
 }
 export interface Plan {
+ planner?:'OUTINGS';
  version:1;id:string;title:string;purpose:Purpose;day:string;start:string;end:string;area:string;
  style:string;stops:PlanStop[];updatedAt:string;interests?:TopicSelection;
 }
@@ -87,12 +90,14 @@ export function nextStart(plan:Plan,duration:number){const last=plan.stops.at(-1
 export function validatePlan(value:unknown):value is Plan {
  if(!value||typeof value!=='object')return false
  const p=value as Plan
+ const flexible=p.planner==='OUTINGS', validTime=(v:string)=>flexible&&v===''||Number.isFinite(timeMinutes(v))
  return p.version===1&&typeof p.id==='string'&&!!p.id&&p.id.length<=128&&typeof p.title==='string'&&p.title.length<=120&&['EVENT','DATE'].includes(p.purpose)&&validDay(p.day)
- &&Number.isFinite(timeMinutes(p.start))&&Number.isFinite(timeMinutes(p.end))&&typeof p.area==='string'&&typeof p.style==='string'&&typeof p.updatedAt==='string'
+ &&(p.planner===undefined||flexible)&&validTime(p.start)&&validTime(p.end)&&typeof p.area==='string'&&typeof p.style==='string'&&typeof p.updatedAt==='string'
  &&(p.interests===undefined||p.interests&&['topics','subjects'].every(k=>Array.isArray(p.interests![k as keyof TopicSelection])&&p.interests![k as keyof TopicSelection].length<=10&&p.interests![k as keyof TopicSelection].every(s=>typeof s==='string'&&s.length>0&&s.length<=100)))
- &&Array.isArray(p.stops)&&p.stops.length<=20&&new Set(p.stops.map(s=>s?.id)).size===p.stops.length&&p.stops.every(s=>s&&typeof s.id==='string'&&!!s.id&&s.id.length<=128&&typeof s.name==='string'&&s.name.length<=200
- &&Object.hasOwn(kindNames,s.kind)&&typeof s.address==='string'&&s.address.length<=400&&typeof s.url==='string'&&s.url.length<=2048&&typeof s.note==='string'&&s.note.length<=2000
- &&Number.isFinite(timeMinutes(s.start))&&Number.isInteger(s.duration)&&s.duration>=15&&s.duration<=720&&typeof s.locked==='boolean'
+ &&Array.isArray(p.stops)&&p.stops.length<=(flexible?30:20)&&new Set(p.stops.map(s=>s?.id)).size===p.stops.length&&p.stops.every(s=>s&&typeof s.id==='string'&&!!s.id&&s.id.length<=128&&typeof s.name==='string'&&s.name.length<=200
+ &&Object.hasOwn(kindNames,s.kind)&&typeof s.address==='string'&&s.address.length<=(flexible?500:400)&&typeof s.url==='string'&&s.url.length<=2048&&typeof s.note==='string'&&s.note.length<=2000
+ &&validTime(s.start)&&Number.isInteger(s.duration)&&s.duration>=(flexible?5:15)&&s.duration<=720&&typeof s.locked==='boolean'
+ &&(s.outing===undefined||flexible&&validOutingDetails(s.outing))
  &&['CATALOG','OSM','KAKAO','MANUAL'].includes(s.source)&&(s.point===null||validPoint(s.point))
  &&(s.eventId===undefined||Number.isSafeInteger(s.eventId)&&s.eventId>0)&&(s.image===undefined||typeof s.image==='string')
  &&(s.occurrences===undefined||Array.isArray(s.occurrences)&&s.occurrences.length<=100&&s.occurrences.every(o=>o&&validDay(o.startDate)&&validDay(o.endDate)&&o.startDate<=o.endDate

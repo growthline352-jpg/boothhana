@@ -19,9 +19,9 @@ export function safeShareUrl(value:string){
 }
 export function publicSnapshot(plan:Plan,includeNotes=false):Plan{
  // Explicit allowlist also keeps accidentally added account fields off the wire.
- return {version:1,id:plan.id,title:plan.title.trim()||'나의 하루 일정',purpose:plan.purpose,day:plan.day,start:plan.start,end:plan.end,area:plan.area,style:plan.style,updatedAt:plan.updatedAt,
+ return {version:1,planner:plan.planner,id:plan.id,title:plan.title.trim()||'나의 하루 일정',purpose:plan.purpose,day:plan.day,start:plan.start,end:plan.end,area:plan.area,style:plan.style,updatedAt:plan.updatedAt,
   ...(plan.interests?{interests:{topics:[...plan.interests.topics],subjects:[...plan.interests.subjects]}}:{}),
-  stops:plan.stops.map(s=>({id:s.id,kind:s.kind,name:s.name,address:s.address,point:s.point?{lat:s.point.lat,lng:s.point.lng}:null,eventId:s.eventId,start:s.start,duration:s.duration,locked:s.locked,note:includeNotes?s.note:'',url:safeShareUrl(s.url),image:s.image?safeShareUrl(s.image):undefined,occurrences:s.occurrences?.map(o=>({startDate:o.startDate,endDate:o.endDate,startTime:o.startTime,endTime:o.endTime})),venueName:s.venueName,openingHours:s.openingHours,source:s.source}))}
+  stops:plan.stops.map(s=>({id:s.id,kind:s.kind,name:s.name,address:s.address,point:s.point?{lat:s.point.lat,lng:s.point.lng}:null,eventId:s.eventId,start:s.start,duration:s.duration,locked:s.locked,note:includeNotes?s.note:'',url:safeShareUrl(s.url),image:s.image?(/^\/assets\/brand\/outings\/sample-(popup|exhibition|festival)\.jpg$/.test(s.image)?s.image:safeShareUrl(s.image)):undefined,occurrences:s.occurrences?.map(o=>({startDate:o.startDate,endDate:o.endDate,startTime:o.startTime,endTime:o.endTime})),venueName:s.venueName,openingHours:s.openingHours,source:s.source,...(s.outing?{outing:{placeId:s.outing.placeId,kind:s.outing.kind,area:s.outing.area,description:'',booking:'',tags:[],cost:null,indoor:s.outing.indoor,source:s.outing.source,sourceUrl:s.outing.sourceUrl?safeShareUrl(s.outing.sourceUrl):undefined,admission:s.outing.admission,state:s.outing.state,travel:s.outing.travel,fixed:s.outing.fixed,done:false}}:{})}))}
 }
 export function createShareInput(plan:Plan,includeNotes:boolean):ShareInput{
  const bytes=crypto.getRandomValues(new Uint8Array(32)),key=btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replaceAll('=','')

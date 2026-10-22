@@ -32,7 +32,7 @@ export function ShareDialog({plan,owner,close}:{plan:Plan;owner:string;close:()=
  const send=async(entry:ManagedShare)=>{try{await navigator.share({title:entry.input.plan.title,url:shareLink(entry.result!.token)})}catch(e){if(!(e instanceof DOMException&&e.name==='AbortError'))void copy(entry)}}
  return <dialog className="it-dialog it-share-dialog" ref={ref} aria-labelledby={id} onCancel={e=>{e.preventDefault();if(!busy)close()}}>
   <header><h2 ref={title} id={id} tabIndex={-1}>일정 공유</h2><button type="button" disabled={busy} onClick={close} aria-label="공유 창 닫기">×</button></header>
-  <div className="it-dialog-body"><div className="it-share-preview"><strong>{plan.title.trim()||'나의 하루 일정'}</strong><span>{plan.day} · {plan.stops.length}곳 · {plan.start}–{plan.end}</span></div>
+  <div className="it-dialog-body"><div className="it-share-preview"><strong>{plan.title.trim()||'나의 하루 일정'}</strong><span>{plan.day} · {plan.stops.length}곳 · {plan.start||'시작시간 미정'}{plan.end?`–${plan.end}`:''}</span></div>
    <p>링크를 받은 사람은 일정과 지도를 볼 수 있고, 자기 일정으로 복사해 수정할 수 있어요.</p>
    <label className="it-share-notes"><input type="checkbox" disabled={busy} checked={includeNotes} onChange={e=>setIncludeNotes(e.target.checked)}/>장소별 메모도 공유</label>
    <small>장소와 주소, 방문 시간이 공유됩니다. 메모는 선택한 경우에만 포함해요. 링크 종료는 작성한 브라우저에서 할 수 있어요.</small>

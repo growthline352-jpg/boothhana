@@ -21,7 +21,7 @@ public class PersonalItineraries {
  @GetMapping public ResponseEntity<List<PrivatePlanStore.Stored>> list(Authentication auth){return response(store.list(PrivatePlanStore.Kind.ITINERARY,current.require(auth).id));}
  @PutMapping("/{id}") public ResponseEntity<PrivatePlanStore.Stored> save(Authentication auth,@PathVariable UUID id,@RequestBody Save input){
   long owner=current.require(auth).id;if(input==null||input.revision()==null)throw ApiException.badRequest("일정과 저장 버전을 확인해 주세요.");expected(owner,input.expectedUserId());
-  var plan=SharedPlanRules.snapshot(input.plan(),true,json);
+  var plan=SharedPlanRules.snapshot(input.plan(),true,json,true);
   if(!id.toString().equals(plan.get("id")))throw ApiException.badRequest("일정 번호가 일치하지 않아요.");
   try{plan.put("updatedAt",Instant.parse(SharedPlanRules.text(input.plan(),"updatedAt",64,true)).toString());}catch(java.time.DateTimeException e){throw ApiException.badRequest("일정 수정 시각을 확인해 주세요.");}
   return response(store.save(PrivatePlanStore.Kind.ITINERARY,owner,id,input.revision(),json.valueToTree(plan)));

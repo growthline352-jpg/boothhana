@@ -27,13 +27,13 @@ export function OutingsFooter({ onNavigate }: { onNavigate: (view: FooterView) =
           <div><h2>부스하나 안내</h2>
             <a href="/about">회사소개</a>
             <a href="/support">고객센터</a>
-            <a href="/library">내 방문·보관함</a><a href="/itinerary">계정에 저장한 일정</a>
+            <a href="/library">내 방문·보관함</a><a href="/itinerary?step=0">행사 중심 일정 만들기</a>
           </div>
         </nav>
       </div>
       <div className="o-footer-bottom">
         <small>© {new Date().getFullYear()} BoothHana</small>
-        <div><p>일정과 보관함은 이 브라우저에 저장돼요. 파일로 보관하거나 다른 기기로 옮길 수 있어요.</p>
+        <div><p>로그인하면 일정을 계정에 저장하고 다른 기기에서 이어서 볼 수 있어요. 초안과 장소 보관함은 이 기기에 보관됩니다.</p>
           <p>예시 행사는 체험용입니다. 실제 방문 전 주최 측의 최신 일정과 이용 조건을 확인해 주세요.</p></div>
       </div>
     </div>

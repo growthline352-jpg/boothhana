@@ -377,3 +377,8 @@
   .o-continue button { font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+.o-account-panel { margin:20px 0; padding:20px; border:1px solid var(--o-line); border-radius:12px; background:var(--o-warm); display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+.o-account-panel>div:first-child { flex:1; min-width:220px; }
+.o-account-panel h2 { font-size:18px; }
+.o-account-panel p { color:var(--o-muted); }
