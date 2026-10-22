@@ -23,6 +23,7 @@ from urllib.parse import urlsplit,urlunsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from rules import parse_result, inspect_result, parse_date, MAX_JSON_BYTES, InvalidResult
 from transport import send_batch, endpoint, DeliveryError
+from usage_cooldown import active_cooldown, start_cooldown
 
 ROOT=Path(__file__).resolve().parent
 try: SEOUL=ZoneInfo('Asia/Seoul')
@@ -104,7 +105,7 @@ def child_environment(home: Path, source: dict[str,str] | None=None) -> dict[str
     # DB, R2, BOOTH_COLLECTOR_TOKEN, plugin/MCP configuration are never inherited.
     return env
 
-def codex_command(executable: str, schema: Path, output: Path, model: str | None=None, images: list[Path] | None=None, web_search: bool=True) -> list[str]:
+def codex_command(executable: str, schema: Path, output: Path, model: str | None=None, images: list[Path] | None=None, web_search: bool=True, reasoning_effort: str | None=None) -> list[str]:
     command=[executable,'exec','--skip-git-repo-check','--sandbox','read-only','--ephemeral','--json',
         '-c','web_search="live"' if web_search else 'web_search="disabled"','-c','approval_policy="never"','-c','features.shell_tool=false',
         '-c','features.unified_exec=false','-c','allow_login_shell=false',
@@ -112,6 +113,9 @@ def codex_command(executable: str, schema: Path, output: Path, model: str | None
     if model:
         if not isinstance(model,str) or not re.fullmatch(r'[A-Za-z0-9_.:/-]{1,100}',model): raise RunError('model 이름 형식 오류')
         command+=['--model',model]
+    if reasoning_effort is not None:
+        if reasoning_effort not in ('none','low','medium','high','xhigh','max'):raise RunError('잘못된 추론 설정')
+        command+=['-c','model_reasoning_effort='+json.dumps(reasoning_effort)]
     for image in images or []:
         command += ['--image',str(image)]
     return command+['-']
@@ -250,6 +254,10 @@ def output_schema_for_cli(value: dict) -> dict:
     return result
 
 def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | None = None, *, images: list[Path] | None = None, web_search: bool = True, allow_full_image_set: bool = False) -> tuple[bytes,bool,dict]:
+    cooldown=active_cooldown(cfg)
+    if cooldown:
+        write_json(run_dir/'cli-failure.json',{'reason':'USAGE_LIMIT','retryAt':cooldown['retryAt'],'remainingSeconds':cooldown['remainingSeconds'],'skipped':True})
+        raise CliUnavailable('USAGE_LIMIT')
     executable=shutil.which(cfg['codexExecutable'])
     if not executable: raise RunError('Codex CLI를 찾지 못했습니다. 설치 후 codex login을 실행하세요.')
     auth_root=Path(cfg['codexHome']).expanduser() if cfg['codexHome'] else Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex'))).expanduser()
@@ -274,7 +282,7 @@ def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | No
             if image.is_symlink() or not image.is_file() or image.stat().st_size>10*1024*1024: raise RunError('잘못된 분석 이미지')
             target=home/'work'/f'image-{index}{image.suffix.lower()}'
             shutil.copyfile(image,target);copied.append(target)
-        command=codex_command(executable,schema,output,cfg['model'],copied,web_search)
+        command=codex_command(executable,schema,output,cfg['model'],copied,web_search,reasoning_effort='high' if cfg['model']=='gpt-6-luna' else None)
         stdout=run_dir/'codex.jsonl'; stderr=run_dir/'codex.stderr.log'
         with stdout.open('wb') as out,stderr.open('wb') as err:
             flags={'start_new_session':True} if os.name!='nt' else {'creationflags':subprocess.CREATE_NEW_PROCESS_GROUP}
@@ -296,7 +304,11 @@ def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | No
         if p.returncode:
             reason=terminal_cli_failure(stdout)
             if reason:
-                write_json(run_dir/'cli-failure.json',{'reason':reason,'exitCode':p.returncode})
+                details={'reason':reason,'exitCode':p.returncode}
+                if reason=='USAGE_LIMIT':
+                    cooldown=start_cooldown(cfg)
+                    details.update(retryAt=cooldown['retryAt'],remainingSeconds=cooldown['remainingSeconds'])
+                write_json(run_dir/'cli-failure.json',details)
                 raise CliUnavailable(reason)
             raise RunError(f'Codex 실행 실패(exit {p.returncode}). 로컬 codex.jsonl 및 stderr 로그를 확인하세요.')
         if not output.is_file() or output.stat().st_size>MAX_JSON_BYTES: raise RunError('CLI 결과 파일 누락/크기 초과')

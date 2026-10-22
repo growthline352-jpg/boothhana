@@ -92,6 +92,10 @@ class RunnerTests(unittest.TestCase):
     def test_safe_codex_args(self):
         cmd=codex_command('/codex',Path('/s.json'),Path('/o.json'))
         self.assertIn('web_search="live"',cmd);self.assertIn('features.shell_tool=false',cmd);self.assertEqual(cmd[-1],'-');self.assertNotIn('--yolo',cmd)
+    def test_explicit_luna_reasoning_keeps_the_same_model_and_read_only_cli(self):
+        cmd=codex_command('/codex',Path('/s.json'),Path('/o.json'),model='gpt-6-luna',reasoning_effort='high')
+        self.assertEqual(cmd[cmd.index('--model')+1],'gpt-6-luna');self.assertIn('model_reasoning_effort="high"',cmd);self.assertIn('read-only',cmd);self.assertEqual(cmd[-1],'-')
+        with self.assertRaises(RunError):codex_command('/codex',Path('/s.json'),Path('/o.json'),reasoning_effort='invalid')
     def test_unsafe_api_origin(self):
         for u in ['http://example.com','https://u:p@example.com','https://example.com?token=x','https://example.com/api']:
             self.assertRaises(DeliveryError,endpoint,u)

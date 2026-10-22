@@ -15,7 +15,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit
 
-from graph_worker import COMMON, MODEL, Worker as GraphWorker, arr, configuration, obj, string
+from graph_worker import COMMON, MODEL, EXTRACTION_MODEL, Worker as GraphWorker, arr, configuration, obj, string
 from media_fetch import fetch_html, fetch_image, inspect_image
 from public_sources import PublicSources, illustar_notice, kakao_pr_article
 from run import CliUnavailable, RunError, canonical_audit_url, execute_search, write_json
@@ -227,8 +227,10 @@ def commons_imageinfo(url):
 class EntityMediaWorker:
     def __init__(self, cfg=None, api=None, search=execute_search, source_loader=None, image_fetcher=fetch_image):
         self.cfg = dict(cfg if cfg is not None else configuration())
-        if self.cfg.get('model') != MODEL:
+        if self.cfg.get('model') not in (MODEL,EXTRACTION_MODEL) or self.cfg.get('reviewModel') != MODEL:
             raise RunError('Entity media requires explicit gpt-6.1-sol; null/fallback is disabled')
+        # Media discovery, identity and rights decisions all retain the explicit Sol policy.
+        self.cfg['model'] = MODEL
         self.sources = source_loader or NativeSources(self.cfg['blockedSourceHosts'])
         self.image_fetcher = image_fetcher
         self.caller = GraphWorker(self.cfg, api=api, search=search, source_loader=self.sources)

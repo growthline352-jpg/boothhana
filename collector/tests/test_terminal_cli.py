@@ -60,7 +60,8 @@ class TerminalCliTests(unittest.TestCase):
                                               'poll': lambda self: 1})()
         with patch.dict(os.environ, {'CODEX_API_KEY': 'test-only'}), \
                 patch('run.shutil.which', return_value='fake-codex'), \
-                patch('run.subprocess.Popen', side_effect=process):
+                patch('run.subprocess.Popen', side_effect=process), \
+                patch('run.active_cooldown', return_value=None):  # Classifier cases are independent provider calls.
             return run.execute_search({**self.cfg, 'codexHome': str(self.root / 'no-auth')}, folder, 'test')
 
     def test_structured_cli_failures_are_classified_without_copying_response_bodies(self):
