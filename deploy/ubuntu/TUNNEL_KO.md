@@ -108,6 +108,9 @@ DB와 GCS는 동일한 서비스를 계속 사용하므로 Render에서 Ubuntu�
 `graph.config.json`에는 `collector/config.graph.example.json`을 바탕으로 내부 API 주소,
 `/var/lib/boothhana-collector/state/graph`, `/var/lib/boothhana-collector/codex`를 설정합니다.
 SQL031–036, API 그래프 기능, Codex 로그인과 정확한 모델 호출 검증이 선행되어야 합니다.
+일반 텍스트 추출은 `model: "gpt-6-luna"`, 독립 검토는 `reviewModel: "gpt-6.1-sol"`을 지정합니다.
+이미지 첨부와 캐릭터·관계 판단은 Sol을 유지합니다. API를 먼저 배포한 뒤 그래프 worker 이미지와
+설정을 함께 반영하며, 이전 worker로 복구할 때는 이전 설정도 복원합니다. [단계별 모델 안내](../../collector/GRAPH_WORKER_KO.md#2026-10-23-단계별-모델)를 따릅니다.
 
 ```bash
 docker compose --profile graph up -d --no-deps boothhana-graph
@@ -132,5 +135,7 @@ docker compose --profile graph logs --tail 50 boothhana-graph
 롤백 시 상시 그래프 서비스만 중지하고 이전 이미지·설정·graph baseline cron을 복원합니다.
 
 계정 사용량 제한(`USAGE_LIMIT`)·인증 오류·CLI 스키마 오류는 전체 작업의 실패가 아닙니다.
-상시 그래프 수집기는 해당 작업을 보완 대기로 보존하고 1시간 대기한 뒤 자동 재시도합니다.
+상시 그래프 수집기는 해당 작업을 보완 대기로 보존합니다. 사용량 제한은 같은 계정의 예약 작업과
+공유하는 5시간 대기 파일에 재시도 시각을 기록하고, 그 시각 이후 자동 재시도합니다. 인증·스키마
+오류는 1시간 대기 후 재시도하며, 사용량 제한 때 모델을 자동 전환하지 않습니다.
 호출 횟수 무제한 설정은 공급자 계정의 사용량 제한을 해제하지 않습니다.
