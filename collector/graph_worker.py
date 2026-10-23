@@ -23,7 +23,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-source-recovery-1'
+PROMPT_VERSION='graph-4-comicinfo-images-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -138,6 +138,7 @@ PRODUCT_RULES='''
 판매글/판매표는 상품을 담는 자료이며 그 자체를 하나의 상품으로 만들지 않는다. 히나/리제처럼 캐릭터가 다른 옵션이나 원문에서 구별되는 판매 옵션은 각 행으로 수집한다.
 실제 옵션명만 사용한다. 공통 주문폼 URL/폼 ID를 모든 옵션의 productUrl/sourceEntryId/identity에 반복하지 않는다. 개별 식별 URL/ID가 없으면 null로 두고 공통 폼 주소는 sources에만 남긴다.
 선입금 종료와 품절, 과거 회차 판매와 현재 판매를 구분한다. 상품 이미지를 못 보더라도 원문으로 확인한 옵션명/가격/귀속을 버리지 않는다.
+코믹인포 공식 /g/숫자 원문의 INFO_COVER·INFO_BODY 이미지가 실제 첨부되면 표지와 본문 판매표를 직접 읽어라. 표지의 팬아트·캐릭터 그림 자체를 판매상품으로 만들지 않는다. 실제 상품명·옵션·가격·작가 귀속·행사 회차가 확인된 항목만 수집하고 미확인은 남긴다. 외부 주문폼을 열지 못해도 이 공식 인포 본문·이미지에서 직접 확인한 사실은 버리지 않는다.
 '''
 PROMPTS['SALES']+=PRODUCT_RULES+'''
 공동 판매표에서 서로 다른 작가의 같은 이름 상품(예: A3 Poster)은 각각 별도 상품이다. name을 원문으로 확인된 작가명 + 상품명으로 구별하고 memberName에도 그 작가명을 유지한다. 작가명이나 옵션명을 추정하거나 같은 출처의 다른 작가 상품을 합치지 않는다.
