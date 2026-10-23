@@ -471,6 +471,52 @@ class CollectionGraphIntegrationTests {
   assertThat(candidates).hasSize(80);assertThat(candidates.getFirst().get("id")).isEqualTo(work);
   assertThat(candidates).allMatch(c->work.equals(c.get("id"))||work.equals(c.get("workId")));
  }
+ @Test void cleanFirstClaimFindsPunctuatedWorkAndCastWithoutRelaxingIdentityProof(){
+  var result=new LinkedHashMap<>(characters("[TEST] 고토 히토리"));var assignment=value(((List<?>)result.get("assignments")).getFirst());
+  assignment.put("work",Map.of("name","[TEST] 봇치 더 록!","sourceUrl",source,"medium","애니메이션"));result.put("assignments",List.of(assignment));
+  approveJob(seed("CHARACTERS",standaloneProduct().toString()),result);
+  UUID work=db.queryForObject("select id from subculture_subject where name='[TEST] 봇치 더 록!'",UUID.class);
+  UUID hero=db.queryForObject("select id from subculture_subject where name='[TEST] 고토 히토리'",UUID.class);
+  UUID product=standaloneProduct();db.update("update collection_product set data_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","Unrelated product title","subjects",List.of("[TEST]봇치더록"))),product);
+  long aliases=db.queryForObject("select count(*) from collection_subject_identity",Long.class);
+  var queued=graph.seed(new Seed("CHARACTERS",product.toString(),Map.of(),true,"fresh-punctuation"));
+  assertThat(db.queryForObject("select last_error from collection_job where id=?",String.class,queued.get("id"))).isNullOrEmpty();
+  var candidates=(List<?>)value(graph.claim((UUID)queued.get("id")).get("context")).get("identityCandidates");
+  assertThat(candidates.stream().map(x->value(x).get("id").toString()).toList()).containsExactlyInAnyOrder(work.toString(),hero.toString());
+  assertThat(db.queryForObject("select name from subculture_subject where id=?",String.class,work)).isEqualTo("[TEST] 봇치 더 록!");
+  assertThat(db.queryForObject("select count(*) from collection_subject_identity",Long.class)).isEqualTo(aliases);
+  assertThat(db.queryForObject("select count(*) from collection_product_subject where product_id=?",Integer.class,product)).isZero();
+  var unproven=Map.<String,Object>of("id",work,"name","[TEST] 봇치더록","sourceUrl",source+"/other","medium","애니메이션","identityDecision","EXISTING");
+  assertThatThrownBy(()->new GraphIdentity(db,json).subject(unproven,"WORK",null,UUID.randomUUID())).isInstanceOf(ApiException.class).hasMessageContaining("양쪽 공식 출처");
+ }
+ @Test void punctuatedReviewedAliasFindsCanonicalWorkAndCastWithoutChangingRows(){
+  var expected=reviewHintSubjects();UUID work=expected.getFirst();
+  db.update("insert into collection_subject_identity(identity_key,subject_id,source_url,name,evidence_json,verdict_id) select ?,id,source_url,?,'[]',system_verdict_id from subculture_subject where id=?",UUID.randomUUID().toString(),"[TEST] Alternative-Series!",work);
+  long aliases=db.queryForObject("select count(*) from collection_subject_identity",Long.class);
+  var candidates=new GraphIdentity(db,json).subjectCandidates("[TEST]AlternativeSeries");
+  assertThat(candidates.stream().map(x->x.get("id").toString()).toList()).containsExactlyInAnyOrderElementsOf(expected.stream().map(UUID::toString).toList());
+  assertThat(db.queryForObject("select count(*) from collection_subject_identity",Long.class)).isEqualTo(aliases);
+  assertThat(db.queryForObject("select name from subculture_subject where id=?",String.class,work)).isEqualTo("[TEST] Canonical Series");
+ }
+ @Test void punctuationOnlySubjectAndAliasNamesCannotMatchEveryProduct(){
+  var expected=reviewHintSubjects();UUID work=expected.getFirst();
+  db.update("insert into subculture_subject(id,kind,name,medium,source_url,system_verdict_id) select gen_random_uuid(),'WORK','!!!','애니메이션',source_url,system_verdict_id from subculture_subject where id=?",work);
+  db.update("insert into collection_subject_identity(identity_key,subject_id,source_url,name,evidence_json,verdict_id) select ?,id,source_url,'---','[]',system_verdict_id from subculture_subject where id=?",UUID.randomUUID().toString(),work);
+  for(String text:List.of("Unrelated product without a known series","","{}"))assertThat(new GraphIdentity(db,json).subjectCandidates(text)).isEmpty();
+ }
+ @Test void punctuationSimilarityOnlySuggestsDistinctWorksAndNeverMergesThem(){
+  var ids=new ArrayList<UUID>();
+  for(String name:List.of("[TEST] Hint-A","[TEST] HintA")){
+   var result=new LinkedHashMap<>(characters("[TEST] Hero for "+name));var assignment=value(((List<?>)result.get("assignments")).getFirst());
+   assignment.put("work",Map.of("name",name,"sourceUrl",source+"/"+ids.size(),"medium","애니메이션"));result.put("assignments",List.of(assignment));
+   reviewed(seed("CHARACTERS",standaloneProduct().toString()),result,audit(List.of(source,source+"/"+ids.size()),List.of()));ids.add(db.queryForObject("select id from subculture_subject where kind='WORK' and name=?",UUID.class,name));
+  }
+  long count=db.queryForObject("select count(*) from subculture_subject",Long.class);
+  var candidates=new GraphIdentity(db,json).subjectCandidates("[TEST]HintA");
+  assertThat(candidates.stream().filter(x->"WORK".equals(x.get("kind"))).map(x->x.get("id")).toList()).containsExactlyInAnyOrderElementsOf(ids);
+  assertThat(db.queryForObject("select count(*) from subculture_subject",Long.class)).isEqualTo(count);
+  assertThat(db.queryForObject("select count(*) from subculture_subject where id in (?,?)",Integer.class,ids.get(0),ids.get(1))).isEqualTo(2);
+ }
  @Test void identityCollisionGivesCanonicalHintsAndCorrectedResearchReusesTheIds(){
   var expected=reviewHintSubjects();String alternate=source+"/new-official";
   var proposed=Map.<String,Object>of("name","[TEST] Canonical Series","sourceUrl",alternate,"medium","애니메이션","identityDecision","NEW");

@@ -72,12 +72,14 @@ public class GraphIdentity {
  }
  public List<Map<String,Object>> subjectCandidates(String text){return db.queryForList("""
   with needle as (
-   select regexp_replace(lower(?),'[[:space:]]','','g') value
+   select regexp_replace(lower(?),'[[:space:][:punct:]]','','g') value
   ), matched as (
    select s.id,s.work_id,s.kind from subculture_subject s cross join needle n
-   where position(regexp_replace(lower(s.name),'[[:space:]]','','g') in n.value)>0 or exists(
+   where (regexp_replace(lower(s.name),'[[:space:][:punct:]]','','g')<>''
+    and position(regexp_replace(lower(s.name),'[[:space:][:punct:]]','','g') in n.value)>0) or exists(
     select 1 from collection_subject_identity a where a.subject_id=s.id
-     and position(regexp_replace(lower(a.name),'[[:space:]]','','g') in n.value)>0)
+     and regexp_replace(lower(a.name),'[[:space:][:punct:]]','','g')<>''
+     and position(regexp_replace(lower(a.name),'[[:space:][:punct:]]','','g') in n.value)>0)
   )
   select s.id,s.kind,s.name,s.work_id as "workId",w.name as "workName",s.medium,s.source_url as "sourceUrl",s.active
   from subculture_subject s left join subculture_subject w on w.id=s.work_id
