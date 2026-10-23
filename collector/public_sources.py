@@ -125,10 +125,24 @@ class PublicSources:
                 if len(text)<100 and not (sns_post and parser.images) or any(s in title.lower() for s in ('access denied','just a moment','captcha','로그인','login','sign in')):raise MediaError('No usable public page body')
                 value.update(available=True,title=title,sha256=digest,text=text[:50000],links=parser.links[:150],truncated=len(text)>50000)
                 if sns_post:value['images']=[{'imageUrl':u,'pageUrl':url} for u in parser.images]
+                info_images=comicinfo_images(url,parser.images)
+                if info_images:value['images']=info_images
                 if native_images:value['images']=native_images
             except (ValueError,OSError) as exc:value['failure']=str(exc)[:200]
             documents.append(value)
         return documents
+
+def comicinfo_images(url,images):
+    """Only this publisher's actual info cover/body files, not icons or unrelated uploads."""
+    p=urlsplit(url);hosts={'comicw.net','www.comicw.net','m.comicw.net'}
+    if p.hostname not in hosts or not re.fullmatch(r'/g/[1-9][0-9]*/?',p.path):return []
+    result=[]
+    for image in images:
+        target=urlsplit(image)
+        if target.scheme!='https' or target.hostname not in hosts:continue
+        match=re.fullmatch(r'/data/info/(cover|editor)/[^/]+\.(?:png|jpe?g|webp|gif)',target.path,re.I)
+        if match:result.append({'imageUrl':image,'pageUrl':url,'role':'INFO_COVER' if match[1].lower()=='cover' else 'INFO_BODY'})
+    return result
 
 def illustar_detail(url,body,kind,expected_id):
     """Read only public booth/event fields, never application/account metadata."""
