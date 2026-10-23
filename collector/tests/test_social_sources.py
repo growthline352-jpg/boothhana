@@ -71,6 +71,22 @@ class SocialSourceTests(unittest.TestCase):
     def test_context_reuses_booth_links_and_approved_creator_accounts(self):
         context={'creator':{'data':{'profileUrl':'https://comicw.net/creator/1'}},'creatorProvenance':[{'officialLinks':[PROFILE],'sources':[{'url':'https://comicw.net/event/1','access':'ORIGINAL'}]}],'publication':{'data':{'socialAccounts':[{'profileUrl':'https://x.com/artist'}]}},'creatorSources':[{'socialAccounts':[{'profileUrl':PROFILE}]}]}
         self.assertEqual(4,len(context_urls(context)));self.assertIn(PROFILE,context_urls(context))
+    def test_context_includes_canonical_candidate_originals_without_duplicates(self):
+        context={'product':{'data':{'sources':[{'access':'ORIGINAL','url':'https://example.com/product'}]}},
+                 'identityCandidates':[{'sourceUrl':'https://example.com/work'},{'sourceUrl':'https://example.com/character'},
+                                       {'sourceUrl':'https://example.com/work'},{'sourceUrl':None},{'sourceUrl':'javascript:alert(1)'}]}
+        self.assertEqual(['https://example.com/product','https://example.com/work','https://example.com/character'],context_urls(context))
+    def test_candidate_originals_are_refetched_and_still_obey_source_policy(self):
+        from public_sources import PublicSources
+        context={'identityCandidates':[{'sourceUrl':'https://example.com/work'},{'sourceUrl':'https://example.com/character'}]};calls=[]
+        def fetch(url,hosts,**kwargs):
+            calls.append(url)
+            if url.endswith('/robots.txt'):return 'User-agent: *\nDisallow: /character','robots'
+            return '<p>'+('Original canonical work identity. '*10)+'</p>','fresh-original'
+        reader=PublicSources([],fetch)
+        for phase in ('extract','review'):
+            docs=reader(context_urls(context));self.assertEqual(2,len(docs));self.assertTrue(docs[0]['available']);self.assertFalse(docs[1]['available'])
+        self.assertEqual(2,calls.count('https://example.com/work'));self.assertNotIn('https://example.com/character',calls)
     def test_public_postype_sale_sheet_images_are_attached_even_with_little_body_text(self):
         from public_sources import PublicSources
         def fetch(url,hosts,**kwargs):

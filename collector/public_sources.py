@@ -248,6 +248,10 @@ def context_urls(context):
         for s in data.get('sources',[]):
             if s.get('access')=='ORIGINAL':add(s.get('url'))
         for link in data.get('officialLinks',[]):add(link if isinstance(link,str) else link.get('url'))
+    # Existing IDs need the same freshly fetched official originals as proposed
+    # IDs. Otherwise a separate search transport's 403 can hide an available
+    # native source and leave every canonical assignment unresolved.
+    for candidate in context.get('identityCandidates',[]):add(candidate.get('sourceUrl'))
     for account in context.get('publication',{}).get('data',{}).get('socialAccounts',[]):add(account.get('profileUrl'))
     for creator in context.get('creatorSources',[]):
         add(creator.get('profileUrl'))
