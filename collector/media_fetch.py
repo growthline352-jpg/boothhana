@@ -2,7 +2,9 @@
 Does not inherit proxy settings, send cookies, crawl pages, resize, or transform third-party works.
 """
 from __future__ import annotations
-import hashlib,http.client,ipaddress,io,socket,ssl,time,warnings
+import hashlib,http.client,ipaddress,io,socket,ssl,time,warnings,math
+from datetime import timezone
+from email.utils import parsedate_to_datetime
 from urllib.parse import quote,urlsplit,urljoin
 from PIL import Image,UnidentifiedImageError
 from rules import public_url
@@ -11,6 +13,21 @@ MAX_HTML_BYTES=4*1024*1024
 MAX_PIXELS=25_000_000
 PUBLIC_SOURCE_USER_AGENT='BoothHanaCollectorBot/6 (+https://boothana.kr/support)'
 class MediaError(ValueError): pass
+
+class ImageRateLimited(MediaError):
+    """A host asked us to wait. Never copy arbitrary response/header contents."""
+    def __init__(self,retry_after=None):
+        seconds=3600
+        try:
+            if isinstance(retry_after,str):
+                if retry_after.isascii() and retry_after.isdigit():seconds=int(retry_after)
+                else:
+                    value=parsedate_to_datetime(retry_after)
+                    if value.tzinfo is None:value=value.replace(tzinfo=timezone.utc)
+                    seconds=math.ceil(value.timestamp()-time.time())
+        except (ValueError,TypeError,OverflowError):pass
+        self.retry_after=max(1,min(7*24*3600,seconds))
+        super().__init__('Image HTTP 429; retry after '+str(self.retry_after)+' seconds')
 
 def normalize_image_content_type(value: str):
     """Accept the common but non-standard image/jpg response as JPEG."""
@@ -89,6 +106,7 @@ def fetch_image(url: str,hosts: list[str],timeout: int=30,max_pixels: int=MAX_PI
                 target=response.getheader('Location')
                 if not target: raise MediaError('Redirect missing destination')
                 url=urljoin(url,target);continue
+            if response.status==429:raise ImageRateLimited(response.getheader('Retry-After'))
             if response.status!=200: raise MediaError(f'Image HTTP {response.status}')
             if response.getheader('Content-Encoding','identity') not in ('identity',''): raise MediaError('Compressed transport not accepted')
             type_=normalize_image_content_type(response.getheader('Content-Type',''))

@@ -14,6 +14,8 @@
 
 `graph_worker.py --watch`는 기존 서버 정책에서 APPROVED인 카탈로그 이미지의 저장을 별도 작업으로 계속 처리한다. LLM 조사와 저장이 서로 막지 않으며, 저장 전 승인 상태·revision을 다시 확인하고 파일 형식·해시를 검증한다. 상태를 수동 승인으로 변경하지 않는다. `catalog_media_store.py --config ... --asset ...`로 특정 승인 후보만 다시 처리할 수도 있다.
 
+이미지 원본 서버가 HTTP 429를 반환하면 `Retry-After`의 초 단위 또는 HTTP 날짜를 해석해 해당 호스트의 나머지 다운로드를 대기한다. 값이 없거나 잘못되면 1시간, 유효한 값은 1초~7일 범위로 기록한다. 그래프 이미지 작업의 호스트 대기 시각은 `stateDirectory/catalog-image-host-cooldowns.json`에 저장해 재시작 후에도 유지한다. 대기 항목은 저장 완료나 사용 승인으로 바뀌지 않는다. 전체 이미지 큐는 200개씩 ID 커서로 순회해, 첫 페이지의 대기 호스트가 다른 호스트를 막지 않게 한다. 따라서 이 변경은 커서를 지원하는 백엔드를 먼저 배포한 뒤 수집기에 적용한다. 기존 커서 없는 이미지 API의 정렬과 특정 이미지 ID 재처리는 유지한다.
+
 ## 실행 조건과 미처리 상태
 
 Python `playwright` 및 `python -m playwright install chromium`이 필요하다. Docker 이미지는 동일 런타임과 Chromium을 포함한다. Docker의 비 root 사용자와 Chromium 샌드박스를 유지한다.

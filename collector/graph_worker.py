@@ -468,7 +468,7 @@ def main():
         print(json.dumps(worker.request('POST','/jobs',json.loads(args.seed.read_text(encoding='utf-8')))));return
     if args.watch:
         from catalog_media_store import start_background
-        stop,thread=start_background(worker.api,worker.cfg['blockedSourceHosts'])
+        stop,thread=start_background(worker.api,worker.cfg['blockedSourceHosts'],state_directory=worker.root)
         try:worker.run(args.watch,args.once)
         finally:stop.set();thread.join(timeout=1)
     else:worker.run(args.watch,args.once)

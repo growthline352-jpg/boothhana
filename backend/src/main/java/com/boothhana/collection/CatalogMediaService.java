@@ -141,14 +141,20 @@ public class CatalogMediaService {
         return bannerSelection(eventId);
     }
     public List<AssetView> pending(int limit) {
+        return pending(limit,null);
+    }
+    public List<AssetView> pending(int limit,Long afterId) {
         if(limit<1||limit>200) throw ApiException.badRequest("이미지 한도 오류");
-        return db.query("""
+        if(afterId!=null&&afterId<0) throw ApiException.badRequest("이미지 이어받기 위치 오류");
+        String query="""
             select a.* from subculture_catalog_asset a join subculture_event_candidate e on e.id=a.event_id
             left join subculture_participant p on p.id=a.participant_id
             where a.rights_state='APPROVED' and a.storage_state<>'STORED' and e.review_state<>'EXCLUDED'
             and (p.id is null or p.review_state<>'EXCLUDED')
-            and not (a.type='FLOOR_PLAN' and exists(select 1 from subculture_floorplan_source f where f.asset_id=a.id and f.can_transform)) order by a.last_attempt_at asc nulls first,a.id limit ?
-            """,this::asset,limit);
+            and not (a.type='FLOOR_PLAN' and exists(select 1 from subculture_floorplan_source f where f.asset_id=a.id and f.can_transform))
+            """;
+        return afterId==null?db.query(query+" order by a.last_attempt_at asc nulls first,a.id limit ?",this::asset,limit)
+            :db.query(query+" and a.id>? order by a.id limit ?",this::asset,afterId,limit);
     }
     public AssetView detail(long id) {var rows=db.query("select * from subculture_catalog_asset where id=?",this::asset,id);if(rows.isEmpty()) throw ApiException.notFound("이미지 후보 없음");return rows.getFirst();}
     @Transactional public AssetView rights(long id,RightsInput input) {
