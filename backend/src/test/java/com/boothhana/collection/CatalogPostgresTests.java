@@ -70,6 +70,25 @@ class CatalogPostgresTests {
     long participant() {return ingest(stage("PARTICIPANTS",null)).participantIds().getFirst();}
     void reviewEvent() {long revision=((Number)service.eventDetail(eventId).get("revision")).longValue();tx.execute(s->service.editEvent(eventId,new EditInput(revision,"REVIEWED","test checked",Map.of())));}
     void reviewParticipant(long id) {var row=service.participant(id);tx.execute(s->service.editParticipant(id,new EditInput(row.revision(),"REVIEWED","test checked",Map.of())));}
+    @Test void imageSweepPagesPastDeferredHostsAndKeepsApprovalAndStorageFilters() {
+        long before=db.queryForObject("select coalesce(max(id),0) from subculture_catalog_asset",Long.class);
+        var ids=db.queryForList("""
+            insert into subculture_catalog_asset(event_id,identity_key,type,image_url,page_url,rights_state,storage_state,error,last_attempt_at)
+            select ?,repeat(md5('image-sweep-'||n),2),'BANNER','https://images.example/'||n||'.png','https://official.example/event',
+                'APPROVED','FAILED','HTTP429',now()-(n*interval '1 minute') from generate_series(1,203) n returning id
+            """,Long.class,eventId);
+        db.update("update subculture_catalog_asset set rights_state='PENDING' where id=?",ids.get(201));
+        db.update("update subculture_catalog_asset set storage_state='STORED' where id=?",ids.get(202));
+        var first=media.pending(200,before);
+        assertThat(first).hasSize(200);
+        assertThat(first.stream().map(AssetView::id).toList()).containsExactlyElementsOf(ids.subList(0,200));
+        var second=media.pending(200,first.getLast().id());
+        assertThat(second.stream().map(AssetView::id).toList()).containsExactly(ids.get(200));
+        assertThat(first).allMatch(a->a.rightsState().equals("APPROVED")&&a.storageState().equals("FAILED"));
+        assertThat(media.pending(1).getFirst().id()).isEqualTo(ids.get(200));
+        assertThatThrownBy(()->media.pending(200,-1L)).hasMessageContaining("이어받기");
+        assertThat(db.queryForObject("select count(*) from subculture_catalog_asset where error='HTTP429'",Long.class)).isEqualTo(203);
+    }
     CatalogAutoApproval enableAutomaticIntake() {
         media=new CatalogMediaService(db,mock(VerifiedImageStorage.class),"https://images.example.com",true);
         publications=new CatalogPublicationService(db,json,media);

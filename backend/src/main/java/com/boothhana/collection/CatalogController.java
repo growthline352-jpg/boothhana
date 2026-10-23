@@ -29,7 +29,7 @@ public class CatalogController {
     @PostMapping("/pipelines/{id}/participants/{participantId}/attempt") public Map<String,Object> attempt(@PathVariable String id,@PathVariable long participantId,@RequestBody SalesAttemptInput input){return service.salesAttempt(id,participantId,input);}
     @PostMapping("/stages") public StageReceipt stage(@RequestBody StageBatch batch){return service.ingest(batch);}
     @PostMapping("/manual-stages") public StageReceipt manualStage(@RequestBody StageBatch batch){return service.ingestManual(batch);}
-    @GetMapping("/assets") public List<AssetView> assets(@RequestParam(defaultValue="100") int limit){return media.pending(limit);}
+    @GetMapping("/assets") public List<AssetView> assets(@RequestParam(defaultValue="100") int limit,@RequestParam(required=false) Long afterId){return media.pending(limit,afterId);}
     @GetMapping("/assets/{id}") public AssetView asset(@PathVariable long id){return media.detail(id);}
     @GetMapping("/image-repair-events") public List<Map<String,Object>> imageRepairEvents(@RequestParam(defaultValue="100") int limit,@RequestParam(defaultValue="0") long afterId){return service.imageRepairTargets(limit,afterId);}
     @PostMapping("/events/{id}/assets") public AssetView registerAsset(@PathVariable long id,@RequestBody AssetRegistrationInput input){return media.registerValidated(id,input);}
