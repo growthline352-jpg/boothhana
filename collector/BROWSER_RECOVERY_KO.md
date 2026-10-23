@@ -18,7 +18,13 @@
 
 Python `playwright` 및 `python -m playwright install chromium`이 필요하다. Docker 이미지는 동일 런타임과 Chromium을 포함한다. Docker의 비 root 사용자와 Chromium 샌드박스를 유지한다.
 
+Docker 실행에는 `deploy/ubuntu/chromium-seccomp.json`도 함께 배포한다. Compose의 수집기 두 서비스는 이 프로필을 사용해 Chromium 샌드박스에 필요한 `clone`·`setns`·`unshare`를 허용한다. `no-new-privileges`와 비 root 실행은 유지하며 `--no-sandbox`, privileged, seccomp 전체 해제는 사용하지 않는다. 프로필은 [Playwright 공식 Docker 프로필](https://github.com/microsoft/playwright/blob/main/utils/docker/seccomp_profile.json)의 복사본이며 SHA256은 `cc3e61cabda6bbc1e53e54d27ba4d55a9d3be829b6dd1a596f4a7b31b1cc7849`이다. 익명 브라우저 기동 성공과 실제 X 원문 열람 성공은 별도로 확인한다. X가 HTTP 403을 반환하면 원문 확보 성공으로 기록하지 않는다.
+
 데스크톱 브라우저 보완 요청은 CUA 실행자가 연결되어 있어야 처리된다. CUA 연결이 없는 서버에서 자동 브라우저가 403이면 요청은 DEFERRED로 남고 작업은 실패·재보완 상태가 된다. 따라서 이 구성만으로 모든 X 페이지를 24시간 자동으로 읽을 수 있다고 주장하지 않는다. 읽기 실패를 빈 판매목록의 완료로 승인하지 않는다.
+
+그래프 작업은 X 원문이 대기 중이어도 다른 공식 원문을 확보했다면 그 문서의 확인된 사실을 계속 추출·독립 검토한다. 대기 출처는 `available=false, browserPending=true`로 보존하며 원문 해시나 열람 기록을 만들지 않는다. 이 경우 명단·판매·작가 범위는 부분 상태로 유지한다. 확보한 원문이 하나도 없으면 기존처럼 `BrowserPending`으로 재보완 대기에 남긴다.
+
+승인 적용이 서버의 구조화된 `400 INVALID_REQUEST`로 확정 거절되면 동일한 불변 추출 결과에 더 엄격한 `ENRICH` 판정을 기록한다. 서버가 반환한 사유는 다음 추출의 보완 입력으로 전달한다. 이로써 거절된 추출을 승인 대상으로 무한 재전송하지 않는다. 응답을 알 수 없는 타임아웃, 임대 만료·권한 오류·409 충돌은 이 방식으로 변경하지 않으며 기존 재시도와 임대 검증을 따른다. 서브컬처 그래프의 행사 유형은 공유 분류 `SUBCULTURE`만 허용하고 다른 분야를 함께 사용하는 기존 수집 스키마는 유지한다.
 
 브라우저 프로필에서 보이는 게시물 묶음은 부분 범위다. 실제 전체 이력 커서와 계정 숫자 ID를 만들지 않는다. 이미 API 숫자 ID로 소유자가 확인된 계정은 브라우저 핸들만으로 동일 소유자를 재확정하지 않는다. 기존 API 커서는 브라우저 페이지 주소로 변환하지 않는다.
 

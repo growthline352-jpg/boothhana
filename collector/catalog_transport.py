@@ -3,6 +3,12 @@ import json,time,urllib.request,urllib.error
 from urllib.parse import urlencode
 from transport import endpoint,NoRedirect,DeliveryError
 
+class RejectedDelivery(DeliveryError):
+    """A bounded structured API rejection, distinct from uncertain transport failure."""
+    def __init__(self,status,code,message):
+        self.status=status;self.code=code;self.message=message
+        super().__init__(f'HTTP {status} {code}: {message}; do not alter an already-delivered payload')
+
 class Api:
     def __init__(self,base: str,token: str,timeout: int=45):
         endpoint(base)
@@ -52,17 +58,20 @@ class Api:
                     if len(content)>10*1024*1024: raise DeliveryError('Response too large')
                     return json.loads(content)
             except urllib.error.HTTPError as exc:
-                code=exc.code;detail=''
+                code=exc.code;detail='';rejection=None
                 try:
                     content=exc.read(4097)
                     if len(content)<=4096:
                         value=json.loads(content)
                         if isinstance(value,dict) and value.get('status')==code and value.get('code') in ('CONFLICT','CONCURRENT_UPDATE','DATA_CONFLICT','INVALID_REQUEST','INVALID_INPUT','VALIDATION_FAILED','NOT_FOUND','FORBIDDEN'):
                             message=value.get('message')
-                            if isinstance(message,str):detail=' '+value['code']+': '+' '.join(message.replace(self.token,'[redacted]').split())[:500]
+                            if isinstance(message,str):
+                                message=' '.join(message.replace(self.token,'[redacted]').split())[:500]
+                                detail=' '+value['code']+': '+message
+                                rejection=RejectedDelivery(code,value['code'],message)
                 except (ValueError,OSError):pass
                 finally:exc.close()
-                if code not in (429,502,503,504): raise DeliveryError(f'HTTP {code}{detail}; do not alter an already-delivered payload') from None
+                if code not in (429,502,503,504): raise rejection or DeliveryError(f'HTTP {code}{detail}; do not alter an already-delivered payload') from None
                 error=f'HTTP {code}'
             except (OSError,urllib.error.URLError,TimeoutError) as exc: error=type(exc).__name__
             except ValueError as exc: raise DeliveryError('Invalid API JSON') from exc
