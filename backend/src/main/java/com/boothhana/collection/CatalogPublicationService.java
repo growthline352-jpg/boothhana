@@ -39,6 +39,19 @@ public class CatalogPublicationService {
             where p.event_id=? and p.review_state='REVIEWED' and p.reviewed_payload_json is not null order by p.registration_name,p.id
             """,eventId);
         if(rows.size()>3000) throw ApiException.badRequest("한 행사에 공개할 수 있는 참가 부스 한도를 초과했습니다.");
+        // One event-scoped read avoids a database round trip for every booth.
+        // Keep the same per-parent ID order and identity/verification projection.
+        Map<Long,List<Map<String,Object>>> productsByParticipant=new HashMap<>();
+        if(rows.stream().anyMatch(r->"REVIEWED".equals(r.get("sales_state"))&&r.get("sales_json")!=null))
+            for(var product:db.queryForList("""
+                select product.* from subculture_catalog_product product
+                join subculture_participant p on p.id=product.participant_id
+                join subculture_sales s on s.participant_id=p.id
+                where p.event_id=? and p.review_state='REVIEWED' and p.reviewed_payload_json is not null
+                  and s.review_state='REVIEWED' and s.reviewed_payload_json is not null
+                order by product.participant_id,product.id
+                """,eventId))
+                productsByParticipant.computeIfAbsent(((Number)product.get("participant_id")).longValue(),ignored->new ArrayList<>()).add(product);
         for(var row:rows) {
             long id=((Number)row.get("id")).longValue();Participant p=json.readValue(row.get("reviewed_payload_json").toString(),Participant.class);
             Participant safe=new Participant(p.sourceEntryId(),p.registrationName(),p.kind(),p.members(),p.locations(),p.subjects(),p.description(),p.officialLinks(),p.sources(),List.of(),p.warnings(),p.identity());
@@ -50,7 +63,7 @@ public class CatalogPublicationService {
                 Map<String,ProductCheck> checks=new LinkedHashMap<>();
                 Map<?,?> rawChecks=json.readValue(row.get("checks_json").toString(),Map.class);
                 rawChecks.forEach((key,value)->checks.put(key.toString(),json.readValue(json.writeValueAsString(value),ProductCheck.class)));
-                var linked=new CatalogIdentityIndex(json).products(s,db.queryForList("select * from subculture_catalog_product where participant_id=? order by id",id),checks);
+                var linked=new CatalogIdentityIndex(json).products(s,productsByParticipant.getOrDefault(id,List.of()),checks);
                 List<ProductData> products=new ArrayList<>();List<ProductRow> productRows=new ArrayList<>();Map<String,Long> productIds=new LinkedHashMap<>();
                 for(var link:linked) {
                     ProductData p2=link.data();

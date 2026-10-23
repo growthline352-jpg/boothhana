@@ -77,13 +77,18 @@ public class GraphProjection {
    var batch=new StageBatch("4",verdict.toString(),pipeline,kind,eventId,participantId,number(kind.equals("SALES")?p.get("revision"):e.get("revision")),now,now,true,stage);
    var receipt=catalog.ingestReviewedProjection(batch,projectionRun,kind.equals("SALES")?GraphPageBatch.previousSalesStages(db,input,target):Set.of());
    require(receipt.rejected()==0,"식별 충돌 또는 검증에 실패한 항목이 있습니다.");
+   int excludedParticipants=0;
    if(kind.equals("PARTICIPANTS"))for(long pid:receipt.participantIds()){
-    var row=catalog.participant(pid);require(!"EXCLUDED".equals(row.reviewState()),"제외된 참가 정보입니다.");checkOverrides(row.overrides(),as(row.collectedData(),Map.class));catalog.editParticipant(pid,new EditInput(row.revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));downstream(pid,baseline,generation,enqueue);
+    var row=catalog.participant(pid);
+    // A public roster can still contain explicitly hidden booths. Preserve that
+    // decision and its overrides without rejecting independently reviewed siblings.
+    if("EXCLUDED".equals(row.reviewState())){excludedParticipants++;continue;}
+    checkOverrides(row.overrides(),as(row.collectedData(),Map.class));catalog.editParticipant(pid,new EditInput(row.revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));downstream(pid,baseline,generation,enqueue);
    }
    else if(stage.sales()!=null){var view=catalog.participant(participantId);require(view.sales()!=null&&!"EXCLUDED".equals(view.sales().reviewState()),"제외된 판매 정보입니다.");checkOverrides(view.sales().overrides(),as(view.sales().collectedData(),Map.class));catalog.editSales(participantId,new EditInput(view.sales().revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));products(participantId,baseline,generation,enqueue);}
    publish(eventId);
    String next=stage.coverage().nextPageUrl();if(next!=null){String nextKey=normalizedUrl(next);var seen=new ArrayList<String>();for(Object url:(List<?>)input.getOrDefault("visited",List.of()))seen.add(normalizedUrl(text(url)));String current=text(input.get("pageUrl"));if(!current.isBlank())seen.add(normalizedUrl(current));require(!seen.contains(nextKey),"페이지 순환이 발견됐습니다.");seen.add(nextKey);enqueue.accept(new Seed(kind,target,Map.of("pageUrl",next,"visited",seen),baseline,generation));}
-   return Map.of("verdict","APPROVE","eventId",eventId,"coverage",stage.coverage().completeness(),"needsEnrichment",next==null&&(!Set.of("COMPLETE","NOT_APPLICABLE").contains(stage.coverage().completeness())||!"COMPLETE".equals(stage.searchStatus())));
+   return Map.of("verdict","APPROVE","eventId",eventId,"excludedParticipants",excludedParticipants,"coverage",stage.coverage().completeness(),"needsEnrichment",next==null&&(!Set.of("COMPLETE","NOT_APPLICABLE").contains(stage.coverage().completeness())||!"COMPLETE".equals(stage.searchStatus())));
   }
   if(kind.equals("CREATOR")){
    require(!Boolean.FALSE.equals(map(context.get("publication")).get("active")),"숨긴 작가를 자동 공개할 수 없습니다.");long id=Long.parseLong(target);var original=map(map(context.get("creator")).get("data"));var profile=map(result.get("profile"));
