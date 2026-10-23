@@ -352,6 +352,40 @@ class CollectionGraphIntegrationTests {
   assertThat(value(receipt).get("verdict")).isEqualTo("ENRICH");
   assertThat(db.queryForObject("select count(*) from collection_product_subject where product_id=?",Integer.class,product)).isZero();
  }
+ @Test void spacedWorkTagFindsCanonicalWorkAndItsCharactersWithoutChangingFacts(){
+  var expected=reviewHintSubjects();UUID product=standaloneProduct();
+  db.update("update collection_product set data_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","Unrelated product title","subjects",List.of("[TEST]CanonicalSeries"))),product);
+  long aliases=db.queryForObject("select count(*) from collection_subject_identity",Long.class);
+  var seeded=graph.seed(new Seed("CHARACTERS",product.toString(),Map.of(),true,"spacing-hint"));var context=value(graph.claim((UUID)seeded.get("id")).get("context"));
+  var candidates=(List<?>)context.get("identityCandidates");
+  assertThat(candidates.stream().map(x->value(x).get("id").toString()).toList()).containsExactlyInAnyOrderElementsOf(expected.stream().map(UUID::toString).toList());
+  assertThat(candidates.stream().map(x->value(x).get("sourceUrl").toString()).toList()).containsOnly(source);
+  assertThat(db.queryForObject("select count(*) from collection_subject_identity",Long.class)).isEqualTo(aliases);
+  assertThat(db.queryForObject("select count(*) from collection_product_subject where product_id=?",Integer.class,product)).isZero();
+ }
+ @Test void boundedWorkCastHintsKeepTheMatchedWorkAheadOfItsManyChildren(){
+  var expected=reviewHintSubjects();UUID work=expected.getFirst();
+  db.update("insert into subculture_subject(id,kind,name,work_id,medium,source_url,system_verdict_id) select gen_random_uuid(),'CHARACTER','[TEST] Cast '||n,?,'애니메이션',?,system_verdict_id from subculture_subject cross join generate_series(1,100) n where id=?",work,source,work);
+  var candidates=new GraphIdentity(db,json).subjectCandidates("[TEST]CanonicalSeries");
+  assertThat(candidates).hasSize(80);assertThat(candidates.getFirst().get("id")).isEqualTo(work);
+  assertThat(candidates).allMatch(c->work.equals(c.get("id"))||work.equals(c.get("workId")));
+ }
+ @Test void identityCollisionGivesCanonicalHintsAndCorrectedResearchReusesTheIds(){
+  var expected=reviewHintSubjects();String alternate=source+"/new-official";
+  var proposed=Map.<String,Object>of("name","[TEST] Canonical Series","sourceUrl",alternate,"medium","애니메이션","identityDecision","NEW");
+  ApiException error=catchThrowableOfType(()->new GraphIdentity(db,json).subject(proposed,"WORK",null,UUID.randomUUID()),ApiException.class);
+  assertThat(error).hasMessageContaining("[TEST] Canonical Series").hasMessageContaining(expected.getFirst().toString());
+  UUID product=standaloneProduct();var queued=graph.seed(new Seed("CHARACTERS",product.toString(),Map.of(),true,"collision-hint"));
+  db.update("update collection_job set last_error=? where id=?",error.getMessage(),queued.get("id"));var job=graph.claim((UUID)queued.get("id"));
+  assertThat(((List<?>)value(job.get("context")).get("identityCandidates")).stream().map(x->value(x).get("id").toString()).toList()).containsExactlyInAnyOrderElementsOf(expected.stream().map(UUID::toString).toList());
+  var proof=List.of(Map.of("sourceUrl",source,"evidence","Existing official identity"),Map.of("sourceUrl",alternate,"evidence","Same canonical work and hero"));
+  var corrected=new LinkedHashMap<>(characters("[TEST] Canonical Hero"));var assignment=value(((List<?>)corrected.get("assignments")).getFirst());
+  assignment.put("work",Map.of("id",expected.getFirst(),"name","[TEST] Canonical Series","sourceUrl",alternate,"medium","애니메이션","identityDecision","EXISTING","identityEvidence",proof));
+  assignment.put("character",Map.of("id",expected.get(1),"name","[TEST] Canonical Hero","sourceUrl",alternate,"medium","애니메이션","identityDecision","EXISTING","identityEvidence",proof));corrected.put("assignments",List.of(assignment));
+  reviewed(job,corrected,audit(List.of(source,alternate),List.of()));
+  assertThat(db.queryForList("select subject_id from collection_product_subject where product_id=? and active",UUID.class,product)).containsExactly(expected.get(1));
+  assertThat(db.queryForObject("select count(*) from subculture_subject where name='[TEST] Canonical Series'",Integer.class)).isEqualTo(1);
+ }
  @Test void eventRelationRetryAlsoUsesReviewedCanonicalNamesAsSearchHints(){
   var expected=reviewHintSubjects();var seeded=graph.seed(new Seed("RELATIONS",Long.toString(event),Map.of(),true,"relation-hint"));
   db.update("update collection_job set last_error=? where id=?","공식 이름 [TEST] Canonical Hero의 기존 식별 근거를 보완하세요.",seeded.get("id"));

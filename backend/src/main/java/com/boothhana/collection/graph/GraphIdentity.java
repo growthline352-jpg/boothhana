@@ -50,7 +50,7 @@ public class GraphIdentity {
   var similar=db.queryForList("select id,source_url from subculture_subject where kind=? and name=? and work_id is not distinct from ?",kind,name,work);
   if(similar.size()==1&&"EXISTING".equals(in.get("identityDecision"))){var reuse=new LinkedHashMap<>(in);reuse.put("id",text(similar.getFirst().get("id")));return subject(reuse,kind,work,verdict);}
   if(!similar.isEmpty()){
-   require("DISTINCT".equals(in.get("identityDecision")),"같은 이름의 기존 ID가 있습니다. 동일성 또는 다른 대상이라는 근거를 보완하세요.");
+   require("DISTINCT".equals(in.get("identityDecision")),"같은 이름의 기존 "+kind+" ID가 있습니다: "+name+" / "+similar.stream().limit(5).map(r->text(r.get("id"))).toList()+". 동일성 또는 다른 대상이라는 양쪽 원문 근거를 보완하세요.");
    for(var row:similar)proof(in.get("identityEvidence"),text(row.get("source_url")),source);
   }
   var rows=db.queryForList("insert into subculture_subject(id,kind,name,work_id,medium,source_url,system_verdict_id,source_identity) values(?,?,?,?,?,?,?,?) on conflict(source_identity) where source_identity is not null do update set source_identity=excluded.source_identity returning id,active",UUID.randomUUID(),kind,name,work,medium,source,verdict,identity);
@@ -71,16 +71,21 @@ public class GraphIdentity {
   db.update("insert into collection_creator_identity(alias_id,canonical_id,evidence_json,verdict_id) values(?,?,cast(? as jsonb),?) on conflict(alias_id) do update set canonical_id=excluded.canonical_id,active=true,revision=collection_creator_identity.revision+1,evidence_json=excluded.evidence_json,verdict_id=excluded.verdict_id",id,canonical,encode(decision),verdict);history("CREATOR",Long.toString(id),decision,verdict);
  }
  public List<Map<String,Object>> subjectCandidates(String text){return db.queryForList("""
-  with matched as (
-   select s.id,s.work_id from subculture_subject s
-   where position(lower(s.name) in lower(?))>0 or exists(
-    select 1 from collection_subject_identity a where a.subject_id=s.id and position(lower(a.name) in lower(?))>0)
+  with needle as (
+   select regexp_replace(lower(?),'[[:space:]]','','g') value
+  ), matched as (
+   select s.id,s.work_id,s.kind from subculture_subject s cross join needle n
+   where position(regexp_replace(lower(s.name),'[[:space:]]','','g') in n.value)>0 or exists(
+    select 1 from collection_subject_identity a where a.subject_id=s.id
+     and position(regexp_replace(lower(a.name),'[[:space:]]','','g') in n.value)>0)
   )
   select s.id,s.kind,s.name,s.work_id as "workId",w.name as "workName",s.medium,s.source_url as "sourceUrl",s.active
   from subculture_subject s left join subculture_subject w on w.id=s.work_id
   where s.id in(select id from matched) or s.id in(select work_id from matched)
-  order by s.kind,s.id limit 80
-  """,text,text);}
+   or s.work_id in(select id from matched where kind='WORK')
+  order by case when s.id in(select id from matched) then 0
+   when s.id in(select work_id from matched) then 1 else 2 end,s.kind,s.id limit 80
+  """,text);}
  public List<Map<String,Object>> creatorCandidates(long id,Map<String,Object> profile){
   var names=new LinkedHashSet<String>();names.add(text(profile.get("name")));for(Object alias:(List<?>)profile.getOrDefault("aliases",List.of()))names.add(text(alias));
   for(var row:db.queryForList("select data_json from collection_creator_publication where exhibitor_id=?",id)){var published=map(json.readValue(text(row.get("data_json")),Map.class));for(Object alias:(List<?>)published.getOrDefault("aliases",List.of()))names.add(text(alias));}
