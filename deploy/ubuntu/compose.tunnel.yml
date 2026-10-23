@@ -62,7 +62,7 @@ services:
     tmpfs: ["/tmp:size=512m,mode=1777"]
     cpus: 2.0
     mem_limit: 3g
-    security_opt: [no-new-privileges:true]
+    security_opt: [no-new-privileges:true, seccomp=./chromium-seccomp.json]
     networks: [app]
     logging:
       driver: json-file
@@ -88,7 +88,7 @@ services:
     tmpfs: ["/tmp:size=512m,mode=1777"]
     cpus: 2.0
     mem_limit: 3g
-    security_opt: [no-new-privileges:true]
+    security_opt: [no-new-privileges:true, seccomp=./chromium-seccomp.json]
     networks: [app]
     logging:
       driver: json-file

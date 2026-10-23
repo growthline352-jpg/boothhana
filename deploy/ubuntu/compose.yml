@@ -63,6 +63,7 @@ services:
     stop_grace_period: 45s
     security_opt:
       - no-new-privileges:true
+      - seccomp=./chromium-seccomp.json
     logging:
       driver: json-file
       options:

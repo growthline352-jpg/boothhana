@@ -9,20 +9,21 @@ import argparse,copy,hashlib,json,os,shutil,threading,time,uuid
 from pathlib import Path
 from urllib.parse import urlsplit
 import jsonschema
-from catalog_transport import Api
+from catalog_transport import Api,RejectedDelivery
 from run import ROOT,RunError,CliUnavailable,execute_search,audit_opened_urls,write_json,canonical_audit_url
 from usage_cooldown import active_cooldown, start_cooldown
 from media_fetch import fetch_image
 from public_sources import PublicSources,context_urls
 from social_sources import SocialSources,social_route,profile_key
 from browser_sources import BrowserSources,CaptureQueue
+from taxonomy import GROUPS
 
 MODEL='gpt-6.1-sol'
 EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-luna-text-sol-review-1'
+PROMPT_VERSION='graph-4-source-recovery-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -53,6 +54,8 @@ def with_batch(value):
 def schema(kind):
     stage=json.loads((ROOT/'schemas/stage-result.schema.json').read_text(encoding='utf-8'))
     events=json.loads((ROOT/'schemas/event-result-v4.schema.json').read_text(encoding='utf-8'))
+    # This graph is subculture-only. The legacy discovery schema serves other fields too.
+    events['properties']['events']['items']['properties']['subcategory']['enum']=list(GROUPS['SUBCULTURE'])
     if kind=='DISCOVERY':
         events['properties']['existingEventRefs']=arr(obj({'eventIndex':{'type':'integer','minimum':0},'existingEventId':{'type':['integer','null'],'minimum':1},'identityReason':{'type':'string','minLength':1,'maxLength':1000}}),events['properties']['events'].get('maxItems',1000))
         events['required'].append('existingEventRefs')
@@ -149,6 +152,8 @@ unresolved에는 이 상품의 캐릭터 식별/연결을 완료하는 데 실�
 텍스트만으로 정체성이 확정되면 basis=TEXT를 사용한다. 상품에 관련된 확정 연결과 미확정 연결을 구분해서 반환한다.
 '''
 PROMPTS['DISCOVERY']+=' input.eventHint가 있으면 보완 대상으로 지정된 그 행사 회차만 조사하고 다른 행사를 결과에 섞지 말라. 힌트는 정답이 아니라 검증 대상이다.'
+PROMPTS['DISCOVERY']+=' subcategory는 공유 분류의 서브컬처 유형만 사용한다. 서브컬처를 소재로 했더라도 일반 축제·박람회·팝업 분류로만 확인되는 행사는 이 큐의 events에 넣지 말고 unverifiedLeads에 사유를 남긴다.'
+REVIEW_PROMPT+=' 작품·캐릭터·시리즈의 기존 ID를 재사용하거나 출처를 바꿀 때 identityEvidence는 기존 후보 sourceUrl과 새 sourceUrl 양쪽의 구체적인 원문 근거를 포함해야 한다. 한쪽이 미확인이면 연결을 확정하지 말고 보완한다. EVENT의 name/edition/organizer는 대상 식별값과 정확히 같아야 하며 회차·주최자 정정이 필요하면 ENRICH로 사유를 남긴다.'
 PROMPTS['DISCOVERY']+='''
 context.existingEvents는 같은 탐색 기간에 이미 등록된 행사다. 원문과 대조해 동일 회차인지 먼저 확인한다. 제목의 번역·띄어쓰기·부제 차이나 기존 edition=null을 보완하려는 이유만으로 새 회차를 만들지 않는다.
 events의 각 행마다 existingEventRefs에 eventIndex, existingEventId, identityReason을 정확히 한 번 기록한다. 동일 회차가 공식 근거와 기존 자료에서 확인되면 해당 기존 id를 선택한다. 신규 행사는 existingEventId=null로 기록한다. 같은 기존 id를 여러 행에 반복하지 않는다.
@@ -227,7 +232,8 @@ class Worker:
         return paths,manifest
     def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False,review=False,complex_task=False):
         directory.mkdir(parents=True,exist_ok=True);schema_path=directory/'schema.json';write_json(schema_path,output_schema)
-        documents=self.source_loader(source_urls_to_fetch) if self.source_loader and source_urls_to_fetch else []
+        documents=(self.source_loader(source_urls_to_fetch,defer_browser_pending=True) if isinstance(self.source_loader,SocialSources)
+                   else self.source_loader(source_urls_to_fetch)) if self.source_loader and source_urls_to_fetch else []
         write_json(directory/'source-documents.json',{'documents':documents})
         attached=list(images);social_images=[]
         # Native media is only analyzed. This does not grant republication rights.
@@ -273,6 +279,15 @@ class Worker:
         raw,observed,usage=self.search(call_cfg,directory,prompt,schema_path,images=attached,web_search=True,**options)
         if batch_usage:usage={**usage,'imageBatchUsage':batch_usage}
         value=json.loads(raw);jsonschema.validate(value,output_schema);validate_products(value)
+        if any(d.get('browserPending') for d in documents):
+            # Preserve verified facts from other official originals, never infer an empty/complete catalog.
+            if value.get('searchStatus')=='COMPLETE':value['searchStatus']='PARTIAL'
+            coverage=value.get('coverage')
+            if isinstance(coverage,dict) and coverage.get('completeness') in ('COMPLETE','NOT_APPLICABLE'):coverage['completeness']='PARTIAL'
+            elif coverage in ('COMPLETE','UNPUBLISHED'):value['coverage']='PARTIAL'
+            if 'socialPageComplete' in value:value['socialPageComplete']=False
+            if isinstance(value.get('unresolved'),list) and len(value['unresolved'])<30:
+                value['unresolved'].append('일부 공개 SNS 원문은 브라우저 확인 대기 상태입니다. 해당 원문의 상품·관계·전체 범위는 미확인입니다.')
         if any(d.get('available') and d.get('browserPartial') for d in documents):
             # A visible public profile is useful evidence, not exhaustive history.
             coverage=value.get('coverage')
@@ -382,7 +397,17 @@ class Worker:
             if lost:raise RunError('Lease heartbeat failed; publication was not requested')
             body={'leaseToken':token,'extractionId':extracted['id'],'resultHash':extracted['resultHash'],**verdict,'audit':audit}
             if event_decisions:body['eventDecisions']=event_decisions
-            receipt=self.request('POST','/jobs/'+job['id']+'/decide',body)
+            try:receipt=self.request('POST','/jobs/'+job['id']+'/decide',body)
+            except RejectedDelivery as error:
+                if body['verdict']!='APPROVE' or error.status!=400 or error.code!='INVALID_REQUEST':raise
+                # The transactional server rejected and rolled back this approval. Keep the
+                # immutable extraction; record a stricter verdict so the next lease researches
+                # again with the precise server reason instead of replaying poisoned input.
+                # Never do this after timeout, auth/lease conflict, or an opaque HTTP response.
+                body={**body,'verdict':'ENRICH','reason':'독립 검토 후 서버 정합성 검증에서 승인 적용이 거절됨. 새 추출에서 보완: '+error.message}
+                body.pop('eventDecisions',None)
+                write_json(directory/'server-rejection.json',{'status':error.status,'code':error.code,'reason':error.message})
+                receipt=self.request('POST','/jobs/'+job['id']+'/decide',body)
             write_json(directory/'receipt.json',receipt);return receipt
         finally:stop.set();thread.join(timeout=1)
     def run(self,watch=False,once=False):

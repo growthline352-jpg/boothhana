@@ -10,6 +10,7 @@ import hashlib, json, os, re
 from urllib.parse import urlsplit, parse_qs, urlencode, quote
 from media_fetch import MediaError, fetch_html, check_url, public_addresses, PinnedHTTPS, request_target, PUBLIC_SOURCE_USER_AGENT
 from public_sources import PublicSources
+from browser_sources import BrowserPending
 
 PAGE_SIZE = 5
 MAX_BYTES = 4 * 1024 * 1024
@@ -73,8 +74,8 @@ class SocialSources:
         text=json.dumps(data,ensure_ascii=False)
         if len(text)>50000:raise MediaError('SNS page must be split, not truncated')
         return {'url':url,'transportUrl':api,'capturedAt':datetime.now(timezone.utc).isoformat(),'available':True,'title':'Official SNS original','sha256':digest,'text':text,'truncated':False,'images':images or [],'links':links or [],'nextPageUrl':next_page}
-    def __call__(self,urls):
-        docs=[]
+    def __call__(self,urls,*,defer_browser_pending=False):
+        docs=[];pending=[]
         for url in dict.fromkeys(urls):
             route=social_route(url)
             if not route:docs.extend(self.public([url]));continue
@@ -101,9 +102,16 @@ class SocialSources:
                             if root:root['url']=url
                         for d in fallback:d['apiFailure']=message
                         docs.extend(fallback);continue
+                    except BrowserPending as browser_exc:
+                        if not defer_browser_pending:raise
+                        pending.append(browser_exc)
+                        docs.append({'url':url,'available':False,'browserPending':True,
+                                     'capturedAt':datetime.now(timezone.utc).isoformat(),'failure':'Public browser capture pending'})
+                        continue
                     except (ValueError,OSError) as browser_exc:
                         message+='; '+(str(browser_exc) if isinstance(browser_exc,MediaError) else type(browser_exc).__name__)
                 docs.append({'url':url,'available':False,'capturedAt':datetime.now(timezone.utc).isoformat(),'failure':message[:200]})
+        if pending and not any(d.get('available') for d in docs):raise pending[0]
         return docs
     def read(self,url,route):
         platform,actor,post_id,p=route;params=parse_qs(p.query,keep_blank_values=True)
