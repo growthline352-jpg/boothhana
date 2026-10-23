@@ -24,7 +24,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-attached-image-source-1'
+PROMPT_VERSION='graph-4-native-roster-pagination-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -156,6 +156,7 @@ unresolved에는 이 상품의 캐릭터 식별/연결을 완료하는 데 실�
 PROMPTS['DISCOVERY']+=' input.eventHint가 있으면 보완 대상으로 지정된 그 행사 회차만 조사하고 다른 행사를 결과에 섞지 말라. 힌트는 정답이 아니라 검증 대상이다.'
 PROMPTS['DISCOVERY']+=' subcategory는 공유 분류의 서브컬처 유형만 사용한다. 서브컬처를 소재로 했더라도 일반 축제·박람회·팝업 분류로만 확인되는 행사는 이 큐의 events에 넣지 말고 unverifiedLeads에 사유를 남긴다.'
 REVIEW_PROMPT+=' 작품·캐릭터·시리즈의 기존 ID를 재사용하거나 출처를 바꿀 때 identityEvidence는 기존 후보 sourceUrl과 새 sourceUrl 양쪽의 구체적인 원문 근거를 포함해야 한다. 한쪽이 미확인이면 연결을 확정하지 말고 보완한다. EVENT의 name/edition/organizer는 대상 식별값과 정확히 같아야 하며 회차·주최자 정정이 필요하면 ENRICH로 사유를 남긴다.'
+REVIEW_PROMPT+=' 동네 참가 명단의 pagination은 공개 범위·버튼·개별 링크를 대조한 현재 페이지 정보다. 해당 페이지를 새로 읽고 참가자의 identity.detailUrl과 pagination.entryUrls 전체를 대조한다. 현재 페이지 누락이나 다음 주소 불일치가 있으면 ENRICH로 구체적으로 남긴다. 다른 페이지의 참가자를 대신 채우지 말고 페이지 하나를 전체 명단 완료로 승인하지 않는다.'
 PROMPTS['DISCOVERY']+='''
 context.existingEvents는 같은 탐색 기간에 이미 등록된 행사다. 원문과 대조해 동일 회차인지 먼저 확인한다. 제목의 번역·띄어쓰기·부제 차이나 기존 edition=null을 보완하려는 이유만으로 새 회차를 만들지 않는다.
 events의 각 행마다 existingEventRefs에 eventIndex, existingEventId, identityReason을 정확히 한 번 기록한다. 동일 회차가 공식 근거와 기존 자료에서 확인되면 해당 기존 id를 선택한다. 신규 행사는 existingEventId=null로 기록한다. 같은 기존 id를 여러 행에 반복하지 않는다.
