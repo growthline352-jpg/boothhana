@@ -237,6 +237,40 @@ class CollectionGraphIntegrationTests {
   assertThat(db.queryForObject("select count(*) from collection_job where kind='PARTICIPANTS' and input_json->>'pageUrl'=?",Integer.class,source+"?page=2")).isEqualTo(1);
  }
  UUID standaloneProduct(){UUID id=UUID.randomUUID();db.update("insert into collection_product(id,identity_key,data_json) values(?,?,'{}')",id,UUID.randomUUID().toString());return id;}
+ List<UUID> reviewHintSubjects(){
+  var result=new LinkedHashMap<>(characters("[TEST] Canonical Hero"));
+  var assignment=value(((List<?>)result.get("assignments")).getFirst());
+  assignment.put("work",Map.of("name","[TEST] Canonical Series","sourceUrl",source,"medium","애니메이션"));
+  result.put("assignments",List.of(assignment));
+  approveJob(seed("CHARACTERS",standaloneProduct().toString()),result);
+  var unrelated=new LinkedHashMap<>(characters("[TEST] Unrelated Hero"));
+  var other=value(((List<?>)unrelated.get("assignments")).getFirst());
+  other.put("work",Map.of("name","[TEST] Unrelated Series","sourceUrl",source,"medium","게임"));
+  unrelated.put("assignments",List.of(other));
+  approveJob(seed("CHARACTERS",standaloneProduct().toString()),unrelated);
+  return List.of(db.queryForObject("select id from subculture_subject where name='[TEST] Canonical Series'",UUID.class),db.queryForObject("select id from subculture_subject where name='[TEST] Canonical Hero'",UUID.class));
+ }
+ @Test void previousReviewFindsCanonicalCharacterAndParentWithoutChangingContextOrLinking(){
+  var expected=reviewHintSubjects();UUID product=standaloneProduct();
+  var seeded=graph.seed(new Seed("CHARACTERS",product.toString(),Map.of(),true,"review-hint"));
+  db.update("update collection_job set last_error=? where id=?","약칭의 정식 이름 [TEST] Canonical Hero에 대한 기존 ID·양쪽 공식 근거를 확인해야 합니다.",seeded.get("id"));
+  var job=graph.claim((UUID)seeded.get("id"));
+  var candidates=(List<?>)value(job.get("context")).get("identityCandidates");
+  assertThat(candidates.stream().map(x->value(x).get("id").toString()).toList()).containsExactlyInAnyOrderElementsOf(expected.stream().map(UUID::toString).toList());
+  assertThat(candidates.stream().map(x->value(x).get("sourceUrl").toString()).toList()).containsExactlyInAnyOrder(source,source);
+  assertThat(db.queryForObject("select count(*) from collection_product_subject where product_id=?",Integer.class,product)).isZero();
+  var result=Map.of("assignments",List.of(),"unresolved",List.of("Need independent identity proof"),"sources",List.of(new Source(source,"OFFICIAL","ORIGINAL","Product")));
+  var e=extract(job,result);
+  var receipt=graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"ENRICH","Independent evidence still required",audit()));
+  assertThat(value(receipt).get("verdict")).isEqualTo("ENRICH");
+  assertThat(db.queryForObject("select count(*) from collection_product_subject where product_id=?",Integer.class,product)).isZero();
+ }
+ @Test void eventRelationRetryAlsoUsesReviewedCanonicalNamesAsSearchHints(){
+  var expected=reviewHintSubjects();var seeded=graph.seed(new Seed("RELATIONS",Long.toString(event),Map.of(),true,"relation-hint"));
+  db.update("update collection_job set last_error=? where id=?","공식 이름 [TEST] Canonical Hero의 기존 식별 근거를 보완하세요.",seeded.get("id"));
+  var context=value(graph.claim((UUID)seeded.get("id")).get("context"));
+  assertThat(((List<?>)context.get("identityCandidates")).stream().map(x->value(x).get("id").toString()).toList()).containsExactlyInAnyOrderElementsOf(expected.stream().map(UUID::toString).toList());
+ }
  Map<String,Object> characters(String name){return Map.of("assignments",List.of(Map.of("status","CONFIRMED","work",Map.of("name","Test Game","sourceUrl",source,"medium","게임"),"character",Map.of("name",name,"sourceUrl",source,"medium","게임"),"evidenceUrl",source,"evidence","Named on this product","basis","TEXT")),"unresolved",List.of(),"sources",List.of(new Source(source,"OFFICIAL","ORIGINAL","Exact product")));}
  @Test void unresolvedAnalysisReturnsToEnrichmentWithReason(){var job=seed("CHARACTERS",standaloneProduct().toString());approve(job,extract(job,Map.of("assignments",List.of(),"unresolved",List.of("Two similarly named characters"),"sources",List.of(new Source(source,"OFFICIAL","ORIGINAL","Product")))));assertThat(db.queryForObject("select state from collection_job where id=?",String.class,id(job))).isEqualTo("WAITING");db.update("update collection_job set available_at=now() where id=?",id(job));var retry=graph.claim();assertThat(retry).doesNotContainKey("extraction");assertThat(retry.get("previousReview").toString()).contains("Two similarly named characters");}
  @Test void correctedAnalysisRetractsOldAttribution(){UUID product=standaloneProduct();var first=seed("CHARACTERS",product.toString());approve(first,extract(first,characters("First Hero")));var second=seed("CHARACTERS",product.toString());approve(second,extract(second,characters("Actual Hero")));assertThat(db.queryForList("select s.name from collection_product_subject l join subculture_subject s on s.id=l.subject_id where l.product_id=? and l.active",String.class,product)).containsExactly("Actual Hero");}

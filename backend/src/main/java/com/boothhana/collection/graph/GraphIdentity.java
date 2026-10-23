@@ -70,7 +70,17 @@ public class GraphIdentity {
   require(current.isEmpty()||!Boolean.TRUE.equals(current.getFirst().get("active"))||number(current.getFirst().get("canonical_id"))==canonical,"기존 작가 연결을 먼저 해제해야 합니다.");
   db.update("insert into collection_creator_identity(alias_id,canonical_id,evidence_json,verdict_id) values(?,?,cast(? as jsonb),?) on conflict(alias_id) do update set canonical_id=excluded.canonical_id,active=true,revision=collection_creator_identity.revision+1,evidence_json=excluded.evidence_json,verdict_id=excluded.verdict_id",id,canonical,encode(decision),verdict);history("CREATOR",Long.toString(id),decision,verdict);
  }
- public List<Map<String,Object>> subjectCandidates(String text){return db.queryForList("select s.id,s.kind,s.name,s.work_id as \"workId\",w.name as \"workName\",s.medium,s.source_url as \"sourceUrl\",s.active from subculture_subject s left join subculture_subject w on w.id=s.work_id where position(lower(s.name) in lower(?))>0 or exists(select 1 from collection_subject_identity a where a.subject_id=s.id and position(lower(a.name) in lower(?))>0) order by s.kind,s.id limit 80",text,text);}
+ public List<Map<String,Object>> subjectCandidates(String text){return db.queryForList("""
+  with matched as (
+   select s.id,s.work_id from subculture_subject s
+   where position(lower(s.name) in lower(?))>0 or exists(
+    select 1 from collection_subject_identity a where a.subject_id=s.id and position(lower(a.name) in lower(?))>0)
+  )
+  select s.id,s.kind,s.name,s.work_id as "workId",w.name as "workName",s.medium,s.source_url as "sourceUrl",s.active
+  from subculture_subject s left join subculture_subject w on w.id=s.work_id
+  where s.id in(select id from matched) or s.id in(select work_id from matched)
+  order by s.kind,s.id limit 80
+  """,text,text);}
  public List<Map<String,Object>> creatorCandidates(long id,Map<String,Object> profile){
   var names=new LinkedHashSet<String>();names.add(text(profile.get("name")));for(Object alias:(List<?>)profile.getOrDefault("aliases",List.of()))names.add(text(alias));
   for(var row:db.queryForList("select data_json from collection_creator_publication where exhibitor_id=?",id)){var published=map(json.readValue(text(row.get("data_json")),Map.class));for(Object alias:(List<?>)published.getOrDefault("aliases",List.of()))names.add(text(alias));}
