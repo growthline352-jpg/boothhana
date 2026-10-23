@@ -77,7 +77,7 @@ public class GraphProjection {
    var batch=new StageBatch("4",verdict.toString(),pipeline,kind,eventId,participantId,number(kind.equals("SALES")?p.get("revision"):e.get("revision")),now,now,true,stage);
    var receipt=catalog.ingestReviewedProjection(batch,projectionRun,kind.equals("SALES")?GraphPageBatch.previousSalesStages(db,input,target):Set.of());
    require(receipt.rejected()==0,"식별 충돌 또는 검증에 실패한 항목이 있습니다.");
-   int excludedParticipants=0;
+   int excludedParticipants=0;boolean preservedSalesCategoryOverride=false;
    if(kind.equals("PARTICIPANTS"))for(long pid:receipt.participantIds()){
     var row=catalog.participant(pid);
     // A public roster can still contain explicitly hidden booths. Preserve that
@@ -85,10 +85,14 @@ public class GraphProjection {
     if("EXCLUDED".equals(row.reviewState())){excludedParticipants++;continue;}
     checkOverrides(row.overrides(),as(row.collectedData(),Map.class));catalog.editParticipant(pid,new EditInput(row.revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));downstream(pid,baseline,generation,enqueue);
    }
-   else if(stage.sales()!=null){var view=catalog.participant(participantId);require(view.sales()!=null&&!"EXCLUDED".equals(view.sales().reviewState()),"제외된 판매 정보입니다.");checkOverrides(view.sales().overrides(),as(view.sales().collectedData(),Map.class));catalog.editSales(participantId,new EditInput(view.sales().revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));products(participantId,baseline,generation,enqueue);}
+   else if(stage.sales()!=null){var view=catalog.participant(participantId);require(view.sales()!=null&&!"EXCLUDED".equals(view.sales().reviewState()),"제외된 판매 정보입니다.");
+    // Editorial category grouping stays in the effective/reviewed overlay. A
+    // finer collected classification must not block independently verified goods.
+    var factualOverrides=new LinkedHashMap<>(view.sales().overrides());preservedSalesCategoryOverride=factualOverrides.containsKey("categories");factualOverrides.remove("categories");
+    checkOverrides(factualOverrides,as(view.sales().collectedData(),Map.class));catalog.editSales(participantId,new EditInput(view.sales().revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));products(participantId,baseline,generation,enqueue);}
    publish(eventId);
    String next=stage.coverage().nextPageUrl();if(next!=null){String nextKey=normalizedUrl(next);var seen=new ArrayList<String>();for(Object url:(List<?>)input.getOrDefault("visited",List.of()))seen.add(normalizedUrl(text(url)));String current=text(input.get("pageUrl"));if(!current.isBlank())seen.add(normalizedUrl(current));require(!seen.contains(nextKey),"페이지 순환이 발견됐습니다.");seen.add(nextKey);enqueue.accept(new Seed(kind,target,Map.of("pageUrl",next,"visited",seen),baseline,generation));}
-   return Map.of("verdict","APPROVE","eventId",eventId,"excludedParticipants",excludedParticipants,"coverage",stage.coverage().completeness(),"needsEnrichment",next==null&&(!Set.of("COMPLETE","NOT_APPLICABLE").contains(stage.coverage().completeness())||!"COMPLETE".equals(stage.searchStatus())));
+   return Map.of("verdict","APPROVE","eventId",eventId,"excludedParticipants",excludedParticipants,"preservedSalesCategoryOverride",preservedSalesCategoryOverride,"coverage",stage.coverage().completeness(),"needsEnrichment",next==null&&(!Set.of("COMPLETE","NOT_APPLICABLE").contains(stage.coverage().completeness())||!"COMPLETE".equals(stage.searchStatus())));
   }
   if(kind.equals("CREATOR")){
    require(!Boolean.FALSE.equals(map(context.get("publication")).get("active")),"숨긴 작가를 자동 공개할 수 없습니다.");long id=Long.parseLong(target);var original=map(map(context.get("creator")).get("data"));var profile=map(result.get("profile"));
@@ -156,7 +160,7 @@ public class GraphProjection {
  private void retireAttributions(UUID product){db.update("update collection_product_subject set active=false where product_id=?",product);retireUnsupportedCreatorLinks(product);}
  private void retireUnsupportedCreatorLinks(UUID product){db.update("update subculture_subject_link l set active=false,revision=revision+1 where l.kind='CREATOR' and l.reviewed_by is null and l.active and l.target_id=(select exhibitor_id from collection_product where id=?) and not exists(select 1 from collection_product p join collection_product_subject s on s.product_id=p.id where p.exhibitor_id=l.target_id and p.active and s.active and s.subject_id=l.subject_id)",product);}
  private static boolean sameProduct(Map<String,Object> current,Map<String,Object> reviewed){var safe=new LinkedHashMap<>(current);safe.remove("images");return sorted(safe).equals(sorted(reviewed));}
- private void checkOverrides(Map<String,Object> overrides,Map<String,Object> candidate){for(var entry:overrides.entrySet())require(Objects.equals(sorted(entry.getValue()),sorted(candidate.get(entry.getKey()))),"기존 수정값과 새 원문 결과가 다릅니다. 수정값을 확인하는 보완이 필요합니다.");}
+ private void checkOverrides(Map<String,Object> overrides,Map<String,Object> candidate){for(var entry:overrides.entrySet())require(Objects.equals(sorted(entry.getValue()),sorted(candidate.get(entry.getKey()))),"기존 수정값과 새 원문 결과가 다릅니다. 수정값을 확인하는 보완이 필요합니다. 충돌 항목: "+entry.getKey());}
  private void publish(long id){var rows=db.queryForList("select revision from subculture_event_candidate where id=? and review_state='REVIEWED' and not publication_withdrawn",id);if(!rows.isEmpty())publication.publish(id,new PublishInput(number(rows.getFirst().get("revision"))));}
  private void downstream(long participant,boolean baseline,String generation,Consumer<Seed> enqueue){enqueue.accept(new Seed("SALES",Long.toString(participant),Map.of(),baseline,generation));for(var c:db.queryForList("select exhibitor_id from subculture_participant_member where participant_id=?",participant))enqueue.accept(new Seed("CREATOR",text(c.get("exhibitor_id")),Map.of(),baseline,generation));products(participant,baseline,generation,enqueue);}
  private void products(long participant,boolean baseline,String generation,Consumer<Seed> enqueue){

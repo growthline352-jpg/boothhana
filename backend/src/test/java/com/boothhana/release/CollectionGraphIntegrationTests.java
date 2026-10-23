@@ -317,6 +317,42 @@ class CollectionGraphIntegrationTests {
   var rows=(List<?>)snapshot.get("participants");assertThat(rows).hasSize(25);
   for(var raw:rows){var row=value(raw);long pid=((Number)row.get("id")).longValue();var products=(List<?>)row.get("productRows");assertThat(products).hasSize(1);assertThat(((Number)value(products.getFirst()).get("id")).longValue()).isEqualTo(expected.get(pid));}
  }
+ Sales categorySales(List<String> categories,String method,List<ProductData> products){return new Sales("Verified sale","EVENT_SALE_CONFIRMED",categories,List.of(),method,List.of(new Source(source,"OFFICIAL","ORIGINAL","Official sale")),List.of(),products,List.of());}
+ StageResult categoryStage(Sales sales){return new StageResult("COMPLETE","Official goods",List.of("test"),new Coverage("COMPLETE",sales.products().size(),"PRODUCTS",List.of(source),null,List.of()),List.of(),sales);}
+ ProductData categoryProduct(List<String> categories){return new ProductData("tag-good-1","Test keyring","Official tag refinement",null,categories,List.of(),"EVENT_SALE_CONFIRMED",null,"PLANNED",null,List.of(new Source(source,"OFFICIAL","ORIGINAL","Official good")),List.of(),List.of());}
+ long manualCategorySale(Map<String,Object> overrides){
+  reviewedRosterEvent();approveJob(seed("PARTICIPANTS",Long.toString(event)),value(roster(rosterBooth("manual-tag"))));
+  long participant=db.queryForObject("select id from subculture_participant where event_id=?",Long.class,event);
+  db.update("update collection_job set available_at=now()+interval '7 days'");
+  approveJob(seed("SALES",Long.toString(participant)),value(categoryStage(categorySales(List.of("굿즈"),"On site",List.of()))));
+  var sales=catalog.participant(participant).sales();catalog.editSales(participant,new EditInput(sales.revision(),"REVIEWED","Editorial category grouping",overrides));
+  db.update("update collection_job set available_at=now()+interval '7 days'");return participant;
+ }
+ @Test void manualSalesCategoriesPreserveEditorialTagsWhileNewVerifiedProductsAreStored(){
+  var manual=List.of("아크릴","쿠션/의류");long pid=manualCategorySale(Map.of("categories",manual));
+  var before=catalog.participant(pid).sales().overrides();var product=categoryProduct(List.of("아크릴키링"));
+  var job=seed("SALES",Long.toString(pid));var receipt=value(approve(job,extract(job,categoryStage(categorySales(List.of("아크릴키링"),"On site",List.of(product))))));
+  assertThat(receipt.get("preservedSalesCategoryOverride")).isEqualTo(true);
+  var sale=catalog.participant(pid).sales();assertThat(sale.data().categories()).isEqualTo(manual);assertThat(sale.collectedData().categories()).containsExactly("아크릴키링");assertThat(sale.overrides()).isEqualTo(before);
+  assertThat(sale.productRows()).hasSize(1);assertThat(sale.productRows().getFirst().id()).isNotNull();
+  var snapshot=json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class);var rows=(List<?>)snapshot.get("participants");var published=value(rows.getFirst());
+  assertThat(value(published.get("sales")).get("categories")).isEqualTo(manual);assertThat((List<?>)value(published.get("sales")).get("products")).hasSize(1);
+ }
+ @Test void repeatedCategoryRefinementKeepsManualTagsAndStableProductIds(){
+  var manual=List.of("소장 굿즈");long pid=manualCategorySale(Map.of("categories",manual));Long productId=null;
+  for(var categories:List.of(List.of("아크릴키링"),List.of("아크릴","키링"))){
+   db.update("update collection_job set available_at=now()+interval '7 days'");var job=seed("SALES",Long.toString(pid));
+   approve(job,extract(job,categoryStage(categorySales(categories,"On site",List.of(categoryProduct(categories))))));
+   var sale=catalog.participant(pid).sales();assertThat(sale.data().categories()).isEqualTo(manual);assertThat(sale.collectedData().categories()).isEqualTo(categories);
+   assertThat(sale.productRows()).hasSize(1);if(productId==null)productId=sale.productRows().getFirst().id();else assertThat(sale.productRows().getFirst().id()).isEqualTo(productId);
+  }
+  assertThat(db.queryForObject("select count(*) from subculture_catalog_product where participant_id=?",Integer.class,pid)).isEqualTo(1);
+ }
+ @Test void manualSalesFactConflictIsStillRejectedWhenCategoryTagsDiffer(){
+  long pid=manualCategorySale(Map.of("categories",List.of("소장 굿즈"),"salesMethod","No on-site sale"));
+  var job=seed("SALES",Long.toString(pid));var e=extract(job,categoryStage(categorySales(List.of("아크릴키링"),"On site",List.of(categoryProduct(List.of("아크릴키링"))))));
+  assertThatThrownBy(()->approve(job,e)).isInstanceOf(ApiException.class).hasMessageContaining("salesMethod");
+ }
  @Test void partialPageKeepsContinuationInQueue(){
   var eventJob=seed("EVENT",Long.toString(event));approve(eventJob,extract(eventJob,data));db.update("update collection_job set available_at=now()+interval '7 days'");
   var sources=List.of(new Source(source,"OFFICIAL","ORIGINAL","First page"));var p=new Participant(null,"Test circle","CIRCLE",List.of(),List.of(),List.of(),"Test",List.of(),sources,List.of(),List.of());
