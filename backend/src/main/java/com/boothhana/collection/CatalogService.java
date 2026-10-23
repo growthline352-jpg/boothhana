@@ -460,14 +460,22 @@ public class CatalogService {
             s.get("latest_payload_json")==null?null:decode(s.get("latest_payload_json"),Sales.class),s.get("review_note").toString(),instant(s.get("collected_at")),decode(s.get("overrides_json"),Map.class),
             identities.products(view,db.queryForList("select * from subculture_catalog_product where participant_id=? order by id",participant),productChecks(s.get("product_checks_json"))));
     }
+    private Scope eventScope(EventData event) {
+        var dates=event.occurrences();
+        if(dates==null || dates.isEmpty() || dates.stream().anyMatch(o->o==null || o.startDate()==null || o.endDate()==null))
+            throw ApiException.badRequest("확인된 개최일과 종료일이 필요합니다. 일정 미확인 결과는 보완해야 합니다.");
+        String start=dates.stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow();
+        String end=dates.stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
+        return new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end);
+    }
     @Transactional public Map<String,Object> editEvent(long id,EditInput input) {
         var row=one("select * from subculture_event_candidate where id=? for update",id);
         checkEdit(row,input,Set.of("name","venueName","address","description","admission","organizer","edition","subjects","occurrences","eventFormat","discoveryLinks","warnings","subcategory","region","operationStatus","visitorGuide","districts","sources"),EventData.class);
         EventData e=effective(after(row,input),EventData.class);
-        String start=e.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=e.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
-        if(!CollectionRules.event(e,new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end)).accepted()) throw ApiException.badRequest("행사 수정값을 확인하세요.");
+        Scope scope=eventScope(e);
+        if(!CollectionRules.event(e,scope).accepted()) throw ApiException.badRequest("행사 수정값을 확인하세요.");
         review("subculture_event_candidate","id",id,row,input,e);
-        db.update("update subculture_event_candidate set name=?,subcategory=?,venue_name=?,starts_on=cast(? as date),ends_on=cast(? as date) where id=?",e.name(),e.subcategory(),e.venueName(),start,end,id);
+        db.update("update subculture_event_candidate set name=?,subcategory=?,venue_name=?,starts_on=cast(? as date),ends_on=cast(? as date) where id=?",e.name(),e.subcategory(),e.venueName(),scope.startDate(),scope.endDate(),id);
         return eventDetail(id);
     }
     /** Automatic observations update collected facts; manual overrides remain authoritative. */
@@ -480,8 +488,7 @@ public class CatalogService {
         if(next.equals(collected))return eventDetail(id);
         var effective=new LinkedHashMap<>(next);effective.putAll(decode(row.get("overrides_json"),Map.class));
         EventData e=decode(encode(effective),EventData.class);
-        String start=e.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=e.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
-        if(!CollectionRules.event(e,new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end)).accepted())throw ApiException.badRequest("관측한 행사 정보 오류");
+        if(!CollectionRules.event(e,eventScope(e)).accepted())throw ApiException.badRequest("관측한 행사 정보 오류");
         String payload=encode(next);
         db.update("update subculture_event_candidate set payload_json=cast(? as jsonb),payload_hash=? where id=?",payload,CollectionRules.sha(payload),id);
         return editEvent(id,new EditInput(revision,"REVIEWED",CatalogAutoApproval.NOTE,Map.of(),List.of()));
