@@ -13,6 +13,7 @@ from urllib.parse import urlsplit,urljoin
 from urllib.robotparser import RobotFileParser
 from media_fetch import fetch_html,MediaError,PUBLIC_SOURCE_USER_AGENT
 from run import canonical_audit_url
+from tmm_sources import tmm_route,related_public_tabs,tmm_policies,render_tmm_page,tmm_document
 
 class PageText(HTMLParser):
     def __init__(self,url):
@@ -69,10 +70,15 @@ def kakao_pr_article(url,html):
     return '<title>'+escape(unescape(title))+'</title>'+unescape(content)
 
 class PublicSources:
-    def __init__(self,blocked,fetch=fetch_html):self.blocked=blocked;self.fetch=fetch
+    def __init__(self,blocked,fetch=fetch_html,*,tmm_renderer=None):self.blocked=blocked;self.fetch=fetch;self.tmm_renderer=tmm_renderer
     def __call__(self,urls):
         documents=[];robots={}
         requested=list(dict.fromkeys(urls))
+        seen_tmm={tmm_route(u) for u in requested if tmm_route(u)}
+        for source in list(requested):
+            for extra in related_public_tabs(source):
+                route=tmm_route(extra)
+                if route not in seen_tmm:requested.append(extra);seen_tmm.add(route)
         if any(urlsplit(u).hostname=='illustar.net' for u in requested):
             listing='https://api.illustar.net/v1/event/list'
             if listing not in requested:requested.append(listing)
@@ -105,6 +111,13 @@ class PublicSources:
                     html='<title>일러스타 공식 행사 목록</title><pre>'+escape(json.dumps(rows,ensure_ascii=False))+'</pre>'
                 html=kakao_pr_article(url,html)
                 parser=PageText(url);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
+                if tmm_route(url):
+                    value['publicViewPartial']=True
+                    try:
+                        policies=tmm_policies(self.blocked,self.fetch,robots)
+                        value.update(tmm_document(url,(self.tmm_renderer or render_tmm_page)(url,policies)))
+                        value['httpSha256']=digest;documents.append(value);continue
+                    except (ValueError,OSError):value['renderFailure']='Public event rendering unavailable; visible page content remains unverified'
                 # The official web bundle reads this public, unauthenticated API.
                 # Exact notice routes only: no account endpoints or arbitrary URL proxy.
                 notice=re.fullmatch(r'/notice/([A-Za-z0-9]+)',parsed.path)
