@@ -6,6 +6,7 @@ Network/model calls never run on import. Existing v4 schema, CLI isolation and t
 """
 from __future__ import annotations
 import argparse,copy,hashlib,json,os,shutil,threading,time,uuid
+from datetime import datetime,timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 import jsonschema
@@ -23,7 +24,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-tmm-public-1'
+PROMPT_VERSION='graph-4-attached-image-source-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -208,6 +209,26 @@ def validate_products(result):
         names={p['name'] for p in result.get('goods',[]) if any(canonical_audit_url(s['url'])==canonical_audit_url(page['sourceUrl']) for s in p['sources'] if s['access']=='ORIGINAL')}
         if not set(page['optionNames'])<=names:raise RunError('Complete product page omits individual options: '+', '.join(sorted(set(page['optionNames'])-names))[:800])
 
+def attached_image_documents(paths,manifest,blocked):
+    """Bind successful image fetches to the exact bytes attached to this call.
+
+    A linked HTML page is not proven by an image. Failed downloads and arbitrary
+    manifest claims cannot become opened evidence without matching local bytes.
+    """
+    hashes={hashlib.sha256(p.read_bytes()).hexdigest() for p in paths if p.is_file() and not p.is_symlink()}
+    documents=[]
+    for item in manifest:
+        if item.get('unavailable') or item.get('sha256') not in hashes or not item.get('capturedAt'):continue
+        try:
+            url=item['url'];parsed=urlsplit(url);host=parsed.hostname
+            captured=datetime.fromisoformat(item['capturedAt'].replace('Z','+00:00'))
+            if (parsed.scheme!='https' or not host or parsed.username or parsed.password or parsed.port not in (None,443) or
+                captured.tzinfo is None or any(host==b or host.endswith('.'+b) for b in blocked)):continue
+        except (ValueError,TypeError,KeyError):continue
+        document={k:item[k] for k in ('url','sha256','capturedAt')};document['transportUrl']=url
+        if document not in documents:documents.append(document)
+    return documents
+
 class Worker:
     def __init__(self,cfg,api=None,search=execute_search,source_loader=None):
         self.cfg=cfg;self.api=api or Api(cfg['apiBaseUrl'],os.environ.get(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']);self.search=search
@@ -228,14 +249,16 @@ class Worker:
                 raw,content_type,digest=fetch_image(url,[host])
                 extension={'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','image/gif':'.gif'}[content_type]
                 path=directory/(digest+extension);path.write_bytes(raw);paths.append(path)
-                manifest.append({'index':index,'url':url,'pageUrl':candidate.get('pageUrl'),'sha256':digest})
+                manifest.append({'index':index,'url':url,'pageUrl':candidate.get('pageUrl'),'sha256':digest,'capturedAt':datetime.now(timezone.utc).isoformat()})
             except (ValueError,OSError) as exc:manifest.append({'index':index,'url':url,'unavailable':type(exc).__name__})
         return paths,manifest
-    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False,review=False,complex_task=False):
+    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False,review=False,complex_task=False,image_sources=()):
         directory.mkdir(parents=True,exist_ok=True);schema_path=directory/'schema.json';write_json(schema_path,output_schema)
         documents=(self.source_loader(source_urls_to_fetch,defer_browser_pending=True) if isinstance(self.source_loader,SocialSources)
                    else self.source_loader(source_urls_to_fetch)) if self.source_loader and source_urls_to_fetch else []
         write_json(directory/'source-documents.json',{'documents':documents})
+        image_documents=attached_image_documents(images,image_sources,self.cfg['blockedSourceHosts'])
+        if image_documents:prompt+='\nATTACHED ORIGINAL IMAGE SOURCES (이 호출에 실제 첨부한 이미지 바이트의 출처·해시다. 링크된 HTML 페이지 열람이나 이미지 재게시 권한을 뜻하지 않는다):\n'+json.dumps(image_documents,ensure_ascii=False)
         attached=list(images);social_images=[]
         # Native media is only analyzed. This does not grant republication rights.
         for document in documents if auto_sns_images else []:
@@ -313,8 +336,9 @@ class Worker:
             batch=value['pageBatch']
             if not any(d['available'] and not d.get('truncated') and not d.get('publicViewPartial') and canonical_audit_url(d['url'])==canonical_audit_url(batch['sourceUrl']) and d['sha256']==batch['sourceHash'] for d in documents):raise RunError('Page batch needs a complete captured original with matching hash')
         opened=audit_opened_urls(directory/'codex.jsonl')
-        opened=list(dict.fromkeys(opened+[u for d in documents if d['available'] for u in (d['url'],d.get('transportUrl',d['url']))]+[m['url'] for m in social_images if m.get('sha256')]))
+        opened=list(dict.fromkeys(opened+[u for d in documents if d['available'] for u in (d['url'],d.get('transportUrl',d['url']))]+[m['url'] for m in social_images if m.get('sha256')]+[d['url'] for d in image_documents]))
         source_documents=[{**{k:d[k] for k in ('url','sha256','capturedAt')},'transportUrl':d.get('transportUrl',d['url'])} for d in documents if d['available']]
+        source_documents.extend(image_documents)
         if not observed and not source_documents:raise RunError('CLI did not report web research')
         audit={'model':model,'promptVersion':PROMPT_VERSION,'schemaVersion':VERSION,'webSearchObserved':observed,
                'openedUrls':opened,'usage':usage,'imageHashes':[hashlib.sha256(p.read_bytes()).hexdigest() for p in attached],'sourceDocuments':source_documents}
@@ -342,7 +366,7 @@ class Worker:
                 if job['kind']=='CREATOR' and not job['context'].get('input',{}).get('socialPage'):
                     discovered,_=self.call(directory/'social-discovery',COMMON+SOCIAL_DISCOVERY_PROMPT+'\nUNTRUSTED CONTEXT:\n'+json.dumps(job['context'],ensure_ascii=False),SOCIAL_DISCOVERY_SCHEMA,[],urls)
                     urls=list(dict.fromkeys(urls+discovered['profileUrls']))
-                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls,complex_task=job['kind'] in COMPLEX_KINDS,**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {}))
+                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls,complex_task=job['kind'] in COMPLEX_KINDS,**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {'image_sources':manifest} if job['kind']=='CHARACTERS' else {}))
                 if job['kind']=='CREATOR' and job['context'].get('input',{}).get('socialPage') and social_route(job['context']['input']['pageUrl']):
                     page=job['context']['input']['pageUrl'];documents=json.loads((directory/'extract'/'source-documents.json').read_text(encoding='utf-8'))['documents']
                     original=next((d for d in documents if d['url']==page),{})
@@ -362,11 +386,17 @@ class Worker:
                 receipt=self.request('POST','/jobs/'+job['id']+'/extract',{'leaseToken':token,'extractionId':str(uuid.uuid4()),'contextHash':job['contextHash'],'result':result,'audit':audit})
                 extracted={**receipt,'result':result,'audit':audit,'context':job['context'],'contextHash':job['contextHash']}
             def review(candidate,review_dir):
-                prompt=COMMON+REVIEW_PROMPT+'\nUNTRUSTED REVIEW INPUT:\n'+json.dumps({'kind':job['kind'],'previousReview':job.get('previousReview',''),'context':extracted['context'],'candidate':candidate,'images':manifest,'requiredSources':sorted(source_urls(candidate))},ensure_ascii=False)
+                review_images,review_manifest=images,manifest
+                if job['kind']=='CHARACTERS':
+                    review_dir.mkdir(parents=True,exist_ok=True)
+                    review_images,review_manifest=self.images(job,review_dir)
+                prompt=COMMON+REVIEW_PROMPT+'\nUNTRUSTED REVIEW INPUT:\n'+json.dumps({'kind':job['kind'],'previousReview':job.get('previousReview',''),'context':extracted['context'],'candidate':candidate,'images':review_manifest,'requiredSources':sorted(source_urls(candidate))},ensure_ascii=False)
                 urls=sorted(source_urls(candidate))+context_urls(extracted['context'])
                 if candidate.get('events')==[]:
                     urls.extend(u for c in candidate.get('sourceCoverage',[]) if c['status'] in ('CHECKED','NO_RESULTS','PARTIAL') for u in c['checkedUrls'])
-                decision,observations=self.call(review_dir,prompt,REVIEW_SCHEMA,images,list(dict.fromkeys(urls)),review=True,**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {}))
+                decision,observations=self.call(review_dir,prompt,REVIEW_SCHEMA,review_images,list(dict.fromkeys(urls)),review=True,**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {'image_sources':review_manifest} if job['kind']=='CHARACTERS' else {}))
+                if job['kind']=='CHARACTERS' and ({m['index']:m.get('sha256') for m in review_manifest}!={m['index']:m.get('sha256') for m in candidate.get('imageCoverage',[])}):
+                    decision={'verdict':'ENRICH','reason':'Image group changed or became unavailable during independent review; extract current originals again'}
                 if job['kind'] in ('CREATOR','SALES'):
                     before=json.loads((directory/'extract'/'social-images.json').read_text(encoding='utf-8')) if (directory/'extract'/'social-images.json').exists() else None
                     after=json.loads((review_dir/'social-images.json').read_text(encoding='utf-8'))
