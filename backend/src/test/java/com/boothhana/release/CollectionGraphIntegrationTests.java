@@ -35,6 +35,7 @@ class CollectionGraphIntegrationTests {
   p.add("app.collection.graph.enabled",()->true);p.add("app.collector.token",()->"graph-isolated-test-token-1234567890");p.add("app.gcs.project-id",()->"");p.add("app.gcs.public-bucket",()->"");p.add("app.support.private-bucket",()->"");p.add("app.storage.public-url",()->"https://assets.example.test");
  }
  @Autowired JdbcTemplate db;@Autowired GraphService graph;@Autowired JsonMapper json;@Autowired WebApplicationContext web;@Autowired SubcultureInterestService interests;
+ @Autowired CatalogService catalog;
  @Autowired com.boothhana.interests.NotificationService notifications;
  @Autowired com.boothhana.interests.CreatorProducts creatorProducts;
  @Autowired com.boothhana.health.ReadinessService readiness;
@@ -201,6 +202,10 @@ class CollectionGraphIntegrationTests {
  @Test void independentCreatorDoesNotRequireAnEvent(){var member=new Member("[TEST] Independent","ARTIST",List.of(),source);long maker=db.queryForObject("insert into subculture_exhibitor(identity_key,name,profile_json) values(?,?,cast(? as jsonb)) returning id",Long.class,UUID.randomUUID().toString().replace("-","").repeat(2),member.name(),json.writeValueAsString(member));var job=seed("CREATOR",Long.toString(maker));var result=Map.of("profile",member,"sources",List.of(new Source(source,"OFFICIAL","ORIGINAL","Official creator profile")),"goods",List.of(),"coverage","COMPLETE");approve(job,extract(job,result));assertThat(interests.creator(maker).get("name")).isEqualTo(member.name());}
  @Test void participantAndSalesFlowReusesExistingCatalogIds(){
   var eventJob=seed("EVENT",Long.toString(event));approve(eventJob,extract(eventJob,data));
+  String legacy=UUID.randomUUID().toString(),day=data.occurrences().getFirst().startDate();
+  var scope=new Scope("SEOUL_GYEONGGI","Asia/Seoul",day,day);
+  catalog.start(new PipelineInput(legacy,LocalDate.now(ZoneId.of("Asia/Seoul")).toString(),scope));
+  assertThatThrownBy(()->catalog.start(new PipelineInput(UUID.randomUUID().toString(),LocalDate.now(ZoneId.of("Asia/Seoul")).toString(),scope))).isInstanceOf(ApiException.class).hasMessageContaining("다른 주간 배치");
   db.update("update collection_job set available_at=now()+interval '7 days'");
   var member=new Member("[TEST] Maker","ARTIST",List.of(),source);var sources=List.of(new Source(source,"OFFICIAL","ORIGINAL","Participant and sale official source"));
   var participant=new Participant(null,"[TEST] Maker","ARTIST",List.of(member),List.of(),List.of(),"Test creator",List.of(source),sources,List.of(),List.of());
@@ -211,14 +216,17 @@ class CollectionGraphIntegrationTests {
   var product=new ProductData(null,"Test keyring","Character keyring",member.name(),List.of("keyring"),List.of("Candidate character"),"EVENT_SALE_CONFIRMED",null,"PLANNED",source,sources,List.of(),List.of());
   var sales=new Sales("Test sale","EVENT_SALE_CONFIRMED",List.of("keyring"),List.of(),"On site",sources,List.of(),List.of(product),List.of());
   var sj=seed("SALES",Long.toString(pid));approve(sj,extract(sj,new StageResult("COMPLETE","One product",List.of("test"),new Coverage("COMPLETE",1,"PRODUCTS",List.of(source),null,List.of()),List.of(),sales)));
-  long legacy=db.queryForObject("select id from subculture_catalog_product where participant_id=?",Long.class,pid);UUID graphProduct=db.queryForObject("select id from collection_product where legacy_product_id=?",UUID.class,legacy);
+  assertThat(catalog.pipeline(legacy).get("state")).isEqualTo("RUNNING");
+  assertThat(db.queryForObject("select count(*) from subculture_pipeline_run where state='RUNNING'",Integer.class)).isEqualTo(1);
+  assertThat(db.queryForObject("select count(*) from subculture_pipeline_run where state='SUCCESS' and summary_json->>'graphVerdict' is not null",Integer.class)).isEqualTo(2);
+  long legacyProduct=db.queryForObject("select id from subculture_catalog_product where participant_id=?",Long.class,pid);UUID graphProduct=db.queryForObject("select id from collection_product where legacy_product_id=?",UUID.class,legacyProduct);
   db.update("update collection_job set available_at=now()+interval '7 days'");var cj=seed("CHARACTERS",graphProduct.toString());
   var work=Map.of("name","Test Game","sourceUrl",source,"medium","게임");var character=Map.of("name","Test Hero","sourceUrl",source,"medium","게임");
   var assignment=Map.of("status","CONFIRMED","work",work,"character",character,"evidenceUrl",source,"evidence","Named on the product","basis","TEXT");
   approve(cj,extract(cj,Map.of("assignments",List.of(assignment),"unresolved",List.of(),"sources",sources)));
-  assertThat(db.queryForObject("select target_id from subculture_subject_link where kind='PRODUCT' and target_id=?",Long.class,legacy)).isEqualTo(legacy);
+  assertThat(db.queryForObject("select target_id from subculture_subject_link where kind='PRODUCT' and target_id=?",Long.class,legacyProduct)).isEqualTo(legacyProduct);
   assertThat(db.queryForObject("select count(*) from subculture_catalog_publication where event_id=?",Integer.class,event)).isEqualTo(1);
-  var link=db.queryForList("select * from subculture_subject_link where kind='PRODUCT' and target_id=?",legacy).getFirst();assertThat(interests.productLinkMatches(link,value(product))).isTrue();var changed=value(product);changed.put("name","A completely different character product");assertThat(interests.productLinkMatches(link,changed)).isFalse();
+  var link=db.queryForList("select * from subculture_subject_link where kind='PRODUCT' and target_id=?",legacyProduct).getFirst();assertThat(interests.productLinkMatches(link,value(product))).isTrue();var changed=value(product);changed.put("name","A completely different character product");assertThat(interests.productLinkMatches(link,changed)).isFalse();
   db.update("update subculture_subject_link set active=false where id=?",link.get("id"));var recheck=seed("CHARACTERS",graphProduct.toString());approve(recheck,extract(recheck,Map.of("assignments",List.of(assignment),"unresolved",List.of(),"sources",sources)));assertThat(db.queryForObject("select active from subculture_subject_link where id=?",Boolean.class,link.get("id"))).isTrue();
 
  }

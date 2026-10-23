@@ -1,5 +1,5 @@
 from __future__ import annotations
-import copy,io,json,os,socket,sys,tempfile,threading,unittest,uuid
+import copy,io,json,os,socket,sys,tempfile,threading,unittest,uuid,urllib.error
 from datetime import datetime,date,timezone
 from pathlib import Path
 from unittest.mock import patch
@@ -226,6 +226,19 @@ class PipelineTests(unittest.TestCase):
  def test_transport_rejects_external_paths(self):
   api=Api(self.cfg['apiBaseUrl'],'t'*40)
   with self.assertRaises(DeliveryError):api.request('POST','https://evil.example/steal',{})
+ def test_transport_keeps_bounded_conflict_reason_without_retrying_or_leaking_token(self):
+  api=Api(self.cfg['apiBaseUrl'],'t'*40)
+  body=json.dumps({'status':409,'code':'CONFLICT','message':'다른 주간 배치가 실행 중입니다. '+api.token}).encode()
+  error=urllib.error.HTTPError(api.base+'/api/internal/subculture/v6/jobs/test/decide',409,'Conflict',{},io.BytesIO(body))
+  with patch.object(api.opener,'open',side_effect=error) as send:
+   with self.assertRaises(DeliveryError) as caught:api.request('POST','/api/internal/subculture/v6/jobs/test/decide',{})
+  self.assertIn('CONFLICT: 다른 주간 배치가 실행 중입니다.',str(caught.exception));self.assertNotIn(api.token,str(caught.exception));self.assertIn('[redacted]',str(caught.exception));send.assert_called_once()
+ def test_transport_does_not_echo_html_or_oversized_error_bodies(self):
+  for body in (b'<html>private upstream response</html>',b'x'*4097):
+   api=Api(self.cfg['apiBaseUrl'],'t'*40);error=urllib.error.HTTPError(api.base,409,'Conflict',{},io.BytesIO(body))
+   with patch.object(api.opener,'open',side_effect=error):
+    with self.assertRaises(DeliveryError) as caught:api.request('POST','/api/internal/subculture/v6/jobs/test/decide',{})
+   self.assertEqual('HTTP 409; do not alter an already-delivered payload',str(caught.exception))
  def test_same_request_replay_uses_persisted_body(self):
   runner=weekly.Pipeline(self.cfg,self.root/'run',self.scope);body={'runId':str(uuid.uuid4())}
   runner.deliver('test',body,True);runner.deliver('test',{'runId':str(uuid.uuid4())},True)

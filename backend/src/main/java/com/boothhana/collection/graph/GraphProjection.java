@@ -72,16 +72,16 @@ public class GraphProjection {
    var e=map(context.get("event"));long eventId=number(e.get("id"));var event=as(e.get("data"),EventData.class);
    var stage=as(GraphPageBatch.legacy(result),StageResult.class);require(!"FAILED".equals(stage.searchStatus()),"실패 결과를 공개할 수 없습니다.");
    String start=event.occurrences().stream().map(Occurrence::startDate).min(String::compareTo).orElseThrow(),end=event.occurrences().stream().map(Occurrence::endDate).max(String::compareTo).orElseThrow();
-   String pipeline=verdict.toString(),now=Instant.now().toString();catalog.start(new PipelineInput(pipeline,LocalDate.now(ZoneId.of("Asia/Seoul")).toString(),new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end)));
+   String pipeline=verdict.toString(),now=Instant.now().toString();var projectionRun=new PipelineInput(pipeline,LocalDate.now(ZoneId.of("Asia/Seoul")).toString(),new Scope("SEOUL_GYEONGGI","Asia/Seoul",start,end));
    var p=map(context.get("participant"));Long participantId=kind.equals("SALES")?number(p.get("id")):null;
    var batch=new StageBatch("4",verdict.toString(),pipeline,kind,eventId,participantId,number(kind.equals("SALES")?p.get("revision"):e.get("revision")),now,now,true,stage);
-   var receipt=kind.equals("SALES")?catalog.ingestSalesContinuation(batch,GraphPageBatch.previousSalesStages(db,input,target)):catalog.ingest(batch);
+   var receipt=catalog.ingestReviewedProjection(batch,projectionRun,kind.equals("SALES")?GraphPageBatch.previousSalesStages(db,input,target):Set.of());
    require(receipt.rejected()==0,"식별 충돌 또는 검증에 실패한 항목이 있습니다.");
    if(kind.equals("PARTICIPANTS"))for(long pid:receipt.participantIds()){
     var row=catalog.participant(pid);require(!"EXCLUDED".equals(row.reviewState()),"제외된 참가 정보입니다.");checkOverrides(row.overrides(),as(row.collectedData(),Map.class));catalog.editParticipant(pid,new EditInput(row.revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));downstream(pid,baseline,generation,enqueue);
    }
    else if(stage.sales()!=null){var view=catalog.participant(participantId);require(view.sales()!=null&&!"EXCLUDED".equals(view.sales().reviewState()),"제외된 판매 정보입니다.");checkOverrides(view.sales().overrides(),as(view.sales().collectedData(),Map.class));catalog.editSales(participantId,new EditInput(view.sales().revision(),"REVIEWED","LLM graph review "+verdict,Map.of()));products(participantId,baseline,generation,enqueue);}
-   catalog.finish(pipeline,new PipelineFinish("SUCCESS",Map.of("graphVerdict",verdict)));publish(eventId);
+   publish(eventId);
    String next=stage.coverage().nextPageUrl();if(next!=null){String nextKey=normalizedUrl(next);var seen=new ArrayList<String>();for(Object url:(List<?>)input.getOrDefault("visited",List.of()))seen.add(normalizedUrl(text(url)));String current=text(input.get("pageUrl"));if(!current.isBlank())seen.add(normalizedUrl(current));require(!seen.contains(nextKey),"페이지 순환이 발견됐습니다.");seen.add(nextKey);enqueue.accept(new Seed(kind,target,Map.of("pageUrl",next,"visited",seen),baseline,generation));}
    return Map.of("verdict","APPROVE","eventId",eventId,"coverage",stage.coverage().completeness(),"needsEnrichment",next==null&&(!Set.of("COMPLETE","NOT_APPLICABLE").contains(stage.coverage().completeness())||!"COMPLETE".equals(stage.searchStatus())));
   }
