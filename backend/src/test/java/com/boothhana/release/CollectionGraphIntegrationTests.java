@@ -194,6 +194,39 @@ class CollectionGraphIntegrationTests {
  @Test void eventThemeAndSeriesWorkWithoutBoothsAndCorrectedThemeRetracts(){approveJob(seed("EVENT",Long.toString(event)),value(data));db.update("update collection_job set available_at=now()+interval '7 days'");approveJob(seed("RELATIONS",Long.toString(event)),relations());assertThat(db.queryForObject("select count(*) from subculture_subject_link where kind='EVENT' and event_id=? and active",Integer.class,event)).isEqualTo(1);assertThat(db.queryForObject("select count(*) from event_series_member where event_id=? and series_id is not null",Integer.class,event)).isEqualTo(1);var correction=relations();correction.put("subjects",List.of());correction.put("series",Map.of("status","NONE"));approveJob(seed("RELATIONS",Long.toString(event)),correction);assertThat(db.queryForObject("select count(*) from subculture_subject_link where kind='EVENT' and event_id=? and active",Integer.class,event)).isZero();assertThat(db.queryForObject("select series_id from event_series_member where event_id=?",Long.class,event)).isNull();}
  @Test void eventThemeNewsUsesCurrentPublicSnapshot(){approveJob(seed("EVENT",Long.toString(event)),value(data));db.update("update collection_job set available_at=now()+interval '7 days'");approveJob(seed("RELATIONS",Long.toString(event)),relations());UUID character=db.queryForObject("select subject_id from subculture_subject_link where kind='EVENT' and event_id=?",UUID.class,event);long user=fan();follow(user,null,character);db.update("delete from subculture_news_fact where kind='EVENT' and target_id=?",Long.toString(event));new com.boothhana.interests.InterestNews(db).event(event,false);assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(1);db.update("update subculture_catalog_publication set snapshot_json=jsonb_set(snapshot_json,'{event,name}','\"Changed event\"') where event_id=?",event);assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(0);}
  @Test void staleRevisionCannotPublish(){var job=seed("EVENT",Long.toString(event));var extracted=extract(job,data);db.update("update subculture_event_candidate set revision=revision+1 where id=?",event);assertThat(value(approve(job,extracted)).get("verdict")).isEqualTo("STALE");assertThat(db.queryForObject("select count(*) from subculture_catalog_publication where event_id=?",Integer.class,event)).isZero();}
+ @Test void emptyEventScheduleReturnsStructuredValidationAndCanResumeAsEnrichment()throws Exception{
+  var before=db.queryForMap("select payload_json,overrides_json,revision,starts_on,ends_on from subculture_event_candidate where id=?",event);
+  var job=seed("EVENT",Long.toString(event));var candidate=value(data);candidate.put("occurrences",List.of());
+  var e=extract(job,candidate);UUID extraction=UUID.fromString(e.get("id").toString());String route="/api/internal/subculture/v6/jobs/"+id(job)+"/decide";
+  var approve=new Decision(token(job),extraction,e.get("resultHash").toString(),"APPROVE","Original checked but schedule unconfirmed",audit());
+  // MockMvc joins this test's fixture transaction. A savepoint supplies the
+  // request rollback boundary that an actual failed HTTP request owns.
+  db.execute((org.springframework.jdbc.core.ConnectionCallback<Void>)connection->{
+   var boundary=connection.setSavepoint();
+   try {http.perform(post(route).servletPath(route).header("Authorization","Bearer graph-isolated-test-token-1234567890").contentType("application/json").content(json.writeValueAsString(approve)))
+    .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_REQUEST"));}
+   catch(Exception error){throw new RuntimeException(error);}
+   finally {connection.rollback(boundary);connection.releaseSavepoint(boundary);}
+   return null;
+  });
+  assertThat(db.queryForMap("select payload_json,overrides_json,revision,starts_on,ends_on from subculture_event_candidate where id=?",event)).isEqualTo(before);
+  assertThat(db.queryForObject("select count(*) from collection_verdict where extraction_id=?",Integer.class,extraction)).isZero();
+  assertThat(db.queryForObject("select count(*) from subculture_catalog_publication where event_id=?",Integer.class,event)).isZero();
+  var enrich=new Decision(token(job),extraction,e.get("resultHash").toString(),"ENRICH","Confirmed event schedule is required; research again",audit());
+  http.perform(post(route).servletPath(route).header("Authorization","Bearer graph-isolated-test-token-1234567890").contentType("application/json").content(json.writeValueAsString(enrich)))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.verdict").value("ENRICH"));
+  assertThat(db.queryForObject("select state from collection_job where id=?",String.class,id(job))).isEqualTo("WAITING");
+  assertThat(db.queryForMap("select payload_json,overrides_json,revision,starts_on,ends_on from subculture_event_candidate where id=?",event)).isEqualTo(before);
+ }
+ @Test void manualEventScheduleWithMissingDatesFailsValidationBeforeWriting(){
+  var before=db.queryForMap("select payload_json,overrides_json,revision,starts_on,ends_on from subculture_event_candidate where id=?",event);
+  long revision=((Number)before.get("revision")).longValue();
+  for(Object dates:List.of(List.of(),List.of(new Occurrence(null,"2026-10-25",null,null)),Arrays.asList((Occurrence)null))){
+   assertThatThrownBy(()->catalog.editEvent(event,new EditInput(revision,"REVIEWED","Unconfirmed schedule",Map.of("occurrences",dates))))
+    .isInstanceOfSatisfying(ApiException.class,error->assertThat(error.status.value()).isEqualTo(400));
+   assertThat(db.queryForMap("select payload_json,overrides_json,revision,starts_on,ends_on from subculture_event_candidate where id=?",event)).isEqualTo(before);
+  }
+ }
  @Test void expiredLeaseIsFencedAndExtractionResumes(){var job=seed("EVENT",Long.toString(event));extract(job,data);db.update("update collection_job set lease_until=now()-interval '1 minute' where id=?",id(job));var reclaimed=graph.claim();assertThat(reclaimed.get("extraction")).isNotNull();assertThat(reclaimed.get("leaseToken")).isNotEqualTo(token(job));assertThatThrownBy(()->graph.heartbeat(id(job),token(job))).isInstanceOf(ApiException.class);}
  @Test void unobservedSourceCannotBeApproved(){var job=seed("EVENT",Long.toString(event));var e=extract(job,data);var wrong=new Audit("gpt-6.1-sol","graph-1","graph-1",true,List.of("https://example.com/other"),Map.of(),List.of());assertThatThrownBy(()->graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"APPROVE","checked",wrong))).isInstanceOf(ApiException.class);}
  @Test void extractionIdentityCannotBeReusedForAnotherPayload(){var job=seed("EVENT",Long.toString(event));UUID eid=UUID.randomUUID();graph.extract(id(job),new Extraction(token(job),eid,job.get("contextHash").toString(),value(data),audit()));assertThatThrownBy(()->graph.extract(id(job),new Extraction(token(job),eid,job.get("contextHash").toString(),Map.of("different",true),audit()))).isInstanceOf(ApiException.class);}
