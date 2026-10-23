@@ -23,7 +23,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-comicinfo-images-1'
+PROMPT_VERSION='graph-4-tmm-public-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -296,6 +296,13 @@ class Worker:
             elif coverage=='COMPLETE':value['coverage']='PARTIAL'
             if 'socialPageComplete' in value:value['socialPageComplete']=False
             if 'nextPageUrl' in value:value['nextPageUrl']=None
+        if any(d.get('publicViewPartial') for d in documents):
+            # Public event tabs are useful facts, not an exhaustive catalogue.
+            # Keep real continuations/native SNS checkpoints from other sources.
+            if value.get('searchStatus')=='COMPLETE':value['searchStatus']='PARTIAL'
+            coverage=value.get('coverage')
+            if isinstance(coverage,dict) and coverage.get('completeness') in ('COMPLETE','NOT_APPLICABLE'):coverage['completeness']='PARTIAL'
+            elif coverage=='COMPLETE':value['coverage']='PARTIAL'
         for account in value.get('socialAccounts',[]):
             native=next((d for d in documents if d.get('available') and profile_key(d.get('profileUrl',''))==profile_key(account['profileUrl']) and d.get('platformAccountId')),None)
             if account.get('accountId') is None and native:account['accountId']=native['platformAccountId']
@@ -304,7 +311,7 @@ class Worker:
         if any(profile_key(s['url']) in mismatches for good in value.get('goods',[]) for s in good.get('sources',[])):raise RunError('Goods cannot be attributed to a recycled SNS account')
         if value.get('pageBatch'):
             batch=value['pageBatch']
-            if not any(d['available'] and not d.get('truncated') and canonical_audit_url(d['url'])==canonical_audit_url(batch['sourceUrl']) and d['sha256']==batch['sourceHash'] for d in documents):raise RunError('Page batch needs a complete captured original with matching hash')
+            if not any(d['available'] and not d.get('truncated') and not d.get('publicViewPartial') and canonical_audit_url(d['url'])==canonical_audit_url(batch['sourceUrl']) and d['sha256']==batch['sourceHash'] for d in documents):raise RunError('Page batch needs a complete captured original with matching hash')
         opened=audit_opened_urls(directory/'codex.jsonl')
         opened=list(dict.fromkeys(opened+[u for d in documents if d['available'] for u in (d['url'],d.get('transportUrl',d['url']))]+[m['url'] for m in social_images if m.get('sha256')]))
         source_documents=[{**{k:d[k] for k in ('url','sha256','capturedAt')},'transportUrl':d.get('transportUrl',d['url'])} for d in documents if d['available']]
