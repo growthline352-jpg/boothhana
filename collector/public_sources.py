@@ -17,12 +17,13 @@ from tmm_sources import tmm_route,related_public_tabs,tmm_policies,render_tmm_pa
 
 class PageText(HTMLParser):
     def __init__(self,url):
-        super().__init__();self.url=url;self.hidden=0;self.text=[];self.links=[];self.images=[];self.title=[];self.in_title=False
+        super().__init__();self.url=url;self.hidden=0;self.text=[];self.links=[];self.images=[];self.title=[];self.in_title=False;self.buttons=[];self.button=None
     def handle_starttag(self,tag,attrs):
         if tag in ('script','style','noscript','template'):self.hidden+=1
         if tag=='title':self.in_title=True
         if not self.hidden:
             values=dict(attrs)
+            if tag=='button':self.button={'text':[],'disabled':'disabled' in values or values.get('aria-disabled')=='true'}
             if tag=='img' and values.get('alt'):self.text.append(values['alt'])
             if tag=='img':
                 src=values.get('src') or values.get('data-src')
@@ -33,11 +34,43 @@ class PageText(HTMLParser):
                 link=urljoin(self.url,values['href'])
                 if canonical_audit_url(link) and link not in self.links:self.links.append(link)
     def handle_endtag(self,tag):
+        if tag=='button' and self.button is not None:
+            self.buttons.append({'text':' '.join(self.button['text']),'disabled':self.button['disabled']});self.button=None
         if tag in ('script','style','noscript','template'):self.hidden=max(0,self.hidden-1)
         if tag=='title':self.in_title=False
     def handle_data(self,data):
         if self.in_title:self.title.append(data)
-        if not self.hidden and data.strip():self.text.append(data.strip())
+        if not self.hidden and data.strip():
+            self.text.append(data.strip())
+            if self.button is not None:self.button['text'].append(data.strip())
+
+def dongne_pagination(url,parser):
+    """Observed public button protocol: ?page=N, 24 entries per page.
+
+    Never read hydration/account data. Check the rendered footer, controls and
+    exact current-event entry links together before exposing a continuation.
+    Every page is a slice, including the last; no whole-roster retirement.
+    """
+    p=urlsplit(url)
+    if p.scheme!='https' or p.hostname!='dongne.co' or not re.fullmatch(r'/events/[A-Za-z0-9_-]+/circles',p.path):return {}
+    result={'publicViewPartial':True}
+    if p.fragment or p.query and not re.fullmatch(r'page=[1-9][0-9]{0,4}',p.query):return result
+    page=int(p.query[5:]) if p.query else 1
+    text=' '.join(parser.text)
+    ranges=re.findall(r'전체 ([0-9]{1,6})개 중 ([0-9]{1,6})-([0-9]{1,6})개 표시',text)
+    if len(ranges)!=1:return result
+    total,first,last=map(int,ranges[0]);pages=(total+23)//24
+    if not 1<=page<=pages<=5000 or first!=(page-1)*24+1 or last!=min(page*24,total):return result
+    if not re.search(r'(?<![0-9])'+str(page)+r'\s*/\s*'+str(pages)+r'(?![0-9])',text):return result
+    buttons=[b for b in parser.buttons if b['text']=='다음 페이지']
+    if len(buttons)!=1 or buttons[0]['disabled']!=(page==pages):return result
+    entries=[u for u in parser.links if re.fullmatch(re.escape('https://dongne.co'+p.path)+r'/[1-9][0-9]*',u)]
+    if len(entries)!=last-first+1:return result
+    next_url='https://dongne.co'+p.path+'?page='+str(page+1) if page<pages else None
+    result['pagination']={'page':page,'totalPages':pages,'reportedTotal':total,'totalUnit':'REGISTERED_BOOTHS',
+                          'rangeStart':first,'rangeEnd':last,'entryUrls':entries,'nextPageUrl':next_url}
+    if next_url and next_url not in parser.links:parser.links.append(next_url)
+    return result
 
 class InlineScripts(HTMLParser):
     """Capture inline bytes only; this parser never evaluates JavaScript."""
@@ -111,6 +144,7 @@ class PublicSources:
                     html='<title>일러스타 공식 행사 목록</title><pre>'+escape(json.dumps(rows,ensure_ascii=False))+'</pre>'
                 html=kakao_pr_article(url,html)
                 parser=PageText(url);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
+                value.update(dongne_pagination(url,parser))
                 if tmm_route(url):
                     value['publicViewPartial']=True
                     try:
