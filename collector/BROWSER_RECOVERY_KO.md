@@ -2,7 +2,7 @@
 
 ## TMM 공개 행사 화면
 
-`https://takemm.com/event/@핸들/{timeline,info,store}`는 초기 HTML에 날짜가 비어 있을 수 있으므로 공개 화면을 렌더링해 읽는다. 실제 페이지에서 확인한 타임라인·행사 정보·상품&부스 경로를 함께 조사하며, 추출과 검토는 각각 새 익명 Chromium 컨텍스트를 사용한다. 현재 보이는 텍스트·링크만 전달하고, 로그인 정보·브라우저 저장소·API 응답 원문·비공개 장소는 내보내지 않는다. 현재 화면은 전체 명단·전체 상품의 완료 증거가 아니며, 실제 다른 출처의 이어받기는 계속 유지한다.
+`https://takemm.com/event/@핸들` 및 `https://takemm.com/event/@핸들/{timeline,info,store}`는 초기 HTML에 날짜가 비어 있을 수 있으므로 공개 화면을 렌더링해 읽는다. 실제 페이지에서 확인한 타임라인·행사 정보·상품&부스 경로를 함께 조사하며, 추출과 검토는 각각 새 익명 Chromium 컨텍스트를 사용한다. 현재 보이는 텍스트·링크만 전달하고, 로그인 정보·브라우저 저장소·API 응답 원문·비공개 장소는 내보내지 않는다. 현재 화면은 전체 명단·전체 상품의 완료 증거가 아니며, 실제 다른 출처의 이어받기는 계속 유지한다.
 
 DNS를 공개 주소로 고정하고 `takemm.com`, `static.takemm.com`, `api.takemm.com`의 HTTPS GET/HEAD만 허용한다. Chromium 샌드박스, 기존 seccomp, 비 root 및 no-new-privileges를 유지한다. 봇 User-Agent와 robots 검사에 같은 수집기 식별자를 사용하며, 각 호스트의 명시적인 Disallow를 따른다. `robots.txt`의 4xx 부재는 [RFC 9309 §2.3.1.3](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.3.1.3)에 따라 처리하되, 429·5xx·통신 실패에서는 멈춘다. 이 처리는 robots 파일에만 적용하며 실제 원문/API의 403을 허용으로 바꾸지 않는다.
 

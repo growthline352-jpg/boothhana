@@ -38,6 +38,21 @@ class TmmSourcesTests(unittest.TestCase):
                     'https://user:pass@takemm.com/event/@a/info','https://takemm.com/event/@..%2Fadmin/info',
                     'https://other.test/event/@a/info','https://takemm.com/account'):
             self.assertIsNone(tmm_route(url),url)
+    def test_stored_root_event_source_reads_three_tabs_without_duplicate_timeline(self):
+        root='https://takemm.com/event/%40shseofficial'
+        with patch('public_sources.render_tmm_page',side_effect=lambda url,policies:snapshot(url)) as render:
+            docs=PublicSources([],fetch)([root])
+        self.assertEqual(('shseofficial','timeline'),tmm_route(root))
+        self.assertEqual(3,len(docs));self.assertEqual(3,render.call_count)
+        self.assertEqual([root,'https://takemm.com/event/@shseofficial/info','https://takemm.com/event/@shseofficial/store'],[d['url'] for d in docs])
+        self.assertTrue(all(d.get('captureMethod')=='ANONYMOUS_BROWSER_DOM' for d in docs))
+    def test_root_and_timeline_redirect_are_same_public_view_but_other_tabs_are_not(self):
+        root='https://takemm.com/event/%40shseofficial'
+        value=snapshot('https://takemm.com/event/@shseofficial/timeline')
+        self.assertTrue(tmm_document(root,value)['available'])
+        for final in ('https://takemm.com/event/@shseofficial/store','https://takemm.com/event/@other',
+                      root+'?private=1','https://takemm.com/event/@shseofficial/apply'):
+            with self.subTest(final=final),self.assertRaises(MediaError):tmm_document(root,{**value,'url':final})
     def test_document_requires_fresh_anonymous_same_event_and_visible_date(self):
         for change in ({'anonymous':False},{'url':'https://takemm.com/event/@other/timeline'},
                        {'url':'https://takemm.com/event/@mdcrsweethome/store'},

@@ -16,8 +16,8 @@ def tmm_route(url):
     try:
         p=urlsplit(url)
         if p.scheme!='https' or p.hostname!='takemm.com' or p.username or p.password or p.port not in (None,443) or p.query or p.fragment:return None
-        m=re.fullmatch(r'/event/@([\w.-]{1,100})/(timeline|info|store)/?',unquote(p.path))
-        return (m[1],m[2]) if m and m[1] not in ('.','..') else None
+        m=re.fullmatch(r'/event/@([\w.-]{1,100})(?:/(timeline|info|store))?/?',unquote(p.path))
+        return (m[1],m[2] or 'timeline') if m and m[1] not in ('.','..') else None
     except ValueError:return None
 
 def related_public_tabs(url):
