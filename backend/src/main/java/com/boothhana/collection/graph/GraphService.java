@@ -107,7 +107,9 @@ public class GraphService {
   for(var row:rows.stream().limit(in.size()).toList()){after=number(row.get("id"));seed(new Seed("EVENT",Long.toString(after),Map.of(),false,cycle));}
   return Map.of("afterId",after,"hasMore",rows.size()>in.size());
  }
- private Map<String,Object> leased(UUID id,UUID token){var row=one("select *,lease_until>now() as lease_valid from collection_job where id=? for update",id);if(token==null||!token.equals(row.get("lease_token"))||!Boolean.TRUE.equals(row.get("lease_valid")))throw ApiException.conflict("수집 임대가 만료되거나 교체되었습니다.");return row;}
+ private Map<String,Object> lockJob(UUID id){return one("select *,lease_until>now() as lease_valid from collection_job where id=? for update",id);}
+ private void requireLease(Map<String,Object> row,UUID token){if(token==null||!token.equals(row.get("lease_token"))||!Boolean.TRUE.equals(row.get("lease_valid")))throw ApiException.conflict("수집 임대가 만료되거나 교체되었습니다.");}
+ private Map<String,Object> leased(UUID id,UUID token){var row=lockJob(id);requireLease(row,token);return row;}
  @Transactional public Map<String,Object> refreshCreators(Bootstrap in){
   require(in!=null&&in.afterId()>=0&&in.size()>0&&in.size()<=200,"작가 갱신 범위 오류");
   String cycle=java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString();
@@ -128,10 +130,13 @@ public class GraphService {
   return Map.of("id",in.extractionId(),"resultHash",hash(in.result()));
  }
  @Transactional public Object decide(UUID id,Decision in){
+  // Wait for any in-flight decision before checking its committed receipt.
+  // Checking first can miss that commit, then reject its cleared lease as 409.
+  var row=lockJob(id);
   // Lost-response replay returns the committed receipt; it cannot execute a second publication.
   var done=db.queryForList("select v.receipt_json from collection_verdict v join collection_extraction e on e.id=v.extraction_id where e.job_id=? and e.id=? and e.result_hash=?",id,in.extractionId(),in.resultHash());
   if(!done.isEmpty())return decode(done.getFirst().get("receipt_json"));
-  var row=leased(id,in.leaseToken());audit(in.audit(),true,null);require(Set.of("APPROVE","REJECT","ENRICH").contains(in.verdict())&&in.reason()!=null&&!in.reason().isBlank()&&in.reason().length()<=2000,"검토 판정 형식 오류");
+  requireLease(row,in.leaseToken());audit(in.audit(),true,null);require(Set.of("APPROVE","REJECT","ENRICH").contains(in.verdict())&&in.reason()!=null&&!in.reason().isBlank()&&in.reason().length()<=2000,"검토 판정 형식 오류");
   var extraction=one("select * from collection_extraction where id=? and job_id=?",in.extractionId(),id);if(!Objects.equals(extraction.get("result_hash"),in.resultHash()))throw ApiException.conflict("검토 결과 해시가 다릅니다.");
   // Serialize graph projections with the legacy catalog writer. Recheck and lock targets before apply.
   db.queryForList("select pg_advisory_xact_lock(728194301)");
