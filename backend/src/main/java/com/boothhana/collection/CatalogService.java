@@ -383,7 +383,9 @@ public class CatalogService {
         }
         String status="FAILED".equals(b.result().searchStatus())?"FAILED":(!issues.isEmpty()||rejected>0||"PARTIAL".equals(b.result().searchStatus())||"PARTIAL".equals(b.result().coverage().completeness())?"PARTIAL":inserted+changed+unchanged==0?"NO_RESULTS":"SUCCESS");
         StageReceipt receipt=new StageReceipt(b.runId(),status,inserted,changed,unchanged,rejected,ids,issues);
-        if(approval!=null)approval.approve(b.eventId());
+        // GraphProjection reviews only this immutable extraction and publishes once.
+        // The legacy intake policy would approve unrelated pending event rows too.
+        if(approval!=null&&projection==null)approval.approve(b.eventId());
         db.update("""
             insert into subculture_stage_run(id,pipeline_id,event_id,participant_id,stage,request_hash,request_json,coverage_json,receipt_json,status,started_at,finished_at)
             values(?,?,?,?,?,?,cast(? as jsonb),cast(? as jsonb),cast(? as jsonb),?,?,?)

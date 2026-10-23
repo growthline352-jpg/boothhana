@@ -263,6 +263,52 @@ class CollectionGraphIntegrationTests {
   db.update("update subculture_subject_link set active=false where id=?",link.get("id"));var recheck=seed("CHARACTERS",graphProduct.toString());approve(recheck,extract(recheck,Map.of("assignments",List.of(assignment),"unresolved",List.of(),"sources",sources)));assertThat(db.queryForObject("select active from subculture_subject_link where id=?",Boolean.class,link.get("id"))).isTrue();
 
  }
+ Participant rosterBooth(String key){return new Participant(key,"[TEST] "+key,"CIRCLE",List.of(),List.of(),List.of(),"Public roster",List.of(),List.of(new Source(source,"OFFICIAL","ORIGINAL","Roster entry "+key)),List.of(),List.of());}
+ long pendingRosterBooth(String key){var p=rosterBooth(key);String identity=CatalogIdentity.participantKeys(p).getFirst();return db.queryForObject("insert into subculture_participant(event_id,identity_key,identity_aliases,registration_name,payload_json,payload_hash) values(?,?,cast(? as jsonb),?,cast(? as jsonb),?) returning id",Long.class,event,identity,json.writeValueAsString(CatalogIdentity.participantKeys(p)),p.registrationName(),json.writeValueAsString(p),CollectionRules.sha(json.writeValueAsString(p)));}
+ StageResult roster(Participant... p){return new StageResult("COMPLETE","Public roster",List.of("test"),new Coverage("COMPLETE",p.length,"REGISTERED_BOOTHS",List.of(source),null,List.of()),List.of(p),null);}
+ void reviewedRosterEvent(){approveJob(seed("EVENT",Long.toString(event)),value(data));db.update("update collection_job set available_at=now()+interval '7 days'");}
+ @Test void graphRosterDoesNotBulkApproveUnrelatedPendingRowsOrRights(){
+  reviewedRosterEvent();long pending=pendingRosterBooth("unrelated");
+  long asset=db.queryForObject("insert into subculture_catalog_asset(event_id,participant_id,identity_key,type,image_url,page_url,reported_rights) values(?,?,?,'BOOTH_CUT','https://example.com/pending.png',?,'Not independently reviewed') returning id",Long.class,event,pending,"a".repeat(64),source);
+  approveJob(seed("PARTICIPANTS",Long.toString(event)),value(roster(rosterBooth("included"))));
+  assertThat(db.queryForObject("select review_state from subculture_participant where id=?",String.class,pending)).isEqualTo("PENDING");
+  assertThat(db.queryForObject("select rights_state from subculture_catalog_asset where id=?",String.class,asset)).isEqualTo("PENDING");
+  var publicRows=(List<?>)json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class).get("participants");
+  assertThat(publicRows).hasSize(1);assertThat(value(publicRows.getFirst()).get("id").toString()).isNotEqualTo(Long.toString(pending));
+ }
+ @Test void graphRosterKeepsExcludedEntriesHiddenAndStillPublishesValidSiblings(){
+  reviewedRosterEvent();long excluded=pendingRosterBooth("excluded");
+  var row=catalog.participant(excluded);catalog.editParticipant(excluded,new EditInput(row.revision(),"EXCLUDED","Explicit exclusion",Map.of("description","Owner correction")));
+  db.update("update collection_job set available_at=now()+interval '7 days'");
+  var job=seed("PARTICIPANTS",Long.toString(event));var receipt=value(approve(job,extract(job,roster(rosterBooth("excluded"),rosterBooth("valid")))));
+  assertThat(receipt.get("excludedParticipants")).isEqualTo(1);
+  assertThat(catalog.participant(excluded).reviewState()).isEqualTo("EXCLUDED");assertThat(catalog.participant(excluded).overrides()).containsEntry("description","Owner correction");
+  assertThat(db.queryForObject("select count(*) from collection_job where kind='SALES' and target_id=?",Integer.class,Long.toString(excluded))).isZero();
+  var snapshot=json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class);
+  var rows=(List<?>)snapshot.get("participants");assertThat(rows).hasSize(1);assertThat(value(value(rows.getFirst()).get("participant")).get("registrationName")).isEqualTo("[TEST] valid");
+ }
+ @Autowired CatalogMediaService catalogMedia;
+ static class ProductReadCounter extends JdbcTemplate {
+  int productReads;
+  ProductReadCounter(javax.sql.DataSource ds){super(ds);}
+  @Override public List<Map<String,Object>> queryForList(String sql,Object... args){if(sql.toLowerCase(Locale.ROOT).contains("from subculture_catalog_product"))productReads++;return super.queryForList(sql,args);}
+ }
+ @Test void publicationReadsProductsOnceAndKeepsParentIdsForManyReviewedBooths(){
+  reviewedRosterEvent();var expected=new LinkedHashMap<Long,Long>();
+  for(int n=0;n<25;n++){
+   long pid=pendingRosterBooth("bulk-"+n);var p=catalog.participant(pid);catalog.editParticipant(pid,new EditInput(p.revision(),"REVIEWED","Fixture",Map.of()));
+   var good=new ProductData("g"+n,"Keyring "+n,"Official product",null,List.of("keyring"),List.of(),"EVENT_SALE_CONFIRMED",null,"PLANNED",source+"/g/"+n,List.of(new Source(source,"OFFICIAL","ORIGINAL","Product")),List.of(),List.of());
+   String encoded=json.writeValueAsString(good);long gid=db.queryForObject("insert into subculture_catalog_product(participant_id,identity_key,identity_aliases,name,payload_json) values(?,?,cast(? as jsonb),?,cast(? as jsonb)) returning id",Long.class,pid,CatalogIdentity.productKeys(good).getFirst(),json.writeValueAsString(CatalogIdentity.productKeys(good)),good.name(),encoded);expected.put(pid,gid);
+   var sale=new Sales("Sale "+n,"EVENT_SALE_CONFIRMED",List.of(),List.of(),"On site",good.sources(),List.of(),List.of(good),List.of());String sales=json.writeValueAsString(sale);
+   db.update("insert into subculture_sales(participant_id,payload_json,payload_hash,review_state,reviewed_payload_json,reviewed_product_checks_json) values(?,cast(? as jsonb),?,'REVIEWED',cast(? as jsonb),'{}')",pid,sales,CollectionRules.sha(sales),sales);
+  }
+  var counter=new ProductReadCounter(db.getDataSource());var publisher=new CatalogPublicationService(counter,json,catalogMedia);
+  publisher.publish(event,new PublishInput(((Number)catalog.eventDetail(event).get("revision")).longValue()));
+  assertThat(counter.productReads).isEqualTo(1);
+  var snapshot=json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class);
+  var rows=(List<?>)snapshot.get("participants");assertThat(rows).hasSize(25);
+  for(var raw:rows){var row=value(raw);long pid=((Number)row.get("id")).longValue();var products=(List<?>)row.get("productRows");assertThat(products).hasSize(1);assertThat(((Number)value(products.getFirst()).get("id")).longValue()).isEqualTo(expected.get(pid));}
+ }
  @Test void partialPageKeepsContinuationInQueue(){
   var eventJob=seed("EVENT",Long.toString(event));approve(eventJob,extract(eventJob,data));db.update("update collection_job set available_at=now()+interval '7 days'");
   var sources=List.of(new Source(source,"OFFICIAL","ORIGINAL","First page"));var p=new Participant(null,"Test circle","CIRCLE",List.of(),List.of(),List.of(),"Test",List.of(),sources,List.of(),List.of());
