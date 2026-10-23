@@ -227,7 +227,15 @@ class CollectionGraphIntegrationTests {
    assertThat(db.queryForMap("select payload_json,overrides_json,revision,starts_on,ends_on from subculture_event_candidate where id=?",event)).isEqualTo(before);
   }
  }
- @Test void expiredLeaseIsFencedAndExtractionResumes(){var job=seed("EVENT",Long.toString(event));extract(job,data);db.update("update collection_job set lease_until=now()-interval '1 minute' where id=?",id(job));var reclaimed=graph.claim();assertThat(reclaimed.get("extraction")).isNotNull();assertThat(reclaimed.get("leaseToken")).isNotEqualTo(token(job));assertThatThrownBy(()->graph.heartbeat(id(job),token(job))).isInstanceOf(ApiException.class);}
+ @Test void expiredLeaseIsFencedAndExtractionResumes(){
+  var job=seed("EVENT",Long.toString(event));var e=extract(job,data);
+  db.update("update collection_job set lease_until=now()-interval '1 minute' where id=?",id(job));
+  var reclaimed=graph.claim();assertThat(reclaimed.get("extraction")).isNotNull();assertThat(reclaimed.get("leaseToken")).isNotEqualTo(token(job));
+  assertThatThrownBy(()->graph.heartbeat(id(job),token(job))).isInstanceOf(ApiException.class);
+  assertThatThrownBy(()->graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"APPROVE","Expired lease cannot publish",audit()))).isInstanceOf(ApiException.class).hasMessageContaining("임대");
+  assertThat(db.queryForObject("select count(*) from collection_verdict where extraction_id=?",Integer.class,UUID.fromString(e.get("id").toString()))).isZero();
+ }
+
  @Test void unobservedSourceCannotBeApproved(){var job=seed("EVENT",Long.toString(event));var e=extract(job,data);var wrong=new Audit("gpt-6.1-sol","graph-1","graph-1",true,List.of("https://example.com/other"),Map.of(),List.of());assertThatThrownBy(()->graph.decide(id(job),new Decision(token(job),UUID.fromString(e.get("id").toString()),e.get("resultHash").toString(),"APPROVE","checked",wrong))).isInstanceOf(ApiException.class);}
  @Test void extractionIdentityCannotBeReusedForAnotherPayload(){var job=seed("EVENT",Long.toString(event));UUID eid=UUID.randomUUID();graph.extract(id(job),new Extraction(token(job),eid,job.get("contextHash").toString(),value(data),audit()));assertThatThrownBy(()->graph.extract(id(job),new Extraction(token(job),eid,job.get("contextHash").toString(),Map.of("different",true),audit()))).isInstanceOf(ApiException.class);}
  @Test void modelFallbackIsRejected(){var job=seed("EVENT",Long.toString(event));var other=new Audit("different-model","graph-1","graph-1",true,List.of(source),Map.of(),List.of());assertThatThrownBy(()->graph.extract(id(job),new Extraction(token(job),UUID.randomUUID(),job.get("contextHash").toString(),value(data),other))).isInstanceOf(ApiException.class);}
