@@ -47,13 +47,16 @@ public class CatalogService {
         if(!"RUNNING".equals(row.get("state"))) throw ApiException.conflict("종료된 배치입니다. 다시 시작 또는 이어서 실행하세요.");
         db.update("update subculture_pipeline_run set heartbeat_at=now() where id=?",UUID.fromString(id));return row;
     }
-    @Transactional(timeout=30)
-    public Map<String,Object> start(PipelineInput input) {
+    private void validatePipeline(PipelineInput input) {
         try { UUID.fromString(input.runId());CollectionRules.date(input.weekKey());
             if(input.scope()==null||!CatalogTaxonomy.SCOPES.contains(input.scope().region())||!"Asia/Seoul".equals(input.scope().timezone())||
                 CollectionRules.date(input.scope().startDate()).isAfter(CollectionRules.date(input.scope().endDate()))||
                 java.time.temporal.ChronoUnit.DAYS.between(CollectionRules.date(input.scope().startDate()),CollectionRules.date(input.scope().endDate()))>365) throw new IllegalArgumentException();
         } catch(RuntimeException e) { throw ApiException.badRequest("주간 배치 ID/범위 오류"); }
+    }
+    @Transactional(timeout=30)
+    public Map<String,Object> start(PipelineInput input) {
+        validatePipeline(input);
         lock();
         db.update("update subculture_pipeline_run set state='FAILED',finished_at=now() where state='RUNNING' and heartbeat_at<now()-interval '2 hours'");
         var existing=db.queryForList("select * from subculture_pipeline_run where id=?",UUID.fromString(input.runId()));
@@ -232,6 +235,23 @@ public class CatalogService {
         return ingest(b,manualImport,Set.of());
     }
     private StageReceipt ingest(StageBatch b,boolean manualImport,Set<UUID> previousStages) {
+        return ingest(b,manualImport,previousStages,null);
+    }
+    /** A reviewed graph verdict is applied atomically; it never owns the long-running runner slot. */
+    @Transactional(propagation=org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public StageReceipt ingestReviewedProjection(StageBatch b,PipelineInput pipeline,Set<UUID> previousStages) {
+        validatePipeline(pipeline);
+        if(b==null||!pipeline.runId().equals(b.pipelineId())||!pipeline.runId().equals(b.runId()))
+            throw ApiException.badRequest("승인 반영 작업 ID가 다릅니다.");
+        var approved=db.queryForList("""
+            select v.id from collection_verdict v
+            join collection_extraction x on x.id=v.extraction_id join collection_job j on j.id=x.job_id
+            where v.id=? and v.verdict='APPROVE' and j.kind=? and j.target_id=?
+            """,UUID.fromString(b.runId()),b.stage(),Objects.toString("SALES".equals(b.stage())?b.participantId():b.eventId()));
+        if(approved.isEmpty()) throw ApiException.badRequest("독립 검토에서 승인한 수집 작업이 필요합니다.");
+        return ingest(b,false,Set.copyOf(previousStages),pipeline);
+    }
+    private StageReceipt ingest(StageBatch b,boolean manualImport,Set<UUID> previousStages,PipelineInput projection) {
         try { if(manualImport) CatalogRules.manualStage(b); else CatalogRules.stage(b); }
         catch(RuntimeException e) { throw ApiException.badRequest("단계별 JSON 형식 또는 대상/출처를 확인하세요."); }
         if(approval!=null)approval.lock();
@@ -245,7 +265,15 @@ public class CatalogService {
             if(!same) throw ApiException.conflict("같은 작업 ID에 다른 결과를 보낼 수 없습니다.");
             return decode(saved.get("receipt_json"),StageReceipt.class);
         }
-        var pipeline=requireRunning(b.pipelineId());Scope scope=decode(pipeline.get("scope_json"),Scope.class);
+        if(projection!=null) {
+            // This row and all stage data commit or roll back with the graph verdict.
+            // SUCCESS is not externally visible until the surrounding transaction commits.
+            db.update("""
+                insert into subculture_pipeline_run(id,week_key,scope_json,state,summary_json,finished_at)
+                values(?,cast(? as date),cast(? as jsonb),'SUCCESS',cast(? as jsonb),now())
+                """,UUID.fromString(b.pipelineId()),projection.weekKey(),encode(projection.scope()),encode(Map.of("graphVerdict",b.runId())));
+        }
+        var pipeline=projection==null?requireRunning(b.pipelineId()):one("select * from subculture_pipeline_run where id=? for update",UUID.fromString(b.pipelineId()));Scope scope=decode(pipeline.get("scope_json"),Scope.class);
         var e=one("select * from subculture_event_candidate where id=? for update",b.eventId());
         if("EXCLUDED".equals(e.get("review_state"))) throw ApiException.conflict("제외된 행사에는 수집하지 않습니다.");
         EventData event=effective(e,EventData.class);
