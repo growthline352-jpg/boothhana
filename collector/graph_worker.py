@@ -24,7 +24,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-native-roster-pagination-2'
+PROMPT_VERSION='graph-4-scoped-sales-images-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -230,6 +230,19 @@ def attached_image_documents(paths,manifest,blocked):
         if document not in documents:documents.append(document)
     return documents
 
+def image_page_key(url):
+    if not isinstance(url,str):return ''
+    route=social_route(url)
+    if route:
+        profile=profile_key(url)
+        return profile+('/status/' if route[0]=='X' else '/post/')+route[2] if route[2] else profile
+    return canonical_audit_url(url)
+
+def sales_image_pages(context):
+    # Event references can include other exhibitors' sales sheets. Keep their
+    # general event text, but analyze the current seller's linked originals.
+    return context_urls({k:context[k] for k in ('input','participant','creatorSources') if k in context})
+
 class Worker:
     def __init__(self,cfg,api=None,search=execute_search,source_loader=None):
         self.cfg=cfg;self.api=api or Api(cfg['apiBaseUrl'],os.environ.get(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']);self.search=search
@@ -253,7 +266,7 @@ class Worker:
                 manifest.append({'index':index,'url':url,'pageUrl':candidate.get('pageUrl'),'sha256':digest,'capturedAt':datetime.now(timezone.utc).isoformat()})
             except (ValueError,OSError) as exc:manifest.append({'index':index,'url':url,'unavailable':type(exc).__name__})
         return paths,manifest
-    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False,review=False,complex_task=False,image_sources=()):
+    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False,review=False,complex_task=False,image_sources=(),image_page_urls=None):
         directory.mkdir(parents=True,exist_ok=True);schema_path=directory/'schema.json';write_json(schema_path,output_schema)
         documents=(self.source_loader(source_urls_to_fetch,defer_browser_pending=True) if isinstance(self.source_loader,SocialSources)
                    else self.source_loader(source_urls_to_fetch)) if self.source_loader and source_urls_to_fetch else []
@@ -262,8 +275,12 @@ class Worker:
         if image_documents:prompt+='\nATTACHED ORIGINAL IMAGE SOURCES (이 호출에 실제 첨부한 이미지 바이트의 출처·해시다. 링크된 HTML 페이지 열람이나 이미지 재게시 권한을 뜻하지 않는다):\n'+json.dumps(image_documents,ensure_ascii=False)
         attached=list(images);social_images=[]
         # Native media is only analyzed. This does not grant republication rights.
+        image_scope=None if image_page_urls is None else {key for u in image_page_urls if (key:=image_page_key(u))}
+        def image_page_allowed(document):return image_scope is None or any(image_page_key(document.get(k)) in image_scope for k in ('url','profileUrl'))
+        if image_scope is not None:write_json(directory/'image-page-scope.json',{'allowedPages':sorted(image_scope),'skippedImagePages':[d['url'] for d in documents if d.get('images') and not image_page_allowed(d)]})
         for document in documents if auto_sns_images else []:
             if not document.get('available'):continue
+            if not image_page_allowed(document):continue
             for candidate in document.get('images',[]):
                 url=candidate.get('imageUrl','');host=urlsplit(url).hostname
                 entry={'url':url,'pageUrl':candidate.get('pageUrl')}
@@ -367,7 +384,9 @@ class Worker:
                 if job['kind']=='CREATOR' and not job['context'].get('input',{}).get('socialPage'):
                     discovered,_=self.call(directory/'social-discovery',COMMON+SOCIAL_DISCOVERY_PROMPT+'\nUNTRUSTED CONTEXT:\n'+json.dumps(job['context'],ensure_ascii=False),SOCIAL_DISCOVERY_SCHEMA,[],urls)
                     urls=list(dict.fromkeys(urls+discovered['profileUrls']))
-                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls,complex_task=job['kind'] in COMPLEX_KINDS,**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {'image_sources':manifest} if job['kind']=='CHARACTERS' else {}))
+                image_options={'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {'image_sources':manifest} if job['kind']=='CHARACTERS' else {}
+                if job['kind']=='SALES':image_options['image_page_urls']=sales_image_pages(job['context'])
+                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls,complex_task=job['kind'] in COMPLEX_KINDS,**image_options)
                 if job['kind']=='CREATOR' and job['context'].get('input',{}).get('socialPage') and social_route(job['context']['input']['pageUrl']):
                     page=job['context']['input']['pageUrl'];documents=json.loads((directory/'extract'/'source-documents.json').read_text(encoding='utf-8'))['documents']
                     original=next((d for d in documents if d['url']==page),{})
@@ -395,7 +414,11 @@ class Worker:
                 urls=sorted(source_urls(candidate))+context_urls(extracted['context'])
                 if candidate.get('events')==[]:
                     urls.extend(u for c in candidate.get('sourceCoverage',[]) if c['status'] in ('CHECKED','NO_RESULTS','PARTIAL') for u in c['checkedUrls'])
-                decision,observations=self.call(review_dir,prompt,REVIEW_SCHEMA,review_images,list(dict.fromkeys(urls)),review=True,**({'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {'image_sources':review_manifest} if job['kind']=='CHARACTERS' else {}))
+                review_options={'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {'image_sources':review_manifest} if job['kind']=='CHARACTERS' else {}
+                # Always give the independent reviewer the extractor's claimed
+                # originals too, including foreign sources that can disprove it.
+                if job['kind']=='SALES':review_options['image_page_urls']=sales_image_pages(extracted['context'])+sorted(source_urls(candidate))
+                decision,observations=self.call(review_dir,prompt,REVIEW_SCHEMA,review_images,list(dict.fromkeys(urls)),review=True,**review_options)
                 if job['kind']=='CHARACTERS' and ({m['index']:m.get('sha256') for m in review_manifest}!={m['index']:m.get('sha256') for m in candidate.get('imageCoverage',[])}):
                     decision={'verdict':'ENRICH','reason':'Image group changed or became unavailable during independent review; extract current originals again'}
                 if job['kind'] in ('CREATOR','SALES'):
