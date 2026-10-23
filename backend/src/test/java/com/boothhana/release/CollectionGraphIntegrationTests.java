@@ -193,6 +193,71 @@ class CollectionGraphIntegrationTests {
  Map<String,Object> relations(){var assignment=characters("Theme Hero");return new LinkedHashMap<>(Map.of("subjects",List.of(Map.of("work",Map.of("name","Theme Game","sourceUrl",source,"medium","게임"),"character",Map.of("name","Theme Hero","sourceUrl",source,"medium","게임"),"evidenceUrl",source,"evidence","Official only-event theme")),"series",Map.of("status","CONFIRMED","name","Theme Convention","officialUrl",source,"edition","2026","evidenceUrl",source,"evidence","Annual edition"),"unresolved",List.of(),"sources",assignment.get("sources")));}
  @Test void eventThemeAndSeriesWorkWithoutBoothsAndCorrectedThemeRetracts(){approveJob(seed("EVENT",Long.toString(event)),value(data));db.update("update collection_job set available_at=now()+interval '7 days'");approveJob(seed("RELATIONS",Long.toString(event)),relations());assertThat(db.queryForObject("select count(*) from subculture_subject_link where kind='EVENT' and event_id=? and active",Integer.class,event)).isEqualTo(1);assertThat(db.queryForObject("select count(*) from event_series_member where event_id=? and series_id is not null",Integer.class,event)).isEqualTo(1);var correction=relations();correction.put("subjects",List.of());correction.put("series",Map.of("status","NONE"));approveJob(seed("RELATIONS",Long.toString(event)),correction);assertThat(db.queryForObject("select count(*) from subculture_subject_link where kind='EVENT' and event_id=? and active",Integer.class,event)).isZero();assertThat(db.queryForObject("select series_id from event_series_member where event_id=?",Long.class,event)).isNull();}
  @Test void eventThemeNewsUsesCurrentPublicSnapshot(){approveJob(seed("EVENT",Long.toString(event)),value(data));db.update("update collection_job set available_at=now()+interval '7 days'");approveJob(seed("RELATIONS",Long.toString(event)),relations());UUID character=db.queryForObject("select subject_id from subculture_subject_link where kind='EVENT' and event_id=?",UUID.class,event);long user=fan();follow(user,null,character);db.update("delete from subculture_news_fact where kind='EVENT' and target_id=?",Long.toString(event));new com.boothhana.interests.InterestNews(db).event(event,false);assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(1);db.update("update subculture_catalog_publication set snapshot_json=jsonb_set(snapshot_json,'{event,name}','\"Changed event\"') where event_id=?",event);assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(0);}
+ record NewsBooth(long creator,long participant,Map<String,Object> snapshot){}
+ List<NewsBooth> newsRoster(int size){
+  reviewedRosterEvent();var booths=new ArrayList<NewsBooth>();
+  for(int n=0;n<size;n++){
+   String name="[TEST] news maker "+n,url=source+"/maker/"+n;long creator=maker(name,url);
+   var person=new Participant(null,name,"CIRCLE",List.of(new Member(name,"ARTIST",List.of(),url)),List.of(),List.of(),"Official roster",List.of(),List.of(new Source(source,"OFFICIAL","ORIGINAL","Roster")),List.of(),List.of());
+   String encoded=json.writeValueAsString(person),key=UUID.randomUUID().toString().replace("-","").repeat(2);
+   long pid=db.queryForObject("insert into subculture_participant(event_id,identity_key,registration_name,payload_json,payload_hash,review_state,reviewed_payload_json) values(?,?,?,cast(? as jsonb),?,'REVIEWED',cast(? as jsonb)) returning id",Long.class,event,key,name,encoded,CollectionRules.sha(encoded),encoded);
+   db.update("insert into subculture_participant_member(participant_id,exhibitor_id) values(?,?)",pid,creator);
+   booths.add(new NewsBooth(creator,pid,new LinkedHashMap<>(Map.of("id",pid,"participant",value(person)))));
+  }
+  newsSnapshot(booths.stream().map(NewsBooth::snapshot).toList());return booths;
+ }
+ void newsSnapshot(List<Map<String,Object>> booths){db.update("update subculture_catalog_publication set snapshot_json=jsonb_set(snapshot_json,'{participants}',cast(? as jsonb)) where event_id=?",json.writeValueAsString(booths),event);}
+ static class NewsStatementCounter extends JdbcTemplate {
+  int statements;
+  NewsStatementCounter(javax.sql.DataSource ds){super(ds);}
+  @Override public List<Map<String,Object>> queryForList(String sql,Object... args){statements++;return super.queryForList(sql,args);}
+  @Override public int update(String sql,Object... args){statements++;return super.update(sql,args);}
+ }
+ @Test void eventNewsForLargeRosterUsesBoundedRoundTripsAndNeverReannouncesBaseline(){
+  var booths=newsRoster(120);long user=fan();follow(user,booths.getFirst().creator(),null);
+  var counter=new NewsStatementCounter(db.getDataSource());var news=new com.boothhana.interests.InterestNews(counter);
+  news.event(event,true);
+  assertThat(db.queryForObject("select count(*) from subculture_news_fact where kind='EVENT' and target_id=? and baseline",Integer.class,Long.toString(event))).isEqualTo(120);
+  assertThat(counter.statements).as("One batch must replace per-creator network round trips").isLessThanOrEqualTo(3);
+  var before=db.queryForList("select id,identity_key,baseline from subculture_news_fact where kind='EVENT' and target_id=? order by identity_key",Long.toString(event));
+  long newcomer=fan();follow(newcomer,booths.getFirst().creator(),null);counter.statements=0;news.event(event,false);
+  assertThat(counter.statements).isLessThanOrEqualTo(3);
+  assertThat(db.queryForList("select id,identity_key,baseline from subculture_news_fact where kind='EVENT' and target_id=? order by identity_key",Long.toString(event))).isEqualTo(before);
+  assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(0);assertThat(notifications.inbox(newcomer,0).get("unread")).isEqualTo(0);
+ }
+ @Test void eventNewsBatchPreservesPublicMembershipVisibilityAndPushDeduplication(){
+  var booths=newsRoster(5);long user=fan();for(var booth:booths)follow(user,booth.creator(),null);
+  UUID verdict=db.queryForObject("select id from collection_verdict order by created_at desc limit 1",UUID.class);
+  db.update("insert into collection_creator_publication(exhibitor_id,data_json,verdict_id,active) values(?,'{}',?,false)",booths.get(1).creator(),verdict);
+  db.update("update subculture_participant set review_state='EXCLUDED' where id=?",booths.get(2).participant());
+  // The fourth creator is private-only; the fifth no longer matches the public profile.
+  var fifth=new LinkedHashMap<>(booths.get(4).snapshot());var person=new LinkedHashMap<>(value(fifth.get("participant")));person.put("members",List.of(Map.of("name","Different maker","profileUrl",source+"/other")));fifth.put("participant",person);
+  newsSnapshot(List.of(booths.get(0).snapshot(),booths.get(1).snapshot(),booths.get(2).snapshot(),fifth));
+  var service=new com.boothhana.interests.NotificationService(db);org.springframework.test.util.ReflectionTestUtils.setField(service,"enabled",true);org.springframework.test.util.ReflectionTestUtils.setField(service,"pushEnabled",true);org.springframework.test.util.ReflectionTestUtils.setField(service,"publicKey","configured-for-test");
+  byte[] key=new byte[65];key[0]=4;var encoder=Base64.getUrlEncoder().withoutPadding();service.subscribe(user,new com.boothhana.interests.NotificationService.Subscription("https://fcm.googleapis.com/fcm/send/"+UUID.randomUUID(),encoder.encodeToString(key),encoder.encodeToString(new byte[16])));
+  var news=new com.boothhana.interests.InterestNews(db);news.event(event,false);news.event(event,false);
+  assertThat(db.queryForList("select creator_id from subculture_news_fact where kind='EVENT' and target_id=?",Long.class,Long.toString(event))).containsExactly(booths.getFirst().creator());
+  assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(1);
+  assertThat(db.queryForObject("select count(*) from subculture_push_delivery where state='PENDING'",Integer.class)).isEqualTo(1);
+  db.update("update subculture_catalog_publication set snapshot_json=jsonb_set(snapshot_json,'{event,operationStatus}', '{\"state\":\"CANCELED\"}'::jsonb) where event_id=?",event);
+  assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(0);news.event(event,false);
+  assertThat(db.queryForObject("select count(*) from subculture_news_fact where kind='EVENT' and target_id=?",Integer.class,Long.toString(event))).isEqualTo(1);
+ }
+ @Test void eventNewsBatchKeepsSubjectPriorityAndRollsBackFactsWithInbox(){
+  var booths=newsRoster(1);approveJob(seed("RELATIONS",Long.toString(event)),relations());
+  UUID character=db.queryForObject("select subject_id from subculture_subject_link where kind='EVENT' and event_id=?",UUID.class,event);
+  long user=fan();follow(user,booths.getFirst().creator(),null);follow(user,null,character);
+  db.update("delete from subculture_news_fact where kind='EVENT' and target_id=?",Long.toString(event));var news=new com.boothhana.interests.InterestNews(db);
+  db.execute((org.springframework.jdbc.core.ConnectionCallback<Void>)connection->{
+   var boundary=connection.setSavepoint();news.event(event,false);
+   assertThat(db.queryForObject("select count(*) from subculture_news_fact where kind='EVENT' and target_id=?",Integer.class,Long.toString(event))).isEqualTo(2);
+   assertThat(db.queryForObject("select title from subculture_notification where user_id=?",String.class,user)).isEqualTo("관심 대상과 관련된 행사가 확인됐어요");
+   connection.rollback(boundary);connection.releaseSavepoint(boundary);return null;
+  });
+  assertThat(db.queryForObject("select count(*) from subculture_news_fact where kind='EVENT' and target_id=?",Integer.class,Long.toString(event))).isZero();
+  assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(0);news.event(event,false);news.event(event,false);
+  assertThat(notifications.inbox(user,0).get("unread")).isEqualTo(1);
+ }
  @Test void staleRevisionCannotPublish(){var job=seed("EVENT",Long.toString(event));var extracted=extract(job,data);db.update("update subculture_event_candidate set revision=revision+1 where id=?",event);assertThat(value(approve(job,extracted)).get("verdict")).isEqualTo("STALE");assertThat(db.queryForObject("select count(*) from subculture_catalog_publication where event_id=?",Integer.class,event)).isZero();}
  @Test void emptyEventScheduleReturnsStructuredValidationAndCanResumeAsEnrichment()throws Exception{
   var before=db.queryForMap("select payload_json,overrides_json,revision,starts_on,ends_on from subculture_event_candidate where id=?",event);
