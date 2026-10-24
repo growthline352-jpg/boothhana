@@ -97,8 +97,19 @@ def documents(url,snapshot):
    'truncated':False,'captureMethod':'ANONYMOUS_BROWSER_DOM','hashScope':'normalized rendered public DOM; not HTTP response bytes',
    'browserPartial':not bool(pid),'profileUrl':profile,**extra}
  result=[doc(url if pid else row['url'],row,images=row['images'],links=row['links']) for row in rows]
- if not pid:result.insert(0,doc(url,{'profile':snapshot.get('profile',''),'postUrls':[r['url'] for r in rows],
-  'coverage':'PARTIAL','warning':'Visible browser slice only; no native account ID or feed checkpoint.'},links=[r['url'] for r in rows]))
+ if not pid:
+  profile_text=snapshot.get('profile','')
+  if not isinstance(profile_text,str) or len(profile_text)>8000:raise MediaError('Invalid public profile text')
+  if not isinstance(snapshot.get('profileLinks',[]),list):raise MediaError('Invalid public profile links')
+  profile_links=[]
+  for link in snapshot.get('profileLinks',[])[:20]:
+   if not isinstance(link,dict):continue
+   href,label=link.get('url',''),link.get('text','')
+   if not isinstance(href,str) or not isinstance(label,str) or len(href)>2048 or len(label)>500:continue
+   p=urlsplit(href)
+   if p.scheme=='https' and p.hostname and not p.username and not p.password and p.port in (None,443):profile_links.append({'url':href,'text':label})
+  result.insert(0,doc(url,{'profile':profile_text,'profileLinks':profile_links,'postUrls':[r['url'] for r in rows],
+   'coverage':'PARTIAL','warning':'Visible browser slice only; public link labels are not verified redirect destinations. No native account ID or feed checkpoint.'},links=list(dict.fromkeys([r['url'] for r in rows]+[p['url'] for p in profile_links]))))
  return result
 
 # Read only the page's public author/post controls. Quote blocks are excluded.
@@ -117,8 +128,39 @@ DOM=r'''() => {
    repost:!!a.querySelector('[data-testid="socialContext"]'),
    links:text?[...text.querySelectorAll('a[href]')].map(x=>x.href):[],images:ownImages.map(i=>i.src||i.currentSrc)};
  });
+ // Profile headers differ between X's public and older timeline layouts.
+ // Bind a bounded visible region to BOTH the requested handle and its own
+ // photo/about control; never export an article, login panel or whole page.
+ let profile='',profileLinks=[];
+ const actor=/^\/([A-Za-z0-9_]{1,15})\/?$/.exec(location.pathname)?.[1];
+ const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
+ if(actor){
+  const regions=new Set();
+  for(const heading of document.querySelectorAll('h1,[data-testid="UserName"]')){
+   if(!visible(heading)||heading.closest('article,form,iframe')||!heading.innerText.trim())continue;
+   let region=heading.parentElement;
+   for(let depth=0;region&&depth<7;depth++,region=region.parentElement){
+    if(['BODY','HTML','MAIN'].includes(region.tagName)||region.querySelector('article,form,input,textarea,iframe'))break;
+    const text=region.innerText.trim();
+    if(text.length>8000)break;
+    const handle=new RegExp('(?:^|\\s)@'+actor+'(?![A-Za-z0-9_])','i');
+    const controls=[...region.querySelectorAll('a[href]')].filter(a=>{
+     if(!visible(a))return false;
+     const u=new URL(a.href);
+     return u.origin===location.origin&&new RegExp('^/'+actor+'/(?:photo|about)/?$','i').test(u.pathname);
+    });
+    const metadata=region.querySelector('[data-testid="UserDescription"],[dir="auto"]')||controls.some(a=>/\/about\/?$/.test(new URL(a.href).pathname));
+    if(controls.length&&metadata&&handle.test(text)){regions.add(region);break;}
+   }
+  }
+  if(regions.size===1){
+   const region=[...regions][0];profile=region.innerText.trim();
+   profileLinks=[...region.querySelectorAll('a[href]')].filter(visible).map(a=>({url:a.href,text:a.innerText.trim()}))
+    .filter(a=>{const u=new URL(a.url);return u.protocol==='https:'&&!u.username&&!u.password&&!['x.com','www.x.com','twitter.com','www.twitter.com'].includes(u.hostname)&&a.url.length<=2048&&a.text.length<=500;}).slice(0,20);
+  }
+ }
  const title=document.title;
- return {url:location.href,profile:document.querySelector('[data-testid="UserDescription"]')?.innerText||'',posts,
+ return {url:location.href,profile,profileLinks,posts,
   anonymous:!!document.querySelector('a[href*="onboarding"][href*="mode=login"],a[href*="/i/flow/login"],a[href="/login"]'),
   blocked:/access denied|just a moment|captcha|something went wrong/i.test(title)||!!document.querySelector('iframe[src*="captcha"]')};
 }'''
