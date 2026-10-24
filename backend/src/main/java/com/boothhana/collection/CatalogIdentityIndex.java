@@ -28,7 +28,9 @@ final class CatalogIdentityIndex {
                 existing=CatalogIdentity.known(existing,p.sourceEntryId(),p.sources());
             } else {
                 var p=json.readValue(row.get("payload_json").toString(),Participant.class);
-                existing=CatalogIdentity.known(existing,p.sourceEntryId(),p.sources());
+                if(identity!=null&&CatalogIdentity.unresolvedObservation(p))
+                    throw ApiException.conflict("기존 관측의 공식 등록 식별 근거가 모호합니다. 원문 상세 주소를 확인하세요.");
+                existing=CatalogIdentity.participantIdentity(p);
             }
             // Distinct known source IDs may legitimately share a listing/detail URL (variants).
             if(CatalogIdentity.conflicts(identity,existing)) continue;

@@ -65,7 +65,39 @@ public final class CatalogIdentity {
         if(type.equals("product")&&i==null&&(legacy==null||legacy.isBlank())) keys.add(sha(normalize(name)+"\u001f"+Objects.toString(detail,"")));
         require(!keys.isEmpty(),"안정적인 식별 근거 없음");return List.copyOf(keys);
     }
-    public static List<String> participantKeys(Participant p) { return keys("participant",p.identity(),p.sourceEntryId(),p.registrationName(),null,p.sources()); }
+    private static boolean observation(Participant p) {
+        return p.identity()==null&&p.sourceEntryId()!=null&&p.sourceEntryId().matches("obs_[a-f0-9]{16}");
+    }
+    /** Recover a legacy observation only from its originally verified official
+     * detail URL, never from a name, source-array position, or booth number. */
+    private static List<Identity> observedRegistrationIds(Participant p) {
+        if(!observation(p))return List.of();
+        var found=new TreeMap<String,Identity>();
+        for(var s:p.sources())if("OFFICIAL".equals(s.kind())&&"ORIGINAL".equals(s.access())&&s.evidence()!=null&&!s.evidence().isBlank()){
+            URI u=URI.create(canonical(s.url()));
+            if(!"https://dongne.co".equals(system(s.url()))||u.getRawQuery()!=null)continue;
+            var matcher=java.util.regex.Pattern.compile("/events/[A-Za-z0-9_-]+/circles/([1-9][0-9]*)/?").matcher(u.getRawPath());
+            if(matcher.matches())found.merge(matcher.group(1),new Identity("https://dongne.co",matcher.group(1),canonical(s.url())),
+                (a,b)->a.detailUrl().compareTo(b.detailUrl())<=0?a:b);
+        }
+        return List.copyOf(found.values());
+    }
+    public static Identity participantIdentity(Participant p) {
+        if(!observation(p))return known(p.identity(),p.sourceEntryId(),p.sources());
+        var verified=observedRegistrationIds(p);return verified.size()==1?verified.getFirst():null;
+    }
+    static boolean unresolvedObservation(Participant p) {return observation(p)&&observedRegistrationIds(p).size()!=1;}
+    public static List<String> participantKeys(Participant p) {
+        var values=new LinkedHashSet<String>();var identity=participantIdentity(p);
+        // A display name may repeat; a known provider ID is the insertion key.
+        if(identity!=null&&identity.entryId()!=null)values.add(idKey("participant",identity.sourceSystem(),identity.entryId()));
+        values.addAll(keys("participant",p.identity(),p.sourceEntryId(),p.registrationName(),null,p.sources()));
+        for(var verified:observedRegistrationIds(p)){
+            values.add(idKey("participant",verified.sourceSystem(),verified.entryId()));
+            values.add(sha("participant:url\u001f"+verified.detailUrl()));
+        }
+        return List.copyOf(values);
+    }
     public static List<String> productKeys(ProductData p) { return keys("product",p.identity(),p.sourceEntryId(),p.name(),p.productUrl(),p.sources()); }
     /** Called after alias matching, including historical URLs. A name change requires a shared stable ID. */
     public static boolean ambiguousProductMatch(ProductData prior,ProductData incoming) {
