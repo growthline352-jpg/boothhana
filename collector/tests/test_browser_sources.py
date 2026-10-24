@@ -82,6 +82,17 @@ class BrowserSourceTests(unittest.TestCase):
  def test_visible_profile_does_not_claim_feed_completion_or_cursor(self):
   docs=documents(PROFILE,snapshot(PROFILE));self.assertEqual(2,len(docs))
   self.assertTrue(docs[0]['browserPartial']);self.assertNotIn('socialPageReceipt',docs[0]);self.assertNotIn('nextPageUrl',docs[0])
+ def test_public_profile_links_keep_actual_href_separate_from_visible_label(self):
+  value=snapshot(PROFILE);value['profileLinks']=[{'url':'https://t.co/public','text':'postype.com/@artist'},
+   {'url':'https://user:secret@example.com/private','text':'bad'},{'url':'http://example.com/','text':'bad'}]
+  doc=documents(PROFILE,value)[0];data=json.loads(doc['text'])
+  self.assertEqual([{'url':'https://t.co/public','text':'postype.com/@artist'}],data['profileLinks'])
+  self.assertIn('https://t.co/public',doc['links']);self.assertNotIn('https://postype.com/@artist',doc['links'])
+  self.assertNotIn('secret',doc['text']);self.assertNotIn('platformAccountId',doc)
+ def test_profile_capture_rejects_nontext_or_oversize_profile_without_claiming_success(self):
+  for profile in ({'not':'text'},'x'*8001):
+   value=snapshot(PROFILE);value['profile']=profile
+   with self.assertRaises(MediaError):documents(PROFILE,value)
  def test_post_redirect_keeps_the_requested_evidence_url_and_actual_destination(self):
   requested='https://x.com/ARTIST/status/123'
   doc=documents(requested,snapshot())[0]
