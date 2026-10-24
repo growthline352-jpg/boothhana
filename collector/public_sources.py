@@ -14,6 +14,7 @@ from urllib.robotparser import RobotFileParser
 from media_fetch import fetch_html,MediaError,PUBLIC_SOURCE_USER_AGENT
 from run import canonical_audit_url
 from tmm_sources import tmm_route,related_public_tabs,tmm_policies,render_tmm_page,tmm_document
+from dongne_sources import dongne_roster_entries
 
 class PageText(HTMLParser):
     def __init__(self,url):
@@ -171,6 +172,9 @@ class PublicSources:
                 sns_post=(host=='postype.com' or host.endswith('.postype.com')) and re.fullmatch(r'(?:/@[A-Za-z0-9_.-]+)?/post/[0-9]+/?',parsed.path) or host in ('instagram.com','www.instagram.com') and re.fullmatch(r'/(?:p|reel)/[A-Za-z0-9_-]+/?',parsed.path)
                 if len(text)<100 and not (sns_post and parser.images) or any(s in title.lower() for s in ('access denied','just a moment','captcha','로그인','login','sign in')):raise MediaError('No usable public page body')
                 value.update(available=True,title=title,sha256=digest,text=text[:50000],links=parser.links[:150],truncated=len(text)>50000)
+                if not value['truncated']:
+                    roster=dongne_roster_entries(url,html,value.get('pagination'))
+                    if roster:value['rosterEntries']=roster
                 if sns_post:value['images']=[{'imageUrl':u,'pageUrl':url} for u in parser.images]
                 info_images=comicinfo_images(url,parser.images)
                 if info_images:value['images']=info_images
