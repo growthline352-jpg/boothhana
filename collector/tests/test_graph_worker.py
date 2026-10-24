@@ -269,6 +269,34 @@ class GraphWorkerTests(unittest.TestCase):
 
     def creator_result(self):
         return {'profile':{'name':'Artist','kind':'ARTIST','aliases':[],'profileUrl':SOURCE},'sources':RESULT['sources'],'goods':[],'socialAccounts':[],'socialPageComplete':True,'productCoverage':[],'eventLeads':[],'identityDecision':{'action':'KEEP','canonicalId':None,'evidence':[]},'nextPageUrl':None,'coverage':'COMPLETE','pageBatch':None}
+    def test_creator_account_bridge_needs_its_own_official_anchor_before_approval(self):
+        import copy
+        anchor='https://dongne.co/events/sample/circles/174217'
+        profile='https://www.postype.com/@artist';bridge='https://x.com/artist/status/123'
+        context={'input':{},'creator':{'data':{'profileUrl':None}},
+                 'creatorProvenance':[{'sources':[{'url':anchor,'access':'ORIGINAL'}]}],
+                 'publication':{'data':{'socialAccounts':[{'profileUrl':'https://x.com/artist'}]}}}
+        for include_anchor in (False,True):
+            with self.subTest(include_anchor=include_anchor),tempfile.TemporaryDirectory() as temp:
+                candidate=self.creator_result();candidate['coverage']='PARTIAL'
+                evidence=[{'sourceUrl':profile,'evidence':'Own public profile'},
+                          {'sourceUrl':bridge,'evidence':'Author links this channel'}]
+                if include_anchor:evidence.append({'sourceUrl':anchor,'evidence':'Official booth identifies this author and their linked account'})
+                candidate['socialAccounts']=[{'profileUrl':profile,'accountId':None,'action':'KEEP','identityEvidence':evidence}]
+                before=copy.deepcopy(candidate);prompts={}
+                def search(cfg,directory,prompt,schema_path,**kwargs):
+                    prompts[directory.name]=prompt
+                    (directory/'codex.jsonl').write_text('\n'.join(json.dumps(page_result(u)) for u in (SOURCE,anchor,profile,bridge)))
+                    value={'profileUrls':[]} if directory.name=='social-discovery' else candidate if directory.name=='extract' else {'verdict':'APPROVE','reason':'Checked ownership chain'}
+                    return json.dumps(value).encode(),True,{}
+                cfg=configuration();cfg['stateDirectory']=temp;api=FakeApi()
+                Worker(cfg,api,search).process({'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'contextHash':'a'*64,'kind':'CREATOR','context':context})
+                self.assertEqual('APPROVE' if include_anchor else 'ENRICH',api.calls[-1][2]['verdict'])
+                self.assertEqual(before,api.calls[0][2]['result'])
+                for phase in ('extract','review'):
+                    self.assertIn('ACCOUNT EVIDENCE CONTRACT',prompts[phase])
+                    self.assertIn('"identityAnchorUrls": ["'+anchor+'"]',prompts[phase])
+                if not include_anchor:self.assertIn('socialAccounts[0].identityEvidence',api.calls[-1][2]['reason'])
     def test_creator_searches_social_profiles_then_extracts_and_independently_reviews(self):
         profile='https://bsky.app/profile/artist.bsky.social';calls=[];loads=[]
         def sources(urls):

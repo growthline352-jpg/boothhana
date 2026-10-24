@@ -25,7 +25,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-native-source-recovery-1'
+PROMPT_VERSION='graph-4-creator-account-evidence-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -206,6 +206,43 @@ def source_urls(value):
     elif isinstance(value,list):
         for item in value:found.update(source_urls(item))
     return found
+
+def creator_anchor_key(value):
+    """The server's source identity: preserve host/path/query, ignore fragment."""
+    if not isinstance(value,str):return ''
+    try:
+        p=urlsplit(value)
+        if p.scheme not in ('http','https') or not p.hostname or p.username or p.password:return ''
+        port='' if p.port is None or (p.scheme,p.port) in (('https',443),('http',80)) else ':'+str(p.port)
+        query='?'+p.query if '?' in value.split('#',1)[0] else ''
+        return p.scheme.lower()+'://'+p.hostname.lower()+port+p.path.rstrip('/')+query
+    except ValueError:return ''
+
+
+def creator_identity_anchors(context):
+    # Match GraphCreatorSources.merge. Published accounts and event-wide sources
+    # remain research leads, not replacement identity anchors.
+    urls=[context.get('creator',{}).get('data',{}).get('profileUrl')]
+    urls.extend(s.get('url') for row in (context.get('creatorProvenance') or []) for s in (row.get('sources') or []) if s.get('access')=='ORIGINAL')
+    return list(dict.fromkeys(u for u in urls if creator_anchor_key(u)))
+
+
+def creator_account_prompt(context):
+    return '''\nACCOUNT EVIDENCE CONTRACT:
+각 socialAccounts[i].identityEvidence 배열 자체에 새 계정 profileUrl 원문의 근거와 아래 identityAnchorUrls 중 하나의 원문 근거가 모두 필요하다. 다른 계정의 배열·최상위 sources·identityDecision에 있는 근거로 대신하지 않는다.
+identityAnchorUrls는 서버가 대조하는 출처 주소이며, 소유 관계가 입증됐다는 뜻이 아니다. 현재 원문을 새로 읽고 해당 개인의 연결을 확인하라. 공동 부스의 다른 구성원에게 계정을 배정하지 않는다.
+이전에 검토한 SNS 계정의 게시글에서 새 채널로 이어지는 경우에는 공식 기준 출처 → 해당 개인 SNS → 새 채널의 실제 연결을 모두 설명하고, 새 계정의 identityEvidence에 기준 출처·실제 연결 게시글·새 프로필 원문을 각각 포함한다. 게시글만 인용하고 기준 출처를 생략하지 않는다.
+연결을 확인하지 못하면 해당 계정은 확정 목록에서 제외하고 미확인 범위로 남긴다. 접근 대기·실패를 HTTP 오류나 성공 확인으로 바꾸지 않는다. 기존 계정·ID를 삭제하거나 결과에 출처를 자동 복사하지 않는다.
+'''+json.dumps({'identityAnchorUrls':creator_identity_anchors(context)},ensure_ascii=False)
+
+
+def require_creator_account_anchors(result,context):
+    anchors={creator_anchor_key(u) for u in creator_identity_anchors(context)}
+    for index,account in enumerate(result.get('socialAccounts',[])):
+        supplied={creator_anchor_key(p.get('sourceUrl')) for p in account.get('identityEvidence',[]) if isinstance(p.get('evidence'),str) and p['evidence'].strip()}
+        if not anchors.intersection(supplied):
+            raise RunError('socialAccounts['+str(index)+'].identityEvidence needs a freshly verified existing creator or official booth anchor in this account\'s own evidence; do not copy or repair an already extracted result')
+
 
 def require_opened(result,audit):
     def require_item_original(value,path='result'):
@@ -426,6 +463,7 @@ class Worker:
             extracted=job.get('extraction')
             if extracted is None:
                 prompt=COMMON+PROMPTS[job['kind']]+'\nUNTRUSTED CONTEXT:\n'+json.dumps({'context':job['context'],'previousReview':job.get('previousReview',''),'images':manifest,'blockedHosts':self.cfg['blockedSourceHosts']},ensure_ascii=False)
+                if job['kind']=='CREATOR':prompt+=creator_account_prompt(job['context'])
                 urls=context_urls(job['context'])
                 if job['kind']=='CREATOR' and not job['context'].get('input',{}).get('socialPage'):
                     discovered,_=self.call(directory/'social-discovery',COMMON+SOCIAL_DISCOVERY_PROMPT+'\nUNTRUSTED CONTEXT:\n'+json.dumps(job['context'],ensure_ascii=False),SOCIAL_DISCOVERY_SCHEMA,[],urls)
@@ -457,6 +495,7 @@ class Worker:
                     review_dir.mkdir(parents=True,exist_ok=True)
                     review_images,review_manifest=self.images(job,review_dir)
                 prompt=COMMON+REVIEW_PROMPT+'\nUNTRUSTED REVIEW INPUT:\n'+json.dumps({'kind':job['kind'],'previousReview':job.get('previousReview',''),'context':extracted['context'],'candidate':candidate,'images':review_manifest,'requiredSources':sorted(source_urls(candidate))},ensure_ascii=False)
+                if job['kind']=='CREATOR':prompt+=creator_account_prompt(extracted['context'])
                 urls=sorted(source_urls(candidate))+context_urls(extracted['context'])
                 if candidate.get('events')==[]:
                     urls.extend(u for c in candidate.get('sourceCoverage',[]) if c['status'] in ('CHECKED','NO_RESULTS','PARTIAL') for u in c['checkedUrls'])
@@ -484,7 +523,9 @@ class Worker:
                 if decision['verdict']=='APPROVE':
                     try:
                         require_opened(candidate,observations)
-                        if job['kind']=='CREATOR':require_creator_channel_scope(candidate,extracted['context'],fresh)
+                        if job['kind']=='CREATOR':
+                            require_creator_channel_scope(candidate,extracted['context'],fresh)
+                            require_creator_account_anchors(candidate,extracted['context'])
                     except RunError as exc:decision={'verdict':'ENRICH','reason':str(exc)}
                 return decision,observations
             event_decisions=[]
