@@ -65,7 +65,9 @@ public class GraphProjection {
    enqueue.accept(new Seed("RELATIONS",target,Map.of(),baseline,generation));
    enqueue.accept(new Seed("PARTICIPANTS",target,Map.of(),baseline,generation));
    // Backfill current legacy entities as well: re-collection must not be necessary to preserve IDs.
-   for(var p:db.queryForList("select id from subculture_participant where event_id=? and review_state<>'EXCLUDED' order by id",id))downstream(number(p.get("id")),baseline,generation,enqueue);
+   for(var p:db.queryForList("select id from subculture_participant where event_id=? and review_state<>'EXCLUDED' order by id",id))enqueue.accept(new Seed("SALES",text(p.get("id")),Map.of(),baseline,generation));
+   for(var creator:db.queryForList("select m.exhibitor_id from subculture_participant_member m join subculture_participant p on p.id=m.participant_id where p.event_id=? and p.review_state<>'EXCLUDED' order by p.id,m.exhibitor_id",id))enqueue.accept(new Seed("CREATOR",text(creator.get("exhibitor_id")),Map.of(),baseline,generation));
+   legacyProducts(catalog.graphProductRows(id).values().stream().flatMap(List::stream).toList(),baseline,generation,enqueue);
    return Map.of("verdict","APPROVE","eventId",id);
   }
   if(kind.equals("PARTICIPANTS")||kind.equals("SALES")){
@@ -165,8 +167,36 @@ public class GraphProjection {
  private void downstream(long participant,boolean baseline,String generation,Consumer<Seed> enqueue){enqueue.accept(new Seed("SALES",Long.toString(participant),Map.of(),baseline,generation));for(var c:db.queryForList("select exhibitor_id from subculture_participant_member where participant_id=?",participant))enqueue.accept(new Seed("CREATOR",text(c.get("exhibitor_id")),Map.of(),baseline,generation));products(participant,baseline,generation,enqueue);}
  private void products(long participant,boolean baseline,String generation,Consumer<Seed> enqueue){
   var view=catalog.participant(participant);if(view.sales()==null)return;
-  for(var row:view.sales().productRows()){
+  legacyProducts(view.sales().productRows(),baseline,generation,enqueue);
+ }
+ private void legacyProducts(List<ProductRow> rows,boolean baseline,String generation,Consumer<Seed> enqueue){
+  var counts=new HashMap<Long,Integer>();for(var row:rows)if(row.id()!=null)counts.merge(row.id(),1,Integer::sum);
+  var unique=new LinkedHashMap<Long,ProductRow>();for(var row:rows)if(row.id()!=null&&counts.get(row.id())==1)unique.put(row.id(),row);
+  var bulkIds=new HashMap<Long,String>();
+  if(!unique.isEmpty()){
+   String keys=encode(unique.keySet());var changed=new ArrayList<Long>();var changedProducts=new ArrayList<UUID>();
+   for(var previous:db.queryForList("select id,legacy_product_id,data_json from collection_product where legacy_product_id in(select value::bigint from jsonb_array_elements_text(cast(? as jsonb))) order by legacy_product_id for update",keys)){
+    long legacy=number(previous.get("legacy_product_id"));
+    if(!sorted(decode(previous.get("data_json"))).equals(sorted(as(unique.get(legacy).data(),Map.class)))){changed.add(legacy);changedProducts.add((UUID)previous.get("id"));}
+   }
+   if(!changed.isEmpty()){
+    db.update("update collection_product_subject set active=false where product_id in(select value::uuid from jsonb_array_elements_text(cast(? as jsonb)))",encode(changedProducts));
+    db.update("update subculture_subject_link set active=false,revision=revision+1 where kind='PRODUCT' and target_id in(select value::bigint from jsonb_array_elements_text(cast(? as jsonb))) and reviewed_by is null",encode(changed));
+   }
+   var payload=new ArrayList<Map<String,Object>>();
+   for(var row:unique.values())payload.add(Map.of("id",UUID.randomUUID(),"legacy_id",row.id(),"identity","legacy:"+row.id(),"data",row.data()));
+   for(var row:db.queryForList("""
+    insert into collection_product(id,legacy_product_id,identity_key,data_json)
+    select id,legacy_id,identity,data from jsonb_to_recordset(cast(? as jsonb)) as input(id uuid,legacy_id bigint,identity text,data jsonb) order by legacy_id
+    on conflict(legacy_product_id) do update set data_json=excluded.data_json,revision=collection_product.revision+case when collection_product.data_json=excluded.data_json then 0 else 1 end
+    returning legacy_product_id,id
+    """,encode(payload)))bulkIds.put(number(row.get("legacy_product_id")),text(row.get("id")));
+  }
+  for(var row:rows){
    if(row.id()==null)continue;String encoded=encode(row.data());
+   if(counts.get(row.id())==1){enqueue.accept(new Seed("CHARACTERS",bulkIds.get(row.id()),Map.of(),baseline,generation+":"+CollectionRules.sha(encoded)));continue;}
+   // Rare duplicated legacy mappings keep the original sequential semantics,
+   // including intermediate attribution retirement and revision increments.
    var previous=db.queryForList("select id,data_json from collection_product where legacy_product_id=? for update",row.id());
    if(!previous.isEmpty()&&!sorted(decode(previous.getFirst().get("data_json"))).equals(sorted(as(row.data(),Map.class)))){
     // A prior character attribution must not silently follow a changed sale row.

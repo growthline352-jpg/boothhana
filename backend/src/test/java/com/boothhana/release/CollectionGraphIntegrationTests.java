@@ -36,6 +36,7 @@ class CollectionGraphIntegrationTests {
  }
  @Autowired JdbcTemplate db;@Autowired GraphService graph;@Autowired JsonMapper json;@Autowired WebApplicationContext web;@Autowired SubcultureInterestService interests;
  @Autowired CatalogService catalog;
+ @Autowired GraphProjection graphProjection;
  @Autowired com.boothhana.interests.NotificationService notifications;
  @Autowired com.boothhana.interests.CreatorProducts creatorProducts;
  @Autowired com.boothhana.health.ReadinessService readiness;
@@ -212,6 +213,94 @@ class CollectionGraphIntegrationTests {
   NewsStatementCounter(javax.sql.DataSource ds){super(ds);}
   @Override public List<Map<String,Object>> queryForList(String sql,Object... args){statements++;return super.queryForList(sql,args);}
   @Override public int update(String sql,Object... args){statements++;return super.update(sql,args);}
+ }
+ int countedProjectionApproval(Map<String,Object> job,Map<String,Object> saved){
+  Object graphTarget=org.springframework.test.util.AopTestUtils.getUltimateTargetObject(graph),projectionTarget=org.springframework.test.util.AopTestUtils.getUltimateTargetObject(graphProjection);
+  Object oldGraphDb=org.springframework.test.util.ReflectionTestUtils.getField(graphTarget,"db"),oldProjectionDb=org.springframework.test.util.ReflectionTestUtils.getField(projectionTarget,"db");var counter=new NewsStatementCounter(db.getDataSource());
+  try{org.springframework.test.util.ReflectionTestUtils.setField(graphTarget,"db",counter);org.springframework.test.util.ReflectionTestUtils.setField(projectionTarget,"db",counter);approve(job,saved);}
+  finally{org.springframework.test.util.ReflectionTestUtils.setField(graphTarget,"db",oldGraphDb);org.springframework.test.util.ReflectionTestUtils.setField(projectionTarget,"db",oldProjectionDb);}
+  return counter.statements;
+ }
+ @Test void eventLegacyBackfillUsesBoundedProjectionAndQueueRoundTrips(){
+  var booths=newsRoster(116);int next=0;
+  for(var booth:booths){
+   var goods=new ArrayList<ProductData>();
+   while(goods.size()<7&&next<809){
+    int index=next++;var good=new ProductData("legacy-good-"+index,"Legacy keyring "+index,"Official product",null,List.of("keyring"),List.of(),"EVENT_SALE_CONFIRMED",null,"PLANNED",source+"/g/"+index,List.of(new Source(source,"OFFICIAL","ORIGINAL","Exact product")),List.of(),List.of());goods.add(good);
+    db.update("insert into subculture_catalog_product(participant_id,identity_key,identity_aliases,name,payload_json) values(?,?,cast(? as jsonb),?,cast(? as jsonb))",booth.participant(),CatalogIdentity.productKeys(good).getFirst(),json.writeValueAsString(CatalogIdentity.productKeys(good)),good.name(),json.writeValueAsString(good));
+   }
+   var sale=new Sales("Legacy sale","EVENT_SALE_CONFIRMED",List.of(),List.of(),"On site",List.of(new Source(source,"OFFICIAL","ORIGINAL","Sale")),List.of(),goods,List.of());String encoded=json.writeValueAsString(sale);
+   db.update("insert into subculture_sales(participant_id,payload_json,payload_hash,review_state,reviewed_payload_json,reviewed_product_checks_json) values(?,cast(? as jsonb),?,'REVIEWED',cast(? as jsonb),'{}')",booth.participant(),encoded,CollectionRules.sha(encoded),encoded);
+  }
+  db.update("update collection_job set available_at=now()+interval '7 days'");
+  var job=seed("EVENT",Long.toString(event));var saved=extract(job,value(data));
+  int inserts=countedProjectionApproval(job,saved);
+  assertThat(db.queryForObject("select count(*) from collection_product c join subculture_catalog_product g on g.id=c.legacy_product_id join subculture_participant p on p.id=g.participant_id where p.event_id=?",Integer.class,event)).isEqualTo(809);
+  for(var booth:booths){
+   assertThat(db.queryForObject("select count(*) from collection_job where kind='SALES' and target_id=? and baseline",Integer.class,Long.toString(booth.participant()))).isEqualTo(1);
+   assertThat(db.queryForObject("select count(*) from collection_job where kind='CREATOR' and target_id=? and baseline",Integer.class,Long.toString(booth.creator()))).isEqualTo(1);
+  }
+  assertThat(db.queryForObject("select count(*) from collection_job j join collection_product c on j.target_id=c.id::text join subculture_catalog_product g on g.id=c.legacy_product_id join subculture_participant p on p.id=g.participant_id where p.event_id=? and j.kind='CHARACTERS' and j.baseline",Integer.class,event)).isEqualTo(809);
+  assertThat(inserts).as("116 booths and 809 goods must not issue per-item graph projection/queue SQL").isLessThanOrEqualTo(60);
+  String snapshot="select c.id,c.legacy_product_id,c.revision,c.data_json::text from collection_product c join subculture_catalog_product g on g.id=c.legacy_product_id join subculture_participant p on p.id=g.participant_id where p.event_id=? order by c.legacy_product_id";
+  var before=db.queryForList(snapshot,event);db.update("update collection_job set available_at=now()+interval '7 days'");var repeat=seed("EVENT",Long.toString(event));int repeated=countedProjectionApproval(repeat,extract(repeat,value(data)));
+  assertThat(db.queryForList(snapshot,event)).isEqualTo(before);assertThat(repeated).isLessThanOrEqualTo(60);
+  System.out.println("GRAPH_EVENT_BACKFILL_STATEMENTS insert="+inserts+" unchanged="+repeated);
+ }
+ @Test void batchedFollowupsMatchSingleSeedOrderingAndBaselineSuppression(){
+  long active=maker("Active import",source+"/active"),completed=maker("Completed import",source+"/completed"),late=maker("Live before import",source+"/late"),early=maker("Import before live",source+"/early"),same=maker("Same active input",source+"/same");
+  graph.seed(new Seed("CREATOR",Long.toString(active),Map.of("old",true),true,"existing"));
+  var done=graph.seed(new Seed("CREATOR",Long.toString(completed),Map.of(),true,"finished"));db.update("update collection_job set state='COMPLETE' where id=?",done.get("id"));
+  var reversed=new LinkedHashMap<String,Object>();reversed.put("b",2);reversed.put("a",1);
+  var seeds=List.of(new Seed("CREATOR",Long.toString(active),Map.of("new",true),false,"live"),
+   new Seed("CREATOR",Long.toString(completed),Map.of(),true,"finished"),new Seed("CREATOR",Long.toString(completed),Map.of(),false,"live"),
+   new Seed("CREATOR",Long.toString(late),Map.of(),false,"live"),new Seed("CREATOR",Long.toString(late),Map.of(),true,"import"),
+   new Seed("CREATOR",Long.toString(early),Map.of(),true,"import"),new Seed("CREATOR",Long.toString(early),Map.of(),false,"live"),
+   new Seed("CREATOR",Long.toString(same),Map.of("a",1,"b",2),false,"first"),new Seed("CREATOR",Long.toString(same),reversed,false,"second"));
+  String ids=json.writeValueAsString(List.of(active,completed,late,early,same));
+  String query="select kind,target_id,input_json::text,dedupe_key,baseline,active_key,state from collection_job where kind='CREATOR' and target_id in(select value from jsonb_array_elements_text(cast(? as jsonb))) order by target_id,dedupe_key";
+  db.execute("savepoint graph_seed_reference");for(var seed:seeds)graph.seed(seed);var expected=db.queryForList(query,ids);db.execute("rollback to savepoint graph_seed_reference");db.execute("release savepoint graph_seed_reference");
+  Object target=org.springframework.test.util.AopTestUtils.getUltimateTargetObject(graph);org.springframework.test.util.ReflectionTestUtils.invokeMethod(target,"enqueueAll",seeds);
+  assertThat(db.queryForList(query,ids)).isEqualTo(expected);
+  assertThat(db.queryForObject("select count(*) from collection_job where kind='CREATOR' and target_id=?",Integer.class,Long.toString(late))).isEqualTo(2);
+  assertThat(db.queryForObject("select count(*) from collection_job where kind='CREATOR' and target_id=?",Integer.class,Long.toString(early))).isEqualTo(1);
+ }
+ @Test void invalidBatchedFollowupCannotPartiallyEnqueueEarlierSeeds(){
+  long creator=maker("Queue validation",source+"/validation");long before=db.queryForObject("select count(*) from collection_job",Long.class);
+  var seeds=List.of(new Seed("CREATOR",Long.toString(creator),Map.of(),true,"valid"),new Seed("CREATOR","not-a-number",Map.of(),true,"invalid"));
+  Object target=org.springframework.test.util.AopTestUtils.getUltimateTargetObject(graph);assertThatThrownBy(()->org.springframework.test.util.ReflectionTestUtils.invokeMethod(target,"enqueueAll",seeds)).isInstanceOf(ApiException.class);
+  assertThat(db.queryForObject("select count(*) from collection_job",Long.class)).isEqualTo(before);
+ }
+ @Test void eventBulkBackfillPreservesOwnerFieldsAndManualAttributions(){
+  long participant=salesParticipant();collectSales(participant,singleSale("Legacy keyring"));
+  long legacy=db.queryForObject("select id from subculture_catalog_product where participant_id=?",Long.class,participant);UUID product=db.queryForObject("select id from collection_product where legacy_product_id=?",UUID.class,legacy);
+  var manual=characters("Manual backfill hero");var automatic=characters("Automatic backfill hero");var assignment=new LinkedHashMap<>(manual);assignment.put("assignments",List.of(((List<?>)manual.get("assignments")).getFirst(),((List<?>)automatic.get("assignments")).getFirst()));
+  db.update("update collection_job set available_at=now()+interval '7 days'");approveJob(seed("CHARACTERS",product.toString()),assignment);
+  assertThat(db.queryForObject("select count(*) from subculture_subject_link where kind='PRODUCT' and target_id=? and active",Integer.class,legacy)).isEqualTo(2);
+  long reviewer=fan();db.update("update subculture_subject_link set reviewed_by=? where kind='PRODUCT' and target_id=? and subject_id in(select id from subculture_subject where name='Manual backfill hero')",reviewer,legacy);
+  long revision=db.queryForObject("select revision from collection_product where id=?",Long.class,product);
+  db.update("update subculture_catalog_product set owner_overrides_json=cast(? as jsonb) where id=?",json.writeValueAsString(Map.of("name","Owner named keyring","summary","Owner notes")),legacy);
+  db.update("update collection_job set available_at=now()+interval '7 days'");approveJob(seed("EVENT",Long.toString(event)),value(data));
+  assertThat(db.queryForObject("select id from collection_product where legacy_product_id=?",UUID.class,legacy)).isEqualTo(product);
+  assertThat(db.queryForObject("select data_json->>'name' from collection_product where id=?",String.class,product)).isEqualTo("Owner named keyring");
+  assertThat(db.queryForObject("select data_json->>'summary' from collection_product where id=?",String.class,product)).isEqualTo("Owner notes");
+  assertThat(db.queryForObject("select revision from collection_product where id=?",Long.class,product)).isEqualTo(revision+1);
+  assertThat(db.queryForObject("select count(*) from collection_product_subject where product_id=? and active",Integer.class,product)).isZero();
+  assertThat(db.queryForObject("select count(*) from subculture_subject_link where kind='PRODUCT' and target_id=? and active and reviewed_by=?",Integer.class,legacy,reviewer)).isEqualTo(1);
+  assertThat(db.queryForObject("select count(*) from subculture_subject_link where kind='PRODUCT' and target_id=? and active and reviewed_by is null",Integer.class,legacy)).isZero();
+ }
+ @Test void duplicatedLegacyMappingKeepsIntermediateRevisionChanges(){
+  long participant=salesParticipant();var original=categoryProduct(List.of("keyring"));collectSales(participant,value(categoryStage(categorySales(List.of(),"On site",List.of(original)))));
+  long legacy=db.queryForObject("select id from subculture_catalog_product where participant_id=?",Long.class,participant);UUID product=db.queryForObject("select id from collection_product where legacy_product_id=?",UUID.class,legacy);long revision=db.queryForObject("select revision from collection_product where id=?",Long.class,product);
+  var changed=value(original);changed.put("summary","Intermediate legacy text");
+  db.update("update subculture_sales set payload_json=jsonb_set(payload_json,'{products}',cast(? as jsonb)) where participant_id=?",json.writeValueAsString(List.of(changed,original)),participant);
+  var rows=catalog.participant(participant).sales().productRows();assertThat(rows).hasSize(2);assertThat(rows).allSatisfy(row->assertThat(row.id()).isEqualTo(legacy));
+  var queued=new ArrayList<Seed>();java.util.function.Consumer<Seed> enqueue=queued::add;
+  Object target=org.springframework.test.util.AopTestUtils.getUltimateTargetObject(graphProjection);org.springframework.test.util.ReflectionTestUtils.invokeMethod(target,"legacyProducts",rows,true,"duplicate-fixture",enqueue);
+  assertThat(db.queryForObject("select id from collection_product where legacy_product_id=?",UUID.class,legacy)).isEqualTo(product);
+  assertThat(db.queryForObject("select revision from collection_product where id=?",Long.class,product)).isEqualTo(revision+2);
+  assertThat(db.queryForObject("select data_json->>'summary' from collection_product where id=?",String.class,product)).isEqualTo(original.summary());
+  assertThat(queued).hasSize(2);assertThat(queued).allSatisfy(seed->assertThat(seed.targetId()).isEqualTo(product.toString()));
  }
  @Test void eventNewsForLargeRosterUsesBoundedRoundTripsAndNeverReannouncesBaseline(){
   var booths=newsRoster(120);long user=fan();follow(user,booths.getFirst().creator(),null);
