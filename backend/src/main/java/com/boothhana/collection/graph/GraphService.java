@@ -30,7 +30,7 @@ public class GraphService {
  static void require(boolean ok,String message){if(!ok)throw ApiException.badRequest(message);}
  private Map<String,Object> one(String sql,Object...args){var rows=db.queryForList(sql,args);if(rows.isEmpty())throw ApiException.notFound("수집 대상이 없습니다.");return rows.getFirst();}
 
- @Transactional public Map<String,Object> seed(Seed in){
+ private void validateSeed(Seed in){
   require(in!=null&&KINDS.contains(in.kind())&&in.targetId()!=null&&in.targetId().length()<=200&&in.input()!=null&&in.generation()!=null&&in.generation().length()<=100,"작업 형식을 확인하세요.");
   require(encode(in.input()).length()<=50000,"작업 입력이 너무 큽니다.");
   try{
@@ -43,6 +43,9 @@ public class GraphService {
    else if(!"DISCOVERY".equals(in.kind()))require(Long.parseLong(in.targetId())>0,"대상 ID 오류");
    else{var scope=GraphProjection.map(in.input().get("scope"));require("SEOUL_GYEONGGI".equals(scope.get("region"))&&"Asia/Seoul".equals(scope.get("timezone")),"발견 지역 오류");var a=java.time.LocalDate.parse(text(scope.get("startDate")));var b=java.time.LocalDate.parse(text(scope.get("endDate")));require(!a.isAfter(b)&&java.time.temporal.ChronoUnit.DAYS.between(a,b)<=365,"발견 기간 오류");}
   }catch(IllegalArgumentException|java.time.format.DateTimeParseException ex){throw ApiException.badRequest("작업 대상 형식 오류");}
+ }
+ @Transactional public Map<String,Object> seed(Seed in){
+  validateSeed(in);
   // A live refresh must not bypass an unfinished historical import and announce old goods.
   if(!in.baseline()){
    var baseline=db.queryForList("select id,state from collection_job where kind=? and target_id=? and baseline and state in ('PENDING','RUNNING','VERIFYING','WAITING') order by created_at,id limit 1",in.kind(),in.targetId());
@@ -52,6 +55,28 @@ public class GraphService {
   String active=hash(List.of(in.kind(),in.targetId(),in.input(),in.baseline()));
   db.update("insert into collection_job(id,kind,target_id,input_json,dedupe_key,baseline,active_key) values(?,?,?,cast(? as jsonb),?,?,?) on conflict do nothing",UUID.randomUUID(),in.kind(),in.targetId(),encode(in.input()),key,in.baseline(),active);
   return one("select id,state from collection_job where dedupe_key=? or (active_key=? and state in ('PENDING','RUNNING','VERIFYING','WAITING')) order by (dedupe_key=?) desc limit 1",key,active,key);
+ }
+ private void enqueueAll(List<Seed> seeds){
+  var inputs=new LinkedHashMap<String,Map<String,Object>>();int ordinal=0;
+  for(var seed:seeds){
+   validateSeed(seed);String key=hash(List.of(seed.kind(),seed.targetId(),seed.input(),seed.generation(),seed.baseline()));
+   inputs.putIfAbsent(key,Map.of("id",UUID.randomUUID(),"kind",seed.kind(),"target",seed.targetId(),"input",seed.input(),"dedupe",key,"active",hash(List.of(seed.kind(),seed.targetId(),seed.input(),seed.baseline())),"baseline",seed.baseline(),"ordinal",ordinal++));
+  }
+  if(inputs.isEmpty())return;
+  db.update("""
+   with incoming as materialized (
+    select * from jsonb_to_recordset(cast(? as jsonb)) as batch_rows(id uuid,kind text,target text,input jsonb,dedupe text,active text,baseline boolean,ordinal integer)
+   ), new_baselines as materialized (
+    select b.kind,b.target,min(b.ordinal) first_ordinal from incoming b where b.baseline
+    and not exists(select 1 from collection_job prior where prior.dedupe_key=b.dedupe) group by b.kind,b.target
+   )
+   insert into collection_job(id,kind,target_id,input_json,dedupe_key,baseline,active_key)
+   select i.id,i.kind,i.target,i.input,i.dedupe,i.baseline,i.active from incoming i
+   where i.baseline or (
+    not exists(select 1 from collection_job b where b.kind=i.kind and b.target_id=i.target and b.baseline and b.state in ('PENDING','RUNNING','VERIFYING','WAITING'))
+    and not exists(select 1 from new_baselines b where b.first_ordinal<i.ordinal and b.kind=i.kind and b.target=i.target)
+   ) order by i.ordinal on conflict do nothing
+   """,encode(inputs.values()));
  }
  /** Stable keyset backfill; all legacy IDs and published snapshots remain in place. */
  @Transactional public Map<String,Object> bootstrap(Bootstrap in){
@@ -153,7 +178,9 @@ public class GraphService {
    if("CHARACTERS".equals(row.get("kind")))images.validateEvidence(current,value,in.audit(),decode(extraction.get("audit_json")));
    if("CHARACTERS".equals(row.get("kind")))for(var assignment:GraphProjection.maps(value.get("assignments")))if("IMAGE".equals(assignment.get("basis"))){String image=text(assignment.get("imageHash"));var originalAudit=decode(extraction.get("audit_json"));require(in.audit().imageHashes().contains(image)&&((List<?>)originalAudit.getOrDefault("imageHashes",List.of())).contains(image),"양쪽 호출에서 동일한 상품 이미지를 확인해야 합니다.");}
    boolean baseline=(Boolean)row.get("baseline");if("CREATOR".equals(row.get("kind"))){var previous=GraphProjection.map(GraphProjection.map(current.get("publication")).get("data"));var known=GraphProjection.maps(previous.get("socialAccounts")).stream().map(a->text(a.get("profileUrl"))).toList();if(!previous.containsKey("socialAccounts")||GraphProjection.maps(value.get("socialAccounts")).stream().anyMatch(a->!known.contains(text(a.get("profileUrl")))))baseline=true;}
-   receipt=projection.apply(text(row.get("kind")),text(row.get("target_id")),decode(row.get("input_json")),current,value,decisionId,baseline,s->seed(s));
+   var followups=new ArrayList<Seed>();
+   receipt=projection.apply(text(row.get("kind")),text(row.get("target_id")),decode(row.get("input_json")),current,value,decisionId,baseline,followups::add);
+   enqueueAll(followups);
    var continuation=GraphPageBatch.next(decode(row.get("input_json")),value,decisionId,text(row.get("kind")));
    if(!continuation.isEmpty()){seed(new Seed(text(row.get("kind")),text(row.get("target_id")),continuation,baseline,"batch:"+decisionId));receipt=new LinkedHashMap<>(receipt);receipt.put("needsEnrichment",false);receipt.put("pageRemaining",true);}
    var news=new com.boothhana.interests.InterestNews(db);

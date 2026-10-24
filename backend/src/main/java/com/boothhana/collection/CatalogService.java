@@ -445,6 +445,18 @@ public class CatalogService {
         return new PageData<>(rows.stream().map(this::participantView).toList(),page,size,total==null?0:total);
     }
     public ParticipantView participant(long id) { return participantView(one("select * from subculture_participant where id=?",id)); }
+    /** Existing graph backfill uses the same effective sale/identity/owner overlay as a single booth, without loading each booth's media. */
+    public Map<Long,List<ProductRow>> graphProductRows(long eventId) {
+        var rows=db.queryForList("select g.* from subculture_catalog_product g join subculture_participant p on p.id=g.participant_id where p.event_id=? and p.review_state<>'EXCLUDED' order by g.participant_id,g.id",eventId);
+        Map<Long,List<Map<String,Object>>> products=new LinkedHashMap<>();
+        for(var row:rows)products.computeIfAbsent(num(row,"participant_id"),ignored->new ArrayList<>()).add(row);
+        Map<Long,List<ProductRow>> result=new LinkedHashMap<>();
+        for(var sale:db.queryForList("select s.* from subculture_sales s join subculture_participant p on p.id=s.participant_id where p.event_id=? and p.review_state<>'EXCLUDED' order by p.id",eventId)) {
+            long id=num(sale,"participant_id");
+            result.put(id,identities.products(effective(sale,Sales.class),products.getOrDefault(id,List.of()),productChecks(sale.get("product_checks_json"))));
+        }
+        return result;
+    }
     private ParticipantView participantView(Map<String,Object> p) {
         long id=num(p,"id"),event=num(p,"event_id");
         return new ParticipantView(id,event,num(p,"revision"),p.get("review_state").toString(),effective(p,Participant.class),decode(p.get("payload_json"),Participant.class),p.get("review_note").toString(),instant(p.get("last_seen_at")),salesView(id),media.assets(event,id),decode(p.get("overrides_json"),Map.class));
