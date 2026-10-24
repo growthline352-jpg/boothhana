@@ -297,7 +297,7 @@ public class CatalogService {
                 try { CatalogRules.participant(p);CatalogRules.locationDates(p,event); }
                 catch(RuntimeException ex) { rejected++;issues.add("참가항목 제외: "+Objects.toString(p==null?null:p.registrationName(),"이름 없음"));continue; }
                 var keys=CatalogIdentity.participantKeys(p);Map<String,Object> found;
-                try { found=identities.match(participantRows,keys,CatalogIdentity.known(p.identity(),p.sourceEntryId(),p.sources()),false); }
+                try { found=identities.match(participantRows,keys,CatalogIdentity.participantIdentity(p),false); }
                 catch(ApiException ambiguous) {rejected++;issues.add("참가자 식별 검토 필요: "+p.registrationName());continue;}
                 String key=keys.getFirst(),data=encode(p),digest=CollectionRules.sha(data);long id;
                 if(found==null) {

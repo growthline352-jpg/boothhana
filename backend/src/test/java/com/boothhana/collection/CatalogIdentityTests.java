@@ -7,6 +7,51 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class CatalogIdentityTests {
+    private Participant observed(String entry,String name,String... urls) {
+        return new Participant(entry,name,"CIRCLE",List.of(),List.of(),List.of(),null,List.of(),
+            java.util.Arrays.stream(urls).map(u->new Source(u,"OFFICIAL","ORIGINAL","Official registration detail")).toList(),List.of(),List.of());
+    }
+    private java.util.Map<String,Object> legacyRow(long id,Participant p) {
+        var mapper=tools.jackson.databind.json.JsonMapper.builder().build();
+        return java.util.Map.of("id",id,"identity_key",CollectionRules.sha("old-v4-import:"+id),"identity_aliases","[]","payload_json",mapper.writeValueAsString(p));
+    }
+    @Test void realParticipantIdsWithTheSameDisplayNameHaveDifferentPrimaryKeys() {
+        var first=observed("179410","-","https://dongne.co/events/example/circles/179410");
+        var second=observed("176131","-","https://dongne.co/events/example/circles/176131");
+        assertThat(CatalogIdentity.participantKeys(first).getFirst()).isNotEqualTo(CatalogIdentity.participantKeys(second).getFirst());
+    }
+    @Test void legacyObservationCanRecoverOnlyTheOriginalOfficialDetailIdentity() {
+        var old=observed("obs_75ea4d89b3e35a36","Old registration","https://dongne.co/events/example/circles/179410");
+        var incoming=observed("179410","Renamed registration","https://dongne.co/events/example/circles");
+        var row=legacyRow(341,old);var index=new CatalogIdentityIndex(tools.jackson.databind.json.JsonMapper.builder().build());
+        assertThat(index.match(List.of(row),CatalogIdentity.participantKeys(incoming),CatalogIdentity.known(incoming.identity(),incoming.sourceEntryId(),incoming.sources()),false)).isSameAs(row);
+    }
+    @Test void legacyIdenticallyNamedObservationsAreDisambiguatedByOfficialDetailUrls() {
+        var first=legacyRow(341,observed("obs_75ea4d89b3e35a36","-","https://dongne.co/events/example/circles/179410"));
+        var second=legacyRow(342,observed("obs_f6481c5fafb6fe0d","-","https://dongne.co/events/example/circles/174426"));
+        var incoming=observed("179410","-","https://dongne.co/events/example/circles");
+        var index=new CatalogIdentityIndex(tools.jackson.databind.json.JsonMapper.builder().build());
+        assertThat(index.match(List.of(first,second),CatalogIdentity.participantKeys(incoming),CatalogIdentity.known(incoming.identity(),incoming.sourceEntryId(),incoming.sources()),false)).isSameAs(first);
+    }
+    @Test void conflictingOriginalRegistrationUrlsAreNotSilentlyAdopted() {
+        var old=legacyRow(341,observed("obs_75ea4d89b3e35a36","Old combined label","https://dongne.co/events/example/circles/179410","https://dongne.co/events/example/circles/174426"));
+        var incoming=observed("179410","Renamed registration","https://dongne.co/events/example/circles");
+        var index=new CatalogIdentityIndex(tools.jackson.databind.json.JsonMapper.builder().build());
+        org.assertj.core.api.Assertions.assertThatThrownBy(()->index.match(List.of(old),CatalogIdentity.participantKeys(incoming),CatalogIdentity.known(incoming.identity(),incoming.sourceEntryId(),incoming.sources()),false)).isInstanceOf(com.boothhana.api.ApiException.class);
+    }
+    @Test void searchSnippetOrLookalikeHostCannotSupplyARegistrationAlias() {
+        var index=new CatalogIdentityIndex(tools.jackson.databind.json.JsonMapper.builder().build());
+        var incoming=observed("179410","Renamed registration","https://dongne.co/events/example/circles");
+        var snippet=observed("obs_75ea4d89b3e35a36","Old registration","https://dongne.co/events/example/circles/179410");
+        snippet=new Participant(snippet.sourceEntryId(),snippet.registrationName(),snippet.kind(),snippet.members(),snippet.locations(),snippet.subjects(),snippet.description(),snippet.officialLinks(),List.of(new Source(snippet.sources().getFirst().url(),"OFFICIAL","SEARCH_SNIPPET","Not opened")),snippet.images(),snippet.warnings());
+        var impostor=observed("obs_f6481c5fafb6fe0d","Old registration","https://dongne.co.evil.com/events/example/circles/179410");
+        for(var p:List.of(snippet,impostor))assertThat(index.match(List.of(legacyRow(341,p)),CatalogIdentity.participantKeys(incoming),CatalogIdentity.known(incoming.identity(),incoming.sourceEntryId(),incoming.sources()),false)).isNull();
+    }
+    @Test void observationDetailAliasesDoNotDependOnOriginalSourceOrder() {
+        String a="https://dongne.co/events/edition-a/circles/179410",b="https://dongne.co/events/edition-b/circles/179410";
+        assertThat(CatalogIdentity.participantKeys(observed("obs_75ea4d89b3e35a36","Same registration",a,b)))
+            .isEqualTo(CatalogIdentity.participantKeys(observed("obs_75ea4d89b3e35a36","Same registration",b,a)));
+    }
     private ProductData product(String name,String url,String id) {
         return new ProductData(id,name,null,null,List.of(),List.of(),"GENERAL_CATALOG",null,"UNKNOWN",url,
             List.of(new Source(url,"OFFICIAL","ORIGINAL","판매 옵션")),List.of(),List.of());

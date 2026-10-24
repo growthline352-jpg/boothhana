@@ -429,6 +429,35 @@ class CollectionGraphIntegrationTests {
  long pendingRosterBooth(String key){var p=rosterBooth(key);String identity=CatalogIdentity.participantKeys(p).getFirst();return db.queryForObject("insert into subculture_participant(event_id,identity_key,identity_aliases,registration_name,payload_json,payload_hash) values(?,?,cast(? as jsonb),?,cast(? as jsonb),?) returning id",Long.class,event,identity,json.writeValueAsString(CatalogIdentity.participantKeys(p)),p.registrationName(),json.writeValueAsString(p),CollectionRules.sha(json.writeValueAsString(p)));}
  StageResult roster(Participant... p){return new StageResult("COMPLETE","Public roster",List.of("test"),new Coverage("COMPLETE",p.length,"REGISTERED_BOOTHS",List.of(source),null,List.of()),List.of(p),null);}
  void reviewedRosterEvent(){approveJob(seed("EVENT",Long.toString(event)),value(data));db.update("update collection_job set available_at=now()+interval '7 days'");}
+ Participant dongneBooth(String entry,String name,String... sourceIds){return new Participant(entry,name,"CIRCLE",List.of(),List.of(),List.of(),"Official roster",List.of(),Arrays.stream(sourceIds).map(s->new Source("https://dongne.co/events/example/circles/"+s,"OFFICIAL","ORIGINAL","Exact official registration")).toList(),List.of(),List.of());}
+ long oldDongneBooth(Participant p){String payload=json.writeValueAsString(p);return db.queryForObject("insert into subculture_participant(event_id,identity_key,identity_aliases,registration_name,payload_json,payload_hash) values(?,?,'[]',?,cast(? as jsonb),?) returning id",Long.class,event,CollectionRules.sha("old-observation:"+UUID.randomUUID()),p.registrationName(),payload,CollectionRules.sha(payload));}
+ @Test void legacyDongneDifferentRegistrationsMayHaveTheSameDisplayName(){
+  reviewedRosterEvent();var first=dongneBooth("179410","-","179410");var second=dongneBooth("176131","-","176131");
+  reviewed(seed("PARTICIPANTS",Long.toString(event)),value(roster(first,second)),audit(List.of(source,first.sources().getFirst().url(),second.sources().getFirst().url()),List.of()));
+  assertThat(db.queryForObject("select count(*) from subculture_participant where event_id=? and registration_name='-'",Integer.class,event)).isEqualTo(2);
+ }
+ @Test void legacyDongneObservationsKeepBothExcludedIdsAndOwnerCorrections(){
+  reviewedRosterEvent();var oldA=dongneBooth("obs_75ea4d89b3e35a36","-","179410");var oldB=dongneBooth("obs_f6481c5fafb6fe0d","-","174426");
+  long a=oldDongneBooth(oldA),b=oldDongneBooth(oldB);
+  for(long pid:List.of(a,b)){var p=catalog.participant(pid);catalog.editParticipant(pid,new EditInput(p.revision(),"EXCLUDED","Keep hidden",Map.of("description","Owner correction")));}
+  var first=dongneBooth("179410","-","179410");var second=dongneBooth("174426","-","174426");var visible=dongneBooth("173713","Visible booth","173713");
+  var receipt=value(reviewed(seed("PARTICIPANTS",Long.toString(event)),value(roster(first,second,visible)),audit(List.of(source,first.sources().getFirst().url(),second.sources().getFirst().url(),visible.sources().getFirst().url()),List.of())));
+  assertThat(receipt.get("excludedParticipants")).isEqualTo(2);
+  assertThat(db.queryForObject("select count(*) from subculture_participant where event_id=?",Integer.class,event)).isEqualTo(3);
+  assertThat(db.queryForObject("select payload_json->>'sourceEntryId' from subculture_participant where id=?",String.class,a)).isEqualTo("179410");
+  assertThat(db.queryForObject("select payload_json->>'sourceEntryId' from subculture_participant where id=?",String.class,b)).isEqualTo("174426");
+  for(long pid:List.of(a,b)){assertThat(catalog.participant(pid).reviewState()).isEqualTo("EXCLUDED");assertThat(catalog.participant(pid).overrides()).containsEntry("description","Owner correction");}
+  var snapshot=json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class);
+  assertThat((List<?>)snapshot.get("participants")).hasSize(1);
+ }
+ @Test void legacyDongneConflictingDetailReferencesCannotCreateAPublicReplacement(){
+  reviewedRosterEvent();long previous=oldDongneBooth(dongneBooth("obs_75ea4d89b3e35a36","Old combined label","179410","174426"));
+  var old=catalog.participant(previous);catalog.editParticipant(previous,new EditInput(old.revision(),"EXCLUDED","Unresolved identity",Map.of()));
+  var incoming=dongneBooth("179410","New registration label","179410");
+  assertThatThrownBy(()->reviewed(seed("PARTICIPANTS",Long.toString(event)),value(roster(incoming)),audit(List.of(source,incoming.sources().getFirst().url()),List.of()))).isInstanceOf(ApiException.class);
+  assertThat(db.queryForObject("select count(*) from subculture_participant where event_id=?",Integer.class,event)).isEqualTo(1);
+  assertThat(catalog.participant(previous).reviewState()).isEqualTo("EXCLUDED");
+ }
  @Test void graphRosterDoesNotBulkApproveUnrelatedPendingRowsOrRights(){
   reviewedRosterEvent();long pending=pendingRosterBooth("unrelated");
   long asset=db.queryForObject("insert into subculture_catalog_asset(event_id,participant_id,identity_key,type,image_url,page_url,reported_rights) values(?,?,?,'BOOTH_CUT','https://example.com/pending.png',?,'Not independently reviewed') returning id",Long.class,event,pending,"a".repeat(64),source);
