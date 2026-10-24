@@ -25,7 +25,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-creator-account-evidence-1'
+PROMPT_VERSION='graph-4-postype-public-channel-dom-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -326,7 +326,11 @@ class Worker:
     def __init__(self,cfg,api=None,search=execute_search,source_loader=None):
         self.cfg=cfg;self.api=api or Api(cfg['apiBaseUrl'],os.environ.get(cfg['tokenEnv'],''),cfg['httpTimeoutSeconds']);self.search=search
         self.root=Path(cfg['stateDirectory']).expanduser().resolve();self.root.mkdir(parents=True,exist_ok=True)
-        self.source_loader=source_loader or (SocialSources(cfg['blockedSourceHosts'],token_env=cfg['xBearerTokenEnv'],browser=BrowserSources(cfg['blockedSourceHosts'],capture_queue=CaptureQueue(self.root/'browser-captures')) if cfg['xBrowserFallback'] else None) if search is execute_search else None)
+        self.source_loader=source_loader
+        if self.source_loader is None and search is execute_search:
+            browser=BrowserSources(cfg['blockedSourceHosts'],capture_queue=CaptureQueue(self.root/'browser-captures')) if cfg['xBrowserFallback'] else None
+            public=PublicSources(cfg['blockedSourceHosts'],postype_renderer=browser.capture_queue if browser else None)
+            self.source_loader=SocialSources(cfg['blockedSourceHosts'],public=public,token_env=cfg['xBearerTokenEnv'],browser=browser)
     def request(self,method,path,body=None):return self.api.request(method,PREFIX+path,body)
     def images(self,job,directory):
         if job['kind']!='CHARACTERS':return [],[]

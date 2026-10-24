@@ -9,6 +9,7 @@ import hashlib,json,os,re,time,uuid
 from pathlib import Path
 from urllib.parse import urlsplit
 from media_fetch import MediaError,public_addresses
+from postype_browser import channel_route,postype_document
 
 X_HOSTS={'x.com','www.x.com','twitter.com','www.twitter.com'}
 RESOURCE_HOSTS=X_HOSTS|{'abs.twimg.com','pbs.twimg.com','video.twimg.com','api.x.com'}
@@ -26,7 +27,7 @@ class CaptureQueue:
  """
  def __init__(self,directory,wait_seconds=60):self.directory=Path(directory);self.wait_seconds=wait_seconds
  def __call__(self,url):
-  target(url);self.directory.mkdir(parents=True,exist_ok=True)
+  capture_target(url);self.directory.mkdir(parents=True,exist_ok=True)
   nonce=str(uuid.uuid4());requested=datetime.now(timezone.utc)
   request={'id':nonce,'url':url,'requestedAt':requested.isoformat(),'expiresAt':(requested+timedelta(seconds=self.wait_seconds)).isoformat(),'state':'PENDING','captureMethod':'CUA_PUBLIC_DOM'}
   path=self.directory/(nonce+'.request.json')
@@ -44,12 +45,22 @@ class CaptureQueue:
     if captured.tzinfo is None or captured<requested or captured>datetime.now(timezone.utc):raise MediaError('Browser capture is stale or invalid')
     snapshot=value.get('snapshot',{})
     if snapshot.get('anonymous') is not True:raise MediaError('Browser capture is not a verified logged-out public page')
-    documents(url,snapshot)
+    capture_documents(url,snapshot)
     request.update(state='FULFILLED',capturedAt=value['capturedAt']);save_request()
     snapshot['capturedAt']=value['capturedAt'];return snapshot
    time.sleep(0.25)
   request.update(state='DEFERRED');save_request()
   raise BrowserPending('Public browser capture pending: '+nonce)
+
+def capture_target(url):
+ if channel_route(url):return channel_route(url)
+ return target(url)
+
+
+def capture_documents(url,snapshot):
+ if channel_route(url):return [postype_document(url,snapshot)]
+ return documents(url,snapshot)
+
 
 def target(url):
  p=urlsplit(url)

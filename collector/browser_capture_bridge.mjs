@@ -4,7 +4,7 @@
 import * as fs from 'node:fs/promises';
 import path from 'node:path';
 
-export async function fulfillPending({cua,tab,directory,domSource,maxRequests=10}) {
+export async function fulfillPending({cua,tab,directory,domSource,postypeDomSource,maxRequests=10}) {
   const files=(await fs.readdir(directory)).filter(n=>/^[0-9a-f-]{36}\.request\.json$/.test(n));
   const done=[];
   for(const file of files) {
@@ -13,11 +13,28 @@ export async function fulfillPending({cua,tab,directory,domSource,maxRequests=10
     if(file!==request.id+'.request.json')continue;
     const requestedAt=Date.parse(request.requestedAt),expiresAt=request.expiresAt?Date.parse(request.expiresAt):requestedAt+180000;
     if(request.state!=='PENDING'||!Number.isFinite(requestedAt)||!Number.isFinite(expiresAt)||requestedAt>Date.now()||Date.now()>expiresAt)continue;
-    if(!/^https:\/\/x\.com\/[A-Za-z0-9_]{1,15}(?:\/status\/[0-9]{1,25})?$/.test(request.url))continue;
+    const isX=/^https:\/\/x\.com\/[A-Za-z0-9_]{1,15}(?:\/status\/[0-9]{1,25})?$/.test(request.url);
+    let isPostype=false;
+    try {
+      const u=new URL(request.url),keys=[...u.searchParams.keys()];
+      isPostype=u.protocol==='https:'&&['postype.com','www.postype.com'].includes(u.hostname)&&!u.username&&!u.password&&(!u.port||u.port==='443')&&!u.hash&&
+        /^\/@[A-Za-z0-9_.-]+\/?$/.test(u.pathname)&&new Set(keys).size===keys.length&&keys.every(k=>['page','activity-type'].includes(k))&&
+        /^[1-9][0-9]{0,4}$/.test(u.searchParams.get('page')??'1')&&['all','post'].includes(u.searchParams.get('activity-type')??'all');
+    } catch(error) {}
+    if(!isX&&!(isPostype&&typeof postypeDomSource==='string'))continue;
     const destination=path.join(directory,request.id+'.response.json');
     try {await fs.access(destination);continue;}catch(error){if(error.code!=='ENOENT')throw error;}
     await tab.goto(request.url);
     await tab.getAXState({emit:false});
+    if(isPostype){
+      // Only the public channel-card region is read. No post body, login or API.
+      try {await tab.playwright.locator('#activity-content article[data-sentry-component="FeedPostItem"]').first().waitFor({state:'visible',timeoutMs:10000});}catch(error){}
+      const snapshot=await tab.playwright.evaluate('('+postypeDomSource+')()');
+      const response={id:request.id,requestedUrl:request.url,capturedAt:new Date().toISOString().replace('Z','+00:00'),snapshot};
+      const temporary=destination+'.tmp';await fs.writeFile(temporary,JSON.stringify(response));await fs.rename(temporary,destination);
+      done.push({url:request.url,publicCards:snapshot.activities?.reduce((sum,a)=>sum+(a.posts?.length||0),0)||0});
+      continue;
+    }
     // A navigation snapshot can precede the public timeline render.
     try {await tab.playwright.locator('article').first().waitFor({state:'visible',timeoutMs:10000});}catch(error){}
     // These are only the public post-text expand controls. No menus or login.
