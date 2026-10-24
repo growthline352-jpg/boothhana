@@ -78,7 +78,14 @@ class SocialSources:
         docs=[];pending=[]
         for url in dict.fromkeys(urls):
             route=social_route(url)
-            if not route:docs.extend(self.public([url]));continue
+            if not route:
+                try:docs.extend(self.public([url]))
+                except BrowserPending as browser_exc:
+                    if not defer_browser_pending:raise
+                    pending.append(browser_exc)
+                    docs.append({'url':url,'available':False,'browserPending':True,
+                                 'capturedAt':datetime.now(timezone.utc).isoformat(),'failure':'Public browser capture pending'})
+                continue
             try:
                 host=urlsplit(url).hostname
                 if any(host==b or host.endswith('.'+b) for b in self.blocked):raise MediaError('Blocked SNS source')

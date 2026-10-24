@@ -16,6 +16,7 @@ from run import canonical_audit_url
 from tmm_sources import tmm_route,related_public_tabs,tmm_policies,render_tmm_page,tmm_document
 from dongne_sources import dongne_roster_entries
 from postype_sources import postype_pagination
+from postype_browser import channel_route,postype_document
 
 class PageText(HTMLParser):
     def __init__(self,url):
@@ -113,7 +114,7 @@ def postype_canonical_transport(url):
     return urlunsplit(('https','www.postype.com',p.path,p.query,''))
 
 class PublicSources:
-    def __init__(self,blocked,fetch=fetch_html,*,tmm_renderer=None):self.blocked=blocked;self.fetch=fetch;self.tmm_renderer=tmm_renderer
+    def __init__(self,blocked,fetch=fetch_html,*,tmm_renderer=None,postype_renderer=None):self.blocked=blocked;self.fetch=fetch;self.tmm_renderer=tmm_renderer;self.postype_renderer=postype_renderer
     def __call__(self,urls):
         documents=[];robots={}
         requested=list(dict.fromkeys(urls))
@@ -165,6 +166,11 @@ class PublicSources:
                 parser=PageText(transport);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
                 value.update(dongne_pagination(url,parser))
                 value.update(postype_pagination(transport,html))
+                if self.postype_renderer and channel_route(transport) and value.get('channelPageVerified') is False:
+                    try:
+                        rendered=postype_document(url,self.postype_renderer(transport));rendered['httpSha256']=digest
+                        documents.append(rendered);continue
+                    except MediaError:value['renderFailure']='Current public channel rendering is unavailable; retain the unverified HTTP inventory'
                 next_postype=value.get('pagination',{}).get('nextPageUrl') if transport_host in {'postype.com','www.postype.com'} else None
                 if next_postype and next_postype not in parser.links:parser.links.append(next_postype)
                 if tmm_route(url):
