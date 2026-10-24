@@ -39,6 +39,7 @@ class CatalogPostgresTests {
         db.execute(Files.readString(Path.of("../database/009_floorplan_automation.sql")));
         db.execute(Files.readString(Path.of("../database/027_discovery_observations.sql")));
         db.execute(Files.readString(Path.of("../database/030_catalog_publication_withdrawal.sql")));
+        db.execute(Files.readString(Path.of("../database/039_participant_duplicate_retirement.sql")));
         // Later catalog fields; commerce/account modules remain empty in this
         // catalog-only fixture. Match their lookup keys without seeding real users.
         db.execute("alter table subculture_catalog_asset add column offline_allowed boolean not null default false");
