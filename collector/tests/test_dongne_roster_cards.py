@@ -7,7 +7,7 @@ def card(ident, name, member, tags='', extra=''):
     return (f'<div class="rounded-lg neu-card relative grid">'
             '<div aria-hidden="true"><span>이미지 없음</span></div>'
             f'<div><h3><a class="stretched-link" href="/events/df2610/circles/{ident}">{name}</a></h3>'
-            f'<p>{member} · 2부스</p><div><span>A-29</span></div></div>'
+            f'<p class="truncate text-xs text-muted-foreground">{member} · 2부스</p><div><span>A-29</span></div></div>'
             f'<button aria-label="{name} 방문 예정"><span aria-hidden="true">별</span></button>'
             f'<div>{tags}</div>{extra}</div>')
 
@@ -22,6 +22,32 @@ def read(body, url=URL):
     return PublicSources([], fetch)([url])[0]
 
 class DongneRosterCardTests(unittest.TestCase):
+    def test_author_display_parts_do_not_split_the_registration_or_adjacent_card(self):
+        rows = read(listing(card(176131, '서클, 이름은 그대로', '<em>마낙</em>, <span>임사</span>') +
+                            card(174596, '다른 부스', '이노, 꿈자')))['rosterEntries']
+        self.assertEqual('서클, 이름은 그대로', rows[0]['registrationName'])
+        self.assertEqual(['마낙', '임사'], rows[0]['authorNameParts'])
+        self.assertEqual(['이노', '꿈자'], rows[1]['authorNameParts'])
+        self.assertNotIn('꿈자', rows[0]['authorText'])
+        self.assertIn('2부스', rows[0]['authorText'])
+
+    def test_author_parts_preserve_slashes_and_ignore_hidden_author_noise(self):
+        hidden = '<p hidden class="truncate text-xs text-muted-foreground">다른, 작가</p>'
+        rows = read(listing(card(176131, '서클', '밤/낮', extra=hidden) +
+                            card(174596, '다른 부스', '다솜')))['rosterEntries']
+        self.assertEqual(['밤/낮'], rows[0]['authorNameParts'])
+        self.assertNotIn('다른, 작가', rows[0]['authorText'])
+
+    def test_ambiguous_or_missing_author_region_keeps_text_without_invented_parts(self):
+        duplicate = '<p class="truncate text-xs text-muted-foreground">설명, 필명</p>'
+        cases = [card(176131, '작가 표시가 모호한 첫 번째 부스', '마낙, 임사', extra=duplicate),
+                 card(176131, '작가 표시가 모호한 첫 번째 부스', '마낙, 임사').replace('truncate text-xs text-muted-foreground', 'description')]
+        for first in cases:
+            with self.subTest(first=first):
+                row = read(listing(first + card(174596, '다른 부스', '다솜')))['rosterEntries'][0]
+                self.assertNotIn('authorNameParts', row)
+                self.assertIn('마낙', row['text'])
+
     def test_adjacent_booth_name_never_enters_preceding_card_evidence(self):
         body = listing(card(171577, '하나 스티치', 'nazo') +
                        card(172015, '수성 내행성 지점', 'W3', '<span data-chip><span>괴담에 떨어져도 출근을 해야 하는구나</span></span>'))

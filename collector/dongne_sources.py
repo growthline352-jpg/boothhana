@@ -20,7 +20,7 @@ class RosterCards(HTMLParser):
             if self.card is not None:
                 self.card['invalid'] = True
             else:
-                self.card = {'anchors': [], 'chips': [], 'text': [], 'invalid': False}
+                self.card = {'anchors': [], 'chips': [], 'authors': [], 'text': [], 'invalid': False}
                 frame['cardRoot'] = True
         if self.card is not None and not hidden:
             if tag == 'a' and 'stretched-link' in attrs.get('class', '').split() and any(f['tag'] == 'h3' for f in self.frames):
@@ -31,6 +31,9 @@ class RosterCards(HTMLParser):
             if 'data-chip' in attrs:
                 frame['chip'] = []
                 self.card['chips'].append(frame['chip'])
+            if tag == 'p' and {'truncate', 'text-xs', 'text-muted-foreground'} <= set(attrs.get('class', '').split()):
+                frame['author'] = []
+                self.card['authors'].append(frame['author'])
         if tag not in VOID:
             self.frames.append(frame)
 
@@ -55,9 +58,18 @@ class RosterCards(HTMLParser):
             name = ' '.join(anchor['text'])
             text = '\n'.join(card['text'])
             if name and len(text) <= 16000:
-                self.rows.append({'sourceEntryId': anchor['url'].rsplit('/', 1)[1], 'detailUrl': anchor['url'],
-                                  'registrationName': name, 'text': text,
-                                  'tagLabels': [' '.join(chip) for chip in card['chips'] if chip]})
+                row = {'sourceEntryId': anchor['url'].rsplit('/', 1)[1], 'detailUrl': anchor['url'],
+                       'registrationName': name, 'text': text,
+                       'tagLabels': [' '.join(chip) for chip in card['chips'] if chip]}
+                if len(card['authors']) == 1 and card['authors'][0]:
+                    displayed = ' '.join(card['authors'][0])
+                    label = re.sub(r'\s*·\s*[0-9]+(?:\.[0-9]+)?부스\s*$', '', displayed)
+                    parts = [part.strip() for part in label.split(',')]
+                    # Literal display parts, not canonical people or account ownership.
+                    # Ambiguous layout/size text remains available in the original card.
+                    if '·' not in label and len(displayed) <= 2000 and 1 <= len(parts) <= 30 and all(0 < len(part) <= 255 for part in parts):
+                        row.update(authorText=displayed, authorNameParts=parts)
+                self.rows.append(row)
 
     def handle_data(self, data):
         if self.card is None or not data.strip() or self.frames and self.frames[-1]['hidden']:
@@ -69,6 +81,8 @@ class RosterCards(HTMLParser):
                 frame['anchor']['text'].append(text)
             if 'chip' in frame:
                 frame['chip'].append(text)
+            if 'author' in frame:
+                frame['author'].append(text)
 
 def dongne_roster_entries(url, html, pagination):
     if not pagination:
