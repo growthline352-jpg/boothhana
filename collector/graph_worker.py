@@ -24,7 +24,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-roster-card-evidence-1'
+PROMPT_VERSION='graph-4-item-original-evidence-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -54,6 +54,10 @@ def with_batch(value):
     return value
 def schema(kind):
     stage=json.loads((ROOT/'schemas/stage-result.schema.json').read_text(encoding='utf-8'))
+    sales=next(x for x in stage['properties']['sales']['anyOf'] if x.get('type')=='object')
+    # Graph publication requires evidence on every item, even when the parent
+    # sale already cites the same sheet. Ask the generator for it explicitly.
+    sales['properties']['products']['items']['properties']['sources']['minItems']=1
     events=json.loads((ROOT/'schemas/event-result-v4.schema.json').read_text(encoding='utf-8'))
     # This graph is subculture-only. The legacy discovery schema serves other fields too.
     events['properties']['events']['items']['properties']['subcategory']['enum']=list(GROUPS['SUBCULTURE'])
@@ -63,7 +67,6 @@ def schema(kind):
         return events
     if kind=='EVENT':return events['properties']['events']['items']
     if kind in ('PARTICIPANTS','SALES'):return with_batch(stage)
-    sales=next(x for x in stage['properties']['sales']['anyOf'] if x.get('type')=='object')
     evidence=arr(obj({'sourceUrl':string(),'evidence':string()}),10)
     if kind=='RELATIONS':
         assignment=schema('CHARACTERS')['properties']['assignments']['items']['properties']
@@ -136,6 +139,7 @@ context.identityCandidates에 해당 항목이 있으면 기존 id를 사용한�
 이번 imageOffset 묶음만 분석한다. 다른 묶음에서만 보이는 캐릭터를 추측하지 말라. basis=IMAGE는 첨부 manifest의 실제 SHA256 imageHash와 해당 상품 영역 imageRegion(x,y,width,height; 0~1 비율)이 필요하다. 이미지를 못 봤다면 TEXT만 사용하고 외형 추정을 하지 말라.
 기존 subjects 문자열은 정답이 아닌 후보이며 상품 텍스트·이미지와 공식 캐릭터 자료를 대조해야 한다.'''}
 PRODUCT_RULES='''
+각 products/goods 항목의 sources에 그 상품명·옵션·가격을 직접 확인한 원문 URL, access=ORIGINAL, 구체적 evidence를 각각 기록한다. sales.sources나 결과 최상위 sources는 개별 상품의 sources를 대신하지 않는다. 같은 판매표라도 각 상품이 확인되는 부분의 근거를 항목마다 남긴다. 제공된 실제 첨부 이미지에서 읽은 사실은 해당 이미지 URL의 ORIGINAL 근거로 기록할 수 있다. 상품 원문을 확인하지 못했으면 공통 출처를 복사하거나 출처를 지어내지 말고 해당 상품의 확정 주장을 보류한다.
 판매글/판매표는 상품을 담는 자료이며 그 자체를 하나의 상품으로 만들지 않는다. 원문에서 개별 판매 옵션으로 확인된 캐릭터·디자인은 각 행으로 수집한다.
 슬래시·쉼표로 함께 적힌 이름만으로 개별 옵션·각각의 가격·세트 가격을 확정하지 않는다. 공통 안내만 있으면 원문 이름을 유지한 안내 항목으로 기록한다. 가격 적용 단위를 확인하지 못하면 price=null로 두고 표시 금액과 미확인 범위를 sources.evidence·warnings에 남긴다. 경고를 붙여 추정한 개별 가격을 확정하지 않는다.
 실제 옵션명만 사용한다. 공통 주문폼 URL/폼 ID를 모든 옵션의 productUrl/sourceEntryId/identity에 반복하지 않는다. 개별 식별 URL/ID가 없으면 null로 두고 공통 폼 주소는 sources에만 남긴다.
@@ -159,6 +163,7 @@ PROMPTS['DISCOVERY']+=' subcategory는 공유 분류의 서브컬처 유형만 �
 REVIEW_PROMPT+=' 작품·캐릭터·시리즈의 기존 ID를 재사용하거나 출처를 바꿀 때 identityEvidence는 기존 후보 sourceUrl과 새 sourceUrl 양쪽의 구체적인 원문 근거를 포함해야 한다. 한쪽이 미확인이면 연결을 확정하지 말고 보완한다. EVENT의 name/edition/organizer는 대상 식별값과 정확히 같아야 하며 회차·주최자 정정이 필요하면 ENRICH로 사유를 남긴다.'
 REVIEW_PROMPT+=' 동네 참가 명단의 pagination은 공개 범위·버튼·개별 링크를 대조한 현재 페이지 정보다. context.input.pageUrl이 있으면 그 페이지를 기준으로 새로 읽고, 참가자의 sourceEntryId를 pagination.entryUrls의 등록 ID와 전체 대조한다. 각 등록명·구성원·위치·sources의 ORIGINAL 근거도 해당 등록과 일치해야 한다. 이 그래프 단계의 참가자 스키마는 v4이며 identity 필드를 요구하거나 추가하지 않는다. 현재 페이지 누락·중복이나 다음 주소 불일치가 있으면 ENRICH로 구체적으로 남긴다. 다른 페이지의 참가자를 대신 채우지 말고 페이지 하나를 전체 명단 완료로 승인하지 않는다.'
 REVIEW_PROMPT+=' rosterEntries가 있으면 sourceEntryId별 카드 text·tagLabels와 각각 대조한다. 이웃 카드의 부스명·작품을 옮기거나 원문의 작품명 부제를 임의로 줄이면 ENRICH다. available=true 원문으로 확인된 목록 사실은 그 목록 URL의 ORIGINAL 출처로 표시해야 하며, 상세 웹 열람 실패를 제공된 목록 원문의 부재로 오인하지 않는다.'
+REVIEW_PROMPT+=' 각 상품 등 sources 필드가 있는 모든 개별 항목에는 직접 확인한 ORIGINAL 출처와 구체적 evidence가 필요하다. 판매표 전체나 다른 상품의 출처로 대신하지 않는다. 개별 sources가 비었거나 검색 요약·접근 불가 관측만 있으면 해당 항목의 확정 주장을 APPROVE하지 말고 ENRICH로 구체적 경로를 남긴다.'
 PROMPTS['DISCOVERY']+='''
 context.existingEvents는 같은 탐색 기간에 이미 등록된 행사다. 원문과 대조해 동일 회차인지 먼저 확인한다. 제목의 번역·띄어쓰기·부제 차이나 기존 edition=null을 보완하려는 이유만으로 새 회차를 만들지 않는다.
 events의 각 행마다 existingEventRefs에 eventIndex, existingEventId, identityReason을 정확히 한 번 기록한다. 동일 회차가 공식 근거와 기존 자료에서 확인되면 해당 기존 id를 선택한다. 신규 행사는 existingEventId=null로 기록한다. 같은 기존 id를 여러 행에 반복하지 않는다.
@@ -194,6 +199,19 @@ def source_urls(value):
     return found
 
 def require_opened(result,audit):
+    def require_item_original(value,path='result'):
+        if isinstance(value,dict):
+            if 'sources' in value:
+                sources=value['sources']
+                if not isinstance(sources,list) or not any(isinstance(s,dict) and s.get('access')=='ORIGINAL' and isinstance(s.get('evidence'),str) and s['evidence'].strip() for s in sources):
+                    raise RunError('Every item needs its own original evidence: '+path+'.sources')
+            for key,item in value.items():
+                if key!='sources':require_item_original(item,path+'.'+key)
+        elif isinstance(value,list):
+            for index,item in enumerate(value):require_item_original(item,path+'['+str(index)+']')
+    # Match the server's recursive per-item rule. Shared parent citations must
+    # not allow an uncited item to reach the approval delivery endpoint.
+    require_item_original(result)
     needed={canonical_audit_url(x) for x in source_urls(result)}
     seen={canonical_audit_url(x) for x in audit['openedUrls']}
     if result.get('events')==[] and 'sourceCoverage' in result:
