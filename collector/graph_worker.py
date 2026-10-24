@@ -5,7 +5,7 @@ Default invocation drains eligible jobs and exits. --watch opts into continuous 
 Network/model calls never run on import. Existing v4 schema, CLI isolation and transport are reused.
 """
 from __future__ import annotations
-import argparse,copy,hashlib,json,os,shutil,threading,time,uuid
+import argparse,copy,hashlib,json,os,re,shutil,threading,time,uuid
 from datetime import datetime,timezone
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -24,7 +24,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-public-profile-header-1'
+PROMPT_VERSION='graph-4-postype-canonical-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -130,6 +130,7 @@ accountId는 제공 원문의 platformAccountId로만 작성하며, 없으면 nu
 input.socialPage=true이면 input.pageUrl의 SNS 게시글 묶음만 상품 수집 대상으로 삼고, 문서의 실제 nextPageUrl을 그대로 이어간다. 페이지가 남거나 이미지가 unavailable이면 COMPLETE로 표시하지 않는다. 게시글 판매표의 이미지를 실제 첨부로 확인하고 옵션별로 나눠라. 리포스트·인용한 다른 작가의 상품은 제외하라. 본인 계정도 일반 팬아트 게시물을 상품이라고 추정하지 않는다.
 socialPageComplete는 이번 게시글 묶음의 판매표/옵션까지 모두 조사한 경우만 true다. 다음 게시글 페이지가 남아도 현재 묶음 자체를 완료할 수 있다. 현재 판매표를 다 읽지 못했거나 같은 페이지의 남은 100개 묶음이 있으면 false이며 먼저 이번 페이지를 보완한다.
 공식 계정/상품 페이지에서 굿즈를 수집하라. 행사 판매 여부는 이 작업에서 확정하지 말고 GENERAL_CATALOG/PROFILE/PAST_REFERENCE/UNKNOWN만 사용한다.
+포스타입 채널 원문의 channelPageVerified=false는 프로필만 보이고 현재 페이지의 게시글 목록은 확인되지 않았다는 뜻이다. 빈 상품 목록을 전체 조사 완료로 표시하거나 다음 페이지를 추측하지 않는다. 검증된 pagination의 entryUrls·reportedTotal·nextPageUrl을 대조하고, 첫 페이지의 일부 게시글만으로 채널 전체를 완료하지 않는다. 로그인·성인 인증·유료 본문이나 robots가 금지한 API를 열지 않고 현재 공개된 메타데이터의 확인 범위만 남긴다.
 작가가 그린 일반 그림을 판매 굿즈로 만들지 말라. 상품 memberName은 확인된 해당 작가의 이름/별칭이어야 하며 공동 판매표의 다른 작가 상품은 제외하라. 상품 원문 sources를 각각 남겨라. 한 페이지 100개 후 다음 URL로 이어간다.
 공식 공지에서 다른 행사 참가를 발견하면 eventLeads에 원문 URL, 근거, 정확한 시작/종료 날짜를 남겨라. 날짜가 불명확하면 넣지 말라.
 context.identityCandidates의 기존 작가와 동일인이면 양쪽 공식 프로필/계정 이전 공지를 확인한 evidence를 주고 identityDecision=LINK를 선택한다.
@@ -168,6 +169,7 @@ REVIEW_PROMPT+=' rosterEntries가 있으면 sourceEntryId별 카드 text·tagLab
 REVIEW_PROMPT+=' 각 상품 등 sources 필드가 있는 모든 개별 항목에는 직접 확인한 ORIGINAL 출처와 구체적 evidence가 필요하다. 판매표 전체나 다른 상품의 출처로 대신하지 않는다. 개별 sources가 비었거나 검색 요약·접근 불가 관측만 있으면 해당 항목의 확정 주장을 APPROVE하지 말고 ENRICH로 구체적 경로를 남긴다.'
 REVIEW_PROMPT+=' PARTICIPANTS의 공동부스는 한 참가자 기록을 유지하되 원문이 구분한 개별 작가는 members에서 각각 확인한다. 여러 사람을 한 ARTIST 이름이나 서로의 aliases로 합치거나, 공동 연락 계정을 모든 사람의 개인 계정으로 배정하면 ENRICH다. CREATOR에서는 여러 사람을 합친 기존 프로필에 한 사람의 계정·상품을 연결하지 않는다. goods.memberName은 실제 같은 개인/서클인 profile.name 또는 확인된 aliases와 일치해야 하며, 다른 구성원 이름을 별칭으로 만들어 통과시키면 안 된다. socialAccounts의 각 identityEvidence에 실제 profileUrl 자체와 공식 작가 연결 출처 양쪽이 있는지 확인하고, 단일 게시글이나 이미지로 프로필 근거를 대신하면 ENRICH다.'
 REVIEW_PROMPT+=' PARTICIPANTS는 원문 관측이며 공개 상태를 바꾸는 요청이 아니다. 서버는 기존 EXCLUDED 참가자의 제외 상태와 수동 수정값을 유지한다. 공식 명단에 표시된 같은 sourceEntryId의 관측을 기록하는 것과 공개 복구를 구분하라. 원문 표시만으로 기존 제외·수동 수정을 해제하거나 다른 ID·이름으로 우회해 공개하려는 주장은 ENRICH다. 숨긴 항목이 원문에 존재한다는 관측 자체를 거절하거나 이번 페이지의 등록 ID 대조에서 누락시키지 않는다.'
+REVIEW_PROMPT+=' CREATOR의 현재 입력이 포스타입 채널 페이지이고 channelPageVerified=false이면 프로필만 보이는 자료를 게시글 목록 전체 완료로 승인하지 않는다. 검증된 현재 목록이 없는데 coverage=COMPLETE 또는 추측한 nextPageUrl을 제출하면 ENRICH다. 현재 공개된 프로필과 PARTIAL 결과는 미확인 범위를 유지할 수 있다. robots 금지 API·로그인·성인 인증·유료 본문을 사용했다고 주장하지 않는다.'
 REVIEW_PROMPT+=' PARTICIPANTS에서 input.pageUrl이 개별 참가자 상세이면 그 상세의 등록이 이번 보완 대상이다. visitedPages에 참고 목록이 있어도 다른 문서의 pagination을 그 상세의 후속 페이지로 강제하지 않는다. 상세 자체에 다음 페이지가 없고 전체 명단 완료를 주장하지 않았다면 nextPageUrl=null이 타당하다. input.pageUrl이 목록이면 그 현재 목록의 전체 등록 ID와 다음 주소를 대조하며, 참고 문서와 현재 대상 페이지의 URL을 구분한다.'
 REVIEW_PROMPT+=' rosterEntries의 authorText/authorNameParts가 있으면 같은 카드의 실제 작가 표시와 members를 각각 대조한다. 원문이 나열한 개별 작가들을 한 ARTIST 이름으로 합치거나 등록명·부스 크기·이웃 카드의 작가를 구성원으로 옮기면 ENRICH다. authorNameParts는 표시 조각이며 동일인·별칭·개인 계정 소유의 근거가 아니다.'
 PROMPTS['DISCOVERY']+='''
@@ -229,6 +231,19 @@ def require_opened(result,audit):
     if not needed:
         needed={canonical_audit_url(x) for x in result.get('coverage',{}).get('visitedPages',[])}&seen
     if not needed or '' in needed or not needed<=seen:raise RunError('Every approved source must be directly opened by the reviewer')
+
+def require_creator_channel_scope(result,context,documents):
+    current=context.get('input',{}).get('pageUrl','');p=urlsplit(current)
+    if p.hostname not in {'postype.com','www.postype.com'} or not re.fullmatch(r'/@[A-Za-z0-9_.-]+/?',p.path):return
+    source=next((d for d in documents if canonical_audit_url(d.get('url',''))==canonical_audit_url(current)),{})
+    next_url=result.get('nextPageUrl');complete=result.get('coverage')=='COMPLETE'
+    if not source.get('available') or source.get('channelPageVerified') is not True:
+        if complete or next_url:raise RunError('Current Postype channel inventory is unverified; keep PARTIAL without an inferred continuation')
+        return
+    actual_next=source.get('pagination',{}).get('nextPageUrl')
+    if next_url and canonical_audit_url(next_url)!=canonical_audit_url(actual_next or ''):
+        raise RunError('Postype continuation does not match the verified current channel controls')
+    if complete and actual_next:raise RunError('Postype channel still has an unvisited next page')
 
 def validate_products(result):
     for page in result.get('productCoverage',[]):
@@ -462,7 +477,9 @@ class Worker:
                     for account in candidate.get('socialAccounts',[]):
                         if account.get('accountId') is not None and not any(d.get('available') and profile_key(d.get('profileUrl',''))==profile_key(account['profileUrl']) and d.get('platformAccountId')==account['accountId'] for d in fresh):decision={'verdict':'ENRICH','reason':'SNS account identity was not verified from the native API'}
                 if decision['verdict']=='APPROVE':
-                    try:require_opened(candidate,observations)
+                    try:
+                        require_opened(candidate,observations)
+                        if job['kind']=='CREATOR':require_creator_channel_scope(candidate,extracted['context'],fresh)
                     except RunError as exc:decision={'verdict':'ENRICH','reason':str(exc)}
                 return decision,observations
             event_decisions=[]
