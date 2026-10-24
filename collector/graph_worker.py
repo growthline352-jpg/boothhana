@@ -18,13 +18,14 @@ from public_sources import PublicSources,context_urls
 from social_sources import SocialSources,social_route,profile_key
 from browser_sources import BrowserSources,CaptureQueue
 from taxonomy import GROUPS
+from source_schema import constrain_source_schema
 
 MODEL='gpt-6.1-sol'
 EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-postype-canonical-1'
+PROMPT_VERSION='graph-4-native-source-constraints-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -307,11 +308,14 @@ class Worker:
                 manifest.append({'index':index,'url':url,'pageUrl':candidate.get('pageUrl'),'sha256':digest,'capturedAt':datetime.now(timezone.utc).isoformat()})
             except (ValueError,OSError) as exc:manifest.append({'index':index,'url':url,'unavailable':type(exc).__name__})
         return paths,manifest
-    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False,review=False,complex_task=False,image_sources=(),image_page_urls=None):
-        directory.mkdir(parents=True,exist_ok=True);schema_path=directory/'schema.json';write_json(schema_path,output_schema)
+    def call(self,directory,prompt,output_schema,images,source_urls_to_fetch=(),*,auto_sns_images=False,review=False,complex_task=False,image_sources=(),image_page_urls=None,source_scope=None):
+        directory.mkdir(parents=True,exist_ok=True);schema_path=directory/'schema.json'
         documents=(self.source_loader(source_urls_to_fetch,defer_browser_pending=True) if isinstance(self.source_loader,SocialSources)
                    else self.source_loader(source_urls_to_fetch)) if self.source_loader and source_urls_to_fetch else []
         write_json(directory/'source-documents.json',{'documents':documents})
+        output_schema,constraints=constrain_source_schema(output_schema,documents,source_scope)
+        write_json(schema_path,output_schema)
+        if constraints:write_json(directory/'source-constraints.json',constraints)
         image_documents=attached_image_documents(images,image_sources,self.cfg['blockedSourceHosts'])
         if image_documents:prompt+='\nATTACHED ORIGINAL IMAGE SOURCES (이 호출에 실제 첨부한 이미지 바이트의 출처·해시다. 링크된 HTML 페이지 열람이나 이미지 재게시 권한을 뜻하지 않는다):\n'+json.dumps(image_documents,ensure_ascii=False)
         attached=list(images);social_images=[]
@@ -427,7 +431,7 @@ class Worker:
                     urls=list(dict.fromkeys(urls+discovered['profileUrls']))
                 image_options={'auto_sns_images':True} if job['kind'] in ('CREATOR','SALES') else {'image_sources':manifest} if job['kind']=='CHARACTERS' else {}
                 if job['kind']=='SALES':image_options['image_page_urls']=sales_image_pages(job['context'])
-                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls,complex_task=job['kind'] in COMPLEX_KINDS,**image_options)
+                result,audit=self.call(directory/'extract',prompt,schema(job['kind']),images,urls,complex_task=job['kind'] in COMPLEX_KINDS,source_scope={'kind':job['kind'],'pageUrl':job['context'].get('input',{}).get('pageUrl','')},**image_options)
                 if job['kind']=='CREATOR' and job['context'].get('input',{}).get('socialPage') and social_route(job['context']['input']['pageUrl']):
                     page=job['context']['input']['pageUrl'];documents=json.loads((directory/'extract'/'source-documents.json').read_text(encoding='utf-8'))['documents']
                     original=next((d for d in documents if d['url']==page),{})
