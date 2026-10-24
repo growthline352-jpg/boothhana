@@ -9,12 +9,13 @@ from datetime import datetime,timezone
 import json,re,zlib
 from html import escape,unescape
 from html.parser import HTMLParser
-from urllib.parse import urlsplit,urljoin
+from urllib.parse import urlsplit,urljoin,urlunsplit
 from urllib.robotparser import RobotFileParser
 from media_fetch import fetch_html,MediaError,PUBLIC_SOURCE_USER_AGENT
 from run import canonical_audit_url
 from tmm_sources import tmm_route,related_public_tabs,tmm_policies,render_tmm_page,tmm_document
 from dongne_sources import dongne_roster_entries
+from postype_sources import postype_pagination
 
 class PageText(HTMLParser):
     def __init__(self,url):
@@ -103,6 +104,14 @@ def kakao_pr_article(url,html):
     if not isinstance(title,str) or not isinstance(content,str):raise MediaError('Invalid public article fields')
     return '<title>'+escape(unescape(title))+'</title>'+unescape(content)
 
+def postype_canonical_transport(url):
+    """Observed www canonical host for public channels/posts, never private routes."""
+    p=urlsplit(url)
+    if p.scheme!='https' or p.hostname!='postype.com' or p.username is not None or p.password is not None or p.fragment:return None
+    if p.port not in (None,443):return None
+    if not re.fullmatch(r'(?:/@[A-Za-z0-9_.-]+(?:/(?:post/[1-9][0-9]*|series(?:/[1-9][0-9]*)?|community))?|/profile/@[A-Za-z0-9_.-]+|/post/[1-9][0-9]*)/?',p.path):return None
+    return urlunsplit(('https','www.postype.com',p.path,p.query,''))
+
 class PublicSources:
     def __init__(self,blocked,fetch=fetch_html,*,tmm_renderer=None):self.blocked=blocked;self.fetch=fetch;self.tmm_renderer=tmm_renderer
     def __call__(self,urls):
@@ -121,19 +130,28 @@ class PublicSources:
             try:
                 parsed=urlsplit(url);host=(parsed.hostname or '').lower()
                 if parsed.scheme!='https' or not host or any(host==b or host.endswith('.'+b) for b in self.blocked):raise MediaError('Blocked source')
-                origin='https://'+host
-                if origin not in robots:
-                    policy=RobotFileParser();policy.set_url(origin+'/robots.txt')
-                    try:
-                        body,_=self.fetch(origin+'/robots.txt',[host],timeout=10,allow_plain=True);policy.parse(body.splitlines())
-                    except MediaError as exc:
-                        if str(exc) not in ('HTML HTTP 404','HTML HTTP 410'):raise
-                        policy.parse([])
-                    robots[origin]=policy
-                if not robots[origin].can_fetch(PUBLIC_SOURCE_USER_AGENT,url):raise MediaError('robots disallows collection')
+                transport=postype_canonical_transport(url) or url
+                transport_host=urlsplit(transport).hostname
+                if any(transport_host==b or transport_host.endswith('.'+b) for b in self.blocked):raise MediaError('Blocked canonical source')
+                policies=[(host,url)]+([(transport_host,transport)] if transport!=url else [])
+                for policy_host,policy_url in policies:
+                    origin='https://'+policy_host
+                    if origin not in robots:
+                        policy=RobotFileParser();policy.set_url(origin+'/robots.txt')
+                        # Only the observed same-provider robots redirect gets an
+                        # extra exact host. Body redirects remain single-host.
+                        hosts=[policy_host]+(['www.postype.com'] if transport!=url and policy_host=='postype.com' else [])
+                        try:
+                            body,_=self.fetch(origin+'/robots.txt',hosts,timeout=10,allow_plain=True);policy.parse(body.splitlines())
+                        except MediaError as exc:
+                            if str(exc) not in ('HTML HTTP 404','HTML HTTP 410'):raise
+                            policy.parse([])
+                        robots[origin]=policy
+                    if not robots[origin].can_fetch(PUBLIC_SOURCE_USER_AGENT,policy_url):raise MediaError('robots disallows collection')
                 event_list=host=='api.illustar.net' and parsed.path=='/v1/event/list' and not parsed.query
                 detail=re.fullmatch(r'/v1/(circle|event/info/detail)/([1-9][0-9]*)',parsed.path) if host=='api.illustar.net' and not parsed.query else None
-                html,digest=self.fetch(url,[host],timeout=15,**({'allow_json':True} if event_list or detail else {}))
+                html,digest=self.fetch(transport,[transport_host],timeout=15,**({'allow_json':True} if event_list or detail else {}))
+                if transport!=url:value['transportUrl']=transport
                 native_images=[]
                 if detail:
                     html,native_images=illustar_detail(url,html,detail[1],int(detail[2]))
@@ -144,8 +162,11 @@ class PublicSources:
                     rows=[{k:row.get(k) for k in fields} for row in data['eventInfo'] if isinstance(row,dict)]
                     html='<title>일러스타 공식 행사 목록</title><pre>'+escape(json.dumps(rows,ensure_ascii=False))+'</pre>'
                 html=kakao_pr_article(url,html)
-                parser=PageText(url);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
+                parser=PageText(transport);parser.feed(html);title=' '.join(parser.title);text='\n'.join(parser.text)
                 value.update(dongne_pagination(url,parser))
+                value.update(postype_pagination(transport,html))
+                next_postype=value.get('pagination',{}).get('nextPageUrl') if transport_host in {'postype.com','www.postype.com'} else None
+                if next_postype and next_postype not in parser.links:parser.links.append(next_postype)
                 if tmm_route(url):
                     value['publicViewPartial']=True
                     try:
