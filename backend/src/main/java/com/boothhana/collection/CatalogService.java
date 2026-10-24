@@ -292,7 +292,7 @@ public class CatalogService {
         if(manualImport) issues.add("MANUAL_IMPORT: CLI 웹 검색 관측 없이 검토형 데이터로 저장됨");
         if("PARTICIPANTS".equals(b.stage())) {
             Set<Long> seen=new HashSet<>();
-            var participantRows=db.queryForList("select p.* from subculture_participant p where event_id=? and not exists(select 1 from catalog_creator_booth c where c.participant_id=p.id) for update",b.eventId());
+            var participantRows=db.queryForList("select p.* from subculture_participant p where event_id=? and p.duplicate_of_id is null and not exists(select 1 from catalog_creator_booth c where c.participant_id=p.id) for update",b.eventId());
             for(Participant p:b.result().participants()) {
                 try { CatalogRules.participant(p);CatalogRules.locationDates(p,event); }
                 catch(RuntimeException ex) { rejected++;issues.add("참가항목 제외: "+Objects.toString(p==null?null:p.registrationName(),"이름 없음"));continue; }
@@ -509,6 +509,7 @@ public class CatalogService {
     }
     @Transactional public ParticipantView editParticipant(long id,EditInput input) {
         var row=one("select * from subculture_participant where id=? for update",id);
+        if(row.get("duplicate_of_id")!=null)throw ApiException.conflict("중복으로 보존한 참가 정보입니다. 기존 참가 ID를 편집하세요.");
         checkEdit(row,input,Set.of("registrationName","kind","members","locations","subjects","description","officialLinks","warnings"),Participant.class);
         Participant data=effective(after(row,input),Participant.class);
         try {CatalogRules.participant(data);CatalogRules.locationDates(data,event(num(row,"event_id")));} catch(RuntimeException e) {throw ApiException.badRequest("참가정보 수정값 오류");}

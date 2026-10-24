@@ -28,12 +28,12 @@ class NativeSourceSchemaTests(unittest.TestCase):
      value={'profileUrls':[]} if directory.name=='social-discovery' else candidate if directory.name=='extract' else {'verdict':'APPROVE','reason':'Checked current originals'}
      return json.dumps(value).encode(),True,{}
     job={'id':str(uuid.uuid4()),'leaseToken':str(uuid.uuid4()),'contextHash':'a'*64,'kind':'CREATOR','context':{'input':{'pageUrl':CHANNEL},'creator':{'data':{'profileUrl':CHANNEL}}}}
-    worker=Worker(cfg,api,search,lambda urls:[doc])
+    worker=Worker(cfg,api,search,lambda urls:[doc,{'url':'https://x.com/artist','available':True,'browserPartial':True,'sha256':'c'*64,'capturedAt':'2026-10-24T00:00:01Z','text':'Public auxiliary profile; history incomplete'}])
     if model_next is None:
      with self.assertRaises(jsonschema.ValidationError):worker.process(job)
      self.assertEqual([],api.calls)
     else:
-     worker.process(job);self.assertEqual('APPROVE',api.calls[-1][2]['verdict'])
+     worker.process(job);self.assertEqual('APPROVE',api.calls[-1][2]['verdict']);self.assertEqual(model_next,api.calls[0][2]['result']['nextPageUrl'])
     self.assertEqual([[CHANNEL+'?page=2']],seen)
  def test_model_must_return_observed_cursor_and_partial_while_next_page_remains(self):
   base=schema('CREATOR');before=copy.deepcopy(base)

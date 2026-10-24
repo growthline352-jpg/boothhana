@@ -66,7 +66,9 @@ public final class CatalogIdentity {
         require(!keys.isEmpty(),"안정적인 식별 근거 없음");return List.copyOf(keys);
     }
     private static boolean observation(Participant p) {
-        return p.identity()==null&&p.sourceEntryId()!=null&&p.sourceEntryId().matches("obs_[a-f0-9]{16}");
+        if(p.sourceEntryId()==null||!p.sourceEntryId().matches("obs_[a-f0-9]{16}"))return false;
+        var i=p.identity();
+        return i==null||("https://dongne.co".equals(i.sourceSystem())&&p.sourceEntryId().equals(i.entryId()));
     }
     /** Recover a legacy observation only from its originally verified official
      * detail URL, never from a name, source-array position, or booth number. */

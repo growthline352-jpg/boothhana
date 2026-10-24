@@ -25,7 +25,7 @@ EXTRACTION_MODEL='gpt-6-luna'
 COMPLEX_KINDS={'CHARACTERS','RELATIONS'}
 PREFIX='/api/internal/subculture/v6'
 VERSION='graph-4'
-PROMPT_VERSION='graph-4-native-source-constraints-1'
+PROMPT_VERSION='graph-4-native-source-recovery-1'
 MEDIA=['게임','애니메이션','만화·웹툰','소설','오리지널·기타']
 
 def configuration(path=None):
@@ -381,7 +381,8 @@ class Worker:
             if isinstance(coverage,dict) and coverage.get('completeness')=='COMPLETE':coverage['completeness']='PARTIAL'
             elif coverage=='COMPLETE':value['coverage']='PARTIAL'
             if 'socialPageComplete' in value:value['socialPageComplete']=False
-            if 'nextPageUrl' in value:value['nextPageUrl']=None
+            # An auxiliary partial SNS profile cannot erase the current channel's verified cursor.
+            if 'nextPageUrl' in value and not (constraints and constraints.get('channelPageVerified')):value['nextPageUrl']=None
         if any(d.get('publicViewPartial') for d in documents):
             # Public event tabs are useful facts, not an exhaustive catalogue.
             # Keep real continuations/native SNS checkpoints from other sources.

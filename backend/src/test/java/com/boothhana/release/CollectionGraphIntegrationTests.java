@@ -450,6 +450,22 @@ class CollectionGraphIntegrationTests {
   var snapshot=json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class);
   assertThat((List<?>)snapshot.get("participants")).hasSize(1);
  }
+ @Test void explicitLegacyObservationsKeepCanonicalIdsAndRetiredDuplicatesStayHidden(){
+  reviewedRosterEvent();var observation=dongneBooth("obs_75ea4d89b3e35a36","Old label","179410");
+  var typed=new Participant(observation.sourceEntryId(),observation.registrationName(),observation.kind(),observation.members(),observation.locations(),observation.subjects(),observation.description(),observation.officialLinks(),java.util.stream.Stream.concat(observation.sources().stream(),java.util.stream.Stream.of(new Source("https://dongne.co/events/example/circles","OFFICIAL","ORIGINAL","Original roster"))).toList(),observation.images(),observation.warnings(),new Identity("https://dongne.co",observation.sourceEntryId(),"https://dongne.co/events/example/circles"));
+  long original=oldDongneBooth(typed);var old=catalog.participant(original);catalog.editParticipant(original,new EditInput(old.revision(),"EXCLUDED","Manual exclusion",Map.of("description","Owner correction")));
+  var incoming=dongneBooth("179410","Correct official label","179410");long duplicate=oldDongneBooth(incoming);
+  db.update("update subculture_participant set review_state='EXCLUDED',duplicate_of_id=? where id=?",original,duplicate);
+  var retired=catalog.participant(duplicate);assertThatThrownBy(()->catalog.editParticipant(duplicate,new EditInput(retired.revision(),"REVIEWED","Restore",Map.of()))).isInstanceOf(ApiException.class);
+  var visible=dongneBooth("174426","Visible booth","174426");
+  var receipt=value(reviewed(seed("PARTICIPANTS",Long.toString(event)),value(roster(incoming,visible)),audit(List.of(source,incoming.sources().getFirst().url(),visible.sources().getFirst().url()),List.of())));
+  assertThat(receipt.get("excludedParticipants")).isEqualTo(1);
+  assertThat(db.queryForObject("select count(*) from subculture_participant where event_id=?",Integer.class,event)).isEqualTo(3);
+  assertThat(db.queryForObject("select payload_json->>'sourceEntryId' from subculture_participant where id=?",String.class,original)).isEqualTo("179410");
+  assertThat(catalog.participant(original).reviewState()).isEqualTo("EXCLUDED");assertThat(catalog.participant(original).overrides()).containsEntry("description","Owner correction");
+  assertThat(db.queryForObject("select duplicate_of_id from subculture_participant where id=?",Long.class,duplicate)).isEqualTo(original);
+  var snapshot=json.readValue(db.queryForObject("select snapshot_json::text from subculture_catalog_publication where event_id=?",String.class,event),Map.class);assertThat((List<?>)snapshot.get("participants")).hasSize(1);
+ }
  @Test void legacyDongneConflictingDetailReferencesCannotCreateAPublicReplacement(){
   reviewedRosterEvent();long previous=oldDongneBooth(dongneBooth("obs_75ea4d89b3e35a36","Old combined label","179410","174426"));
   var old=catalog.participant(previous);catalog.editParticipant(previous,new EditInput(old.revision(),"EXCLUDED","Unresolved identity",Map.of()));

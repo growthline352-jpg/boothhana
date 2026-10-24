@@ -47,6 +47,25 @@ class CatalogIdentityTests {
         var impostor=observed("obs_f6481c5fafb6fe0d","Old registration","https://dongne.co.evil.com/events/example/circles/179410");
         for(var p:List.of(snippet,impostor))assertThat(index.match(List.of(legacyRow(341,p)),CatalogIdentity.participantKeys(incoming),CatalogIdentity.known(incoming.identity(),incoming.sourceEntryId(),incoming.sources()),false)).isNull();
     }
+    private Participant explicitObservation(Participant p,String origin) {
+        return new Participant(p.sourceEntryId(),p.registrationName(),p.kind(),p.members(),p.locations(),p.subjects(),p.description(),p.officialLinks(),java.util.stream.Stream.concat(p.sources().stream(),java.util.stream.Stream.of(new Source(origin+"/events/example/circles","OFFICIAL","ORIGINAL","Original roster"))).toList(),p.images(),p.warnings(),new Identity(origin,p.sourceEntryId(),origin+"/events/example/circles"));
+    }
+    @Test void explicitLegacyObservationStillAdoptsItsOneVerifiedRegistration() {
+        var old=explicitObservation(observed("obs_75ea4d89b3e35a36","Old registration","https://dongne.co/events/example/circles/179410"),"https://dongne.co");
+        var incoming=observed("179410","Renamed registration","https://dongne.co/events/example/circles");
+        var row=legacyRow(341,old);var index=new CatalogIdentityIndex(tools.jackson.databind.json.JsonMapper.builder().build());
+        assertThat(index.match(List.of(row),CatalogIdentity.participantKeys(incoming),CatalogIdentity.participantIdentity(incoming),false)).isSameAs(row);
+    }
+    @Test void explicitLegacyObservationCannotGuessBetweenTwoOfficialRegistrations() {
+        var old=explicitObservation(observed("obs_75ea4d89b3e35a36","Old registration","https://dongne.co/events/example/circles/179410","https://dongne.co/events/example/circles/174426"),"https://dongne.co");
+        var incoming=observed("179410","Old registration","https://dongne.co/events/example/circles");
+        var index=new CatalogIdentityIndex(tools.jackson.databind.json.JsonMapper.builder().build());
+        org.assertj.core.api.Assertions.assertThatThrownBy(()->index.match(List.of(legacyRow(341,old)),CatalogIdentity.participantKeys(incoming),CatalogIdentity.participantIdentity(incoming),false)).isInstanceOf(com.boothhana.api.ApiException.class);
+    }
+    @Test void explicitObservationInAnotherSystemRemainsThatSystemsIdentity() {
+        var p=explicitObservation(observed("obs_75ea4d89b3e35a36","Old registration","https://dongne.co/events/example/circles/179410"),"https://other.example");
+        assertThat(CatalogIdentity.participantIdentity(p)).isEqualTo(p.identity());
+    }
     @Test void observationDetailAliasesDoNotDependOnOriginalSourceOrder() {
         String a="https://dongne.co/events/edition-a/circles/179410",b="https://dongne.co/events/edition-b/circles/179410";
         assertThat(CatalogIdentity.participantKeys(observed("obs_75ea4d89b3e35a36","Same registration",a,b)))
