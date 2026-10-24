@@ -122,7 +122,7 @@ PROMPTS={
  'SALES':(ROOT/'prompts/sales.md').read_text(encoding='utf-8')+'\ninput.leadUrl의 SNS 판매글과 creatorSources의 검토된 계정도 조사하라. 행사명·정확한 날짜/회차·실제 작가 귀속을 대조하고, 과거 행사 글이나 일반 판매를 현 행사 판매로 승격하지 말라. 기존 판매정보도 원문 근거를 확인하며 단서 글 하나로 전체 판매표 수집 완료를 선언하지 말라.',
  'CREATOR':'''context.creator의 작가를 독립 조사하라. profile의 이름과 profileUrl은 기존 값을 유지하고 공식 프로필의 종류·별칭을 확인하라.
 creatorProvenance의 공식 부스 링크는 조사 단서이며 공동 부스의 다른 작가 계정일 수 있다. 기존 프로필·부스의 작가 명시·계정 자체를 대조하라. publication.data.socialAccounts는 이전에 검토한 계정이다.
-기존 profile.name이 여러 사람을 합쳐 놓은 표기라면, 그중 한 사람의 계정이나 상품을 합친 프로필 전체에 귀속하지 않는다. 해당 사람을 합친 이름의 aliases로 추가하지 않는다. profile 식별값은 유지하고, 개인별 명단 보완이 필요하다는 구체적 사유와 공식 출처를 warnings에 남기며 귀속이 불명확한 socialAccounts/goods는 비운다.
+기존 profile.name이 여러 사람을 합쳐 놓은 표기라면, 그중 한 사람의 계정이나 상품을 합친 프로필 전체에 귀속하지 않는다. 해당 사람을 합친 이름의 aliases로 추가하지 않는다. profile 식별값은 유지하고, 공식 sources의 evidence에 개인별 구분이 확인되지 않은 범위와 명단 보완이 필요한 이유를 설명하며 coverage=PARTIAL로 둔다. 귀속이 불명확한 socialAccounts/goods는 비운다.
 socialAccounts에는 확인된 작가 본인의 X/Bluesky/포스타입/인스타그램 등 공개 프로필 URL과 동일인 identityEvidence를 제출한다. 계정 원문과 기존 작가 프로필/해당 작가를 명시한 공식 출처 양쪽 근거가 필요하다. 단순 동명·팬계정·공동 부스 링크만으로 확정하지 말라. 새 계정을 찾지 못했으면 빈 목록이며 기존 식별 profileUrl을 교체하지 않는다.
 각 계정의 identityEvidence에는 실제 확인한 그 profileUrl 자체의 근거와 기존 작가/공식 부스 출처의 연결 근거를 각각 포함한다. 게시글·이미지만 보고 프로필을 확인했다고 표시하지 말고, 계정 프로필 자체를 확인하지 못했으면 이번 확정 계정 목록에서 제외한다. 추가 계정마다 공식 연결 근거를 따로 확인한다.
 accountId는 제공 원문의 platformAccountId로만 작성하며, 없으면 null이다. 계정 핸들에서 ID를 추정하지 말라.
@@ -167,6 +167,7 @@ REVIEW_PROMPT+=' 동네 참가 명단의 pagination은 공개 범위·버튼·�
 REVIEW_PROMPT+=' rosterEntries가 있으면 sourceEntryId별 카드 text·tagLabels와 각각 대조한다. 이웃 카드의 부스명·작품을 옮기거나 원문의 작품명 부제를 임의로 줄이면 ENRICH다. available=true 원문으로 확인된 목록 사실은 그 목록 URL의 ORIGINAL 출처로 표시해야 하며, 상세 웹 열람 실패를 제공된 목록 원문의 부재로 오인하지 않는다.'
 REVIEW_PROMPT+=' 각 상품 등 sources 필드가 있는 모든 개별 항목에는 직접 확인한 ORIGINAL 출처와 구체적 evidence가 필요하다. 판매표 전체나 다른 상품의 출처로 대신하지 않는다. 개별 sources가 비었거나 검색 요약·접근 불가 관측만 있으면 해당 항목의 확정 주장을 APPROVE하지 말고 ENRICH로 구체적 경로를 남긴다.'
 REVIEW_PROMPT+=' PARTICIPANTS의 공동부스는 한 참가자 기록을 유지하되 원문이 구분한 개별 작가는 members에서 각각 확인한다. 여러 사람을 한 ARTIST 이름이나 서로의 aliases로 합치거나, 공동 연락 계정을 모든 사람의 개인 계정으로 배정하면 ENRICH다. CREATOR에서는 여러 사람을 합친 기존 프로필에 한 사람의 계정·상품을 연결하지 않는다. goods.memberName은 실제 같은 개인/서클인 profile.name 또는 확인된 aliases와 일치해야 하며, 다른 구성원 이름을 별칭으로 만들어 통과시키면 안 된다. socialAccounts의 각 identityEvidence에 실제 profileUrl 자체와 공식 작가 연결 출처 양쪽이 있는지 확인하고, 단일 게시글이나 이미지로 프로필 근거를 대신하면 ENRICH다.'
+REVIEW_PROMPT+=' PARTICIPANTS는 원문 관측이며 공개 상태를 바꾸는 요청이 아니다. 서버는 기존 EXCLUDED 참가자의 제외 상태와 수동 수정값을 유지한다. 공식 명단에 표시된 같은 sourceEntryId의 관측을 기록하는 것과 공개 복구를 구분하라. 원문 표시만으로 기존 제외·수동 수정을 해제하거나 다른 ID·이름으로 우회해 공개하려는 주장은 ENRICH다. 숨긴 항목이 원문에 존재한다는 관측 자체를 거절하거나 이번 페이지의 등록 ID 대조에서 누락시키지 않는다.'
 PROMPTS['DISCOVERY']+='''
 context.existingEvents는 같은 탐색 기간에 이미 등록된 행사다. 원문과 대조해 동일 회차인지 먼저 확인한다. 제목의 번역·띄어쓰기·부제 차이나 기존 edition=null을 보완하려는 이유만으로 새 회차를 만들지 않는다.
 events의 각 행마다 existingEventRefs에 eventIndex, existingEventId, identityReason을 정확히 한 번 기록한다. 동일 회차가 공식 근거와 기존 자료에서 확인되면 해당 기존 id를 선택한다. 신규 행사는 existingEventId=null로 기록한다. 같은 기존 id를 여러 행에 반복하지 않는다.
