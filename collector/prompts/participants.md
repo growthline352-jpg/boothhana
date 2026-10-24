@@ -46,6 +46,7 @@ sourceEntryId와 identity.entryId는 같은 원문 ID여야 한다. 식별 근�
 
 컨텍스트 nextPageUrl이 있으면 반드시 그 페이지부터 이어 조사한다. sourceRoot는 이번 작업의 명단 출처다.
 이전 페이지로 돌아가거나 다른 회차 명단으로 넘어가지 않는다. 커서가 만료/접근 불가하면 PARTIAL/UNKNOWN과 이유를 남기고, 원문에 없는 다음 URL을 추측하지 않는다.
+input.pageUrl이 개별 참가자 상세라면 그 등록 한 건이 이번 보완 범위다. 참고로 연 다른 목록의 pagination을 그 상세의 후속 페이지로 사용하지 않는다. 상세 자체에 다음 페이지가 없으면 nextPageUrl=null로 두고, 전체 명단 완료를 주장하지 않는다. input.pageUrl이 목록이면 해당 목록 페이지의 전체 등록과 실제 다음 주소를 대조한다.
 
 동네 공식 명단 문서에 pagination이 있으면 서버가 공개 화면의 범위·버튼·개별 링크를 대조한 페이지 정보다.
 이번 페이지의 entryUrls 전부를 중복 없이 조사하고, 같은 페이지에 미수집 항목이 없을 때만 coverage.nextPageUrl에 pagination.nextPageUrl을 그대로 넣는다.
