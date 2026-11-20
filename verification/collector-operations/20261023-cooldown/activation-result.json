@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-23",
+  "productionApplied": true,
+  "image": "boothhana-collector:usage-cooldown-20261023",
+  "policy": "On provider USAGE_LIMIT, pause AI calls for 18000 seconds. Persist and share deadline per authenticated account; resume after expiry; cached skips do not extend it. Repeated provider limits start a new five-hour pause.",
+  "verifiedServerLimits": {
+    "primary": {
+      "usedPercent": 100,
+      "windowDurationMins": 300,
+      "resetsAt": 1792708215
+    },
+    "secondary": {
+      "usedPercent": 16,
+      "windowDurationMins": 10080,
+      "resetsAt": 1793295015
+    },
+    "planType": "plus",
+    "rateLimitReachedType": "rate_limit_reached"
+  },
+  "nextRetryKST": "2026-10-23T10:42:24.681479+09:00",
+  "tests": {
+    "localCooldown": 7,
+    "localGraphRegression": 29,
+    "localCollectorRegression": 46,
+    "deployedImageCooldown": 7,
+    "deployedImageTerminalFailures": 10,
+    "deployedSyntaxCheck": "pass"
+  },
+  "live": {
+    "image": "boothhana-collector:usage-cooldown-20261023",
+    "running": true,
+    "startedAt": "2026-10-22T20:42:25.320000559Z",
+    "sharedCooldown": {
+      "reason": "USAGE_LIMIT",
+      "retryAt": "2026-10-23T01:42:24.681479+00:00",
+      "remainingSeconds": 17854
+    },
+    "freshScheduledContainerSharesDaemonDeadline": true,
+    "graphLog": "Graph CLI blocked: USAGE_LIMIT; retry at 2026-10-23T01:42:24.681479+00:00 remaining seconds 17999\n{\"catalogImages\": {\"stored\": 0, \"failed\": 200}}",
+    "verificationMadeNoAIRequests": true
+  },
+  "apiReadiness": "READY",
+  "cronCollectorImage": "boothhana-collector:usage-cooldown-20261023",
+  "frontendDeploymentChanged": false,
+  "credentialsOrModelChanged": false,
+  "files": {
+    "collector\\usage_cooldown.py": "1746bde4a4e198745bfec30262425910fe6ee775f077cb361757e6701ce68b61",
+    "collector\\run.py": "4c67a8fc3ee55294dddc66a833d2aaa23d59849085de42c4386188724d3e5c84",
+    "collector\\graph_worker.py": "d4192ea25a5360416a339453613deda259307e044586262ca72a3d045d236453",
+    "collector\\tests\\test_usage_cooldown.py": "c9423125afed80b983b66b4266439948c7b8b66463bf8eba3b1068d3756844cc"
+  },
+  "notes": [
+    "Deployed runtime was newer than local sources; targeted patch was built on the existing production image and tested there.",
+    "Image activation succeeded; reporting initially omitted jobs profile and was corrected. Runtime and both service image pins were subsequently verified.",
+    "No real collection success is claimed during cooldown. Resume boundary verified using controlled-clock tests. Production is currently paused until nextRetryKST."
+  ]
+}

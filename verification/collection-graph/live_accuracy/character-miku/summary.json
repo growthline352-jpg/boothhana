@@ -1,0 +1,14 @@
+{
+  "id": "character-miku",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "69fb1ac7-7372-457c-990a-0f96d1fd88c0",
+  "leaseToken": "a398f43a-76cc-4ef5-a373-c335159473f6",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "ENRICH",
+    "publication": false
+  },
+  "seconds": 59.2
+}

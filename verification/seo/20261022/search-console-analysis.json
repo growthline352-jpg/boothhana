@@ -1,0 +1,319 @@
+{
+  "checkedAt": "2026-10-22",
+  "property": "sc-domain:boothana.kr",
+  "dataThrough": "2026-10-20",
+  "source": "Authenticated Google Search Console UI; live HTTP response checks; previously inspected production collector logs",
+  "comparison": {
+    "previous": {
+      "from": "2026-10-07",
+      "to": "2026-10-13",
+      "clicks": 51,
+      "impressions": 463,
+      "ctr": 11,
+      "position": 6.5
+    },
+    "current": {
+      "from": "2026-10-14",
+      "to": "2026-10-20",
+      "clicks": 4,
+      "impressions": 25,
+      "ctr": 16,
+      "position": 6.3
+    },
+    "clickChangePercent": -92.15686274509804,
+    "impressionChangePercent": -94.60043196544277
+  },
+  "daily": [
+    {
+      "date": "2026-09-28",
+      "clicks": 0,
+      "impressions": 0
+    },
+    {
+      "date": "2026-09-29",
+      "clicks": 3,
+      "impressions": 5
+    },
+    {
+      "date": "2026-09-30",
+      "clicks": 2,
+      "impressions": 3
+    },
+    {
+      "date": "2026-10-01",
+      "clicks": 9,
+      "impressions": 14
+    },
+    {
+      "date": "2026-10-02",
+      "clicks": 5,
+      "impressions": 154
+    },
+    {
+      "date": "2026-10-03",
+      "clicks": 4,
+      "impressions": 165
+    },
+    {
+      "date": "2026-10-04",
+      "clicks": 3,
+      "impressions": 26
+    },
+    {
+      "date": "2026-10-05",
+      "clicks": 8,
+      "impressions": 52
+    },
+    {
+      "date": "2026-10-06",
+      "clicks": 9,
+      "impressions": 57
+    },
+    {
+      "date": "2026-10-07",
+      "clicks": 5,
+      "impressions": 48
+    },
+    {
+      "date": "2026-10-08",
+      "clicks": 5,
+      "impressions": 32
+    },
+    {
+      "date": "2026-10-09",
+      "clicks": 1,
+      "impressions": 55
+    },
+    {
+      "date": "2026-10-10",
+      "clicks": 10,
+      "impressions": 83
+    },
+    {
+      "date": "2026-10-11",
+      "clicks": 16,
+      "impressions": 107
+    },
+    {
+      "date": "2026-10-12",
+      "clicks": 10,
+      "impressions": 85
+    },
+    {
+      "date": "2026-10-13",
+      "clicks": 4,
+      "impressions": 53
+    },
+    {
+      "date": "2026-10-14",
+      "clicks": 2,
+      "impressions": 3
+    },
+    {
+      "date": "2026-10-15",
+      "clicks": 0,
+      "impressions": 3
+    },
+    {
+      "date": "2026-10-16",
+      "clicks": 0,
+      "impressions": 4
+    },
+    {
+      "date": "2026-10-17",
+      "clicks": 0,
+      "impressions": 1
+    },
+    {
+      "date": "2026-10-18",
+      "clicks": 1,
+      "impressions": 6
+    },
+    {
+      "date": "2026-10-19",
+      "clicks": 1,
+      "impressions": 3
+    },
+    {
+      "date": "2026-10-20",
+      "clicks": 0,
+      "impressions": 5
+    }
+  ],
+  "pageAggregationByHost": [
+    {
+      "host": "subculture.boothana.kr",
+      "previousClicks": 31,
+      "clicks": 2,
+      "previousImpressions": 282,
+      "impressions": 7
+    },
+    {
+      "host": "festival.boothana.kr",
+      "previousClicks": 5,
+      "clicks": 0,
+      "previousImpressions": 114,
+      "impressions": 1
+    },
+    {
+      "host": "expo.boothana.kr",
+      "previousClicks": 2,
+      "clicks": 0,
+      "previousImpressions": 57,
+      "impressions": 1
+    },
+    {
+      "host": "popup.boothana.kr",
+      "previousClicks": 7,
+      "clicks": 0,
+      "previousImpressions": 67,
+      "impressions": 9
+    },
+    {
+      "host": "boothana.kr",
+      "previousClicks": 6,
+      "clicks": 2,
+      "previousImpressions": 12,
+      "impressions": 7
+    }
+  ],
+  "aggregationCaveat": "148 page rows were read. Page-level impression totals differ from property-level totals; do not add host figures to reproduce the overall total.",
+  "indexing": {
+    "asOf": "2026-10-16",
+    "indexed": 415,
+    "excluded": 755,
+    "discoveredNotIndexed": 676,
+    "crawledNotIndexed": 47,
+    "noindex": 28,
+    "notFound": 1,
+    "robotsBlocked": 1,
+    "redirect": 1,
+    "alternateCanonical": 1,
+    "noindexExamples": "Filtered listing URLs, support/report/claim/management URLs; not established as erroneous exclusions"
+  },
+  "technical": {
+    "manualActions": "None detected",
+    "securityIssues": "None detected",
+    "robots": "Root and subculture robots.txt return 200 and allow crawling",
+    "sitemaps": {
+      "subculture": 98,
+      "exhibitions": 169,
+      "festivals": 200,
+      "popups": 688
+    },
+    "liveSamples": "Subculture home, events 1/157/173/754 and booths 1/2629 and 173/5366 return HTTP 200 with indexable robots and expected canonical in checked samples",
+    "encoding": "UTF-8 valid; no Unicode replacement characters in sampled HTML",
+    "crawlStats": {
+      "asOf": "2026-10-20",
+      "allRequests": 3797,
+      "successPercent": 96,
+      "averageResponseMs": 1181,
+      "subcultureRequests": 991,
+      "subcultureSuccessPercent": 98,
+      "subculture5xxPercent": 1,
+      "subcultureResponseMs": 1850,
+      "hostIssue": "Previous server connection failure; recent failure rate acceptable. Exact incident dates not established."
+    },
+    "inspections": [
+      {
+        "url": "https://subculture.boothana.kr/discover/754",
+        "indexed": true,
+        "lastCrawl": "2026-10-09T23:54:57",
+        "agent": "Googlebot Smartphone",
+        "fetch": "Success",
+        "canonical": "Inspected URL",
+        "event": "CookieRun Grand Festival; 2026-10-24 to 2026-10-25"
+      },
+      {
+        "url": "https://subculture.boothana.kr/",
+        "indexed": true
+      }
+    ]
+  },
+  "evidenceBasedFindings": [
+    {
+      "confidence": "high observation; causal contribution inferred",
+      "finding": "Traffic-driving past editions ended around 2026-10-10/11",
+      "examples": [
+        {
+          "url": "https://subculture.boothana.kr/discover/173?section=booths&day=2026-10-10",
+          "previousImpressions": 35,
+          "impressions": 0,
+          "eventEnd": "2026-10-11"
+        },
+        {
+          "url": "https://subculture.boothana.kr/discover/157",
+          "previousImpressions": 32,
+          "impressions": 0,
+          "eventEnd": "2026-10-10"
+        },
+        {
+          "url": "https://subculture.boothana.kr/discover/173/booths/5366",
+          "previousImpressions": 12,
+          "impressions": 0,
+          "eventEnd": "2026-10-11"
+        }
+      ]
+    },
+    {
+      "confidence": "confirmed observed content defect; not proof of Google's ranking cause",
+      "finding": "Search intent mismatch and thin participant content",
+      "examples": [
+        "Query '10디페': 175 impressions, 0 clicks across available full period.",
+        "Booth URL /discover/1/booths/2629 is titled '10디페 부스' and contains generic booth text plus product information pending.",
+        "LUDIA Cos booth body contains generic participation/category and product-information-pending text rather than useful product or booth-position information."
+      ]
+    },
+    {
+      "confidence": "confirmed operational impediment, not proven start-date cause",
+      "finding": "Collector AI usage limit blocks new research and enrichment",
+      "reference": "verification/collector-operations/20261022-status.json",
+      "recheckSaved": 0,
+      "recheckRemaining": 525
+    },
+    {
+      "confidence": "confirmed indexing backlog, not sole explanation",
+      "finding": "676 discovered-but-unindexed and 47 crawled-but-unindexed URLs as of Oct 16; some upcoming URLs remain indexed despite lost impressions."
+    },
+    {
+      "confidence": "requires further incident correlation",
+      "finding": "All category subdomains lost impressions at the same time. Event expiry alone is insufficient; compare Oct 13-14 deployment/server incidents and sampled URL history."
+    }
+  ],
+  "notEstablished": [
+    "A specific Google algorithm update caused the loss",
+    "A site-wide manual penalty",
+    "A current site-wide robots/noindex block",
+    "That every excluded page should be indexed",
+    "That the average position of 6.3 means lost queries retained rank",
+    "That restoring the collector alone will restore traffic"
+  ],
+  "actions": [
+    {
+      "priority": "P0",
+      "action": "Restore collector usage capacity; verify saves and factual corrections for 10-20 upcoming event pages rather than launching a large indiscriminate import."
+    },
+    {
+      "priority": "P0",
+      "action": "Correlate Oct 13-14 hosting deployment and server-connectivity incidents with crawl failures; check a small set of indexed yet non-serving pages."
+    },
+    {
+      "priority": "P1",
+      "action": "Fix misidentified participants such as '10디페 부스'; keep the correct event edition as the search landing page, retain useful historical URLs, and choose redirect/canonical/noindex only after confirming entity identity and content value."
+    },
+    {
+      "priority": "P1",
+      "action": "Strengthen upcoming-event pages with verified date/time/location/admission/reservation and official sources; link them prominently from crawlable category/series pages."
+    },
+    {
+      "priority": "P1",
+      "action": "Review discovered/crawled-unindexed URL samples; improve useful pages, consolidate true duplicates, and avoid pushing empty booth or map/review pages into indexing solely to raise URL counts."
+    },
+    {
+      "priority": "P2",
+      "action": "Track 7-day impressions/clicks for curated upcoming pages and compare after 7-14 days, accounting for reporting lag and event end dates; no ranking guarantee."
+    }
+  ],
+  "googleReference": "https://developers.google.com/search/docs/monitor-debug/debugging-search-traffic-drops",
+  "mutations": "Read-only inspection of Search Console and production sites. No index requests, sitemap submissions, deployments, or production SEO changes."
+}

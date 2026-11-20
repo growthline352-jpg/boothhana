@@ -1,0 +1,27 @@
+{
+  "leaseToken": "3f5b151a-d043-469f-a862-15644d85c0ac",
+  "extractionId": "ba5e248e-0aae-4694-8b73-16b47bf91c9b",
+  "resultHash": "local-evaluation-only",
+  "verdict": "APPROVE",
+  "reason": "BOOTH 원문은 COLORFUL LIVE 2nd -Will-의 初音ミク를 모티프로 명시한다. 직접 확인한 [세가 공식 보고서](https://www.sega.jp/topics/detail/230228_2/)는 해당 공연과 게임의 관계를 확인하며, 제공된 게임 공식 프로필과 피아프로 원문도 캐릭터 정체성과 매체 구분을 뒷받침한다. 따라서 TEXT 연결은 타당하다. 이미지 외형·현장 판매·재게시 권한은 승인하지 않는다.",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://www.sega.jp/topics/detail/230228_2",
+      "https://booth.pm/ja/items/4261580",
+      "https://piapro.net/pages/character",
+      "https://pjsekai.sega.jp/character/virtualsinger/miku/index.html"
+    ],
+    "usage": {
+      "input_tokens": 52773,
+      "cached_input_tokens": 22016,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 233,
+      "reasoning_output_tokens": 9
+    },
+    "imageHashes": []
+  }
+}

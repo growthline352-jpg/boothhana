@@ -1,0 +1,12 @@
+{
+  "id": "creator-susu-fixed",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "cca238fd-a1e6-4bcb-b903-f9b65f5aa529",
+  "leaseToken": "aa254bce-dbd7-4ea3-8990-ddf282b0ee41",
+  "state": "FAILED",
+  "errorType": "RunError",
+  "error": "CLI did not report web research",
+  "seconds": 128.0
+}

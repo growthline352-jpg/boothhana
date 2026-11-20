@@ -1,0 +1,2 @@
+import { Link,useLocation } from 'react-router'
+export function SubcultureBackLink(){const location=useLocation(),from=location.state?.subcultureReturnTo;if(typeof from!=='string')return null;try{const url=new URL(from,'https://local.invalid');if(url.origin!=='https://local.invalid'||!(url.pathname==='/subculture'||url.pathname.startsWith('/subculture/')||url.pathname==='/'))return null;return <Link className="sc-live-back" to={url.pathname+url.search}>← 이전 탐색 결과</Link>}catch{return null}}

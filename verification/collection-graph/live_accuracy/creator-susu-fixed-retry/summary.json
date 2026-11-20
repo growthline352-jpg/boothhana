@@ -1,0 +1,14 @@
+{
+  "id": "creator-susu-fixed-retry",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "da1a0019-8ac4-4ec3-940e-6c149a60fcb7",
+  "leaseToken": "9ded953c-d90f-48b9-bb4f-1b1194fdf1e1",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "APPROVE",
+    "publication": false
+  },
+  "seconds": 109.7
+}

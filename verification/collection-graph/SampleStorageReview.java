@@ -1,0 +1,23 @@
+import java.nio.file.*;import java.util.*;
+import com.boothhana.collection.*;import com.boothhana.collection.graph.*;import static com.boothhana.collection.graph.GraphModels.*;
+import org.springframework.jdbc.core.JdbcTemplate;import org.springframework.jdbc.datasource.DriverManagerDataSource;import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import tools.jackson.databind.json.JsonMapper;
+class SampleStorageReview {
+ static JsonMapper j=JsonMapper.builder().build();static Map<String,Object> m(Object x){return (Map<String,Object>)x;}static String enc(Object x){return j.writeValueAsString(x);}static <T>T as(Object x,Class<T> c){return j.readValue(enc(x),c);}
+ public static void main(String[] args)throws Exception {
+  var root=Path.of(args[0]);var ds=new DriverManagerDataSource("jdbc:postgresql://127.0.0.1:55439/boothhana_release_test","boothhana_release_runtime","isolated-interest-test");var db=new JdbcTemplate(ds);if(!"boothhana_release_test".equals(db.queryForObject("select current_database()",String.class)))throw new Error("wrong db");var tx=new DataSourceTransactionManager(ds);
+  var images=new GraphImages(db,j);var identities=new GraphIdentity(db,j);var projection=new GraphProjection(db,j,new CatalogService(db,j,null),new CollectionService(db,j),new CatalogPublicationService(db,j,null),images,identities);var graph=new GraphService(db,j,projection,images,identities);
+  for(String filename:List.of("creator_fixed_retry.json","discovery_illustar_final.json","discovery_comic_fixed_retry.json","character_miku_fixed.json","character_fixed_retry.json","relations_graph4_retry.json")){
+   var c=j.readValue(Files.readString(root.resolve(filename)),Map.class);String name=c.get("id").toString(),kind=c.get("kind").toString();var ctxt=m(c.get("context"));var e=j.readValue(Files.readString(root.resolve(name).resolve("extraction.json")),Map.class);var d=j.readValue(Files.readString(root.resolve(name).resolve("decision.json")),Map.class);var status=tx.getTransaction(null);
+   try{
+    db.update("update collection_job set available_at=now()+interval '7 days'");String target="sample-review";
+    if(kind.equals("CREATOR")){var p=m(m(ctxt.get("creator")).get("data"));target=db.queryForObject("insert into subculture_exhibitor(identity_key,name,profile_json) values(?,?,cast(? as jsonb)) returning id",Long.class,UUID.randomUUID().toString().replace("-","").repeat(2),p.get("name"),enc(p)).toString();}
+    if(kind.equals("CHARACTERS")){var p=m(m(ctxt.get("product")).get("data"));target=UUID.randomUUID().toString();db.update("insert into collection_product(id,identity_key,data_json) values(?,?,cast(? as jsonb))",UUID.fromString(target),UUID.randomUUID().toString(),enc(p));}
+    if(kind.equals("RELATIONS")){var event=m(m(ctxt.get("event")).get("data"));var occurrence=m(((List<?>)event.get("occurrences")).getFirst());String key=UUID.randomUUID().toString().replace("-","").repeat(2);target=db.queryForObject("insert into subculture_event_candidate(identity_key,match_key,name,subcategory,starts_on,ends_on,payload_json,payload_hash,warnings_json,review_state) values(?,?,?,?,cast(? as date),cast(? as date),cast(? as jsonb),?,'[]','REVIEWED') returning id",Long.class,key,key,event.get("name"),event.get("subcategory"),occurrence.get("startDate"),occurrence.get("endDate"),enc(event),key).toString();}
+    var seed=graph.seed(new Seed(kind,target,m(ctxt.get("input")),true,UUID.randomUUID().toString()));db.update("update collection_job set available_at=now() where id=?",seed.get("id"));var job=graph.claim();var token=(UUID)job.get("leaseToken");var ext=m(graph.extract((UUID)job.get("id"),new Extraction(token,UUID.randomUUID(),job.get("contextHash").toString(),m(e.get("result")),as(e.get("audit"),Audit.class))));
+    List<EventDecision> ed=d.get("eventDecisions")==null?null:((List<?>)d.get("eventDecisions")).stream().map(x->as(x,EventDecision.class)).toList();
+    var out=graph.decide((UUID)job.get("id"),new Decision(token,UUID.fromString(ext.get("id").toString()),ext.get("resultHash").toString(),d.get("verdict").toString(),d.get("reason").toString(),as(d.get("audit"),Audit.class),ed));if(kind.equals("RELATIONS")){if(db.queryForObject("select count(*) from event_series_member where event_id=? and series_id is not null",Integer.class,Long.parseLong(target))!=1)throw new AssertionError("Series was not saved");if(!"WAITING".equals(db.queryForObject("select state from collection_job where id=?",String.class,job.get("id"))))throw new AssertionError("Unresolved subjects must stay pending");}System.out.println(name+" STORAGE_PASS "+enc(out));
+   }catch(Exception ex){System.out.println(name+" STORAGE_FAIL "+ex);ex.printStackTrace(System.out);}finally{tx.rollback(status);}
+  }
+ }
+}

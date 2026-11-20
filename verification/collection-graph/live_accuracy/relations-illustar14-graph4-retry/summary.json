@@ -1,0 +1,14 @@
+{
+  "id": "relations-illustar14-graph4-retry",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "497d138c-51ab-4141-ae9b-fbf102a3e735",
+  "leaseToken": "aafa5cf7-0eec-4e41-ae0f-4e8184a9fccb",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "APPROVE",
+    "publication": false
+  },
+  "seconds": 64.6
+}

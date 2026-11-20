@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>부스하나 발견형 홈 시안 4종</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 이동</a>
+
+  <aside class="concept-dock" aria-label="발견형 시안 선택">
+    <div class="concept-dock__brand">
+      <img src="../../frontend/public/assets/brand/logo.png" alt="부스하나">
+      <span>발견형 시안</span>
+    </div>
+    <div class="concept-dock__buttons" role="tablist" aria-label="디자인 시안">
+      <button type="button" class="is-active" role="tab" aria-selected="true" data-show="shop">01 편집숍</button>
+      <button type="button" role="tab" aria-selected="false" data-show="poster">02 포스터월</button>
+      <button type="button" role="tab" aria-selected="false" data-show="taste">03 취향질문</button>
+      <button type="button" role="tab" aria-selected="false" data-show="weekend">04 주말보드</button>
+    </div>
+    <p class="concept-dock__hint">버튼을 눌러 비교</p>
+  </aside>
+
+  <main id="main">
+    <section class="concept concept-shop is-active" data-concept="shop">
+      <header class="site-header shop-header wrap">
+        <a class="brand" href="#" aria-label="부스하나 홈"><img src="../../frontend/public/assets/brand/logo.png" alt="부스하나"></a>
+        <nav aria-label="주요 메뉴"><a class="is-current" href="#shop-events">행사 찾기</a><a href="#shop-guide">방문 가이드</a><a href="#shop-events">내 보관함 <span data-saved-count>0</span></a></nav>
+        <button class="login-button" type="button">로그인</button>
+      </header>
+
+      <nav class="domain-tabs shop-tabs wrap" aria-label="행사 분야">
+        <button type="button" class="is-active" data-category="SUBCULTURE">서브컬처</button>
+        <button type="button" data-category="EXHIBITION">박람회</button>
+        <button type="button" data-category="FESTIVAL">축제</button>
+      </nav>
+
+      <div class="shop-hero wrap">
+        <div class="shop-hero__copy">
+          <p class="eyebrow">이번 주 발견</p>
+          <h1>취향이 맞는 행사부터<br>가볍게 둘러보세요.</h1>
+          <p>서울과 경기의 행사 정보를 사진, 일정, 장소 기준으로 한눈에 비교합니다.</p>
+          <form class="search-box" data-search-form role="search">
+            <label for="shop-search">행사 검색</label>
+            <div><input id="shop-search" data-search type="search" placeholder="행사명, 장소, 관심사"><button type="submit">찾기</button></div>
+          </form>
+        </div>
+        <article class="shop-feature" data-feature></article>
+      </div>
+
+      <section class="shop-moods wrap" id="shop-guide">
+        <h2>오늘은 어떤 걸 보고 싶나요?</h2>
+        <div class="mood-actions">
+          <button type="button" data-keyword="굿즈">새 굿즈 만나기</button>
+          <button type="button" data-keyword="문화">가볍게 나들이</button>
+          <button type="button" data-keyword="산업">새로운 분야 보기</button>
+          <button type="button" data-keyword="">전부 둘러보기</button>
+        </div>
+      </section>
+
+      <section class="shop-events wrap" id="shop-events">
+        <div class="section-heading"><div><h2>지금 많이 보는 행사</h2><p data-summary></p></div><button class="text-button" type="button">전체 일정 보기</button></div>
+        <div class="shop-grid" data-results></div>
+        <div class="empty-state" data-empty hidden><h3>찾는 행사가 없습니다</h3><p>검색어를 지우거나 다른 분야를 선택해 보세요.</p><button type="button" data-reset>검색 초기화</button></div>
+      </section>
+    </section>
+
+    <section class="concept concept-poster" data-concept="poster" hidden>
+      <header class="site-header poster-header wrap-wide">
+        <a class="poster-wordmark" href="#">BOOTH<span>HANA</span></a>
+        <nav aria-label="주요 메뉴"><a class="is-current" href="#poster-wall">발견</a><a href="#poster-wall">전체 일정</a><a href="#poster-wall">보관함 <span data-saved-count>0</span></a></nav>
+        <button class="poster-menu" type="button" aria-label="메뉴 열기">메뉴</button>
+      </header>
+
+      <div class="poster-intro wrap-wide">
+        <div><p class="poster-kicker">서울 경기 행사 아카이브</p><h1>보고 싶은 장면을<br>먼저 고르세요.</h1></div>
+        <form class="poster-search" data-search-form role="search"><label for="poster-search">행사 검색</label><input id="poster-search" data-search type="search" placeholder="이름이나 장소를 입력"><button type="submit">검색</button></form>
+      </div>
+
+      <nav class="domain-tabs poster-tabs wrap-wide" aria-label="행사 분야">
+        <button type="button" class="is-active" data-category="SUBCULTURE">서브컬처</button>
+        <button type="button" data-category="EXHIBITION">박람회</button>
+        <button type="button" data-category="FESTIVAL">축제</button>
+      </nav>
+
+      <section class="poster-section wrap-wide" id="poster-wall">
+        <div class="poster-count"><h2>이번 달의 포스터</h2><p data-summary></p></div>
+        <div class="poster-wall" data-results></div>
+        <div class="empty-state poster-empty" data-empty hidden><h3>검색 결과가 없습니다</h3><p>더 짧은 검색어로 다시 찾아보세요.</p><button type="button" data-reset>처음으로</button></div>
+      </section>
+    </section>
+
+    <section class="concept concept-taste" data-concept="taste" hidden>
+      <header class="site-header taste-header wrap">
+        <a class="brand" href="#"><img src="../../frontend/public/assets/brand/logo.png" alt="부스하나"></a>
+        <nav aria-label="주요 메뉴"><a class="is-current" href="#taste-finder">취향 찾기</a><a href="#taste-results">행사 목록</a><a href="#taste-results">저장 <span data-saved-count>0</span></a></nav>
+        <button class="login-button" type="button">로그인</button>
+      </header>
+
+      <nav class="domain-tabs taste-tabs wrap" aria-label="행사 분야">
+        <button type="button" class="is-active" data-category="SUBCULTURE">서브컬처</button>
+        <button type="button" data-category="EXHIBITION">박람회</button>
+        <button type="button" data-category="FESTIVAL">축제</button>
+      </nav>
+
+      <section class="taste-stage wrap" id="taste-finder">
+        <div class="taste-copy"><p class="eyebrow">2번만 고르면 끝</p><h1>내가 좋아할 만한<br>행사만 보여드릴게요.</h1><p>복잡한 필터 대신 오늘의 기분과 이동 범위를 선택하세요.</p></div>
+        <div class="taste-panel">
+          <fieldset><legend>누구와 가나요?</legend><div class="choice-grid"><button class="is-selected" type="button" data-companion="혼자">혼자 천천히</button><button type="button" data-companion="친구">친구와 함께</button><button type="button" data-companion="가족">가족 나들이</button></div></fieldset>
+          <fieldset><legend>얼마나 멀리 갈까요?</legend><div class="choice-grid"><button class="is-selected" type="button" data-region="전체">가까운 곳부터</button><button type="button" data-region="서울">서울 안에서</button><button type="button" data-region="경기">경기까지</button></div></fieldset>
+          <form class="taste-search" data-search-form role="search"><label for="taste-search">관심 키워드</label><div><input id="taste-search" data-search type="search" placeholder="예: 굿즈, 와인, 미디어"><button type="submit">반영</button></div></form>
+        </div>
+      </section>
+
+      <section class="taste-results wrap" id="taste-results">
+        <div class="taste-result-heading"><div><p data-taste-label>혼자 천천히 보기 좋은 행사</p><h2>오늘의 추천</h2></div><p data-summary></p></div>
+        <div class="taste-stack" data-results></div>
+        <div class="empty-state" data-empty hidden><h3>조건에 맞는 행사가 없습니다</h3><p>이동 범위를 넓히거나 검색어를 바꿔 보세요.</p><button type="button" data-reset>조건 초기화</button></div>
+      </section>
+    </section>
+
+    <section class="concept concept-weekend" data-concept="weekend" hidden>
+      <header class="site-header weekend-header wrap-wide">
+        <a class="weekend-logo" href="#"><span>부스</span>하나</a>
+        <nav aria-label="주요 메뉴"><a class="is-current" href="#weekend-board">이번 주말</a><a href="#weekend-board">지역별</a><a href="#weekend-board">저장한 일정 <span data-saved-count>0</span></a></nav>
+        <button class="weekend-login" type="button">카카오 로그인</button>
+      </header>
+
+      <nav class="domain-tabs weekend-tabs wrap-wide" aria-label="행사 분야">
+        <button type="button" class="is-active" data-category="SUBCULTURE">서브컬처</button>
+        <button type="button" data-category="EXHIBITION">박람회</button>
+        <button type="button" data-category="FESTIVAL">축제</button>
+      </nav>
+
+      <section class="weekend-hero wrap-wide">
+        <div><p class="weekend-date">9월 마지막 주말</p><h1>토요일에 어디 갈지,<br>여기서 바로 정하세요.</h1></div>
+        <div class="weekend-stat"><strong data-total>8</strong><span>이번 주말<br>확인할 행사</span></div>
+      </section>
+
+      <section class="weekend-board wrap-wide" id="weekend-board">
+        <aside class="weekend-filters">
+          <form data-search-form role="search"><label for="weekend-search">행사 검색</label><input id="weekend-search" data-search type="search" placeholder="행사명 또는 장소"><button type="submit">검색</button></form>
+          <fieldset><legend>지역</legend><button class="is-selected" type="button" data-region="전체">전체</button><button type="button" data-region="서울">서울</button><button type="button" data-region="경기">경기</button></fieldset>
+          <div class="saved-note"><strong><span data-saved-count>0</span>개 저장됨</strong><p>저장한 행사는 보관함에서 방문 순서대로 정리할 수 있어요.</p></div>
+        </aside>
+        <div class="weekend-schedule"><div class="schedule-heading"><h2>다가오는 일정</h2><p data-summary></p></div><div class="schedule-list" data-results></div><div class="empty-state" data-empty hidden><h3>일정이 없습니다</h3><p>다른 지역이나 분야를 선택해 보세요.</p><button type="button" data-reset>필터 초기화</button></div></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

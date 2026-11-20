@@ -1,0 +1,52 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "scope": "Collector graph worker and backend projection/identity/source audit; no unrelated UI changes reviewed",
+  "base": "05299e6b4898ab7cd3e7519d5ee2c5bc76162980",
+  "sourceChanges": false,
+  "deployment": false,
+  "productionWrites": false,
+  "findings": [
+    {
+      "priority": "P1",
+      "confidence": 10,
+      "file": "backend/src/main/java/com/boothhana/collection/graph/GraphProjection.java",
+      "line": 78,
+      "title": "Creator product identity collapses distinct options and duplicates stable products",
+      "trigger": "sourceEntryId is empty string, productUrl is null, and two named options share their first source URL",
+      "quote": "Objects.toString(product.sourceEntryId(),product.name())",
+      "actual": "GraphProjection.apply reports products=2 but stores only Hero B keyring (one row), even with complete productCoverage for both names.",
+      "related": "Reordering sources with the same external identity.entryId also changes the key; stable productUrl with renamed product and null sourceEntryId creates another row.",
+      "recommendation": "Normalize blank IDs, enforce per-batch distinct identity, and reuse stable source-system ID / individual URL aliases.",
+      "proof": "CreatorOptionReview.java",
+      "action": "unresolved"
+    },
+    {
+      "priority": "P2",
+      "confidence": 10,
+      "file": "collector/graph_worker.py",
+      "line": 135,
+      "title": "Verified empty discovery is rejected and repeatedly enriched",
+      "trigger": "DISCOVERY has events=[], searchStatus=COMPLETE and successfully opened sourceCoverage.checkedUrls",
+      "quote": "needed={canonical_audit_url(x) for x in result.get('coverage',{}).get('visitedPages',[])}&seen",
+      "actual": "Worker require_opened rejects because DISCOVERY uses sourceCoverage, not coverage. Backend GraphProjection.checkSources lines28-30 repeats the same omission. Worker downgrades APPROVE to ENRICH and GraphService stores WAITING with a six-hour retry.",
+      "recommendation": "For empty discovery, intersect successfully opened URLs with sourceCoverage.checkedUrls, validate coverage completion, and allow COMPLETE/NO_RESULTS without accepting failed attempts.",
+      "proof": [
+        "review-empty-discovery.json",
+        "EmptyDiscoveryReview.java"
+      ],
+      "action": "unresolved"
+    }
+  ],
+  "verification": {
+    "creatorOptionLoss": "Actual GraphProjection.apply on isolated localhost test database, transaction rolled back",
+    "emptyDiscovery": "Reproduced in Python guard and actual compiled Java GraphProjection.checkSources",
+    "realSamplePureContracts": "6/6 pass",
+    "realSampleStorage": "5/5 pass with independent rollback transactions",
+    "salesSampleLimit": "9-option sales sample concerns a Busan event outside current Seoul/Gyeonggi scope; pure contract validated, actual event storage not tested"
+  },
+  "references": [
+    "sample-storage-review.log",
+    "SampleReview.java",
+    "SampleStorageReview.java"
+  ]
+}

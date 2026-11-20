@@ -29,6 +29,9 @@ identity={sourceSystem: "https://해당사이트", entryId: "원문 ID", detailU
 sourceSystem은 해당 ID를 발급하는 사이트의 origin(경로 없음)이며 sources에 그 사이트의 확인 근거가 있어야 한다.
 detailUrl은 개별 등록/상품의 고유 페이지일 때만 사용하고 그 URL도 sources에 넣는다. 목록 전체 URL을 개별 상세 URL로 만들지 않는다.
 sourceEntryId와 identity.entryId는 같은 원문 ID여야 한다. 식별 근거가 불명확하면 identity=null; 번호/이름을 가짜 외부ID로 생성하지 않는다.
+공통 주문폼·전체 판매목록 URL을 서로 다른 상품의 productUrl에 반복하지 않는다. 개별 고유 URL/원문 ID가 없는 옵션은
+productUrl=null, identity=null, sourceEntryId=null로 두고 공통 폼 주소와 실제 확인한 옵션 근거를 sources에 보존한다.
+이 규칙은 옵션들이 서로 다른 수집 페이지에 나뉘어 있어도 동일하다. 실제 원문에 있는 구별 가능한 옵션명만 사용한다.
 
 ## v18 공통 분야
 컨텍스트 행사는 서울·경기 서브컬처/박람회/축제 중 하나다. 박람회는 공식 참가 브랜드·기업, 축제는 실제 공지된 판매·체험·안내 부스를 조사한다. 공연 출연자/프로그램을 판매 부스로 자동 전환하지 않는다. 공식 명단이 없으면 미공개로 남기고 가상의 참가 부스·상품을 만들지 않는다. 주류·웨딩·산업 제품도 원문 사실과 확인 시점을 구분하며 구매 추천·효능/가격을 지어내지 않는다.

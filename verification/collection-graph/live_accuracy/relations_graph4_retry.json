@@ -1,0 +1,92 @@
+{
+  "kind": "RELATIONS",
+  "id": "relations-illustar14-graph4-retry",
+  "context": {
+    "input": {},
+    "event": {
+      "data": {
+        "name": "일러스타 페스 14",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "일러스타 페스 사무국",
+        "edition": "14",
+        "region": "GYEONGGI",
+        "venueName": "일산 킨텍스 제1전시장 4, 5홀",
+        "address": null,
+        "description": "서브컬처 행사. 해당 회차 공식 공지에서 체키&팬미팅 부스 운영을 안내한다.",
+        "admission": null,
+        "subjects": [
+          "서브컬처",
+          "코스프레",
+          "체키·팬미팅"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-10",
+            "endDate": "2026-10-11",
+            "startTime": "10:00",
+            "endTime": "17:00"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://api.illustar.net/v1/event/list",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "사용자 제공 서버 원문 기록(2026-10-08)에서 id 100 '일러스타 페스 14 MAIN'의 show_date는 2026년 10월 10, 11일이며 장소는 일산 킨텍스 제1전시장 4, 5홀이다. start_date 10:00, end_date 17:00. 이번 직접 열기는 접근 오류."
+          },
+          {
+            "url": "https://illustar.net/notice/mEQ8Nzne",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "사용자 제공 서버 원문 기록(2026-10-08)의 제목은 '「일러스타 페스 14」 체키&팬미팅 부스 운영 및 이용수칙 안내'. 사무국 명의로 동일 장소와 별도 행사 입장권 필요를 명시한다. 부스 운영 시간 12:00~17:00은 행사 전체 시간과 구분된다. 이번 직접 열기는 본문이 비어 있었다."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "leadUrl은 작가 참가 공지가 아니라 주최 사무국의 부스 운영 공지다.",
+          "부스 참가비와 체키 판매 권장가는 행사 입장료로 사용하지 않았다.",
+          "최신 참가자 목록·배치도·취소 또는 변경 여부는 직접 원문으로 재확인하지 못했다.",
+          "추가 확인 대상 URL: https://illustar.net/event-info/layout 및 https://illustar.net/performance-list/mEQ8Nzne"
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://illustar.net/notice/mEQ8Nzne",
+            "status": "PUBLISHED",
+            "note": "제공된 공식 원문 기록으로 확인."
+          },
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://illustar.net/event-info/layout",
+            "status": "INACCESSIBLE",
+            "note": "검색에서 발견한 실제 공식 URL을 열었으나 본문과 회차별 배치도는 확인하지 못했다."
+          },
+          {
+            "kind": "SALES",
+            "url": "https://illustar.net/performance-list/mEQ8Nzne",
+            "status": "INACCESSIBLE",
+            "note": "공식 공지에 연결된 14회 입장권 예매 URL. 직접 열기에서 본문 확인 불가."
+          },
+          {
+            "kind": "PARTICIPANTS",
+            "url": null,
+            "status": "UNKNOWN",
+            "note": "해당 회차 참가자 목록 원문 미확인."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "제공된 공식 행사 목록과 운영 공지 기준 개최 예정. 최신 변경 여부 재확인은 미완료.",
+          "sourceUrl": "https://api.illustar.net/v1/event/list",
+          "checkedOn": "2026-10-08"
+        }
+      },
+      "id": 1,
+      "revision": 1
+    },
+    "seriesCandidates": [],
+    "seriesLink": [],
+    "identityCandidates": []
+  }
+}

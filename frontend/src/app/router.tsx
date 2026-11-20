@@ -1,7 +1,13 @@
+import { SubjectAdmin } from '../features/subculture/SubjectAdmin'
+import { NotificationPage } from '../features/subculture/NotificationPage'
+import { CreatorProductList,CreatorProductDetail } from '../features/subculture/CreatorProductPages'
+import { SubcultureHome,SubcultureBrowse,SubcultureIdentity } from '../features/subculture/SubculturePages'
+import { InterestSettingsPage } from '../features/subculture/InterestSettingsPage'
 import { AdminEventComments } from '../features/catalog/AdminEventComments'
 import { OwnershipManagement } from '../features/support/OwnershipManagement'
 import { AdminSeries } from '../features/support/AdminSeries'
 import { LibraryPage } from '../features/library/LibraryPage'
+import { AccountPage } from '../pages/AccountPage'
 import { SupportHome,SupportNew,SupportDetail,ManagedExhibitors } from '../features/support/SupportPages'
 import { GuestSupportPage } from '../features/support/GuestSupportPage'
 import { AdminSupportList,AdminSupportDetail } from '../features/support/AdminSupportPages'
@@ -14,6 +20,7 @@ import { SubcultureCollectionPage } from '../features/collection/SubcultureColle
 import { PublicLayout } from '../components/layout/PublicLayout'
 import { ConsoleLayout } from '../components/layout/ConsoleLayout'
 import { HomePage } from '../pages/HomePage'
+import { AboutPage } from '../pages/AboutPage'
 import { LoginPage } from '../pages/LoginPage'
 import { AdminLoginPage } from '../pages/AdminLoginPage'
 import { BoothDetailPage, EventDetailPage, EventsPage, ProductDetailPage } from '../pages/PublicPages'
@@ -25,7 +32,19 @@ import { EmptyState } from '../components/ui/States'
 export const router = createBrowserRouter([
   { path: '/', element: <PublicLayout />, children: [
     { index: true, element: <HomePage /> },
+    { path: 'about', element: <AboutPage /> },
     { path: 'library', element: <SupportBoundary><LibraryPage/></SupportBoundary> },
+    { path: 'account', element: <SupportBoundary><AccountPage/></SupportBoundary> },
+    { path:'account/interests',element:<InterestSettingsPage/> },
+    { path:'account/notifications',element:<NotificationPage/> },
+    { path:'onboarding',element:<InterestSettingsPage/> },
+    { path:'subculture',element:<SubcultureHome/> },
+    { path:'subculture/products',element:<CreatorProductList/> },
+    { path:'subculture/products/:id',element:<CreatorProductDetail/> },
+    { path:'subculture/subjects',element:<SubcultureBrowse kind="subjects"/> },
+    { path:'subculture/creators',element:<SubcultureBrowse kind="creators"/> },
+    { path:'subculture/subjects/:id',element:<SubcultureIdentity kind="subjects"/> },
+    { path:'subculture/creators/:id',element:<SubcultureIdentity kind="creators"/> },
     { path: 'support/management', element: <SupportBoundary><OwnershipManagement/></SupportBoundary> },
     { path: 'support', element: <SupportBoundary><SupportHome/></SupportBoundary> },
     { path: 'support/new', element: <SupportBoundary><SupportNew/></SupportBoundary> },
@@ -68,6 +87,7 @@ export const router = createBrowserRouter([
     { path: 'support/:id', element: <SupportBoundary><AdminSupportDetail/></SupportBoundary> },
     { path: 'goods-showcase', element: <GoodsAdminPage /> },
     { path: 'subculture', element: <CatalogAdminPage /> },
+    { path: 'subculture/interests', element: <SubjectAdmin /> },
     { path: 'subculture/legacy', element: <SubcultureCollectionPage /> },
   ] },
   { path: '*', element: <section className="section-pad"><EmptyState title="페이지를 찾을 수 없습니다" description="주소를 확인하거나 팬 홈으로 돌아가 주세요." /></section> },

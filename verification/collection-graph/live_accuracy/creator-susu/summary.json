@@ -1,0 +1,14 @@
+{
+  "id": "creator-susu",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "c58ade95-6bec-425e-ac6d-7335217ce1dc",
+  "leaseToken": "360125ba-c02b-4a6e-a5e8-48315ed18272",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "ENRICH",
+    "publication": false
+  },
+  "seconds": 75.0
+}

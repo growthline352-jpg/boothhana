@@ -26,3 +26,13 @@ test('published event discovery combines all public categories and removes dupli
   assert.deepEqual(rows.map(row => row.id), [1, 2, 3])
   assert.equal(seen.length, 3)
 })
+
+test('the Sunday source record does not create a second DFesta sitemap page', async () => {
+  const fetcher = async url => {
+    const category = new URL(url).searchParams.get('category')
+    const items = category === 'SUBCULTURE' ? [1,7].map(id => ({ id, event:{name:`제35회 디. 페스타 (${id===1?'토요일':'일요일'})`},publishedAt:'2026-09-30T00:00:00Z' })) : []
+    return new Response(JSON.stringify({ items, page:0, size:100, total:items.length }), { status:200, headers:{'content-type':'application/json'} })
+  }
+  const rows = await publishedEvents({ apiBase:'https://api.example', fetcher })
+  assert.deepEqual(rows.map(row => row.id), [1])
+})

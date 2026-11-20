@@ -38,6 +38,7 @@ export interface PublicAsset {offlineAllowed?: boolean; id: number; participantI
 export interface PublicParticipant {id: number; participant: Participant; sales: Sales | null; productRows?: ProductRow[]}
 export interface PublicEvent {banner?:PublicAsset|null;id:number;mode:'INFO_ONLY';event:EventData;participants:PublicParticipant[];publishedAt:string;assets:PublicAsset[]}
 export interface PublicEventSummary { id: number; event: EventData; participantCount: number; publishedAt?: string; banner?: PublicAsset | null }
+export interface PopularEventSummary extends PublicEventSummary { saveCount: number }
 
 const placeholderRegistrationNames = new Set(['', '.', '-', '—', 'ㆍ'])
 
@@ -65,6 +66,7 @@ export function presentPublicParticipant(row: PublicParticipant): PublicParticip
 export const publicCatalogApi={
  browse:(query:string)=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?${query}`),
  events:(page=0)=>publicRead<Page<PublicEventSummary>>(`/api/public/catalog/events?page=${page}&size=20`),
+ popular:(category?:string)=>publicRead<PopularEventSummary[]>(`/api/public/catalog/events/popular${category?`?category=${encodeURIComponent(category)}`:''}`),
  event:async(id:string)=>{
   const value=await publicRead<PublicEvent>(`/api/public/catalog/events/${id}`)
   return {...value,participants:value.participants.map(presentPublicParticipant)}

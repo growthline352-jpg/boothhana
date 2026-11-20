@@ -48,6 +48,7 @@ services:
       - /etc/boothhana/collector.json
     volumes:
       - ./collector.config.json:/etc/boothhana/collector.json:ro
+      - ./collector.graph.config.json:/etc/boothhana/graph.json:ro
       - collector_state:/var/lib/boothhana-collector/state
       - collector_auth:/var/lib/boothhana-collector/codex
     depends_on:

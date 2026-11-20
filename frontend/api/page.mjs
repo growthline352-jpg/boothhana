@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
-import { injectCrawlableContent, injectMetadata, normalizePath, pageMetadata, renderCrawlableContent, siteOrigin } from '../seo/metadata.mjs'
+import { categoryFor, injectCrawlableContent, injectMetadata, normalizePath, pageMetadata, renderCrawlableContent, siteOrigin } from '../seo/metadata.mjs'
+import { PORTAL_ORIGIN, categorySite, categoryRedirect, requestSiteOrigin } from '../seo/category-sites.mjs'
 
 const MAX_RESPONSE = 4 * 1024 * 1024
 /** Configured API origin only; never request Host, user URLs, cookies or redirects. */
@@ -34,9 +35,10 @@ function catalogListing(rows) {
     const id = Number(row?.id), event = row?.event
     if (!Number.isSafeInteger(id) || id < 1 || !clean(event?.name)) return []
     const occurrence = Array.isArray(event.occurrences) ? event.occurrences[0] : null
+    const grouped = (id === 1 || id === 7) && /^제35회 디\.\s*페스타/.test(event.name)
     return [{
-      id, name: clean(event.name), description: clean(event.description), venue: clean(event.venueName), address: clean(event.address),
-      startDate: clean(occurrence?.startDate), endDate: clean(occurrence?.endDate), urlPath: `/discover/${id}`,
+      id: grouped ? 1 : id, name: grouped ? '제35회 디. 페스타' : clean(event.name), description: clean(event.description), venue: clean(event.venueName), address: clean(event.address),
+      startDate: grouped ? '2026-10-03' : clean(occurrence?.startDate), endDate: grouped ? '2026-10-04' : clean(occurrence?.endDate), urlPath: `/discover/${grouped ? 1 : id}`,
     }]
   })
 }
@@ -58,17 +60,19 @@ async function fetchJson(origin, path, signal, fetcher) {
   if (!response.ok) throw new Error(`Public SEO source returned ${response.status}`)
   return readBoundedJson(response)
 }
-async function fetchBrowseListing(origin, path, search, fetcher) {
+async function fetchBrowseListing(origin, path, search, fetcher, siteUrl) {
   const params = new URLSearchParams(search)
   if ([...params.keys()].some(key => key !== 'category')) return []
   // Do not hold the initial document behind a sleeping Render instance; crawlers can retry after it wakes.
   const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 1500)
   try {
     if (path === '/events') return platformListing(await fetchJson(origin, '/api/public/events', controller.signal, fetcher))
-    const requested = params.get('category') || 'subculture'
+    const hostCategory = categorySite(siteUrl)
+    const requested = hostCategory || params.get('category') || 'subculture'
     if (!(requested in CATALOG_CATEGORY)) return []
-    const categories = path === '/' ? Object.values(CATALOG_CATEGORY) : [CATALOG_CATEGORY[requested]]
-    const settled = await Promise.allSettled(categories.map(category => fetchJson(origin, `/api/public/catalog/events?category=${category}&page=0&size=${path === '/' ? 12 : 24}&sort=RECENT`, controller.signal, fetcher)))
+    const categories = path === '/' && !hostCategory ? Object.values(CATALOG_CATEGORY) : [CATALOG_CATEGORY[requested]]
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+    const settled = await Promise.allSettled(categories.map(category => fetchJson(origin, `/api/public/catalog/events?category=${category}&page=0&size=${path === '/' ? 12 : 24}&sort=DATE_ASC&from=${today}`, controller.signal, fetcher)))
     const unique = new Map()
     for (const result of settled) if (result.status === 'fulfilled') {
       for (const row of catalogListing(result.value?.items)) unique.set(row.urlPath, row)
@@ -76,10 +80,17 @@ async function fetchBrowseListing(origin, path, search, fetcher) {
     return [...unique.values()].slice(0, 36)
   } finally { clearTimeout(timer) }
 }
-export async function renderPage({ path, search = '', template, siteUrl, verification = '', apiBase, fetcher = fetch }) {
+export async function renderPage({ path, search = '', template, siteUrl, verification = '', apiBase, fetcher = fetch, splitSites = false }) {
   path = normalizePath(path)
   let catalog = null, participant = null, listing = [], unavailable = false, status = 200
   const origin = apiOrigin(apiBase)
+  const redirect = categoryRedirect({ origin: siteUrl, path, search, enabled: splitSites })
+  if (redirect) return { status: 308, location: redirect }
+  if (path === '/discover/7') {
+    const params = new URLSearchParams(search)
+    if (!params.has('day')) params.set('day', '2026-10-04')
+    return { status: 308, location: `${siteOrigin(siteUrl)}/discover/1?${params.toString()}` }
+  }
   const match = /^\/discover\/([1-9]\d*)(?:\/booths\/([1-9]\d*))?$/.exec(path)
   if (match) {
     if (!origin || !Number.isSafeInteger(Number(match[1]))) { unavailable = true; status = 503 }
@@ -93,6 +104,20 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
         else {
           catalog = await readBoundedJson(response)
           if (Number(catalog?.id) !== Number(match[1]) || typeof catalog?.event?.name !== 'string' || !catalog.event.name.trim()) throw new Error('Invalid public event')
+          if (match[1] === '1' && !match[2] && /^제35회 디\.\s*페스타/.test(catalog.event.name)) {
+            try {
+              const sunday = await fetchJson(origin, '/api/public/catalog/events/7', controller.signal, fetcher)
+              if (Number(sunday?.id) === 7 && /^제35회 디\.\s*페스타/.test(sunday.event?.name)) {
+                const saturdayOccurrence = catalog.event.occurrences?.[0]
+                const sundayOccurrence = sunday.event.occurrences?.[0]
+                catalog = { ...catalog,
+                  event: { ...catalog.event, name: '제35회 디. 페스타',
+                    occurrences: saturdayOccurrence && sundayOccurrence && saturdayOccurrence.endDate === '2026-10-03' && sundayOccurrence.startDate === '2026-10-04'
+                      ? [{ ...saturdayOccurrence, endDate: sundayOccurrence.endDate, endTime: sundayOccurrence.endTime }]
+                      : [...catalog.event.occurrences, ...sunday.event.occurrences] } }
+              }
+            } catch { /* Keep the independently published Saturday page available. */ }
+          }
           if (match[2]) {
             participant = catalog.participants?.find(row => Number(row?.id) === Number(match[2])) || null
             if (!participant) { unavailable = true; status = 404 }
@@ -102,14 +127,18 @@ export async function renderPage({ path, search = '', template, siteUrl, verific
       finally { clearTimeout(timer) }
     }
   }
-  if (!match && origin && ['/', '/discover', '/events'].includes(path)) {
+  if (catalog && !unavailable) {
+    const destination = categoryRedirect({ origin: siteUrl, path, search, category: categoryFor(catalog.event), enabled: splitSites })
+    if (destination) return { status: 308, location: destination }
+  }
+  if (!match && origin && ['/', '/discover', '/events'].includes(path) && !(path === '/' && siteUrl === PORTAL_ORIGIN && splitSites)) {
     // Listing markup improves crawlability, but a sleeping API must not turn a public listing page into a 503.
-    try { listing = await fetchBrowseListing(origin, path, search, fetcher) } catch { listing = [] }
+    try { listing = await fetchBrowseListing(origin, path, search, fetcher, siteUrl) } catch { listing = [] }
   }
   if (path === '/not-found') status = 404
-  const meta = pageMetadata({ path, search, siteUrl, verification, catalog, participant, listing, unavailable })
+  const meta = pageMetadata({ path, search, siteUrl, verification, catalog, participant, listing, unavailable, splitSites })
   const withMetadata = injectMetadata(template, meta)
-  const content = unavailable ? '' : renderCrawlableContent({ path, search, catalog, participant, listing })
+  const content = unavailable ? '' : renderCrawlableContent({ path, search, catalog, participant, listing, siteUrl, splitSites })
   return { status, meta, html: injectCrawlableContent(withMetadata, content) }
 }
 export function createHandler(loadTemplate = () => readFile(new URL('../seo-template/index.html', import.meta.url), 'utf8')) {
@@ -125,10 +154,11 @@ export function createHandler(loadTemplate = () => readFile(new URL('../seo-temp
       const path = normalizePath(typeof raw === 'string' ? '/' + raw.replace(/^\//, '') : request.pathname)
       const search = new URLSearchParams(request.search)
       search.delete('path') // framework routing parameter is not a user-visible search filter
-      const siteUrl = siteOrigin(process.env.PUBLIC_SITE_URL || '')
+      const siteUrl = requestSiteOrigin(req.headers?.host, siteOrigin(process.env.PUBLIC_SITE_URL || ''))
       const template = await loadTemplate()
-      const page = await renderPage({ path, search: search.toString(), template, siteUrl, verification: process.env.GOOGLE_SITE_VERIFICATION || '', apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '' })
+      const page = await renderPage({ path, search: search.toString(), template, siteUrl, verification: process.env.GOOGLE_SITE_VERIFICATION || '', apiBase: process.env.SEO_API_BASE_URL || process.env.VITE_API_BASE_URL || '', splitSites: process.env.CATEGORY_SITES_ENABLED === 'true' })
       res.statusCode = page.status
+      if (page.location) { res.setHeader('Location', page.location); res.end(); return }
       res.setHeader('X-Robots-Tag', page.meta.robots)
       if (page.status === 503) res.setHeader('Retry-After', '60')
       res.end(req.method === 'HEAD' ? undefined : page.html)

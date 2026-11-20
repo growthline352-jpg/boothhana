@@ -6,11 +6,15 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useRemote } from '../../app/useRemote'
 import { publicCatalogApi, type PublicEventSummary } from '../catalog/api'
-import { SafeLink, StoredImage, labels } from '../catalog/Shared'
+import { combineDfestaSummaries, DFESTA_MAIN_ID, DFESTA_SUNDAY_ID, isDfestaEdition } from '../catalog/dfesta'
+import { SafeLink, labels } from '../catalog/Shared'
+import { ContentImage } from '../../components/ui/ContentImage'
 import { categoryHref } from './categories'
 import { browseApiParams, cardOccurrences, isDiscoveryResults, periodRange, periodLabel, occurrenceLabel, parseBrowse, searchResultsHref, seoulToday, type Period } from './browse'
 import { DiscoveryIcon } from './DiscoveryIcon'
 import { homeQuickLinks } from './homeQuickLinks'
+import { currentSiteCategory } from './site'
+import { PopularEvents } from './PopularEvents'
 import './discovery.css'
 import '../visit/visit.css'
 
@@ -33,7 +37,8 @@ export function DiscoveryPage() {
   useEffect(() => { setDraft(state.q) }, [state.q, category.key])
   const update = (changes: Record<string, string>) => {
     const next = new URLSearchParams(params)
-    next.set('category', category.key)
+    if (currentSiteCategory()) next.delete('category')
+    else next.set('category', category.key)
     if (!('page' in changes)) next.delete('page')
     Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key))
     setParams(next)
@@ -42,10 +47,14 @@ export function DiscoveryPage() {
     e.preventDefault()
     if (category.enabled) navigate(searchResultsHref(params, category.key, draft))
   }
-  const reset = () => { setDraft(''); setParams({ category: category.key, period: 'all', view: 'results' }) }
-  const rows = data.data?.items ?? []
-  const total = data.data?.total ?? 0
-  const pages = Math.max(1, Math.ceil(total / 20))
+  const reset = () => { setDraft(''); setParams(currentSiteCategory() ? { period: 'all', view: 'results' } : { category: category.key, period: 'all', view: 'results' }) }
+  const sourceRows = data.data?.items ?? []
+  const rows = combineDfestaSummaries(sourceRows)
+  const sourceTotal = data.data?.total ?? 0
+  const hasBothDays = [DFESTA_MAIN_ID,DFESTA_SUNDAY_ID].every(id=>sourceRows.some(row=>row.id===id&&isDfestaEdition(row.id,row.event.name)))
+  const total = Math.max(0,sourceTotal-(hasBothDays?1:0))
+  // Keep API pagination boundaries: grouping two rows must not hide a later page.
+  const pages = Math.max(1, Math.ceil(sourceTotal / 20))
   const range = periodRange(state.period, today, state.from, state.to)
   const returnTo = location.pathname + location.search
   const hasFilter = Boolean(state.q || state.region || state.subcategory || state.period !== 'all')
@@ -55,6 +64,7 @@ export function DiscoveryPage() {
   return <div className={`discovery-page discovery-theme-${category.key}`}>
     <section className={`popga-home${isHome ? '' : ' is-results'}`} aria-label={isHome ? `${category.label} 추천` : `${category.label} 행사 검색`}>
       <div className="discovery-container">
+        {isHome && <h1 className="discovery-sr-only">{category.label} 행사 찾기</h1>}
         <form className="popga-search" role="search" onSubmit={submit}>
           <DiscoveryIcon name="search" size={21}/>
           <input type="search" value={draft} onChange={e => setDraft(e.target.value)} maxLength={100}
@@ -114,6 +124,8 @@ export function DiscoveryPage() {
         : <div className="ranking-empty">표시할 행사가 없습니다. 조건을 바꿔 다시 확인해 주세요.</div>}
     </section>}
 
+    {isHome && <div className="discovery-container"><PopularEvents categoryCode={category.code}/></div>}
+
     <section className="discovery-container discovery-feed" aria-labelledby="discovery-heading" id="discovery-results">
       <div className="discovery-feed-head"><div><h2 id="discovery-heading">{category.label} 전체보기</h2><p>날짜와 지역, 관심 분야로 원하는 행사를 좁혀보세요.</p></div></div>
       <div className="discovery-subcategories" role="group" aria-label={`${category.label} 세부 분류`}>
@@ -131,7 +143,7 @@ export function DiscoveryPage() {
           : data.error ? <div className="discovery-empty" role="alert"><div className="discovery-empty-icon"><DiscoveryIcon name="info" size={30}/></div><h3>행사를 불러오지 못했어요</h3><p>연결 상태를 확인하고 다시 시도해 주세요.</p><button type="button" className="discovery-primary" onClick={() => void data.reload()}>다시 불러오기</button></div>
           : rows.length ? <div className="discovery-card-grid">{rows.map(row => <DiscoveryEventCard key={row.id} row={row} today={today} returnTo={returnTo} period={state.period} from={range.from} to={range.to}/>)}</div>
           : <div className="discovery-empty"><div className="discovery-empty-icon"><DiscoveryIcon name="search" size={30}/></div><h3>{state.page > 0 ? '이 페이지에는 행사가 없어요' : hasFilter ? '조건에 맞는 공개 행사가 없어요' : '새로운 행사를 준비하고 있어요'}</h3><p>{state.page > 0 ? '공개 목록이 변경되었을 수 있어요. 첫 페이지에서 다시 확인해 주세요.' : hasFilter ? '검색어와 분류를 바꾸거나 전체 기간으로 확인해 보세요.' : '검토가 끝난 행사부터 소개해 드립니다. 아직 공개되지 않은 정보는 표시하지 않아요.'}</p>{state.page > 0 ? <button className="discovery-primary" type="button" onClick={() => update({page:''})}>같은 조건의 첫 페이지로</button> : hasFilter && <button className="discovery-primary" type="button" onClick={reset}>전체 공개 행사 보기</button>}</div>}
-        {!state.dateError && !data.loading && !data.error && total > 0 && pages > 1 && state.page < pages && <nav className="discovery-pagination" aria-label="행사 목록 페이지"><button type="button" disabled={state.page === 0} onClick={() => update({ page: String(Math.max(0, state.page - 1)) })}>이전</button><span><strong>{state.page + 1}</strong> / {pages}</span><button type="button" disabled={(state.page + 1) * 20 >= total} onClick={() => update({ page: String(state.page + 1) })}>다음</button></nav>}
+        {!state.dateError && !data.loading && !data.error && sourceTotal > 0 && pages > 1 && state.page < pages && <nav className="discovery-pagination" aria-label="행사 목록 페이지"><button type="button" disabled={state.page === 0} onClick={() => update({ page: String(Math.max(0, state.page - 1)) })}>이전</button><span><strong>{state.page + 1}</strong> / {pages}</span><button type="button" disabled={(state.page + 1) * 20 >= sourceTotal} onClick={() => update({ page: String(state.page + 1) })}>다음</button></nav>}
       </> : <div className="discovery-coming"><div className="discovery-coming-icon"><DiscoveryIcon name={category.icon} size={42}/></div><h3>{category.label} 정보를 준비하고 있어요</h3><p>검토와 공개가 끝난 정보부터 이곳에서 확인할 수 있습니다.</p><Link className="discovery-primary" to={categoryHref('subculture')}>서브컬처 먼저 둘러보기 <DiscoveryIcon name="arrow" size={17}/></Link></div>}
       <div className="discovery-guide-strip"><div className="discovery-guide-label"><DiscoveryIcon name="info"/><strong>방문 전 확인하세요</strong></div><p>일정과 입장 조건은 바뀔 수 있으니 주최 측 최신 공지를 확인해 주세요.</p><Link to="/events">예약 가능한 행사 <DiscoveryIcon name="arrow" size={16}/></Link></div>
     </section>
@@ -142,18 +154,18 @@ export function DiscoveryPage() {
 function MiniEventRow({ row, today, returnTo }: { row: PublicEventSummary; today: string; returnTo: string }) {
   const schedule = eventStatus(row.event, today)
   const occurrence = cardOccurrences(row.event.occurrences, today, 'upcoming', 1).shown[0]
-  return <Link className="daily-note-item" to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><span className="daily-note-thumb">{row.banner ? <StoredImage url={row.banner.url} alt=""/> : <DiscoveryIcon name="ticket" size={18}/>}</span><span className="daily-note-copy"><small>{labels[row.event.subcategory] || '행사'} <b>{schedule.label}</b></small><strong>{row.event.name}</strong><span>{occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span></span></Link>
+  return <Link className="daily-note-item" to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><span className="daily-note-thumb"><ContentImage url={row.banner?.url} kind="event" alt={`${row.event.name} 대표 이미지`}/></span><span className="daily-note-copy"><small>{labels[row.event.subcategory] || '행사'} <b>{schedule.label}</b></small><strong>{row.event.name}</strong><span>{occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span></span></Link>
 }
 
 function FeaturedEvent({ row, today, returnTo, preview = false }: { row: PublicEventSummary; today: string; returnTo: string; preview?: boolean }) {
   const schedule = eventStatus(row.event, today)
   const occurrence = cardOccurrences(row.event.occurrences, today, 'upcoming', 1).shown[0]
-  return <Link className={`featured-event${preview ? ' is-preview' : ''}`} to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}>{row.banner ? <StoredImage url={row.banner.url} alt={`${row.event.name} 대표 이미지`} loading={preview ? 'lazy' : 'eager'} fetchPriority={preview ? 'auto' : 'high'}/> : <div className="featured-placeholder"><DiscoveryIcon name="sparkles" size={42}/></div>}<span className="featured-scrim"/><span className="featured-copy"><small>{occurrence ? occurrenceLabel(occurrence) : schedule.label} / {row.event.region === 'GYEONGGI' ? '경기' : '서울'}</small><strong>{row.event.name}</strong><span>{row.event.venueName || '장소 확인 필요'}</span></span></Link>
+  return <Link className={`featured-event${preview ? ' is-preview' : ''}`} to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><ContentImage url={row.banner?.url} kind="event" alt={`${row.event.name} 대표 이미지`} loading={preview ? 'lazy' : 'eager'} fetchPriority={preview ? 'auto' : 'high'}/><span className="featured-scrim"/><span className="featured-copy"><small>{occurrence ? occurrenceLabel(occurrence) : schedule.label} / {row.event.region === 'GYEONGGI' ? '경기' : '서울'}</small><strong>{row.event.name}</strong><span>{row.event.venueName || '장소 확인 필요'}</span></span></Link>
 }
 
 function RankingEvent({ row, rank, today, returnTo }: { row: PublicEventSummary; rank: number; today: string; returnTo: string }) {
   const occurrence = cardOccurrences(row.event.occurrences, today, 'upcoming', 1).shown[0]
-  return <article className="ranking-event"><span className="ranking-number" aria-label={`일정 순서 ${rank}`}>{String(rank).padStart(2, '0')}</span><Link to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><div className="ranking-image">{row.banner ? <StoredImage url={row.banner.url} alt={`${row.event.name} 대표 이미지`}/> : <div className="ranking-placeholder"><DiscoveryIcon name="ticket" size={28}/></div>}</div><div className="ranking-copy"><strong>{row.event.name}</strong><span>{occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span><small>{row.event.venueName || '장소 확인 필요'}</small></div></Link><SaveButton target={{type:'EVENT',eventId:row.id,id:row.id,participantId:null}} compact/></article>
+  return <article className="ranking-event"><span className="ranking-number" aria-label={`일정 순서 ${rank}`}>{String(rank).padStart(2, '0')}</span><Link to={`/discover/${row.id}`} state={{ catalogReturnTo: returnTo }}><div className="ranking-image"><ContentImage url={row.banner?.url} kind="event" alt={`${row.event.name} 대표 이미지`}/></div><div className="ranking-copy"><strong>{row.event.name}</strong><span>{occurrence ? occurrenceLabel(occurrence) : '일정 확인 필요'}</span><small>{row.event.venueName || '장소 확인 필요'}</small></div></Link><SaveButton target={{type:'EVENT',eventId:row.id,id:row.id,participantId:null}} compact/></article>
 }
 
 export function DiscoveryEventCard({ row, today, returnTo, period = 'all', from='', to='' }: { row: PublicEventSummary; today: string; returnTo: string; period?: Period; from?:string; to?:string }) {
@@ -161,5 +173,5 @@ export function DiscoveryEventCard({ row, today, returnTo, period = 'all', from=
   const schedule = eventStatus(event, today)
   const dates = cardOccurrences(event.occurrences, today, period, 3, from, to)
   const visitDay = dates.shown.length ? (from && dates.shown[0].startDate < from ? from : dates.shown[0].startDate) : ''
-  return <article className="discovery-event-card"><Link to={`/discover/${row.id}${visitDay?'?day='+encodeURIComponent(visitDay):''}`} state={{ catalogReturnTo: returnTo }} className="discovery-event-link"><div className={`discovery-event-poster discovery-poster-${event.subcategory.toLowerCase()}`}>{banner ? <StoredImage url={banner.url} alt={banner.caption || `${event.name} 포스터`}/> : <div className="discovery-poster-placeholder"><DiscoveryIcon name="ticket" size={42}/><strong>{labels[event.subcategory] || '행사'}</strong><small>행사 이미지를 준비하고 있어요</small></div>}</div><div className="discovery-event-body"><div className="discovery-card-label"><span>{labels[event.subcategory] || '행사'}</span><b className={`is-${schedule.state}`}>{schedule.label}</b></div><h3>{event.name}</h3>{schedule.notice&&<p className="visit-important-note">{schedule.notice}</p>}<div className="discovery-event-meta"><DiscoveryIcon name="calendar" size={16}/><div>{dates.shown.map((o,i) => <span key={i}>{occurrenceLabel(o)}</span>)}{dates.additional > 0 && <span>추가 일정 {dates.additional}개</span>}{dates.omittedPast > 0 && <span>지난 일정 {dates.omittedPast}개</span>}{!dates.shown.length && <span>일정은 상세에서 확인하세요.</span>}</div></div><div className="discovery-event-meta"><DiscoveryIcon name="pin" size={16}/><span>{event.venueName || '장소 미공개 또는 미확인'}</span></div><p className="discovery-event-description">{event.description}</p><div className="discovery-event-bottom"><span>{row.participantCount > 0 ? <>소개된 참가 부스 <strong>{row.participantCount.toLocaleString('ko-KR')}곳</strong></> : '행사 정보 살펴보기'}</span><DiscoveryIcon name="arrow" size={19}/></div></div></Link><div className="memory-discovery-save"><SaveButton target={{type:'EVENT',eventId:row.id,id:row.id,participantId:null}} day={visitDay} compact/></div>{banner && <div className="discovery-poster-credit">{banner.credit} <SafeLink url={banner.attribution}>이미지 출처</SafeLink></div>}</article>
+  return <article className="discovery-event-card"><Link to={`/discover/${row.id}${visitDay?'?day='+encodeURIComponent(visitDay):''}`} state={{ catalogReturnTo: returnTo }} className="discovery-event-link"><div className={`discovery-event-poster discovery-poster-${event.subcategory.toLowerCase()}`}><ContentImage url={banner?.url} kind="event" alt={`${event.name} 포스터`}/>{!banner && <span className="media-fallback-caption">기본 이미지</span>}</div><div className="discovery-event-body"><div className="discovery-card-label"><span>{labels[event.subcategory] || '행사'}</span><b className={`is-${schedule.state}`}>{schedule.label}</b></div><h3>{event.name}</h3>{schedule.notice&&<p className="visit-important-note">{schedule.notice}</p>}<div className="discovery-event-meta"><DiscoveryIcon name="calendar" size={16}/><div>{dates.shown.map((o,i) => <span key={i}>{occurrenceLabel(o)}</span>)}{dates.additional > 0 && <span>추가 일정 {dates.additional}개</span>}{dates.omittedPast > 0 && <span>지난 일정 {dates.omittedPast}개</span>}{!dates.shown.length && <span>일정은 상세에서 확인하세요.</span>}</div></div><div className="discovery-event-meta"><DiscoveryIcon name="pin" size={16}/><span>{event.venueName || '장소 미공개 또는 미확인'}</span></div><p className="discovery-event-description">{event.description}</p><div className="discovery-event-bottom"><span>{row.participantCount > 0 ? <>소개된 참가 부스 <strong>{row.participantCount.toLocaleString('ko-KR')}곳</strong></> : '행사 정보 살펴보기'}</span><DiscoveryIcon name="arrow" size={19}/></div></div></Link><div className="memory-discovery-save"><SaveButton target={{type:'EVENT',eventId:row.id,id:row.id,participantId:null}} day={visitDay} compact/></div>{banner && <div className="discovery-poster-credit">{banner.credit} <SafeLink url={banner.attribution}>이미지 출처</SafeLink></div>}</article>
 }

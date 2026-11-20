@@ -1,0 +1,30 @@
+{
+  "id": "character-miku-enrichment",
+  "kind": "CHARACTERS",
+  "context": {
+    "input": {},
+    "product": {
+      "id": "cfeddfb4-99d5-4349-8720-af6c0343ed17",
+      "revision": 1,
+      "legacyProductId": null,
+      "data": {
+        "name": "初音ミク アクリルキーホルダー",
+        "memberName": "mellt°sweetly",
+        "productUrl": "https://booth.pm/ja/items/4261580",
+        "subjects": [
+          "初音ミク"
+        ],
+        "sources": [
+          {
+            "url": "https://booth.pm/ja/items/4261580",
+            "access": "ORIGINAL",
+            "evidence": "商品名 初音ミク アクリルキーホルダー"
+          }
+        ],
+        "images": []
+      }
+    },
+    "identityCandidates": []
+  },
+  "previousReview": "필수 근거 3개 원문을 직접 확인했다. BOOTH의 해당 상품 영역은 상품명과 「プロジェクトセカイ COLORFUL LIVE 2nd -Will-」의 初音ミク를 모티프로 했다는 설명을 명시한다. piapro 공식 소개는 캐릭터 정체성을, SEGA 공식 보고서는 정확한 라이브 회차와 게임의 관계 및 미쿠 출연을 뒷받침한다. 따라서 텍스트 기반 캐릭터·작품 연결은 일치한다. 다만 상품 이미지는 직접 확인하지 않아 외형과 구체적 버전은 미확인이므로 승인하지 않는다. 행사 판매·작가 참가·이미지 재게시 권리는 확인되지 않았으며 이 판정으로 부여하지 않는다."
+}

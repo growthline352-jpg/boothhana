@@ -1,0 +1,43 @@
+{
+  "leaseToken": "9ded953c-d90f-48b9-bb4f-1b1194fdf1e1",
+  "extractionId": "97be062b-020a-416d-91c8-de0c2469c733",
+  "resultHash": "local-evaluation-only",
+  "verdict": "APPROVE",
+  "reason": "제공된 비절단 공식 원문에서 su수 채널의 종료상품 2개와 판매자 귀속을 확인했다. /916의 옵션 6개, /242의 옵션 9개가 후보 목록과 정확히 일치하며 모두 4,000원이다. 스텔라이브 제목·태그와 옵션명이 텍스트 주제를 뒷받침한다. 행사 회차·부스·개최일정도 원문과 일치한다. 과거 선입금 자료로 한정하고 실제 참가일·현재 판매 여부·동명 상품 동일성은 미확인으로 유지했으며, 이미지 권한이나 별도 정체성 병합을 확정하지 않았다.",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": false,
+    "openedUrls": [
+      "https://comicw.net/g/242",
+      "https://comicw.net/g/916",
+      "https://comicw.net/g/creator/@su%EC%88%98"
+    ],
+    "usage": {
+      "input_tokens": 24719,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 207,
+      "reasoning_output_tokens": 32
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://comicw.net/g/242",
+        "sha256": "e46c7080485171ce9669de594c2725b26fe76010037e0e86fdc03e4b60dc132f",
+        "capturedAt": "2026-10-08T11:43:57.097468+00:00"
+      },
+      {
+        "url": "https://comicw.net/g/916",
+        "sha256": "b9a563b98d006c4db08b0a62a4f8f176d3da5d47a9311c95d80661d4d2a98355",
+        "capturedAt": "2026-10-08T11:43:57.248422+00:00"
+      },
+      {
+        "url": "https://comicw.net/g/creator/@su%EC%88%98",
+        "sha256": "8b4b0e25b756f416daef54add161945b80809759cffe509bea9e2ad547075a8d",
+        "capturedAt": "2026-10-08T11:43:58.514034+00:00"
+      }
+    ]
+  }
+}

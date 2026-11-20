@@ -1,0 +1,12 @@
+{
+  "id": "discovery-comic338-fixed",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "65383b2a-ae1f-4f83-ac62-f63e9eb79ac3",
+  "leaseToken": "d8ba835a-7cd9-4e13-b546-f461894cecdc",
+  "state": "FAILED",
+  "errorType": "RunError",
+  "error": "CLI did not report web research",
+  "seconds": 179.0
+}

@@ -8,6 +8,7 @@ from jsonschema import Draft202012Validator
 from rules import public_url,check_event,parse_date,MAX_JSON_BYTES,InvalidResult
 ROOT=Path(__file__).resolve().parent
 SCOPES={'EVENT_LISTED','EVENT_SALE_CONFIRMED','PROFILE','GENERAL_CATALOG','PAST_REFERENCE','UNKNOWN'}
+PRIOR_APPLICATION=re.compile(r'(?<!\d)(20\d{2}).{0,32}?(?:참가\s*(?:제안서|신청서)|부스\s*(?:신청서|신청)|exhibitor\s+application)',re.I)
 
 def parse_schema(raw: bytes, name: str) -> dict:
     if len(raw)>MAX_JSON_BYTES: raise InvalidResult('2MiB result limit')
@@ -36,6 +37,12 @@ def images(values,blocked):
 
 def check_participant(p: dict,event: dict,blocked: list[str]):
     if not p['registrationName'].strip(): raise InvalidResult('No registration name')
+    # Organizer directories can roll application copy from an older edition
+    # forward while correctly showing the company in the current map.
+    event_years={int(row['startDate'][:4]) for row in event.get('occurrences') or [] if row.get('startDate')}
+    if event_years and p.get('description'):
+        if any(int(match.group(1))<min(event_years) for match in PRIOR_APPLICATION.finditer(p['description'])):
+            raise InvalidResult('Prior-edition application text cannot be current participant introduction')
     sources(p['sources'],blocked);images(p['images'],blocked);check_identity(p,blocked)
     for m in p['members']:
         if not m['name'].strip(): raise InvalidResult('Empty member name')

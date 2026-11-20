@@ -1,0 +1,357 @@
+{
+  "leaseToken": "f15c3dd7-4c8f-4eb8-928b-d2aefa6bfe4e",
+  "extractionId": "1100f06e-78da-46da-b9b4-f4cc949748ef",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "schemaVersion": "1",
+    "searchStatus": "PARTIAL",
+    "summary": "2026년 10월 서울·경기 행사 4개 회차를 주최 측 공식 원문에서 확인했다. 제공 leadUrl은 본문을 읽을 수 없어 일러스타 페스 14 관련 여부를 확정하지 않았다. 다른 후보의 공식 검증과 참가 목록 수집이 남아 있다.",
+    "queries": [
+      "site:illustar.net 2026 10월 일러스타",
+      "2026 10월 코믹월드 서울 경기 일정",
+      "\"일러스타\" \"2026\" \"14\"",
+      "\"2026\" \"10월\" \"서브컬처\" 행사",
+      "\"2026\" \"10월\" \"돌프리마켓\"",
+      "site:kintex.com \"2026\" \"일러스타\"",
+      "site:illustar.net \"14\" \"10월 10일\"",
+      "호요랜드 2026 공식 10월 2일",
+      "디페스타 35 2026 공식",
+      "코미버스 2026 가을 공식"
+    ],
+    "sourceCoverage": [
+      {
+        "channel": "ORGANIZER_OFFICIAL",
+        "status": "PARTIAL",
+        "queries": [
+          "site:illustar.net 2026 10월 일러스타",
+          "디페스타 35 2026 공식",
+          "코미버스 2026 가을 공식"
+        ],
+        "checkedUrls": [
+          "https://illustar.net/notice/mEQ8Nzne",
+          "https://illustar.net/",
+          "https://comicw.net/free/9247",
+          "https://comicw.net/c/408",
+          "https://dongne.co/events",
+          "https://dongne.co/events/df2610",
+          "https://dongne.co/events/df261002",
+          "https://dongne.co/events/wt03",
+          "https://dongne.co/events/25d09",
+          "https://comiverse.kr/",
+          "https://comiverse.kr/info",
+          "https://comiverse.kr/board/view/227"
+        ],
+        "notes": "일러스타 공식 페이지는 본문 0줄로 반환됐다. 검색 요약의 회차 정보를 확정 근거로 사용하지 않았다. 코미버스 행사정보는 이미지 중심이며 일정 내용을 판독하지 못했다. 동인네트워크 목록에 추가 페이지가 표시되지만 실제 다음 URL은 노출되지 않았다."
+      },
+      {
+        "channel": "VENUE_CALENDAR",
+        "status": "NO_RESULTS",
+        "queries": [
+          "site:kintex.com \"2026\" \"일러스타\""
+        ],
+        "checkedUrls": [],
+        "notes": "검색 결과 없음. 장소 측 일정 원문 검증은 미완료다."
+      },
+      {
+        "channel": "TICKETING",
+        "status": "CHECKED",
+        "queries": [],
+        "checkedUrls": [
+          "https://comicw.net/shop/1788916238"
+        ],
+        "notes": "코믹월드 338 수원 공식 입장권 원문에서 티켓 종류와 사전 예매 가격을 확인했다. 구매·로그인은 수행하지 않았다."
+      },
+      {
+        "channel": "COMMUNITY_INDEX",
+        "status": "PARTIAL",
+        "queries": [
+          "\"2026\" \"10월\" \"서브컬처\" 행사",
+          "호요랜드 2026 공식 10월 2일"
+        ],
+        "checkedUrls": [
+          "https://comicw.net/c/341",
+          "https://comicw.net/c/417",
+          "https://comicw.net/c/372",
+          "https://comicw.net/c/419"
+        ],
+        "notes": "타 주최 행사에 관한 코믹월드 캘린더는 발견용으로만 사용했다. 일러스타 페스 14, 호요랜드 2026, 코미버스 2026 가을은 공식 일정 검증이 부족해 결과에서 제외했다."
+      }
+    ],
+    "events": [
+      {
+        "name": "제35회 디. 페스타",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "주식회사 동인네트워크",
+        "edition": "35회",
+        "region": "SEOUL",
+        "venueName": "SETEC",
+        "address": "서울특별시 강남구 남부순환로 3104 SETEC",
+        "description": "아마추어 창작 문화 이벤트. 토요일과 일요일은 공식 페이지와 참가 목록이 각각 구분되어 있다.",
+        "admission": "공식 행사 페이지 기준 일반 입장료 10,000원",
+        "subjects": [],
+        "occurrences": [
+          {
+            "startDate": "2026-10-03",
+            "endDate": "2026-10-03",
+            "startTime": "11:00",
+            "endTime": "16:00"
+          },
+          {
+            "startDate": "2026-10-04",
+            "endDate": "2026-10-04",
+            "startTime": "11:00",
+            "endTime": "16:00"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://dongne.co/events/df2610",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "35회 토요일 행사일 2026-10-03, 서울 SETEC, 입장료 10,000원, 일반 입장 11:00 및 종료 16:00을 명시한다."
+          },
+          {
+            "url": "https://dongne.co/events/df261002",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "35회 일요일 행사일 2026-10-04와 동일 장소·일반 관람 시간을 명시한다."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "토요일 참가 목록 첫 페이지만 열었다. 30페이지 중 나머지는 미수집이며 실제 다음 URL은 페이지 원문에 노출되지 않았다.",
+          "요일별 참가자를 합치거나 해당 행사 판매 상품을 확정하지 않았다."
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "PARTICIPANTS",
+            "url": "https://dongne.co/events/df2610/circles",
+            "status": "PUBLISHED",
+            "note": "토요일 참가 목록. 첫 페이지 확인, 전체 수집 미완료."
+          },
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://dongne.co/events/df2610/map",
+            "status": "PUBLISHED",
+            "note": "토요일 공식 배치도 페이지를 직접 열었다."
+          },
+          {
+            "kind": "OFFICIAL",
+            "url": "https://dongne.co/events/df261002",
+            "status": "PUBLISHED",
+            "note": "일요일 행사 및 참가 목록으로 이어지는 공식 페이지."
+          }
+        ],
+        "operationStatus": {
+          "state": "UNKNOWN",
+          "note": "공식 페이지는 양일 모두 Ended로 표시한다. 스키마에 종료 상태가 없어 UNKNOWN으로 기록한다.",
+          "sourceUrl": "https://dongne.co/events/df261002",
+          "checkedOn": "2026-10-08"
+        }
+      },
+      {
+        "name": "스크롤의 바다 3화",
+        "subcategory": "ONLY_EVENT",
+        "organizer": "주식회사 동인네트워크",
+        "edition": "3화",
+        "region": "SEOUL",
+        "venueName": "SETEC",
+        "address": "서울특별시 강남구 남부순환로 3104 SETEC",
+        "description": "웹툰 원작 작품 온리전.",
+        "admission": "공식 행사 페이지 기준 일반 입장료 10,000원",
+        "subjects": [
+          "웹툰 원작 작품"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-04",
+            "endDate": "2026-10-04",
+            "startTime": "11:00",
+            "endTime": "16:00"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://dongne.co/events/wt03",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "행사명, 웹툰 원작 작품 온리전, 2026-10-04, 서울 SETEC, 입장료 및 일반 관람 시간을 명시한다. 참가 서클 17개와 배치도 공개 표시가 있다."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "행사일은 지났으나 페이지 상태는 Ongoing으로 표시되어 운영 상태가 불명확하다."
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://dongne.co/events/wt03",
+            "status": "PUBLISHED",
+            "note": "참가 서클 및 공개 배치도 링크를 포함한 공식 행사 페이지."
+          }
+        ],
+        "operationStatus": {
+          "state": "UNKNOWN",
+          "note": "행사일과 Ongoing 표시가 일치하지 않아 현재 운영 상태를 확정하지 않았다.",
+          "sourceUrl": "https://dongne.co/events/wt03",
+          "checkedOn": "2026-10-08"
+        }
+      },
+      {
+        "name": "제9회 쩜오 어워드",
+        "subcategory": "ONLY_EVENT",
+        "organizer": "주식회사 동인네트워크",
+        "edition": "9회",
+        "region": "SEOUL",
+        "venueName": "SETEC",
+        "address": "서울특별시 강남구 남부순환로 3104 SETEC",
+        "description": "실사매체 통합 온리전.",
+        "admission": "공식 행사 페이지 기준 일반 입장료 10,000원",
+        "subjects": [
+          "실사매체"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-04",
+            "endDate": "2026-10-04",
+            "startTime": "11:00",
+            "endTime": "16:00"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://dongne.co/events/25d09",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "9회 행사명, 실사매체 통합 온리전, 2026-10-04, 서울 SETEC, 입장료 및 일반 관람 시간을 명시한다. 참가 서클 177개와 배치도 공개 표시가 있다."
+          }
+        ],
+        "banners": [],
+        "warnings": [],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://dongne.co/events/25d09",
+            "status": "PUBLISHED",
+            "note": "참가 서클 및 공개 배치도 링크를 포함한 공식 행사 페이지."
+          }
+        ],
+        "operationStatus": {
+          "state": "UNKNOWN",
+          "note": "공식 페이지는 Ended로 표시한다. 스키마에 종료 상태가 없어 UNKNOWN으로 기록한다.",
+          "sourceUrl": "https://dongne.co/events/25d09",
+          "checkedOn": "2026-10-08"
+        }
+      },
+      {
+        "name": "코믹월드 338 수원",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "(주)코믹월드",
+        "edition": "338",
+        "region": "GYEONGGI",
+        "venueName": "수원메쎄 전관",
+        "address": "경기도 수원시 권선구 세화로134번길 37",
+        "description": "만화·애니메이션·동인행사·코스프레 행사. 주최 측 관리자 공지에서 해당 회차의 개최 일정과 장소를 확인했다.",
+        "admission": "일반 입장권 사전 예매가 7,000원, 정상가 10,000원. 공식 페이지는 100% 사전예약제로 안내한다.",
+        "subjects": [
+          "만화",
+          "애니메이션",
+          "동인",
+          "코스프레"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-24",
+            "endDate": "2026-10-25",
+            "startTime": "11:00",
+            "endTime": "16:30"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://comicw.net/free/9247",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "2026-10-08 관리자 공지가 코믹월드 338 수원을 10월 24~25일 수원메쎄 전관에서 진행한다고 명시하고 배치도 공개를 안내한다."
+          },
+          {
+            "url": "https://comicw.net/c/408",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "2026-10-24~25, 11:00~16:30 및 수원시 권선구 주소를 명시한다."
+          },
+          {
+            "url": "https://comicw.net/shop/1788916238",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "338 수원 입장권 원문에서 일반 입장권 사전 예매가 7,000원, 정상가 10,000원 및 사전예약제 안내를 확인했다."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "공식 캘린더 장소 설명에 '일산 수원메쎄'라는 혼재 표기가 있다. 관리자 공지의 수원메쎄 전관 및 수원시 주소를 채택했다.",
+          "배치도는 계속 업데이트되며 일부 위치와 내용이 변경될 수 있다고 공지한다."
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://comicw.net/free/9247",
+            "status": "PUBLISHED",
+            "note": "배치도 공개를 알리는 공식 공지. 배치도 전체 내용은 미수집."
+          },
+          {
+            "kind": "SALES",
+            "url": "https://comicw.net/shop/1788916238",
+            "status": "PUBLISHED",
+            "note": "행사 입장권 판매 페이지이며 개별 작가 상품 판매 근거가 아니다."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "2026-10-08 관리자 공지에서 해당 일정으로 진행 예정임을 확인했다.",
+          "sourceUrl": "https://comicw.net/free/9247",
+          "checkedOn": "2026-10-08"
+        }
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/c/341",
+      "https://comicw.net/",
+      "https://comicw.net/free/9247",
+      "https://comicw.net/c/408",
+      "https://comicw.net/c/417",
+      "https://comicw.net/c/372",
+      "https://comicw.net/c/419",
+      "https://comicw.net/shop/1788916238",
+      "https://comiverse.kr/",
+      "https://dongne.co/events/df2610",
+      "https://comiverse.kr/info",
+      "https://comiverse.kr/board/view/227",
+      "https://dongne.co/events",
+      "https://dongne.co/events/df2610/circles",
+      "https://dongne.co/events/df2610/map",
+      "https://dongne.co/events/df261002",
+      "https://dongne.co/events/wt03",
+      "https://dongne.co/events/25d09"
+    ],
+    "usage": {
+      "input_tokens": 630155,
+      "cached_input_tokens": 535040,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4473,
+      "reasoning_output_tokens": 86
+    },
+    "imageHashes": [],
+    "sourceDocuments": []
+  }
+}

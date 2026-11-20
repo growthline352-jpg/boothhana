@@ -1,0 +1,117 @@
+{
+  "checkedAt": "2026-10-22",
+  "workspace": "C:/Users/071823/Desktop/BoothHana2",
+  "branch": "codex/verified-organizers-series",
+  "state": "Local standalone preview; uncommitted; production entry not connected",
+  "preview": {
+    "url": "http://127.0.0.1:4193/outings-preview.html#/",
+    "command": "pnpm run dev:outings",
+    "workingDirectory": "frontend",
+    "outputDirectory": "frontend/dist-outings-preview"
+  },
+  "featureFiles": [
+    "frontend/outings-preview.html",
+    "frontend/vite.outings-preview.config.ts",
+    "frontend/src/features/outings/OutingsApp.tsx",
+    "frontend/src/features/outings/PlannerWorkspace.tsx",
+    "frontend/src/features/outings/OutingComponents.tsx",
+    "frontend/src/features/outings/OutingsFooter.tsx",
+    "frontend/src/features/outings/OutingsLogo.tsx",
+    "frontend/src/features/outings/PlaceMap.tsx",
+    "frontend/src/features/outings/model.ts",
+    "frontend/src/features/outings/model.test.ts",
+    "frontend/src/features/outings/useOutings.ts",
+    "frontend/src/features/outings/data.ts",
+    "frontend/src/features/outings/main.tsx",
+    "frontend/src/features/outings/outings.css",
+    "frontend/src/features/outings/discovery-polish.css",
+    "frontend/src/features/outings/planner.css",
+    "frontend/public/assets/brand/outings/outings-symbol-v1.png"
+  ],
+  "sharedAssets": [
+    "frontend/public/assets/categories/subculture.jpg",
+    "frontend/public/assets/categories/exhibitions.jpg",
+    "frontend/public/assets/categories/festivals.jpg"
+  ],
+  "sharedFilesRequiringSelectiveHunks": [
+    {
+      "path": "frontend/package.json",
+      "scope": [
+        "dev:outings",
+        "build:outings",
+        "leaflet 1.9.4",
+        "@types/leaflet"
+      ]
+    },
+    {
+      "path": "frontend/pnpm-lock.yaml",
+      "scope": [
+        "leaflet and @types/leaflet dependency changes"
+      ]
+    },
+    {
+      "path": "frontend/.gitignore",
+      "scope": [
+        "dist-outings-preview"
+      ]
+    },
+    {
+      "path": "frontend/README.md",
+      "scope": [
+        "통합 나들이·일정 로컬 미리보기 section"
+      ]
+    },
+    {
+      "path": "frontend/src/components/layout/PublicLayout.tsx",
+      "scope": [
+        "DEV-only outings preview link; optional for standalone preview"
+      ]
+    },
+    {
+      "path": "frontend/src/features/library/LibraryPage.tsx",
+      "scope": [
+        "DEV-only outings preview link; optional for standalone preview"
+      ]
+    }
+  ],
+  "existingSharedRuntimeDependencies": [
+    "frontend/src/features/discovery/DiscoveryIcon.tsx",
+    "frontend/src/features/catalog/dialogLifecycle.ts",
+    "frontend/src/features/library/guestStore.ts"
+  ],
+  "excludeFromOutingsScope": [
+    "backend changes",
+    "collector changes",
+    "database migrations",
+    "subculture and subculture-preview implementation",
+    "authentication/account changes",
+    "SEO and category-domain changes",
+    "deployment infrastructure",
+    "generated build output"
+  ],
+  "verified": [
+    "Model tests: 17 passed on 2026-10-22",
+    "TypeScript + standalone production build: passed",
+    "Read-only public API data rendered: 37 events for 2026-10-24",
+    "Existing browser plans recovered from previous session",
+    "New course created from real public event without editing prior courses",
+    "Custom rest stop added; reordered and restored",
+    "Manual 10-minute travel input yielded 19:10 arrival after 19:00 prior visit end",
+    "Course preview and reload preserved title, date, stop order and times",
+    "390x844 mobile viewport: no horizontal overflow; console errors/warnings: 0"
+  ],
+  "limitations": [
+    "Normal frontend router/build has no integrated outings entry; preview links are DEV-only",
+    "Popup data and nearby cafe/restaurant search not connected",
+    "Public event adapter does not provide coordinates, structured cost or indoor/outdoor data",
+    "No automatic travel routing, account plan sync, share links or collaborative editing",
+    "Current sample fixtures are limited to 2026-10-01 through 2026-11-30; keep them as explicit demo fixtures"
+  ],
+  "nextWork": [
+    "Choose and wire the public integration route and service navigation",
+    "Define popup category and location/price data contract for event discovery",
+    "Connect coordinates and map-assisted place search before automatic routing",
+    "Implement account plan persistence and guest-to-account migration",
+    "Then implement read-only course sharing"
+  ]
+}

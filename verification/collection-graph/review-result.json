@@ -1,0 +1,22 @@
+{
+  "graphIntegration": {
+    "tests": 21,
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0
+  },
+  "previousFullBackend": {
+    "total": 222,
+    "passed": 158,
+    "skipped": 64,
+    "failed": 0
+  },
+  "collectorPython": {
+    "tests": 259,
+    "failed": 0,
+    "utf8": true
+  },
+  "productionDeploy": false,
+  "productionMigration": false,
+  "liveModelCalls": false
+}

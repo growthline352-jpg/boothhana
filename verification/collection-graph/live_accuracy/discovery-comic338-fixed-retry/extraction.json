@@ -1,0 +1,185 @@
+{
+  "leaseToken": "1a5c1539-52c0-4ec5-a965-70330b1bb716",
+  "extractionId": "e318de11-0f9b-48e6-a209-aaf4f707ddfd",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "schemaVersion": "1",
+    "searchStatus": "PARTIAL",
+    "summary": "공식 원문에서 범위에 해당하는 코믹월드 338 수원 1건을 확인했습니다. 다른 후보는 주최 측 원문 확인이 남아 결과에 포함하지 않았습니다.",
+    "queries": [
+      "2026 10월 24 25 서울 경기 동인 행사 일러스타 페스 온리전",
+      "2026 10월 24 25 수원 코믹월드 행사",
+      "\"2026\" \"10월 24일\" \"온리전\"",
+      "\"2026\" \"10월 25일\" \"온리전\"",
+      "\"2026\" \"10월\" \"24\" \"인형\" \"행사\" 서울",
+      "\"집집2\" \"2026\" 행사",
+      "\"온 동네가 환상향\" \"2026\" site:x.com"
+    ],
+    "sourceCoverage": [
+      {
+        "channel": "ORGANIZER_OFFICIAL",
+        "status": "PARTIAL",
+        "queries": [],
+        "checkedUrls": [
+          "https://comicw.net/e/338/8",
+          "https://comicw.net/c/408",
+          "https://comicw.net/map/338/",
+          "https://www.biaf.or.kr/kr/",
+          "https://x.com/OnDongHwan",
+          "https://www.instagram.com/zipzip.hbt/"
+        ],
+        "notes": "코믹월드 원문 확인. BIAF는 502, X는 403, Instagram은 가져오기 제한으로 확인 실패."
+      },
+      {
+        "channel": "VENUE_CALENDAR",
+        "status": "INACCESSIBLE",
+        "queries": [],
+        "checkedUrls": [
+          "https://suwonmesse.com/?kboard_id=3&mod=document&uid=523"
+        ],
+        "notes": "검색 결과는 발견했으나 원문 열기에 실패하여 근거로 확정하지 않음."
+      },
+      {
+        "channel": "TICKETING",
+        "status": "PARTIAL",
+        "queries": [],
+        "checkedUrls": [
+          "https://comicw.co.kr/shop/1773298224"
+        ],
+        "notes": "공식 안내의 예매 링크를 열었으나 오류 페이지로 연결됨. 가격 미확인."
+      },
+      {
+        "channel": "COMMUNITY_INDEX",
+        "status": "PARTIAL",
+        "queries": [
+          "\"2026\" \"10월 24일\" \"온리전\"",
+          "\"집집2\" \"2026\" 행사"
+        ],
+        "checkedUrls": [
+          "https://simugung.tistory.com/1279",
+          "https://comicw.net/c/344",
+          "https://comicw.net/c/419"
+        ],
+        "notes": "온 동네가 환상향 3, 집집 Chapter 02, 부천국제애니메이션페스티벌 2026, 코미버스 2026 가을 후보 발견. 각 주최 측 공식 근거 검증 미완료."
+      }
+    ],
+    "events": [
+      {
+        "name": "코믹월드 338 수원",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "(주)코믹월드",
+        "edition": "338",
+        "region": "GYEONGGI",
+        "venueName": "수원메쎄 전관",
+        "address": "경기도 수원시 권선구 세화로134번길 37",
+        "description": "창작 만화·회지·팬시·일러스트 등을 전시하고 판매하는 동인 행사. 동아리 전시교류전과 코스프레 무대행사를 안내하고 있습니다.",
+        "admission": "100% 사전예약제. 일반 입장 11:00, 얼리 입장 10:30. 입장권 가격 미확인.",
+        "subjects": [
+          "만화",
+          "애니메이션",
+          "동인 창작",
+          "코스프레"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-24",
+            "endDate": "2026-10-25",
+            "startTime": "11:00",
+            "endTime": "16:30"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://comicw.net/e/338/8",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "338 수원 회차, 2026-10-24~25 양일, 수원메쎄 전관, 일반 개장 11:00 및 종료 16:30을 직접 확인."
+          },
+          {
+            "url": "https://comicw.net/c/408",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "동일 회차의 경기도 분류, 일정, 수원메쎄 및 세화로134번길 37 주소 확인."
+          },
+          {
+            "url": "https://comicw.net/map/338/",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "338회 수원 동아리 배치도 페이지 확인. 개별 부스와 참가일 데이터는 확인하지 못함."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "개별 작가 참가 및 해당 행사 판매 상품은 확인하지 않았습니다.",
+          "일정과 입장 시간은 현장 상황에 따라 변동될 수 있습니다.",
+          "배치도 페이지는 확인했으나 실제 배치 이미지와 개별 참가 명단의 공개 상태는 미확인입니다."
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://comicw.net/e/338/8",
+            "status": "PUBLISHED",
+            "note": "해당 회차 관람 안내."
+          },
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://comicw.net/map/338/",
+            "status": "UNKNOWN",
+            "note": "회차별 페이지 접근 가능. 실제 배치도 데이터 미확인."
+          },
+          {
+            "kind": "PARTICIPANTS",
+            "url": "https://comicw.net/g/boothcut/",
+            "status": "UNKNOWN",
+            "note": "공식 메뉴 연결 페이지에 준비중 표시. 해당 회차 참가 명단 미확인."
+          },
+          {
+            "kind": "SALES",
+            "url": null,
+            "status": "UNKNOWN",
+            "note": "해당 회차 판매 정보 미확인."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "공식 관람 안내에 개최 일정이 게시되어 있습니다.",
+          "sourceUrl": "https://comicw.net/e/338/8",
+          "checkedOn": "2026-10-08"
+        }
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/e/338/8",
+      "https://comicw.net/c/408",
+      "https://comicw.net/map",
+      "https://comicw.net/g/boothcut",
+      "https://simugung.tistory.com/1279",
+      "https://comicw.co.kr/shop/1773298224",
+      "https://comicw.net/map/338",
+      "https://comicw.net/c/344",
+      "https://comicw.net/c/419"
+    ],
+    "usage": {
+      "input_tokens": 339757,
+      "cached_input_tokens": 280192,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2380,
+      "reasoning_output_tokens": 49
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://comicw.net/e/338/8",
+        "sha256": "5b8528ede5a27f66958aa332dbfb3c3bd74a0f6f9d61b0864ebc88ea857d59c6",
+        "capturedAt": "2026-10-08T11:43:33.264082+00:00"
+      }
+    ]
+  }
+}

@@ -107,7 +107,7 @@ class RunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             f=Path(temp)/'a';f.write_text('\n'.join([
                 json.dumps({'type':'item.completed','item':{'type':'web_search','query':'event search','action':{'type':'search'}}}),
-                json.dumps({'type':'item.completed','item':{'type':'web_search','query':'https://Official.Example/event/#top','action':{'type':'other'}}}),
+                json.dumps({'type':'item.completed','item':{'type':'web_search','query':'https://Official.Example/event/#top','action':{'type':'other'},'results':[{'url':'https://Official.Example/event/#top','ref_id':'turn0view0','snippet':'Total lines: 30'}]}}),
             ]))
             self.assertEqual(audit_opened_urls(f),['https://official.example/event'])
     def test_auth_refresh_preserved(self):

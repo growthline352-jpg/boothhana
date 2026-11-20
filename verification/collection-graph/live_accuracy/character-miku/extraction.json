@@ -1,0 +1,77 @@
+{
+  "leaseToken": "a398f43a-76cc-4ef5-a373-c335159473f6",
+  "extractionId": "11f5bf12-f65a-422c-a71f-8581af072076",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "assignments": [
+      {
+        "status": "CONFIRMED",
+        "work": {
+          "id": null,
+          "name": "プロジェクトセカイ カラフルステージ！ feat. 初音ミク",
+          "sourceUrl": "https://www.sega.jp/topics/detail/230228_2/",
+          "medium": "게임",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "character": {
+          "id": null,
+          "name": "初音ミク",
+          "sourceUrl": "https://piapro.net/pages/character",
+          "medium": "버추얼 싱어·음성 합성 소프트웨어 캐릭터",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "evidenceUrl": "https://booth.pm/ja/items/4261580",
+        "evidence": "상품명은 「初音ミク アクリルキーホルダー」이며, 상품 설명은 「プロジェクトセカイ COLORFUL LIVE 2nd -Will-」의 하츠네 미쿠를 모티프로 제작했다고 명시한다. SEGA 공식 원문은 해당 라이브가 「プロジェクトセカイ カラフルステージ！ feat. 初音ミク」의 라이브임을 확인하며 하츠네 미쿠의 출연을 기록한다.",
+        "basis": "TEXT",
+        "imageHash": null,
+        "imageRegion": null
+      }
+    ],
+    "unresolved": [
+      "이번 묶음에는 첨부 이미지와 SHA256 manifest가 없어 상품 외형 및 구체적인 의상·세카이 버전은 확인하지 않았다.",
+      "라이브를 모티프로 삼았다는 설명만으로 해당 행사에서의 상품 판매나 작가 참가를 확정할 수 없다."
+    ],
+    "sources": [
+      {
+        "url": "https://booth.pm/ja/items/4261580",
+        "kind": "OTHER",
+        "access": "ORIGINAL",
+        "evidence": "판매자 상품 원문에서 상품명과 COLORFUL LIVE 2nd -Will-의 하츠네 미쿠를 모티프로 한 아크릴 키홀더라는 설명을 확인했다."
+      },
+      {
+        "url": "https://piapro.net/pages/character",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "크립톤 공식 캐릭터 소개에서 初音ミク를 크립톤이 개발한 소프트웨어이자 버추얼 싱어 캐릭터로 확인했다."
+      },
+      {
+        "url": "https://www.sega.jp/topics/detail/230228_2/",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "SEGA 공식 보고서에서 게임의 정식 명칭, COLORFUL LIVE 2nd - Will -과 게임의 관계, 하츠네 미쿠의 출연을 확인했다."
+      }
+    ],
+    "imageCoverage": []
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-2",
+    "schemaVersion": "graph-2",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://booth.pm/ja/items/4261580",
+      "https://pjsekai.sega.jp/colorfullive/2nd",
+      "https://www.sega.jp/topics/detail/230228_2"
+    ],
+    "usage": {
+      "input_tokens": 113060,
+      "cached_input_tokens": 67712,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 780,
+      "reasoning_output_tokens": 0
+    },
+    "imageHashes": []
+  }
+}

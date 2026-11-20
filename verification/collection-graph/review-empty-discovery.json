@@ -1,0 +1,26 @@
+{
+  "input": {
+    "schemaVersion": "1",
+    "searchStatus": "COMPLETE",
+    "summary": "공식 일정에서 해당 주간 행사 없음",
+    "queries": [
+      "official calendar"
+    ],
+    "sourceCoverage": [
+      {
+        "channel": "ORGANIZER_OFFICIAL",
+        "status": "NO_RESULTS",
+        "queries": [],
+        "checkedUrls": [
+          "https://example.com/official-calendar"
+        ],
+        "notes": "공식 전체 일정 확인"
+      }
+    ],
+    "events": []
+  },
+  "openedUrls": [
+    "https://example.com/official-calendar"
+  ],
+  "outcome": "Every approved source must be directly opened by the reviewer"
+}

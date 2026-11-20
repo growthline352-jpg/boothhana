@@ -1,0 +1,92 @@
+{
+  "leaseToken": "1a5c1539-52c0-4ec5-a965-70330b1bb716",
+  "extractionId": "e318de11-0f9b-48e6-a209-aaf4f707ddfd",
+  "resultHash": "local-evaluation-only",
+  "verdict": "APPROVE",
+  "reason": "행사별 독립 검토: 0:APPROVE",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/boothcut",
+      "https://comicw.net/e/338/8",
+      "https://comicw.net/c/408",
+      "https://comicw.net/map/338/"
+    ],
+    "usage": {
+      "eventReviews": [
+        {
+          "input_tokens": 83726,
+          "cached_input_tokens": 62336,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 427,
+          "reasoning_output_tokens": 27
+        }
+      ]
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://comicw.net/c/408",
+        "sha256": "306bdecf3aaefd48b084fc25835333b7ce9a4d8a561e5c01e050eebde74c222c",
+        "capturedAt": "2026-10-08T11:45:04.997825+00:00"
+      },
+      {
+        "url": "https://comicw.net/e/338/8",
+        "sha256": "5b8528ede5a27f66958aa332dbfb3c3bd74a0f6f9d61b0864ebc88ea857d59c6",
+        "capturedAt": "2026-10-08T11:45:05.114028+00:00"
+      },
+      {
+        "url": "https://comicw.net/map/338/",
+        "sha256": "8ff23022d6286df73070057f0aec7e7a4f1d0a1181844852e2b81f8ac02fd17d",
+        "capturedAt": "2026-10-08T11:45:05.213847+00:00"
+      }
+    ]
+  },
+  "eventDecisions": [
+    {
+      "index": 0,
+      "verdict": "APPROVE",
+      "reason": "공식 관람 안내 원문에서 338회 수원, 2026-10-24~25, 수원메쎄 전관, 일반 11:00·얼리 10:30 입장, 16:30 종료 및 사전예약제를 확인했다(https://comicw.net/e/338/8). 제공된 available=true 행사일정 원문은 경기도 분류와 주소를, 배치도 원문은 338회 수원 페이지를 뒷받침한다. 참가 명단 연결 페이지의 ‘준비중’ 표시도 직접 확인했다(https://comicw.net/g/boothcut/). 가격·개별 참가자·판매 상품·실제 배치 데이터는 미확인으로 유지했으며 전체 수집 완료나 이미지 공개 권한을 주장하지 않아 부분 결과로 승인한다.",
+      "audit": {
+        "model": "gpt-6.1-sol",
+        "promptVersion": "graph-3",
+        "schemaVersion": "graph-3",
+        "webSearchObserved": true,
+        "openedUrls": [
+          "https://comicw.net/g/boothcut",
+          "https://comicw.net/e/338/8",
+          "https://comicw.net/c/408",
+          "https://comicw.net/map/338/"
+        ],
+        "usage": {
+          "input_tokens": 83726,
+          "cached_input_tokens": 62336,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 427,
+          "reasoning_output_tokens": 27
+        },
+        "imageHashes": [],
+        "sourceDocuments": [
+          {
+            "url": "https://comicw.net/c/408",
+            "sha256": "306bdecf3aaefd48b084fc25835333b7ce9a4d8a561e5c01e050eebde74c222c",
+            "capturedAt": "2026-10-08T11:45:04.997825+00:00"
+          },
+          {
+            "url": "https://comicw.net/e/338/8",
+            "sha256": "5b8528ede5a27f66958aa332dbfb3c3bd74a0f6f9d61b0864ebc88ea857d59c6",
+            "capturedAt": "2026-10-08T11:45:05.114028+00:00"
+          },
+          {
+            "url": "https://comicw.net/map/338/",
+            "sha256": "8ff23022d6286df73070057f0aec7e7a4f1d0a1181844852e2b81f8ac02fd17d",
+            "capturedAt": "2026-10-08T11:45:05.213847+00:00"
+          }
+        ]
+      }
+    }
+  ]
+}

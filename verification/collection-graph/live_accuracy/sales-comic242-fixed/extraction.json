@@ -1,0 +1,454 @@
+{
+  "leaseToken": "1636a804-ab43-413a-9ef2-63cfc7cc7a1e",
+  "extractionId": "4a0857a3-44e2-4f37-bcad-7f250b3075ce",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "searchStatus": "PARTIAL",
+    "summary": "코믹월드 331 부산 CL_05의 su수 공식 판매 페이지에서 스텔라이브 아크릴 굿즈 9개 옵션과 각 4,000원 가격을 확인했다. 현장수령 선입금은 종료되었다.",
+    "queries": [
+      "site:comicw.net/g/242 \"su수\""
+    ],
+    "coverage": {
+      "completeness": "PARTIAL",
+      "reportedTotal": null,
+      "totalUnit": "PRODUCTS",
+      "visitedPages": [
+        "https://comicw.net/g/242"
+      ],
+      "nextPageUrl": null,
+      "warnings": [
+        "상품 옵션 9개를 모두 확인했으며 해당 판매 페이지에 다음 페이지 링크는 없었다. 사이트 전체 카테고리 수량은 이 부스 상품 총수로 사용하지 않았다.",
+        "상세 설명 이미지 1개는 원문 접근 오류로 내용을 확인하지 못했다."
+      ]
+    },
+    "participants": [],
+    "sales": {
+      "summary": "su수는 2026년 3월 28~29일 코믹월드 331 부산 CL_05에서 수령하는 스텔라이브 아크릴 굿즈 선입금을 공지했다. 확인된 9개 옵션은 각각 4,000원이며 선입금은 종료되었다.",
+      "evidenceScope": "EVENT_SALE_CONFIRMED",
+      "categories": [
+        "아크릴",
+        "굿즈"
+      ],
+      "subjects": [
+        "스텔라이브",
+        "히나",
+        "리제",
+        "타비",
+        "부키",
+        "린",
+        "나나",
+        "리코"
+      ],
+      "salesMethod": "현장 직접수령 선입금. 접수 기간은 2026-03-20 11:10부터 2026-03-27 23:10까지이며 직접수령은 무료. 확인 시점에는 선입금 종료로 표시됨.",
+      "sources": [
+        {
+          "url": "https://comicw.net/g/242",
+          "kind": "OFFICIAL",
+          "access": "ORIGINAL",
+          "evidence": "공식 판매 원문에 판매자 su수, 코믹월드 331 부산, 2026-03-28~29, CL_05, 아크릴·굿즈 분류, 스텔라이브 태그, 현장수령 선입금 기간 및 옵션별 가격이 기재되어 있다."
+        },
+        {
+          "url": "https://comicw.co.kr/data/editor/20260320115713_69bcb789df2d2.png",
+          "kind": "OFFICIAL",
+          "access": "INACCESSIBLE",
+          "evidence": "판매 원문의 상세 설명 이미지 링크를 열었으나 접근 오류로 내용을 확인하지 못했다."
+        }
+      ],
+      "images": [],
+      "products": [
+        {
+          "sourceEntryId": null,
+          "name": "나안아 히나",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "히나"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "상품 옵션에 나안아 히나, 4,000원 및 해당 옵션 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_0_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "나안아 히나 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "나안아 리제",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "리제"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "상품 옵션에 나안아 리제, 4,000원 및 해당 옵션 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_1_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "나안아 리제 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "나안아 타비",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "타비"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "상품 옵션에 나안아 타비, 4,000원 및 해당 옵션 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_2_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "나안아 타비 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "나안아 부키",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "부키"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "상품 옵션에 나안아 부키, 4,000원 및 해당 옵션 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_3_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "나안아 부키 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "나안아 린",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "린"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "직접 연 공식 원문에 나안아 린, 4,000원 및 해당 옵션 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_4_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "나안아 린 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "나안아 나나",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "나나"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "상품 옵션에 나안아 나나, 4,000원 및 해당 옵션 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_5_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "나안아 나나 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "부키",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "부키"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "나안아 부키와 구별되는 부키 옵션에 4,000원 및 별도 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_6_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "부키 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "린",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "린"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "나안아 린과 구별되는 린 옵션에 4,000원 및 별도 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_7_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "린 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "sourceEntryId": null,
+          "name": "리코",
+          "summary": "공식 행사 선입금 페이지의 스텔라이브 굿즈 옵션.",
+          "memberName": "su수",
+          "categories": [
+            "아크릴",
+            "굿즈"
+          ],
+          "subjects": [
+            "스텔라이브",
+            "리코"
+          ],
+          "evidenceScope": "EVENT_SALE_CONFIRMED",
+          "price": {
+            "amount": "4000",
+            "currency": "KRW",
+            "checkedOn": "2026-10-08",
+            "note": "페이지 표시 옵션 금액. 직접수령 무료이며 선입금은 종료됨."
+          },
+          "saleState": "UNKNOWN",
+          "productUrl": null,
+          "sources": [
+            {
+              "url": "https://comicw.net/g/242",
+              "kind": "OFFICIAL",
+              "access": "ORIGINAL",
+              "evidence": "상품 옵션에 리코, 4,000원 및 해당 옵션 이미지 링크가 표시되어 있다."
+            }
+          ],
+          "images": [
+            {
+              "type": "PRODUCT",
+              "imageUrl": "https://comicw.net/data/item/list_242_8_1773984649.jpg",
+              "pageUrl": "https://comicw.net/g/242",
+              "rightsEvidence": null,
+              "caption": "리코 옵션에 연결된 이미지"
+            }
+          ],
+          "warnings": []
+        }
+      ],
+      "warnings": [
+        "선입금 종료는 품절이나 판매 취소를 의미하지 않으므로 각 상품 saleState는 UNKNOWN으로 남겼다. 표시 재고도 행사 현장재고로 확정하지 않았다.",
+        "옵션별 고유 상품 ID와 상세 URL은 확인되지 않았다. 공통 판매폼의 번호 242를 개별 상품 ID로 사용하지 않았다.",
+        "이미지는 원문에서 각 옵션에 연결된 실제 URL을 확인한 후보이며 재게시 권한 문구는 확인되지 않았다.",
+        "이 컨텍스트의 정확한 행사는 부산 행사이므로 다른 지역이나 코믹월드 333 부산 상품은 포함하지 않았다."
+      ]
+    }
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/242"
+    ],
+    "usage": {
+      "input_tokens": 108054,
+      "cached_input_tokens": 76160,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4063,
+      "reasoning_output_tokens": 20
+    },
+    "imageHashes": []
+  }
+}

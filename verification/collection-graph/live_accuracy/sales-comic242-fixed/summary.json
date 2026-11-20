@@ -1,0 +1,14 @@
+{
+  "id": "sales-comic242-fixed",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "bdd8405f-1c09-49de-a17c-1347068071cc",
+  "leaseToken": "1636a804-ab43-413a-9ef2-63cfc7cc7a1e",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "APPROVE",
+    "publication": false
+  },
+  "seconds": 134.6
+}

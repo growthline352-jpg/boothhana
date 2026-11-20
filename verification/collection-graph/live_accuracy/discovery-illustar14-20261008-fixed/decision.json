@@ -1,0 +1,207 @@
+{
+  "leaseToken": "f15c3dd7-4c8f-4eb8-928b-d2aefa6bfe4e",
+  "extractionId": "1100f06e-78da-46da-b9b4-f4cc949748ef",
+  "resultHash": "local-evaluation-only",
+  "verdict": "APPROVE",
+  "reason": "행사별 독립 검토: 0:APPROVE, 1:ENRICH, 2:APPROVE, 3:APPROVE",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://dongne.co/events/df2610/circles",
+      "https://dongne.co/events/df2610/map",
+      "https://dongne.co/events/df2610",
+      "https://dongne.co/events/df261002",
+      "https://dongne.co/events/wt03",
+      "https://dongne.co/events/25d09",
+      "https://comicw.net/c/408",
+      "https://comicw.net/free/9247",
+      "https://comicw.net/shop/1788916238"
+    ],
+    "usage": {
+      "eventReviews": [
+        {
+          "input_tokens": 41103,
+          "cached_input_tokens": 18048,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 272,
+          "reasoning_output_tokens": 14
+        },
+        {
+          "input_tokens": 34421,
+          "cached_input_tokens": 16128,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 268,
+          "reasoning_output_tokens": 27
+        },
+        {
+          "input_tokens": 34496,
+          "cached_input_tokens": 16256,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 248,
+          "reasoning_output_tokens": 20
+        },
+        {
+          "input_tokens": 25012,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 209,
+          "reasoning_output_tokens": 36
+        }
+      ]
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://dongne.co/events/df2610",
+        "sha256": "a24bf34d1e46fa867317dfb1d050ec0eac3999ef14d372700d7ad422bf5bb661",
+        "capturedAt": "2026-10-08T11:43:19.147241+00:00"
+      },
+      {
+        "url": "https://dongne.co/events/df261002",
+        "sha256": "c343cbf112efb84c04d72beaf157d19563efee03e74fbab799b20687be2aa76d",
+        "capturedAt": "2026-10-08T11:43:19.410009+00:00"
+      }
+    ]
+  },
+  "eventDecisions": [
+    {
+      "index": 0,
+      "verdict": "APPROVE",
+      "reason": "제공된 양일 공식 원문에서 제35회, 2026-10-03·04, 서울 SETEC와 주소, 입장료 10,000원, 일반 입장 11:00·종료 16:00 및 운영사명이 확인된다. 참가 목록과 배치도 원문도 직접 확인했으며, 참가 목록은 1/30페이지이고 다음 페이지 URL은 노출되지 않는다. 후보는 수집 미완료를 명시하고 전체 명단이나 행사 판매 상품을 확정하지 않았다. 종료 표시는 설명에 보존되어 있으며 UNKNOWN도 유지한다. 이미지 공개 권한은 부여하지 않는다.",
+      "audit": {
+        "model": "gpt-6.1-sol",
+        "promptVersion": "graph-3",
+        "schemaVersion": "graph-3",
+        "webSearchObserved": true,
+        "openedUrls": [
+          "https://dongne.co/events/df2610/circles",
+          "https://dongne.co/events/df2610/map",
+          "https://dongne.co/events/df2610",
+          "https://dongne.co/events/df261002"
+        ],
+        "usage": {
+          "input_tokens": 41103,
+          "cached_input_tokens": 18048,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 272,
+          "reasoning_output_tokens": 14
+        },
+        "imageHashes": [],
+        "sourceDocuments": [
+          {
+            "url": "https://dongne.co/events/df2610",
+            "sha256": "a24bf34d1e46fa867317dfb1d050ec0eac3999ef14d372700d7ad422bf5bb661",
+            "capturedAt": "2026-10-08T11:43:19.147241+00:00"
+          },
+          {
+            "url": "https://dongne.co/events/df261002",
+            "sha256": "c343cbf112efb84c04d72beaf157d19563efee03e74fbab799b20687be2aa76d",
+            "capturedAt": "2026-10-08T11:43:19.410009+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "verdict": "ENRICH",
+      "reason": "공식 원문 https://dongne.co/events/wt03 을 직접 확인했다. 행사명·회차, 주최사, 장소·주소, 2026-10-04 개최, 일반 입장 11:00·종료 16:00, 입장료 10,000원, 참가 서클 17개 및 배치도 공개는 근거와 일치한다. 그러나 최신 원문은 행사 상태를 ‘종료(Ended)’로 명시한다. 후보의 warnings와 operationStatus.note에 있는 ‘Ongoing 표시’ 주장은 원문과 충돌하므로 삭제·수정하고, operationStatus를 공식 종료 표시에 맞게 보완해야 한다.",
+      "audit": {
+        "model": "gpt-6.1-sol",
+        "promptVersion": "graph-3",
+        "schemaVersion": "graph-3",
+        "webSearchObserved": true,
+        "openedUrls": [
+          "https://dongne.co/events/wt03"
+        ],
+        "usage": {
+          "input_tokens": 34421,
+          "cached_input_tokens": 16128,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 268,
+          "reasoning_output_tokens": 27
+        },
+        "imageHashes": [],
+        "sourceDocuments": [
+          {
+            "url": "https://dongne.co/events/wt03",
+            "sha256": "19e885d1953dad3307450f58be0860666d2008621f85266f6351a8e0fc30f08a",
+            "capturedAt": "2026-10-08T11:43:36.168556+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "verdict": "APPROVE",
+      "reason": "[공식 행사 원문](https://dongne.co/events/25d09)을 직접 확인했다. 제9회 쩜오 어워드, 실사매체 통합 온리전, 2026-10-04 서울 SETEC 개최, 주소, 입장료 10,000원, 일반 입장 11:00·종료 16:00, 운영사와 참가 서클 177개·배치도 공개가 후보와 일치한다. 종료 표시는 UNKNOWN의 설명에 정확히 보존되어 있다. 전체 참가 명단 수집 완료나 이미지 공개 권한을 주장하지 않는다.",
+      "audit": {
+        "model": "gpt-6.1-sol",
+        "promptVersion": "graph-3",
+        "schemaVersion": "graph-3",
+        "webSearchObserved": true,
+        "openedUrls": [
+          "https://dongne.co/events/25d09"
+        ],
+        "usage": {
+          "input_tokens": 34496,
+          "cached_input_tokens": 16256,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 248,
+          "reasoning_output_tokens": 20
+        },
+        "imageHashes": [],
+        "sourceDocuments": [
+          {
+            "url": "https://dongne.co/events/25d09",
+            "sha256": "9fdbe3c649e576214dc477ef07c08ba0988d46dbcd5f8f3d7aaa1ebef1ea12df",
+            "capturedAt": "2026-10-08T11:43:53.113693+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "verdict": "APPROVE",
+      "reason": "제공된 공식 원문 3건에서 338회 수원 행사, 2026-10-24~25 11:00~16:30, 수원메쎄 전관과 주소, 일반 입장권 사전예매 7,000원·정상가 10,000원 및 사전예약제 안내를 확인했다. 캘린더의 혼재 지명은 관리자 공지와 주소로 해소되며 경고에도 명시되어 있다. 배치도 공개와 변경 가능성도 원문과 일치한다. 배치도 전체 내용은 미수집으로 유지하고 입장권 판매를 작가 상품 판매로 주장하지 않아 승인한다.",
+      "audit": {
+        "model": "gpt-6.1-sol",
+        "promptVersion": "graph-3",
+        "schemaVersion": "graph-3",
+        "webSearchObserved": false,
+        "openedUrls": [
+          "https://comicw.net/c/408",
+          "https://comicw.net/free/9247",
+          "https://comicw.net/shop/1788916238"
+        ],
+        "usage": {
+          "input_tokens": 25012,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 209,
+          "reasoning_output_tokens": 36
+        },
+        "imageHashes": [],
+        "sourceDocuments": [
+          {
+            "url": "https://comicw.net/c/408",
+            "sha256": "306bdecf3aaefd48b084fc25835333b7ce9a4d8a561e5c01e050eebde74c222c",
+            "capturedAt": "2026-10-08T11:44:09.681755+00:00"
+          },
+          {
+            "url": "https://comicw.net/free/9247",
+            "sha256": "8fd0fd7e404e0253dd2cbe674a0d7b91948965add581e4923b23db4ddccb5d87",
+            "capturedAt": "2026-10-08T11:44:09.813820+00:00"
+          },
+          {
+            "url": "https://comicw.net/shop/1788916238",
+            "sha256": "20d4156f3e741b29f7af82ecee10a62089adaaac21b0502b52fdede4624383c4",
+            "capturedAt": "2026-10-08T11:44:09.914959+00:00"
+          }
+        ]
+      }
+    }
+  ]
+}

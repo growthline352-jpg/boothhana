@@ -1,0 +1,44 @@
+{
+  "id": "sales-comic242-fixed",
+  "kind": "SALES",
+  "context": {
+    "input": {
+      "pageUrl": "https://comicw.net/g/242"
+    },
+    "event": {
+      "id": 331,
+      "data": {
+        "name": "코믹월드 331 부산",
+        "edition": "331",
+        "occurrences": [
+          {
+            "startDate": "2026-03-28",
+            "endDate": "2026-03-29"
+          }
+        ],
+        "officialUrl": "https://comicw.net/e/331/8"
+      }
+    },
+    "participant": {
+      "id": 242,
+      "data": {
+        "registrationName": "su수",
+        "members": [
+          {
+            "name": "su수",
+            "kind": "ARTIST",
+            "aliases": [],
+            "profileUrl": null
+          }
+        ],
+        "officialLinks": [
+          {
+            "url": "https://comicw.net/g/242",
+            "type": "SALES"
+          }
+        ]
+      }
+    },
+    "sales": {}
+  }
+}

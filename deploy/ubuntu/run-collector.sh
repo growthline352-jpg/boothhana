@@ -10,11 +10,17 @@ if [[ ! -f .env ]]; then
 fi
 
 if [[ $# -ne 1 ]]; then
-  echo "Usage: ./run-collector.sh weekly|floorplans|doctor" >&2
+  echo "Usage: ./run-collector.sh weekly|graph|graph-weekly|floorplans|doctor" >&2
   exit 1
 fi
 
 case "$1" in
+  graph)
+    job=(python graph_worker.py --config /etc/boothhana/graph.json --refresh)
+    ;;
+  graph-weekly)
+    job=(python run_scheduled.py --config /etc/boothhana/collector.json --graph-config /etc/boothhana/graph.json)
+    ;;
   weekly)
     job=(python run_scheduled.py --config /etc/boothhana/collector.json)
     ;;
@@ -25,7 +31,7 @@ case "$1" in
     job=(python doctor.py --config /etc/boothhana/collector.json)
     ;;
   *)
-    echo "Unknown job '$1'. Use weekly, floorplans, or doctor." >&2
+    echo "Unknown job '$1'. Use weekly, graph, graph-weekly, floorplans, or doctor." >&2
     exit 1
     ;;
 esac

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>부스하나 홈 시안 3종</title>
+  <link rel="stylesheet" href="./styles.css?v=6">
+</head>
+<body>
+  <aside class="concept-switcher" aria-label="홈 시안 선택">
+    <div>
+      <strong>부스하나 홈 시안</strong>
+      <span>운영 반영 전</span>
+    </div>
+    <nav>
+      <button class="is-active" type="button" data-show-concept="a">A 발견형</button>
+      <button type="button" data-show-concept="b">B 계획형</button>
+      <button type="button" data-show-concept="c">C 매거진형</button>
+      <button type="button" data-show-concept="d">D 내 주변형</button>
+    </nav>
+  </aside>
+
+  <main>
+    <section class="concept concept-a is-active" data-concept="a" aria-label="시안 A 발견형">
+      <header class="site-header shell">
+        <a class="brand" href="#"><img src="../../frontend/public/assets/brand/logo.png" alt="부스하나"></a>
+        <form class="header-search" data-search-form>
+          <label for="search-a">행사 검색</label>
+          <input id="search-a" type="search" placeholder="행사명, 장소, 관심사를 검색하세요" data-search-input>
+          <button type="submit">검색</button>
+        </form>
+        <nav class="member-nav" aria-label="사용자 메뉴"><a href="#saved-a">내 보관함</a><a href="#">내 예약</a><button type="button">로그인</button></nav>
+      </header>
+
+      <nav class="category-tabs shell" aria-label="행사 분야">
+        <button class="is-active" type="button" data-category="SUBCULTURE">서브컬처 <span>8</span></button>
+        <button type="button" data-category="EXHIBITION">박람회 <span>31</span></button>
+        <button type="button" data-category="FESTIVAL">축제 <span>16</span></button>
+      </nav>
+
+      <div class="editorial-hero shell">
+        <div class="editorial-lead">
+          <p>이번 주말 추천</p>
+          <h1>주말의 새 취향,<br>가까운 곳에서</h1>
+          <p class="lead-copy">일정과 지역만 고르면 지금 갈 만한 행사를 바로 보여드립니다.</p>
+          <a href="#upcoming-a">행사 둘러보기</a>
+        </div>
+        <figure class="editorial-feature">
+          <img src="../../frontend/public/assets/boothup/star-courier-posters.png" alt="행사 굿즈를 둘러보는 방문객" data-feature-image>
+          <figcaption><span data-feature-type>코믹·동인</span><strong data-feature-title>제35회 디. 페스타 (토요일)</strong><small data-feature-meta>10.03 토 | SETEC | 서울</small></figcaption>
+        </figure>
+        <aside class="weekend-list">
+          <div class="section-line"><h2>놓치기 아까운 일정</h2><button type="button">전체 보기</button></div>
+          <div data-side-list></div>
+        </aside>
+      </div>
+
+      <section class="discovery-path shell" aria-label="빠른 탐색">
+        <div><strong>어떻게 찾을까요?</strong><p>목적부터 고르면 탐색 시간이 줄어듭니다.</p></div>
+        <button type="button" data-quick-filter="이번 주말">이번 주말</button>
+        <button type="button" data-quick-filter="무료">무료 행사</button>
+        <button type="button" data-quick-filter="굿즈">굿즈 마켓</button>
+        <button type="button" data-quick-filter="가족">가족과 함께</button>
+      </section>
+
+      <section class="editorial-upcoming shell" id="upcoming-a">
+        <div class="section-line"><h2>지금 많이 보는 행사</h2><p data-category-summary>서브컬처 8개 행사가 공개되어 있어요.</p></div>
+        <div class="poster-grid" data-event-grid></div>
+      </section>
+
+      <section class="local-strip shell">
+        <h2>지역별로 보기</h2>
+        <button type="button">서울</button><button type="button">수원</button><button type="button">고양</button><button type="button">성남</button>
+        <a href="#">전체 지역</a>
+      </section>
+    </section>
+
+    <section class="concept concept-b" data-concept="b" aria-label="시안 B 계획형" hidden>
+      <header class="utility-header">
+        <div class="shell utility-header-inner">
+          <a class="brand brand-text" href="#">부스하나</a>
+          <nav aria-label="주요 메뉴"><a class="is-current" href="#">홈</a><a href="#saved-b">내 보관함</a><a href="#">내 예약</a></nav>
+          <button class="login-button" type="button">로그인</button>
+        </div>
+      </header>
+      <nav class="category-tabs planner-tabs shell" aria-label="행사 분야">
+        <button class="is-active" type="button" data-category="SUBCULTURE">서브컬처 <span>8</span></button>
+        <button type="button" data-category="EXHIBITION">박람회 <span>31</span></button>
+        <button type="button" data-category="FESTIVAL">축제 <span>16</span></button>
+      </nav>
+
+      <section class="planner-intro shell">
+        <div><h1>언제, 어디로 갈지 먼저 정하세요</h1><p>날짜와 지역을 선택하면 이동하기 좋은 순서로 행사를 정리합니다.</p></div>
+        <ol aria-label="방문 계획 순서"><li><strong>날짜 선택</strong><span>가능한 날을 고르기</span></li><li><strong>행사 저장</strong><span>후보를 한곳에 모으기</span></li><li><strong>동선 확인</strong><span>방문 순서를 정하기</span></li></ol>
+      </section>
+
+      <div class="planner-layout shell">
+        <section class="planner-main">
+          <form class="planner-search" data-search-form>
+            <label for="search-b">행사 검색</label>
+            <input id="search-b" type="search" placeholder="행사명, 장소, 관심사를 검색하세요" data-search-input>
+            <button type="submit">검색</button>
+          </form>
+          <div class="quick-filters" aria-label="빠른 검색 조건">
+            <button class="is-active" type="button">이번 주말</button><button type="button">다음 주</button><button type="button">10월</button><button type="button">서울</button><button type="button">경기</button>
+          </div>
+          <div class="date-rail" aria-label="날짜 선택">
+            <button class="is-active" type="button"><span>10.03</span><small>토</small></button><button type="button"><span>10.04</span><small>일</small></button><button type="button"><span>10.05</span><small>월</small></button><button type="button"><span>10.06</span><small>화</small></button><button type="button"><span>10.07</span><small>수</small></button><button type="button"><span>10.08</span><small>목</small></button>
+          </div>
+          <div class="planner-heading"><h2>조건에 맞는 행사</h2><span data-category-summary>서브컬처 8개</span></div>
+          <div class="event-list" data-event-list></div>
+        </section>
+        <aside class="planner-aside">
+          <section class="day-plan"><div class="section-line"><h2>나의 방문 계획</h2><span data-plan-count>2곳</span></div><p class="plan-date">10월 3일과 4일</p><div data-side-list></div><button class="outline-button" type="button">동선 미리보기</button></section>
+          <section id="saved-b" class="saved-guide"><strong>후보는 먼저 저장하세요</strong><p>행사를 저장하면 같은 날짜와 가까운 장소를 묶어 비교할 수 있습니다.</p></section>
+          <section class="useful-note"><strong>현장 모드</strong><p>저장한 부스 위치와 메모를 모바일에서 빠르게 다시 확인합니다.</p></section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="concept concept-c" data-concept="c" aria-label="시안 C 매거진형" hidden>
+      <header class="portal-header shell">
+        <a class="brand brand-text" href="#">부스하나</a>
+        <p>행사를 읽고 고르는 문화 가이드</p>
+        <nav aria-label="사용자 메뉴"><a href="#">홈</a><a href="#saved-c">내 보관함</a><a href="#">내 예약</a><button type="button">로그인</button></nav>
+      </header>
+      <nav class="category-tabs portal-tabs shell" aria-label="행사 분야">
+        <button class="is-active" type="button" data-category="SUBCULTURE">서브컬처 <span>8</span></button>
+        <button type="button" data-category="EXHIBITION">박람회 <span>31</span></button>
+        <button type="button" data-category="FESTIVAL">축제 <span>16</span></button>
+      </nav>
+
+      <section class="portal-hero shell">
+        <img src="../../frontend/public/assets/boothup/summer-cat-pouch.png" alt="창작 행사에서 만날 수 있는 고양이 굿즈">
+        <div class="portal-hero-copy">
+          <h1>이번 달, 놓치면 아쉬운 행사</h1>
+          <form data-search-form><label for="search-c">행사 검색</label><input id="search-c" type="search" placeholder="행사명, 장소, 관심사를 검색하세요" data-search-input><button type="submit">찾기</button></form>
+        </div>
+      </section>
+
+      <section class="portal-picks shell">
+        <div class="portal-section-heading"><h2>어떤 하루를 원하세요?</h2><p data-category-summary>서브컬처 8개 행사가 공개되어 있어요.</p></div>
+        <div class="portal-pick-grid">
+          <button class="is-current" type="button" data-category-jump="SUBCULTURE"><strong>서브컬처</strong><span>창작과 취향이 모이는 행사</span></button>
+          <button type="button" data-category-jump="EXHIBITION"><strong>박람회</strong><span>새로운 브랜드와 산업을 만나는 자리</span></button>
+          <button type="button" data-category-jump="FESTIVAL"><strong>축제</strong><span>도시의 계절을 즐기는 하루</span></button>
+        </div>
+      </section>
+
+      <section class="portal-stories shell">
+        <div class="section-line"><h2>이번 주 편집부 선택</h2><button type="button">전체 보기</button></div>
+        <div class="story-layout">
+          <article class="lead-story" data-lead-story></article>
+          <div class="story-list" data-story-list></div>
+        </div>
+      </section>
+
+      <section class="portal-agenda shell" id="saved-c">
+        <div><h2>날짜가 정해졌다면</h2><p>행사 정보를 짧게 비교하고 관심 일정을 보관하세요.</p></div>
+        <div class="agenda-list" data-agenda-list></div>
+      </section>
+    </section>
+
+    <section class="concept concept-d" data-concept="d" aria-label="시안 D 내 주변형" hidden>
+      <header class="nearby-header shell">
+        <a class="brand" href="#"><img src="../../frontend/public/assets/brand/logo.png" alt="부스하나"></a>
+        <nav aria-label="주요 메뉴"><a class="is-current" href="#">홈</a><a href="#nearby-list">행사 찾기</a><a href="#nearby-saved">내 보관함</a></nav>
+        <button class="nearby-login" type="button">로그인</button>
+      </header>
+
+      <nav class="category-tabs nearby-tabs shell" aria-label="행사 분야">
+        <button class="is-active" type="button" data-category="SUBCULTURE">서브컬처 <span>8</span></button>
+        <button type="button" data-category="EXHIBITION">박람회 <span>31</span></button>
+        <button type="button" data-category="FESTIVAL">축제 <span>16</span></button>
+      </nav>
+
+      <section class="nearby-intro shell">
+        <div>
+          <h1>가까운 행사부터<br>바로 찾아보세요</h1>
+          <p>지역을 고르면 이동하기 편한 순서로 행사와 장소를 보여드립니다.</p>
+        </div>
+        <form class="nearby-search" data-search-form>
+          <label for="search-d">행사 검색</label>
+          <input id="search-d" type="search" placeholder="행사명이나 장소를 입력하세요" data-search-input>
+          <button type="submit">찾기</button>
+        </form>
+        <div class="area-choices" aria-label="지역 선택">
+          <button class="is-active" type="button">서울 전역</button><button type="button">강남·송파</button><button type="button">성수·건대</button><button type="button">수원</button>
+        </div>
+      </section>
+
+      <section class="nearby-workspace shell" id="nearby-list">
+        <div class="map-panel" aria-label="행사 지도">
+          <img class="map-art" src="./assets/seoul-event-map.png" alt="서울 주요 도로와 한강을 표시한 행사 지도">
+          <div class="map-pins" data-map-pins></div>
+        </div>
+        <aside class="nearby-results">
+          <div class="nearby-results-heading"><h2>지금 갈 만한 행사</h2><span data-category-summary>서브컬처 8개 행사가 공개되어 있어요.</span></div>
+          <div data-nearby-list></div>
+        </aside>
+      </section>
+
+      <section class="nearby-route shell" id="nearby-saved">
+        <div><h2>선택한 행사</h2><p>장소를 확인한 뒤 일정에 저장할 수 있습니다.</p></div>
+        <div class="route-choice"><strong data-selected-name>제35회 디. 페스타 (토요일)</strong><span data-selected-meta>10.03 토 | SETEC | 서울</span></div>
+        <button class="route-button" type="button">일정에 저장</button>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js?v=6"></script>
+</body>
+</html>

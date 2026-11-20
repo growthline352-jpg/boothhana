@@ -1,0 +1,12 @@
+.sc-subculture-logo{display:inline-flex;align-items:center;gap:9px;color:#252630;white-space:nowrap;vertical-align:middle}
+.sc-subculture-symbol{display:block;width:56px;height:56px;object-fit:contain;flex-shrink:0}
+.sc-subculture-wordmark{display:flex;flex-direction:column;gap:6px}
+.sc-subculture-wordmark>strong{font-size:25px;font-weight:850;letter-spacing:-1.5px;line-height:1.08}
+.sc-subculture-wordmark>span{display:flex;align-items:center;gap:6px;font-size:8px;line-height:1;font-weight:700;letter-spacing:.65px;color:#775493}
+.sc-brand-divider{width:1px;height:8px;background:#d9c6e6}
+.sc-brand{min-height:48px;flex-shrink:0}
+.sc-footer-logo{display:inline-flex;min-height:48px;align-items:center}
+.sc-footer-logo>.sc-subculture-logo{margin:0;letter-spacing:normal}
+.sc-footer-logo .sc-subculture-symbol{width:52px;height:52px}
+.sc-footer-logo .sc-subculture-wordmark>strong{font-size:23px}
+@media(max-width:700px){.sc-subculture-symbol{width:48px;height:48px}.sc-subculture-logo{gap:7px}.sc-subculture-wordmark>strong{font-size:23px}.sc-subculture-wordmark>span{font-size:7px;gap:5px;letter-spacing:.45px}.sc-subculture-wordmark{gap:6px}}

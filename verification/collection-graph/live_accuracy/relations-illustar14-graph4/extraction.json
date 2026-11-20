@@ -1,0 +1,82 @@
+{
+  "leaseToken": "309c50a0-5d27-40d4-9fd5-18fd63f46672",
+  "extractionId": "0b4cd47c-00a0-4666-a824-47f61e82fd4c",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "subjects": [],
+    "series": {
+      "status": "CONFIRMED",
+      "id": null,
+      "name": "일러스타 페스",
+      "officialUrl": "https://illustar.net/",
+      "edition": "14",
+      "evidenceUrl": "https://api.illustar.net/v1/event/list",
+      "evidence": "제공된 공식 원문 기록(2026-10-08, available=true, truncated=false)에 일러스타 페스 6~14의 여러 개최 회차가 나열되어 있으며, 14 MAIN은 2026년 10월 10~11일로 기재되어 있다. 반복 개최 시리즈로 확인한다. 이번 직접 열기에서는 API에 접근하지 못했다.",
+      "identityEvidence": []
+    },
+    "unresolved": [
+      "subjects=[]는 공식 주제 작품·캐릭터를 확정하지 못한 결과이며, 관련 주제가 없음을 확인한 결과가 아니다. 제공된 체키&팬미팅 공지 원문에는 특정 작품·캐릭터 주제가 명시되지 않는다.",
+      "공식 홈페이지와 회차 공지·배치도 페이지를 직접 열었으나 본문이 반환되지 않아 행사 전체의 주제 부재 여부는 미확인이다. 추가 확인 대상 URL: https://illustar.net/event-info/layout",
+      "기존 시리즈 후보가 제공되지 않아 기존 ID 연결 및 양쪽 원문을 이용한 동일성 비교는 수행하지 않았다."
+    ],
+    "sources": [
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "사용자가 제공한 서버 수집 원문은 available=true, truncated=false이며 여러 일러스타 페스 회차와 14 MAIN을 포함한다. 반복 개최 판단은 이 원문 기록에 근거한다. 이번 직접 접근은 실패했다."
+      },
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "제공된 서버 수집 원문에서 사무국이 일러스타 페스 14 내부 체키&팬미팅 부스를 안내한다. 특정 주제 작품·캐릭터는 명시되지 않는다. 이번 직접 열기에서는 본문이 비어 있었다."
+      },
+      {
+        "url": "https://illustar.net/",
+        "kind": "OFFICIAL",
+        "access": "INACCESSIBLE",
+        "evidence": "공식 홈페이지 URL을 직접 열었으나 읽을 수 있는 본문이 반환되지 않았다."
+      },
+      {
+        "url": "https://illustar.net/event-info/layout",
+        "kind": "OFFICIAL",
+        "access": "SEARCH_SNIPPET",
+        "evidence": "검색 결과에는 종합 서브컬처 이벤트 소개와 14회 선택 항목이 표시되었다. 직접 열기에서는 본문이 비어 있어 주제 유무를 확정하는 근거로 사용하지 않았다."
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-4",
+    "schemaVersion": "graph-4",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://api.illustar.net/v1/event/list",
+      "https://illustar.net/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/notice/mEQ8Nzne"
+    ],
+    "usage": {
+      "input_tokens": 73624,
+      "cached_input_tokens": 45952,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 959,
+      "reasoning_output_tokens": 18
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "sha256": "0e581d778f0f1adaa10ce009cfcb9e4d6602210c4d86fdbb0d873d0a50cf430f",
+        "capturedAt": "2026-10-08T15:58:45.478753+00:00",
+        "transportUrl": "https://api.illustar.net/v1/event/list"
+      },
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "sha256": "362ee58445eadf40beebd2a8b2a1d431a438abc8132807b4648ba4951f2f3382",
+        "capturedAt": "2026-10-08T15:58:45.588182+00:00",
+        "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+      }
+    ]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "leaseToken": "a23d05ed-2ebf-4322-a1df-de5b7e379ec1",
+  "extractionId": "8e6a68b5-a415-4010-9a43-c654da97641c",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "assignments": [
+      {
+        "status": "CONFIRMED",
+        "work": {
+          "id": null,
+          "name": "스텔라이브",
+          "sourceUrl": "https://stellive.me/about",
+          "medium": "오리지널·기타",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "character": {
+          "id": null,
+          "name": "시라유키 히나",
+          "sourceUrl": "https://stellive.me/hina",
+          "medium": "오리지널·기타",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "evidenceUrl": "https://comicw.net/g/242",
+        "evidence": "판매 페이지의 스텔라이브 상품 옵션에 ‘나안아 히나’가 명시되어 있다. 스텔라이브 공식 ‘시라유키 히나’ 프로필에서 정식 이름과 ‘히나’ 약칭을 확인하여 해당 옵션을 연결했다.",
+        "basis": "TEXT",
+        "imageHash": null,
+        "imageRegion": null
+      }
+    ],
+    "unresolved": [],
+    "sources": [
+      {
+        "url": "https://comicw.net/g/242",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "판매 등록 원문에서 스텔라이브 표기와 상품 옵션 ‘나안아 히나’를 확인했다."
+      },
+      {
+        "url": "https://stellive.me/about",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "스텔라이브를 VTuber와 캐릭터 콘텐츠를 제공하는 프로젝트로 소개한다."
+      },
+      {
+        "url": "https://stellive.me/hina",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "공식 페이지 제목은 ‘시라유키 히나’이며, 본문에서 캐릭터를 ‘히나’로 지칭하고 프로필을 제공한다."
+      }
+    ],
+    "imageCoverage": [
+      {
+        "index": 0,
+        "sha256": "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4",
+        "status": "AVAILABLE"
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/242",
+      "https://stellive.me/",
+      "https://stellive.me/talents",
+      "https://stellive.me/about",
+      "https://stellive.me/hina"
+    ],
+    "usage": {
+      "input_tokens": 150837,
+      "cached_input_tokens": 119296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 636,
+      "reasoning_output_tokens": 0
+    },
+    "imageHashes": [
+      "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4"
+    ],
+    "sourceDocuments": [
+      {
+        "url": "https://comicw.net/g/242",
+        "sha256": "e46c7080485171ce9669de594c2725b26fe76010037e0e86fdc03e4b60dc132f",
+        "capturedAt": "2026-10-08T11:40:39.644162+00:00"
+      }
+    ]
+  }
+}

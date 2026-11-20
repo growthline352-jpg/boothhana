@@ -100,7 +100,7 @@ async function commitPack(pack,token,stillAllowed=()=>true){
 }
 export async function ensureShell(){
  if(!globalThis.isSecureContext||!navigator.serviceWorker)throw Error('HTTPS와 Service Worker를 지원하는 브라우저가 필요합니다.')
- const reg=await navigator.serviceWorker.register('/offline/sw.js',{scope:'/offline/',updateViaCache:'none'})
+ const reg=await navigator.serviceWorker.register('/library-sw.js',{scope:'/',updateViaCache:'none'})
  // Prefer an installing update, not the active old worker which may cache incompatible modules.
  if(reg.update)await reg.update()
  let worker=reg.installing||reg.waiting||reg.active

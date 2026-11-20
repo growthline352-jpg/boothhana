@@ -1,0 +1,14 @@
+{
+  "id": "discovery-illustar14-20261008-fixed",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "ec07b888-2650-4615-b6e1-a0e11aa35277",
+  "leaseToken": "f15c3dd7-4c8f-4eb8-928b-d2aefa6bfe4e",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "APPROVE",
+    "publication": false
+  },
+  "seconds": 210.8
+}

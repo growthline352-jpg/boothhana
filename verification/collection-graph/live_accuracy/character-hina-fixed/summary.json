@@ -1,0 +1,12 @@
+{
+  "id": "character-hina-fixed",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "e622eabf-797d-4b68-8471-a974c4c6811a",
+  "leaseToken": "94fb5459-a7a2-402a-b12c-ce4349534f14",
+  "state": "FAILED",
+  "errorType": "RunError",
+  "error": "CLI did not report web research",
+  "seconds": 45.9
+}

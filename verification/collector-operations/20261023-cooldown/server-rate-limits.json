@@ -1,0 +1,2 @@
+{"buckets": {"codex": {"primary": {"usedPercent": 100, "windowDurationMins": 300, "resetsAt": 1792708215}, "secondary": {"usedPercent": 16, "windowDurationMins": 10080, "resetsAt": 1793295015}, "planType": "plus", "rateLimitReachedType": "rate_limit_reached"}}, "error": null}
+

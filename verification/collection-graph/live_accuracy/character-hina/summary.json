@@ -1,0 +1,14 @@
+{
+  "id": "character-hina",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "8ed6365c-6dca-4b2b-bd8b-63837ded193d",
+  "leaseToken": "2f5facf9-2366-4f40-9c90-98582b6bac43",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "ENRICH",
+    "publication": false
+  },
+  "seconds": 89.5
+}

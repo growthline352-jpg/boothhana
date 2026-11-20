@@ -1,0 +1,32 @@
+{
+  "scope": "graph-4 same-page continuation, event relations and migrations 023/024, notifications, creator products and frontend contracts",
+  "mode": "review-only",
+  "productionCodeChanged": false,
+  "deployed": false,
+  "verification": "Two targeted reproductions against isolated localhost boothhana_release_test; both transactions rolled back. No external push sent. Full test suite not rerun in this review.",
+  "findings": [
+    {
+      "id": "sales-batch-resets-earlier-confirmations",
+      "priority": "P2",
+      "confidence": 10,
+      "file": "backend/src/main/java/com/boothhana/collection/graph/GraphProjection.java",
+      "line": 63,
+      "problem": "Each same-page SALES window becomes a separate legacy stage. CatalogService constructs all product checks using only IDs seen in the current window. The final window therefore marks earlier approved products NOT_RECONFIRMED and publishes the incorrect verification status.",
+      "motivatingCode": "catalog.ingest(new StageBatch(\"4\",verdict.toString(),pipeline,kind,eventId,participantId,number(kind.equals(\"SALES\")?p.get(\"revision\"):e.get(\"revision\")),now,now,true,stage))",
+      "supportingCode": "CatalogService.java:253: CatalogAccumulation.check(seen.contains(num(row,\"id\")),instant(row.get(\"last_seen_at\")))",
+      "reproduction": "ReviewSalesBatch.java: approve 100 + 3 goods from one unchanged 103-item page. SALES_BATCH_STATE=COMPLETE; both stored and public checks have NOT_RECONFIRMED=100 and CONFIRMED_CURRENT=3; ROLLED_BACK=true.",
+      "recommendation": "Carry confirmed product IDs through the verified page-batch chain and retain their current verification during subsequent windows. Verify the final public snapshot, not just row count."
+    },
+    {
+      "id": "same-owner-push-registration-cancels-pending",
+      "priority": "P2",
+      "confidence": 10,
+      "file": "backend/src/main/java/com/boothhana/interests/NotificationService.java",
+      "line": 34,
+      "problem": "Registering an existing push endpoint with the same owner and keys cancels all PENDING/SENDING deliveries. The frontend reuses an existing PushSubscription, so an already-open second settings tab can trigger this. The subscription stays active, but canceled notifications are never requeued.",
+      "motivatingCode": "update subculture_push_delivery set state='CANCELED',lease_token=null,lease_until=null where subscription_id in(select id from subculture_push_subscription where endpoint=?) and state in ('PENDING','SENDING')",
+      "reproduction": "ReviewPushRegistration.java and review-push-registration.log: BEFORE_SAME_OWNER_REGISTER=PENDING; AFTER_SAME_OWNER_REGISTER=CANCELED; SUBSCRIPTION_STILL_ACTIVE=true; ROLLED_BACK=true.",
+      "recommendation": "Make same-owner, same-key registration idempotent; cancel former-owner deliveries when endpoint ownership changes."
+    }
+  ]
+}

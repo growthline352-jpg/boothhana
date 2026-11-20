@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-22",
+  "productionDeployed": false,
+  "scope": "Local implementation; read-only production inspection; unrelated working tree changes preserved.",
+  "implemented": [
+    "Plan thumbnails constrained; white content area; multiple-place covers",
+    "Upcoming, past and sample groups; original dates and saved plans preserved",
+    "Consistent itinerary labels; view and edit actions; no past/sample resume prompt",
+    "Default crawlable feeds request upcoming events by date",
+    "Crawlable booth member, assignment, event facts and official links",
+    "All occurrence dates and times; official event sources and publication date",
+    "Exclude profile-only merchandise from current-event crawlable products",
+    "React and crawlable ended-event/booth links to upcoming events in the same region"
+  ],
+  "verification": {
+    "seoTests": 22,
+    "relatedVitestTests": 21,
+    "outingsBuild": "pass",
+    "frontendBuild": "pass (existing bundle-size warnings)",
+    "targetedLint": "pass",
+    "actualPublicFixturePages": [
+      "/discover/1/booths/2629",
+      "/discover/754"
+    ],
+    "desktopImageConfined": true,
+    "mobileImageConfined": true
+  },
+  "correction": "Participant 2629 has official registration identity 171936, member 밀재 and booth I-20. The earlier definite claim of a misclassified event alias is withdrawn. No deletion, rename, deindex or redirect was made.",
+  "remaining": [
+    {
+      "item": "Collector restoration",
+      "status": "Requires intended ChatGPT account login and available capacity. Authentication and credit settings were not changed."
+    },
+    {
+      "item": "Upcoming content completion",
+      "status": "20 public subculture events audited; 19 have at least one missing field. No invented facts or production content mutations."
+    },
+    {
+      "item": "Exact October 14 cause",
+      "status": "229 collector logs checked; 21 mention USAGE_LIMIT. Tunnel errors mostly request cancellations, with some QUIC reconnects. Causality unconfirmed. Vercel team deployment/domain reads denied (403); no authorization tool available."
+    }
+  ],
+  "changedFiles": [
+    "frontend/src/features/outings/PlannerWorkspace.tsx",
+    "frontend/src/features/outings/OutingsApp.tsx",
+    "frontend/src/features/outings/planner.css",
+    "frontend/src/features/outings/model.ts",
+    "frontend/src/features/outings/model.test.ts",
+    "frontend/api/page.mjs",
+    "frontend/seo/metadata.mjs",
+    "frontend/seo/metadata.d.mts",
+    "frontend/seo/metadata.node-test.mjs",
+    "frontend/src/features/catalog/EventFollowup.tsx",
+    "frontend/src/features/catalog/BoothDetail.tsx",
+    "frontend/src/features/catalog/CatalogPublicPage.tsx",
+    "frontend/src/features/visit/visit.css"
+  ]
+}

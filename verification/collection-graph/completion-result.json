@@ -1,0 +1,57 @@
+{
+  "deployed": false,
+  "python": {
+    "log": "completion-python-full.log",
+    "passed": 282
+  },
+  "backend": {
+    "log": "completion-java-final.log",
+    "skipped": 64.0,
+    "total": 269.0,
+    "errors": 0.0,
+    "passed": 205.0,
+    "failures": 0.0
+  },
+  "date": "2026-10-09",
+  "remainingValidation": [
+    "Real browser/device push receipt with VAPID configuration",
+    "Long-duration multi-worker load and full production migration",
+    "Large image-only source recognition and truncated pages over 50000 text characters"
+  ],
+  "productionDatabaseModified": false,
+  "frontend": {
+    "passed": 67,
+    "logs": [
+      "completion-frontend.log",
+      "completion-frontend-build.log"
+    ],
+    "build": "passed"
+  },
+  "reviewFixes": [
+    "Event relationship compares the same public projection with banners removed",
+    "Readiness supports automatic-series actor columns",
+    "Notification visibility rechecks current interests and exact public evidence",
+    "Old push responses cannot deactivate a renewed subscription",
+    "Login return path preserves notification and product destinations",
+    "Windows checkpoint replacement retries transient sharing violations"
+  ],
+  "realSamples": {
+    "newSample": "relations-illustar14-graph4-retry",
+    "log": "completion-sample-storage.log",
+    "model": "gpt-6.1-sol",
+    "series": "saved",
+    "unresolvedTheme": "WAITING",
+    "transaction": "rolled back every sample",
+    "storagePass": 6
+  },
+  "realPushSent": false,
+  "migrations": {
+    "numbers": [
+      "023",
+      "024"
+    ],
+    "apply": "passed",
+    "repeat": "passed",
+    "scope": "isolated local PostgreSQL 17"
+  }
+}

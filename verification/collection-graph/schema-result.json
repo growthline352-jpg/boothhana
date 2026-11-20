@@ -1,0 +1,88 @@
+{
+  "fresh001Through020": "PASS",
+  "repeat020": "PASS",
+  "productionAccess": false,
+  "cluster": "C:\\Users\\071823\\AppData\\Local\\Temp\\boothhana-graph-schema-ovmjeqvf",
+  "migrations": [
+    {
+      "file": "001_initial_schema.sql",
+      "sha256": "b8fc6198e584a8af8506ce95b09e748ff1c198108d99e52f78331b9b737a3e9c"
+    },
+    {
+      "file": "002_remove_user_role.sql",
+      "sha256": "f168a86902426eeb6508e15b4754127bf46ab3c14e74a565182edac003d42a90"
+    },
+    {
+      "file": "003_inventory_safety.sql",
+      "sha256": "0f9ad0214b9d6c3e33af1b6ce85f5abf53f68bb985051df257f65e93dfe64230"
+    },
+    {
+      "file": "004_review_v2_safety.sql",
+      "sha256": "3133a3b76710fd504f1fb8cc50c11985c40a42325dca36fdf7fd5b60811edf28"
+    },
+    {
+      "file": "005_subculture_collection.sql",
+      "sha256": "952b4a3683edf3266de74f729d8dabb44140710d9107a521a9e461ad746d3941"
+    },
+    {
+      "file": "006_subculture_catalog.sql",
+      "sha256": "3892416e962d041213e8e899cb46a441a1a240f72216f062f03e7b01142c777e"
+    },
+    {
+      "file": "007_catalog_review_fixes.sql",
+      "sha256": "ef33a4fba566e81e29e8d0d2635803edffe9463e2ebc57a561804712f670362c"
+    },
+    {
+      "file": "008_catalog_presentation.sql",
+      "sha256": "f1c4feabaf1ccb9333ebe1a1114cc44a5694beddfe0db5fa07bfc5863e806aa4"
+    },
+    {
+      "file": "009_floorplan_automation.sql",
+      "sha256": "6e98240f1deb2f1cbf59fc1d39cb23af618e4ba0127b1894c70a22c43e9adbc0"
+    },
+    {
+      "file": "010_goods_showcase.sql",
+      "sha256": "07cbdb592f7b0bf73f71aa00ae6ea0eb93bcd2ce86836449fcadbe61829dd3f2"
+    },
+    {
+      "file": "011_server_only_access.sql",
+      "sha256": "ad730d9a3f04f22fdc3451d56b1ebd55d23764d2278c4441aab94bfb97ec492d"
+    },
+    {
+      "file": "012_support_and_relationships.sql",
+      "sha256": "946b77ddfcccba396231846d125b35e342b7bf32ca74f10c5216d763fff77b41"
+    },
+    {
+      "file": "013_support_reliability.sql",
+      "sha256": "69baa449f348d72dd7f70527cfb1e26bc42c375f418d331999b0f6ce732d0ab2"
+    },
+    {
+      "file": "014_trade_idempotency.sql",
+      "sha256": "924733322bcca592a2d811ded45fa58c5954f33696fe4a4be5c268ddd6200589"
+    },
+    {
+      "file": "015_personal_library.sql",
+      "sha256": "3e2003192143a9b64c6c2b945e37e37f228b7de1338142eade1169cf4718ac61"
+    },
+    {
+      "file": "016_catalog_scope_offline.sql",
+      "sha256": "9cbee4b1e7ca82930d8c4dc0470b138fb6ce0884f591f5db39a4641657ae5517"
+    },
+    {
+      "file": "017_event_comments.sql",
+      "sha256": "e8b1cd3c35e498720c8c35f8a29ee0929a4a235e53adcc6300407d7bcfd1dbfe"
+    },
+    {
+      "file": "018_verified_organizers_series.sql",
+      "sha256": "5901d55d366644e374e8016fc2015e597d430ea2e909b4ec3e326b29c5fb5fef"
+    },
+    {
+      "file": "019_subculture_interests.sql",
+      "sha256": "236b6774a10f03712891a7eef45662ce536e0b254ba9b605dc4ccec4b74eaf88"
+    },
+    {
+      "file": "020_collection_graph.sql",
+      "sha256": "5b151bbc3bf8bf7ffda1fab63e6b46e73252b7859f132a6b2926d34c06b6caa5"
+    }
+  ]
+}

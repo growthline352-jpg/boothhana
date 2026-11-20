@@ -41,6 +41,15 @@ server:
         secure: ${SESSION_COOKIE_SECURE:false}
         same-site: ${SESSION_COOKIE_SAME_SITE:lax}
 app:
+  collection:
+    graph:
+      enabled: ${APP_COLLECTION_GRAPH_ENABLED:false}
+  notifications:
+    push:
+      enabled: ${APP_NOTIFICATIONS_PUSH_ENABLED:false}
+      public-key: ${WEB_PUSH_PUBLIC_KEY:}
+      private-key: ${WEB_PUSH_PRIVATE_KEY:}
+      subject: ${WEB_PUSH_SUBJECT:}
   support:
     guest-enabled: ${SUPPORT_GUEST_ENABLED:false}
     rate-secret: ${SUPPORT_RATE_SECRET:}

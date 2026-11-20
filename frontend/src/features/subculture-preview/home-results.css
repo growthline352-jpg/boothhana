@@ -1,0 +1,53 @@
+/* Home presents useful destinations; interests only scope the results. */
+.sc-results-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:30px 0 22px}
+.sc-results-heading h1{font-size:32px;letter-spacing:-1.2px;line-height:1.4;margin:0 0 9px}
+.sc-results-heading p{margin:0;color:#626570}
+.sc-discovery-visit{display:inline-flex;align-items:center;gap:8px;min-height:44px;white-space:nowrap;font-size:14px}
+.sc-interest-filters{display:flex;gap:8px;overflow-x:auto;padding:0 0 14px;scrollbar-width:thin}
+.sc-interest-filters button{flex-shrink:0;border:1px solid #dedee1;background:white;border-radius:24px;padding:10px 17px;min-height:44px;font-size:14px;color:#555460}
+.sc-interest-filters button[aria-pressed=true]{background:#34483f;border-color:#34483f;color:white;font-weight:650}
+.sc-discovery-lead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:30px;margin-top:16px}
+.sc-discovery-lead.is-events-only{grid-template-columns:1fr}
+.sc-discovery-section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.sc-discovery-section-head h2{font-size:20px;letter-spacing:-.5px;margin:0}
+.sc-discovery-section-head a{display:flex;align-items:center;gap:3px;min-height:44px;white-space:nowrap;font-size:13px;color:#626570}
+.sc-app .sc-discovery-section-head p{font-size:13px;margin:6px 0 0;color:#626570}
+.sc-discovery-events{display:grid;gap:14px}
+.sc-discovery-event{display:flex;align-items:flex-start;gap:18px;padding:24px;border:1px solid #e7e4dc;border-radius:14px;background:#f7f5ef;transition:background .15s}
+.sc-discovery-event:hover{background:#efeee5}
+.sc-discovery-event.navy{background:#f0f2f7;border-color:#e0e4eb}
+.sc-discovery-event.green{background:#f1f5ee;border-color:#dfe8d8}
+.sc-discovery-date{flex-shrink:0;display:grid;text-align:center;min-width:46px;border-top:3px solid #b56143;padding-top:5px;color:#684332}
+.sc-discovery-date small{font-size:12px}.sc-discovery-date strong{font-size:28px;line-height:1.2}
+.sc-discovery-event.navy .sc-discovery-date{border-color:#616c8c;color:#4a5576}
+.sc-discovery-event.green .sc-discovery-date{border-color:#657b5a;color:#48613d}
+.sc-discovery-evidence{display:block;font-size:12px;line-height:1.6;color:#606375;word-break:keep-all}
+.sc-discovery-evidence.is-confirmed{color:#3e6943}
+.sc-discovery-event h3{font-size:20px;letter-spacing:-.6px;margin:9px 0}
+.sc-app .sc-discovery-event p{font-size:13px;color:#555867;line-height:1.8;margin:0 0 14px}
+.sc-discovery-action{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+.sc-discovery-goods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 16px}
+.sc-discovery-goods .sc-good-image{aspect-ratio:1.15}
+.sc-discovery-goods .sc-good-info{padding-bottom:0}
+.sc-app .sc-discovery-sale{font-size:12px;line-height:1.6;color:#626570;margin:5px 0 0}
+.sc-app .sc-discovery-goods .sc-good-info h3{font-size:15px}
+.sc-discovery-lead.is-events-only .sc-discovery-events{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sc-discovery-lead.is-events-only .sc-discovery-event{padding:20px;gap:12px}
+.sc-app .sc-discovery-personalize{font-size:13px;color:#626570;margin-top:0}
+.sc-discovery-personalize a{display:inline-flex;align-items:center;min-height:44px;gap:5px}
+.sc-app .sc-discovery-unlinked{display:flex;align-items:flex-start;gap:8px;font-size:13px;background:#f6f5f8;border-radius:8px;padding:12px 16px;color:#626570}
+.sc-discovery-unlinked svg{flex-shrink:0;margin-top:3px}
+.sc-discovery-empty{border:1px dashed #dad9df;border-radius:12px;padding:24px;color:#626570}
+.sc-interest-discovery .sc-section{margin-top:40px}
+@media(max-width:760px){
+ .sc-results-heading{margin-top:22px;align-items:flex-start}.sc-results-heading h1{font-size:25px;letter-spacing:-.8px}
+ .sc-discovery-visit{display:none}.sc-results-heading p{font-size:14px}
+ .sc-interest-filters{margin-right:-4px}.sc-interest-filters button{font-size:13px;padding-inline:14px}
+ .sc-discovery-lead{grid-template-columns:1fr;gap:30px;margin-top:8px}
+ .sc-discovery-section-head{margin-bottom:10px}.sc-discovery-section-head h2{font-size:19px}
+ .sc-discovery-event{padding:18px;gap:14px}.sc-discovery-event h3{font-size:19px}
+ .sc-app .sc-discovery-event p{margin-bottom:10px}
+ .sc-discovery-lead.is-events-only .sc-discovery-events{grid-template-columns:1fr}
+ .sc-discovery-goods{gap:18px 12px}.sc-interest-discovery .sc-section{margin-top:30px}
+ .sc-discovery-section-head:has(p){align-items:flex-start}
+}

@@ -1,0 +1,22 @@
+{
+  "review": "review-followup-2026-10-09.json",
+  "fix": "Subscribe and unsubscribe share the endpoint transaction advisory lock and mutate deliveries before subscriptions. Owner predicates still protect transferred subscriptions.",
+  "tests": {
+    "PushSubscriptionConcurrencyTests": {"passed": 4, "skipped": 0, "failures": 0},
+    "WebPushTests": {"passed": 2, "skipped": 0, "failures": 0},
+    "CollectionGraphIntegrationTests": {"passed": 68, "skipped": 0, "failures": 0},
+    "totalPassed": 74,
+    "log": "push-lock-fix-tests.log"
+  },
+  "concurrencyCoverage": [
+    "Transfer first, PENDING delivery",
+    "Unsubscribe first, PENDING delivery",
+    "Transfer first, SENDING delivery",
+    "Unsubscribe first, SENDING delivery"
+  ],
+  "database": "Isolated localhost boothhana_release_test. Concurrent tests commit unique fixtures and remove their exact IDs after each test.",
+  "newMigrationRequired": false,
+  "productionDatabaseModified": false,
+  "externalPushSent": false,
+  "deployed": false
+}

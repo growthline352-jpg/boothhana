@@ -1,0 +1,23 @@
+{
+  "review": "review-2026-10-09.json",
+  "fixed": [
+    "sales-batch-resets-earlier-confirmations",
+    "same-owner-push-registration-cancels-pending"
+  ],
+  "regressionTests": [
+    "salesWindowsPreserveAllApprovedWindowsButNotUnseenHistory",
+    "salesContinuationDoesNotReconfirmRowsOverwrittenByAnotherRun",
+    "sameOwnerPushRegistrationPreservesPendingAndLeasedDelivery"
+  ],
+  "verification": {
+    "backend": {"total": 272, "passed": 208, "skipped": 64, "failures": 0, "errors": 0},
+    "graphIntegration": {"total": 68, "passed": 68},
+    "log": "review-fixes-full-tests.log",
+    "gitDiffCheck": "passed",
+    "database": "isolated localhost boothhana_release_test; transaction rollback fixtures",
+    "externalPushSent": false
+  },
+  "newMigrationRequired": false,
+  "productionDatabaseModified": false,
+  "deployed": false
+}

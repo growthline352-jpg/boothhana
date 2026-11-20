@@ -1,0 +1,153 @@
+{
+  "leaseToken": "db92926c-5573-4602-b0ef-46d4938996be",
+  "extractionId": "9c36ac36-67b8-49ef-ac0d-3d95a41887e3",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "schemaVersion": "1",
+    "searchStatus": "PARTIAL",
+    "summary": "제공된 공식 원문 기록에서 일러스타 페스 14의 2026년 10월 10~11일 경기 개최를 확인했다. 직접 열기에서는 본문을 읽을 수 없어 최신 배치도·참가자·입장료 확인은 미완료다.",
+    "queries": [
+      "site.illustar.net \"14\" \"배치도\"",
+      "site.illustar.net \"14\" \"10월 10\""
+    ],
+    "sourceCoverage": [
+      {
+        "channel": "ORGANIZER_OFFICIAL",
+        "status": "PARTIAL",
+        "queries": [
+          "site.illustar.net \"14\" \"배치도\"",
+          "site.illustar.net \"14\" \"10월 10\""
+        ],
+        "checkedUrls": [
+          "https://illustar.net/notice/mEQ8Nzne",
+          "https://api.illustar.net/v1/notice/mEQ8Nzne",
+          "https://api.illustar.net/v1/event/list",
+          "https://illustar.net/event-info/layout"
+        ],
+        "notes": "제공된 available=true, truncated=false 공식 원문 기록을 검토했다. 웹 직접 열기는 HTML 본문이 비어 있거나 API 접근 오류가 발생했다."
+      },
+      {
+        "channel": "TICKETING",
+        "status": "INACCESSIBLE",
+        "queries": [],
+        "checkedUrls": [
+          "https://illustar.net/performance-list/mEQ8Nzne"
+        ],
+        "notes": "공식 예매 URL을 직접 열었으나 본문을 읽을 수 없었다."
+      }
+    ],
+    "events": [
+      {
+        "name": "일러스타 페스 14",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "일러스타 페스 사무국",
+        "edition": "14",
+        "region": "GYEONGGI",
+        "venueName": "일산 킨텍스 제1전시장 4, 5홀",
+        "address": null,
+        "description": "서브컬처 행사. 해당 회차 공식 공지에서 체키&팬미팅 부스 운영을 안내한다.",
+        "admission": null,
+        "subjects": [
+          "서브컬처",
+          "코스프레",
+          "체키·팬미팅"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-10",
+            "endDate": "2026-10-11",
+            "startTime": "10:00",
+            "endTime": "17:00"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://api.illustar.net/v1/event/list",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "사용자 제공 서버 원문 기록(2026-10-08)에서 id 100 '일러스타 페스 14 MAIN'의 show_date는 2026년 10월 10, 11일이며 장소는 일산 킨텍스 제1전시장 4, 5홀이다. start_date 10:00, end_date 17:00. 이번 직접 열기는 접근 오류."
+          },
+          {
+            "url": "https://illustar.net/notice/mEQ8Nzne",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "사용자 제공 서버 원문 기록(2026-10-08)의 제목은 '「일러스타 페스 14」 체키&팬미팅 부스 운영 및 이용수칙 안내'. 사무국 명의로 동일 장소와 별도 행사 입장권 필요를 명시한다. 부스 운영 시간 12:00~17:00은 행사 전체 시간과 구분된다. 이번 직접 열기는 본문이 비어 있었다."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "leadUrl은 작가 참가 공지가 아니라 주최 사무국의 부스 운영 공지다.",
+          "부스 참가비와 체키 판매 권장가는 행사 입장료로 사용하지 않았다.",
+          "최신 참가자 목록·배치도·취소 또는 변경 여부는 직접 원문으로 재확인하지 못했다.",
+          "추가 확인 대상 URL: https://illustar.net/event-info/layout 및 https://illustar.net/performance-list/mEQ8Nzne"
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://illustar.net/notice/mEQ8Nzne",
+            "status": "PUBLISHED",
+            "note": "제공된 공식 원문 기록으로 확인."
+          },
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://illustar.net/event-info/layout",
+            "status": "INACCESSIBLE",
+            "note": "검색에서 발견한 실제 공식 URL을 열었으나 본문과 회차별 배치도는 확인하지 못했다."
+          },
+          {
+            "kind": "SALES",
+            "url": "https://illustar.net/performance-list/mEQ8Nzne",
+            "status": "INACCESSIBLE",
+            "note": "공식 공지에 연결된 14회 입장권 예매 URL. 직접 열기에서 본문 확인 불가."
+          },
+          {
+            "kind": "PARTICIPANTS",
+            "url": null,
+            "status": "UNKNOWN",
+            "note": "해당 회차 참가자 목록 원문 미확인."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "제공된 공식 행사 목록과 운영 공지 기준 개최 예정. 최신 변경 여부 재확인은 미완료.",
+          "sourceUrl": "https://api.illustar.net/v1/event/list",
+          "checkedOn": "2026-10-08"
+        }
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://illustar.net/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/event/list"
+    ],
+    "usage": {
+      "input_tokens": 98716,
+      "cached_input_tokens": 71168,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1370,
+      "reasoning_output_tokens": 17
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "sha256": "01427e95e010bbdfb52d64b3f6f6922a603ac469162c5d66bd39f43463377266",
+        "capturedAt": "2026-10-08T11:49:32.444697+00:00",
+        "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+      },
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "sha256": "0a6b6940df86438ca82995248b50ae3ef2529f2ec0436afd5bd86f85fad3dffb",
+        "capturedAt": "2026-10-08T11:49:33.226880+00:00",
+        "transportUrl": "https://api.illustar.net/v1/event/list"
+      }
+    ]
+  }
+}

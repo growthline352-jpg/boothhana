@@ -1,3 +1,4 @@
+import { CATEGORY_SITES, PORTAL_ORIGIN, categorySite, categoryOrigin, splitSitesEnabled } from './category-sites.mjs'
 /** Shared server/SPA metadata. Only PUBLIC catalog responses may be supplied here. */
 export const SITE_TITLE = '부스하나 | 서울·경기 행사·부스·상품 찾기'
 export const SITE_DESCRIPTION = '서울·경기 서브컬처·박람회·축제와 참가 부스, 상품을 찾아 저장하세요. 방문을 준비하고 다녀온 뒤에도 다시 찾을 수 있습니다.'
@@ -26,8 +27,8 @@ export function normalizePath(raw) {
   if (typeof raw !== 'string' || !raw.startsWith('/') || raw.startsWith('//') || /[\\?#]/.test(raw) || [...raw].some(char => char.charCodeAt(0) <= 0x20)) return '/not-found'
   return raw.length > 500 ? '/not-found' : raw.replace(/\/+$/, '') || '/'
 }
-function categoryFor(event) { return CATEGORY_BY_TYPE[event?.subcategory] || 'subculture' }
-function categoryUrl(origin, category) { return category === 'subculture' ? `${origin}/discover` : `${origin}/discover?category=${category}` }
+export function categoryFor(event) { return CATEGORY_BY_TYPE[event?.subcategory] || null }
+function categoryUrl(origin, category) { return categorySite(origin) ? `${categoryOrigin(category) || origin}/` : category === 'subculture' ? `${origin}/discover` : `${origin}/discover?category=${category}` }
 function dateTime(date, time) {
   if (!DATE.test(date || '')) return ''
   if (!TIME.test(time || '')) return date
@@ -43,6 +44,44 @@ function selectedBanner(catalog) {
 function selectedParticipantImage(catalog, participant) {
   return catalog?.assets?.find(asset => asset.participantId === participant?.id && ['BOOTH_CUT', 'PRODUCT', 'LOGO'].includes(asset.type))
 }
+function eventDates(event) {
+  return (event.occurrences || []).filter(row => DATE.test(row.startDate || '') && DATE.test(row.endDate || ''))
+}
+function eventDateText(event) {
+  return eventDates(event).map(row => `${row.startDate}${row.endDate !== row.startDate ? ` ~ ${row.endDate}` : ''}`).join(' · ')
+}
+function eventFacts(event) {
+  return [eventDateText(event), text(event.venueName || event.address, 100), text(event.admission, 120)].filter(Boolean).join(' · ')
+}
+function participantLocations(participant) {
+  return (participant.participant.locations || []).filter(row => row.status === 'ASSIGNED' && text(row.code, 40))
+}
+function publicProducts(participant) {
+  const rows = participant.productRows?.length ? participant.productRows.map(row => row.data) : participant.sales?.products || []
+  return rows.filter(row => ['EVENT_LISTED', 'EVENT_SALE_CONFIRMED'].includes(row.evidenceScope || participant.sales?.evidenceScope))
+}
+function safeLinks(rows) {
+  const seen = new Set()
+  return rows.flatMap(row => {
+    const raw = typeof row === 'string' ? row : row?.url
+    try {
+      const url = new URL(raw)
+      if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || seen.has(url.href)) return []
+      seen.add(url.href)
+      return [{ url: url.href, official: typeof row === 'object' && ['OFFICIAL', 'ORGANIZER_SOCIAL'].includes(row.kind) }]
+    } catch { return [] }
+  }).slice(0, 12)
+}
+function eventFollowup(event, siteUrl, day) {
+  const dates = eventDates(event), category = categoryFor(event)
+  if (!dates.length || dates.some(row => row.endDate >= day) || !category) return ''
+  const base = siteOrigin(siteUrl) ? categoryUrl(siteOrigin(siteUrl), category) : category === 'subculture' ? '/discover' : `/discover?category=${category}`
+  const next = new URL(base, 'https://local.invalid')
+  next.searchParams.set('period', 'upcoming'); next.searchParams.set('view', 'results')
+  if (['SEOUL', 'GYEONGGI'].includes(event.region)) next.searchParams.set('region', event.region)
+  const href = next.origin === 'https://local.invalid' ? next.pathname + next.search : next.href
+  return `<section class="visit-next-discovery"><h2>다음에 갈 곳을 찾아보세요</h2><p>공개된 일정이 지난 행사입니다. 이 페이지는 당시 행사와 참가 부스의 기록입니다. 다음 회차의 일정·참가 정보는 별도로 확인해 주세요.</p><a href="${esc(href)}">같은 지역의 예정 ${esc(CATEGORY_LABEL[category])} 찾기 →</a><a href="${esc(base)}">${esc(CATEGORY_LABEL[category])} 전체 둘러보기</a></section>`
+}
 function baseGraph(origin, canonical, title, description, image) {
   const websiteId = `${origin}/#website`, pageId = `${canonical}#webpage`
   const webpage = {
@@ -52,7 +91,7 @@ function baseGraph(origin, canonical, title, description, image) {
   if (image) webpage.primaryImageOfPage = { '@type': 'ImageObject', url: image }
   return {
     webpage,
-    graph: [{ '@type': 'WebSite', '@id': websiteId, url: `${origin}/`, name: '부스하나', description: SITE_DESCRIPTION, inLanguage: 'ko-KR' }, webpage],
+    graph: [{ '@type': 'WebSite', '@id': websiteId, url: `${origin}/`, name: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', description: CATEGORY_SITES[categorySite(origin)]?.description || SITE_DESCRIPTION, inLanguage: 'ko-KR' }, webpage],
   }
 }
 function breadcrumb(items, canonical) {
@@ -96,6 +135,11 @@ function listingRows(rows) {
 }
 function schemaForPage({ origin, canonical, title, description, image, catalog, participant, listing, path, category }) {
   const { graph, webpage } = baseGraph(origin, canonical, title, description, image)
+  if (path === '/about') {
+    webpage['@type'] = 'AboutPage'
+    webpage.mainEntity = { '@id': `${origin}/#organization` }
+    graph.push({ '@type': 'Organization', '@id': `${origin}/#organization`, name: '그로스라인', alternateName: 'Growthline', url: `${origin}/about`, email: 'contact@boothana.kr', brand: { '@type': 'Brand', name: '부스하나', alternateName: 'Boothana' } })
+  }
   if (!catalog?.event) {
     const rows = listingRows(listing)
     if (rows.length) {
@@ -107,13 +151,13 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
       graph.push(itemList)
     }
     if (path !== '/') {
-      const label = path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category] || '행사 찾기'
+      const label = path === '/about' ? '회사소개' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category] || '행사 찾기'
       const trail = breadcrumb([{ name: '홈', url: `${origin}/` }, { name: label, url: canonical }], canonical)
       webpage.breadcrumb = { '@id': trail['@id'] }; graph.push(trail)
     }
     return { '@context': 'https://schema.org', '@graph': graph }
   }
-  const eventCategory = categoryFor(catalog.event)
+  const eventCategory = categoryFor(catalog.event) || 'subculture'
   const eventCanonical = `${origin}/discover/${catalog.id}`
   const crumbs = [
     { name: '홈', url: `${origin}/` },
@@ -142,15 +186,17 @@ function schemaForPage({ origin, canonical, title, description, image, catalog, 
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 
-export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', catalog = null, participant = null, listing = [], unavailable = false } = {}) {
+export function pageMetadata({ path = '/', search = '', siteUrl = '', verification = '', catalog = null, participant = null, listing = [], unavailable = false, splitSites = false } = {}) {
   path = normalizePath(path)
-  const origin = siteOrigin(siteUrl)
+  let origin = siteOrigin(siteUrl)
+  const split = splitSitesEnabled(origin, splitSites)
+  const hostCategory = categorySite(origin)
   const params = new URLSearchParams(search)
   const browse = path === '/' || path === '/discover'
   const detailMatch = /^\/discover\/([1-9]\d*)$/.exec(path)
   const boothMatch = /^\/discover\/([1-9]\d*)\/booths\/([1-9]\d*)$/.exec(path)
-  const category = params.get('category') || 'subculture'
-  const supported = ['subculture', 'exhibitions', 'festivals'].includes(category)
+  const category = hostCategory || params.get('category') || 'subculture'
+  const supported = ['subculture', 'exhibitions', 'festivals'].includes(category) && (!params.has('category') || ['subculture', 'exhibitions', 'festivals'].includes(params.get('category')))
   const filtered = [...params.keys()].some(key => key !== 'category')
   let title = SITE_TITLE, description = SITE_DESCRIPTION, indexable = browse && supported && !filtered
   let image = origin ? `${origin}/assets/brand/logo.png` : ''
@@ -170,7 +216,9 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
       const eventName = text(catalog.event.name, 100)
       title = `${boothName} · ${eventName} | 부스하나`
       const topics = [...(participant.participant.subjects || []), ...(participant.sales?.subjects || []), ...(participant.sales?.categories || [])].map(value => text(value, 60)).filter(Boolean)
-      description = text(participant.sales?.summary, 170) || `${eventName}의 ${boothName} 부스 위치${topics.length ? `와 ${topics.slice(0, 3).join('·')} 상품 정보` : '와 공개 상품 정보'}를 확인하세요.`
+      const codes = participantLocations(participant).map(row => text(row.code, 40))
+      const members = list((participant.participant.members || []).map(row => row.name), 3)
+      description = text([eventName, eventFacts(catalog.event), codes.length ? `부스 ${[...new Set(codes)].join('·')}` : '부스 위치 미확인', members.join('·'), text(participant.sales?.summary || participant.participant.description, 170), topics.slice(0, 3).join('·')].filter(Boolean).join(' · '), 170)
       image = imageUrl(selectedParticipantImage(catalog, participant)?.url) || imageUrl(selectedBanner(catalog)?.url) || image
       indexable = true
     } else {
@@ -180,7 +228,7 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
   } else if (detailMatch) {
     if (validCatalog) {
       title = `${text(catalog.event.name, 100)} | 부스하나`
-      description = text(catalog.event.description, 170) || `${text(catalog.event.name, 100)}의 공개 일정, 장소, 참가 부스와 판매 안내를 확인하세요.`
+      description = text([eventFacts(catalog.event), text(catalog.event.description, 170)].filter(Boolean).join(' · '), 170) || `${text(catalog.event.name, 100)}의 공개 일정과 참가 부스 안내를 확인하세요.`
       image = imageUrl(selectedBanner(catalog)?.url) || image
       indexable = true
     } else {
@@ -194,23 +242,35 @@ export function pageMetadata({ path = '/', search = '', siteUrl = '', verificati
     title = '예약 가능한 행사 | 부스하나'
     description = '부스하나에 직접 등록된 예약 가능 행사를 확인하세요. 외부 수집 행사·상품과 예약 운영 정보는 별개입니다.'
     indexable = true
+  } else if (path === '/about') {
+    title = '회사소개 | 부스하나 · 그로스라인'
+    description = '모든 취향이 현실에서 만나는 곳. 그로스라인이 만드는 부스하나는 행사·부스·상품을 연결하고, 발견이 실제 방문으로 이어지는 오프라인 경험 플랫폼을 지향합니다.'
+    indexable = true
   } else if (!browse) {
-    title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : '부스하나'
+    title = path.startsWith('/admin') ? '관리자 작업 공간 | 부스하나' : path.startsWith('/creator') ? '크리에이터 작업 공간 | 부스하나' : path === '/library' ? '내 보관함 | 부스하나' : path === '/account' ? '내 정보 | 부스하나' : '부스하나'
     description = '계정별 정보와 작업 내용은 공개 검색 및 공유 미리보기에 포함하지 않습니다.'
   }
 
-  // Query filters are alternate views of the same browse/detail content and point to a stable canonical URL.
-  const canonical = origin ? origin + path + (browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
+  if (split && validCatalog && categoryFor(catalog.event)) origin = categoryOrigin(categoryFor(catalog.event))
+  if (split && path === '/about') origin = PORTAL_ORIGIN
+  if (split && browse && supported && (hostCategory || path === '/discover' || params.has('category'))) {
+    origin = categoryOrigin(category)
+    title = `서울·경기 ${CATEGORY_SITES[category].label} 일정 | ${CATEGORY_SITES[category].name}`
+    description = CATEGORY_SITES[category].description
+  }
+  const canonicalPath = split && browse && (hostCategory || path === '/discover' || params.has('category')) && supported ? '/' : path
+  // Queries remain usable but only the unfiltered category home is an index target.
+  const canonical = origin ? origin + canonicalPath + (!split && browse && category !== 'subculture' ? `?category=${encodeURIComponent(category)}` : '') : ''
   const robots = indexable && origin ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1' : 'noindex,follow'
   const schema = indexable && origin ? schemaForPage({ origin, canonical, title, description, image, catalog: validCatalog ? catalog : null, participant: validParticipant ? participant : null, listing, path, category }) : null
-  return { title, description, canonical, robots, image, schema, verification: verificationToken(verification) }
+  return { title, description, canonical, robots, image, schema, siteName: CATEGORY_SITES[categorySite(origin)]?.name || '부스하나', verification: verificationToken(verification) }
 }
 
 export function renderMetadata(meta) {
   const tag = (name, content, property = false) => `<meta data-booth-meta ${property ? 'property' : 'name'}="${name}" content="${esc(content)}" />`
   const tags = [
     `<title data-booth-meta>${esc(meta.title)}</title>`, tag('description', meta.description), tag('robots', meta.robots),
-    tag('og:type', 'website', true), tag('og:site_name', '부스하나', true), tag('og:locale', 'ko_KR', true),
+    tag('og:type', 'website', true), tag('og:site_name', meta.siteName || '부스하나', true), tag('og:locale', 'ko_KR', true),
     tag('og:title', meta.title, true), tag('og:description', meta.description, true),
     tag('twitter:card', meta.image ? 'summary_large_image' : 'summary'), tag('twitter:title', meta.title), tag('twitter:description', meta.description),
   ]
@@ -225,45 +285,60 @@ function list(values, max = 12) {
   return Array.isArray(values) ? values.map(value => text(value, 100)).filter(Boolean).slice(0, max) : []
 }
 /** Real public content for non-JavaScript crawlers; React replaces this same-content fallback after loading. */
-export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [] } = {}) {
+export function renderCrawlableContent({ path = '/', search = '', catalog = null, participant = null, listing = [], siteUrl = '', splitSites = false, day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) } = {}) {
   path = normalizePath(path)
+  if (path === '/about') return `<main class="content-wrap section-pad" data-seo-fallback><h1>모든 취향이 현실에서 만나는 곳.</h1><p>부스하나는 사람과 행사, 창작자와 브랜드를 연결하는 오프라인 경험 플랫폼을 만들어갑니다.</p><h2>좋아하는 것을 찾는 일이 좋아하는 세상을 넓히는 일이 되도록.</h2><p>서울·경기의 서브컬처·박람회·축제와 공개된 참가 부스·상품 정보를 탐색하고 저장하며 방문을 준비할 수 있습니다.</p><h2>정보를 연결하는 AI. 경험을 넓히는 기술.</h2><p>행사 정보의 AI 구조화, 취향에 맞는 추천과 방문 계획, 변화 알림과 외부 AI 서비스 연계를 구상하고 있습니다. 이 AI 기능들은 향후 개발 방향이며 현재 제공되는 기능이 아닙니다.</p><h2>운영사 그로스라인 (Growthline)</h2><p>대표 유창혜 · 2026년 5월 사업 시작 · 대한민국 서울 · 소프트웨어 개발 및 온라인 플랫폼</p><h2>협업 문의</h2><p>행사 정보 연계, 서비스 협업, 사업 제안을 기다립니다.</p><a href="mailto:contact@boothana.kr">contact@boothana.kr</a><section><h2>발견을 돕고, 이야기를 알리고. 비즈니스의 다음 성장을 만듭니다.</h2><h3>모종애드</h3><p>가게와 브랜드의 이야기를 바탕으로 주제와 구성안을 선택하고, AI로 이미지·영상·블로그 콘텐츠 제작을 돕는 통합 마케팅 솔루션입니다. 주제 제안과 제작에서 게시·분석으로 이어지는 흐름을 지향합니다.</p><a href="https://app.danbammsg.co.kr/home">모종애드 둘러보기</a><h3>그로스라인 홈페이지</h3><p>고객 유입부터 문의와 전환, 운영까지 사업이 멈추는 구간을 살펴보고 웹서비스와 자동화, 데이터 기반 개선으로 연결합니다. 홈페이지에서 서비스 분야와 프로젝트, 사업을 바라보는 관점을 확인하고 서비스 구축과 운영 개선을 상담할 수 있습니다.</p><a href="https://www.danbammsg.co.kr/">그로스라인 홈페이지</a></section></main>`
   if (!catalog?.event) {
     if (!['/', '/discover', '/events'].includes(path)) return ''
     const params = new URLSearchParams(search)
     if ((path === '/' || path === '/discover') && [...params.keys()].some(key => key !== 'category')) return ''
-    const category = params.get('category') || 'subculture'
+    if (path === '/' && siteUrl === PORTAL_ORIGIN && splitSites && !params.size) {
+      return `<main class="content-wrap section-pad" data-seo-fallback><h1>어떤 행사를 찾고 계세요?</h1><p>관심 있는 분야의 행사와 참가 부스를 찾아보세요.</p>${Object.values(CATEGORY_SITES).map(site => `<section><h2><a href="${site.origin}/">${esc(site.name)}</a></h2><p>${esc(site.description)}</p></section>`).join('')}</main>`
+    }
+    const category = categorySite(siteUrl) || params.get('category') || 'subculture'
     if ((path === '/' || path === '/discover') && !['subculture', 'exhibitions', 'festivals'].includes(category)) return ''
     const rows = listingRows(listing)
-    const heading = path === '/' ? '서울·경기 행사와 참가 부스 찾기' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category]
+    const heading = categorySite(siteUrl) && path !== '/events' ? CATEGORY_SITES[category].name : path === '/' ? '서울·경기 행사와 참가 부스 찾기' : path === '/events' ? '예약 가능한 행사' : CATEGORY_LABEL[category]
     const intro = path === '/events' ? '부스하나에 직접 등록된 예약 가능 행사입니다.' : '공개된 일정과 장소를 확인하고 행사별 참가 부스와 상품 정보를 찾아보세요.'
     return `<main class="content-wrap section-pad" data-seo-fallback><h1>${esc(heading)}</h1><p>${esc(intro)}</p>
       ${rows.length ? `<h2>공개 행사</h2><ul>${rows.map(row => `<li><a href="${row.urlPath}">${esc(row.name)}</a>${row.startDate ? ` · <time datetime="${esc(text(row.startDate, 10))}">${esc(text(row.startDate, 10))}</time>` : ''}${row.venue ? ` · ${esc(text(row.venue, 160))}` : ''}</li>`).join('')}</ul>` : '<p>공개 행사 목록을 불러오고 있습니다.</p>'}</main>`
   }
   const event = catalog.event
   const eventPath = `/discover/${catalog.id}`
+  const dates = eventDates(event)
+  const facts = `<dl>${dates.map(row => `<dt>일정</dt><dd>${esc(row.startDate)}${row.endDate !== row.startDate ? ` ~ ${esc(row.endDate)}` : ''} · ${row.startTime && TIME.test(row.startTime) ? esc(row.startTime) : '운영시간 미확인'}${row.endTime && TIME.test(row.endTime) ? ` ~ ${esc(row.endTime)}` : ''}</dd>`).join('')}${event.venueName || event.address ? `<dt>장소</dt><dd>${esc(text(event.venueName, 160))}${event.address ? ` · ${esc(text(event.address, 300))}` : ''}</dd>` : ''}${event.admission ? `<dt>입장</dt><dd>${esc(text(event.admission, 500))}</dd>` : ''}</dl>`
+  const followup = eventFollowup(event, siteUrl, day)
+  const eventLinks = safeLinks(event.sources || [])
+  const sources = eventLinks.length ? `<section><h2>공식·참고 안내</h2><ul>${eventLinks.map(row => `<li><a href="${esc(row.url)}" rel="noopener noreferrer">${row.official ? '공식 안내' : '참고 출처'} · ${esc(new URL(row.url).hostname)}</a></li>`).join('')}</ul></section>` : ''
+  const updated = catalog.publishedAt && Number.isFinite(Date.parse(catalog.publishedAt)) ? `<p>공개본 갱신: ${esc(new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium' }).format(new Date(catalog.publishedAt)))}. 방문 전 주최 측 최신 공지를 확인하세요.</p>` : ''
   if (/\/booths\/[1-9]\d*$/.test(path) && participant?.participant) {
-    const products = participant.productRows?.map(row => row.data) || participant.sales?.products || []
+    const products = publicProducts(participant)
     const productNames = list(products.map(product => product?.name), 20)
     const subjects = list([...(participant.participant.subjects || []), ...(participant.sales?.subjects || [])], 12)
+    const locations = participantLocations(participant)
+    const members = list((participant.participant.members || []).map(row => row.name), 10)
+    const links = safeLinks(participant.participant.officialLinks || [])
     return `<main class="content-wrap section-pad" data-seo-fallback>
       <nav aria-label="현재 위치"><a href="/">홈</a> / <a href="${eventPath}">${esc(text(event.name, 160))}</a> / 부스 상세</nav>
       <article><h1>${esc(text(participant.participant.registrationName, 160))}</h1>
-      <p>${esc(text(participant.sales?.summary, 1000) || `${text(event.name, 160)} 참가 부스입니다.`)}</p>
+      <p>${esc(text(participant.participant.description || participant.sales?.summary, 1000) || `${text(event.name, 160)} 참가 부스입니다.`)}</p>
+      ${members.length ? `<p>참가자: ${members.map(esc).join(' · ')}</p>` : ''}
+      <h2>참가 행사와 위치</h2>${facts}
+      ${locations.length ? `<ul>${locations.map(row => `<li>부스 ${esc(text(row.code, 40))}${row.hall ? ` · ${esc(text(row.hall, 100))}` : ''}${DATE.test(row.startDate || '') ? ` · ${esc(row.startDate)}${DATE.test(row.endDate || '') && row.startDate !== row.endDate ? ` ~ ${esc(row.endDate)}` : ''}` : ''}</li>`).join('')}</ul>` : '<p>부스 위치 미확인 · 주최 측 최신 배치도를 확인하세요.</p>'}
       ${subjects.length ? `<p>분야: ${subjects.map(esc).join(' · ')}</p>` : ''}
-      ${productNames.length ? `<h2>공개 상품</h2><ul>${productNames.map(name => `<li>${esc(name)}</li>`).join('')}</ul>` : '<p>공개 확인된 상품 정보를 준비하고 있습니다.</p>'}
+      ${productNames.length ? `<h2>이번 행사 공개 상품</h2><ul>${productNames.map(name => `<li>${esc(name)}</li>`).join('')}</ul>` : '<p>이번 행사에서 판매한다고 공개 확인된 상품은 아직 없습니다. 판매하지 않는다는 뜻은 아니며, 참가자의 공식 안내를 확인해 주세요.</p>'}
+      ${links.length ? `<h2>참가자 공식 안내</h2><ul>${links.map(row => `<li><a href="${esc(row.url)}" rel="noopener noreferrer">${esc(new URL(row.url).hostname)} 안내 확인</a></li>`).join('')}</ul>` : ''}
       <p><a href="${eventPath}">${esc(text(event.name, 160))} 행사 상세 보기</a></p></article>
+      ${followup}${updated}
     </main>`
   }
-  const occurrence = event.occurrences?.[0]
   const participants = Array.isArray(catalog.participants) ? catalog.participants.slice(0, 200) : []
   return `<main class="content-wrap section-pad" data-seo-fallback>
     <article><h1>${esc(text(event.name, 160))}</h1>
     <p>${esc(text(event.description, 3000) || '공개된 행사 일정과 참가 부스를 안내합니다.')}</p>
-    <dl>${occurrence ? `<dt>일정</dt><dd>${esc(occurrence.startDate)}${occurrence.endDate && occurrence.endDate !== occurrence.startDate ? ` ~ ${esc(occurrence.endDate)}` : ''}${occurrence.startTime ? ` ${esc(occurrence.startTime)}` : ''}${occurrence.endTime ? ` ~ ${esc(occurrence.endTime)}` : ''}</dd>` : ''}
-    ${event.venueName || event.address ? `<dt>장소</dt><dd>${esc(text(event.venueName, 160))}${event.address ? ` · ${esc(text(event.address, 300))}` : ''}</dd>` : ''}
-    ${event.admission ? `<dt>입장</dt><dd>${esc(text(event.admission, 500))}</dd>` : ''}</dl>
+    ${facts}${sources}${updated}
     ${participants.length ? `<h2>공개 참가 부스</h2><ul>${participants.map(row => `<li><a href="${eventPath}/booths/${Number(row.id)}">${esc(text(row.participant?.registrationName, 160) || '부스 정보')}</a></li>`).join('')}</ul>` : ''}
-    </article></main>`
+    </article>${followup}</main>`
 }
 
 export function injectMetadata(template, meta) {

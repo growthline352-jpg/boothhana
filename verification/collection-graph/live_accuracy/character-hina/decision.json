@@ -1,0 +1,27 @@
+{
+  "leaseToken": "2f5facf9-2366-4f40-9c90-98582b6bac43",
+  "extractionId": "f4777035-5567-4005-9efb-1430502b7b36",
+  "resultHash": "local-evaluation-only",
+  "verdict": "ENRICH",
+  "reason": "판매 원문 https://comicw.net/g/242 에서 스텔라이브 상품의 개별 옵션 '나안아 히나'와 제공된 이미지 URL의 연결을 확인했다. 행사 표기는 코믹월드 331 부산(2026년 3월 28~29일), 판매자 표기는 su수다. 공식 https://stellive.me/about 및 https://stellive.me/news/9365 원문에서 스텔라이브의 VTuber 활동과 '시라유키 히나'·'히나'의 대응도 확인했다. 다만 원본 이미지 URL을 직접 열었을 때 접근 오류가 발생해 첨부 이미지와 판매 원본의 일치 및 후보 SHA-256을 독립적으로 검증하지 못했다. 텍스트 식별 근거는 타당하지만 이미지 확인을 보완해야 승인할 수 있다.",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-2",
+    "schemaVersion": "graph-2",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/242",
+      "https://comicw.net/data/item/list_242_0_1773984649.jpg"
+    ],
+    "usage": {
+      "input_tokens": 92907,
+      "cached_input_tokens": 66432,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 534,
+      "reasoning_output_tokens": 88
+    },
+    "imageHashes": [
+      "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4"
+    ]
+  }
+}

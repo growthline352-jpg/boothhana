@@ -1,0 +1,24 @@
+{
+  "graphIntegration": {
+    "tests": 33,
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0
+  },
+  "fullBackend": {
+    "tests": 232,
+    "skipped": 64,
+    "failures": 0,
+    "errors": 0
+  },
+  "collectorPython": {
+    "tests": 263,
+    "failed": 0,
+    "utf8": true
+  },
+  "freshMigrations": "001..021 PASS",
+  "repeatMigration": "021 PASS",
+  "productionDeploy": false,
+  "productionMigration": false,
+  "liveModelCalls": false
+}

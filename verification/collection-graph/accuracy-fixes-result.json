@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-08",
+  "scope": "Collector accuracy fixes and local verification; no deployment",
+  "productionWrites": false,
+  "newMigrationRequired": false,
+  "model": "gpt-6.1-sol",
+  "fixes": [
+    "Successful original-page results are required; failed attempts and search snippets do not count.",
+    "Independent original refetch and snapshot provenance for extraction and review.",
+    "Official Illustar public API adapter for JS notice pages and event dates.",
+    "Backend-compatible work.medium enumeration.",
+    "Individual sales options and creator option coverage enforced.",
+    "Review only asserted facts; preserve unknown information and image follow-up.",
+    "Per-event review and independent enrichment instead of blocking the full discovery batch."
+  ],
+  "cases": [
+    {
+      "id": "character-miku-fixed",
+      "verdict": "APPROVE",
+      "model": "gpt-6.1-sol",
+      "productionWrites": false,
+      "extractionKeys": [
+        "assignments",
+        "unresolved",
+        "sources",
+        "imageCoverage"
+      ],
+      "assignmentsCount": 1
+    },
+    {
+      "id": "character-hina-fixed-retry",
+      "verdict": "APPROVE",
+      "model": "gpt-6.1-sol",
+      "productionWrites": false,
+      "extractionKeys": [
+        "assignments",
+        "unresolved",
+        "sources",
+        "imageCoverage"
+      ],
+      "assignmentsCount": 1
+    },
+    {
+      "id": "creator-susu-fixed-retry",
+      "verdict": "APPROVE",
+      "model": "gpt-6.1-sol",
+      "productionWrites": false,
+      "extractionKeys": [
+        "profile",
+        "sources",
+        "goods",
+        "productCoverage",
+        "eventLeads",
+        "identityDecision",
+        "nextPageUrl",
+        "coverage"
+      ],
+      "goodsCount": 15
+    },
+    {
+      "id": "sales-comic242-fixed",
+      "verdict": "APPROVE",
+      "model": "gpt-6.1-sol",
+      "productionWrites": false,
+      "extractionKeys": [
+        "searchStatus",
+        "summary",
+        "queries",
+        "coverage",
+        "participants",
+        "sales"
+      ]
+    },
+    {
+      "id": "discovery-comic338-fixed-retry",
+      "verdict": "APPROVE",
+      "model": "gpt-6.1-sol",
+      "productionWrites": false,
+      "extractionKeys": [
+        "schemaVersion",
+        "searchStatus",
+        "summary",
+        "queries",
+        "sourceCoverage",
+        "events"
+      ],
+      "eventsCount": 1
+    },
+    {
+      "id": "discovery-illustar14-api-fixed-with-dates",
+      "verdict": "APPROVE",
+      "model": "gpt-6.1-sol",
+      "productionWrites": false,
+      "extractionKeys": [
+        "schemaVersion",
+        "searchStatus",
+        "summary",
+        "queries",
+        "sourceCoverage",
+        "events"
+      ],
+      "eventsCount": 1
+    }
+  ],
+  "tests": {
+    "pythonFull": {
+      "tests": 276,
+      "result": "PASS",
+      "log": "python-accuracy-final.log"
+    },
+    "pythonPostReviewTargeted": {
+      "tests": 24,
+      "result": "PASS"
+    },
+    "backend": {
+      "tests": 242,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 64
+    },
+    "graphIntegration": {
+      "tests": 40,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "limitations": [
+    "Six selected local samples, not an estimate of overall accuracy.",
+    "LLM approval is not independent ground truth; sample artifacts were inspected.",
+    "No image-only character recognition benchmark.",
+    "Other JS-only sources may require individual public-source adapters.",
+    "An existing review_v5 resume test intermittently failed in earlier runs; 15 controlled repeats and the final full suite passed without changing that module."
+  ]
+}

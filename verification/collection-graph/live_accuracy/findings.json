@@ -1,0 +1,64 @@
+{
+  "reviewDate": "2026-10-08",
+  "conclusion": "실제 표본에서 일부 핵심 사실은 맞췄지만, 자동 운영 정확도와 수집 완료율은 아직 승인할 수 없다.",
+  "scope": "공개 원문 표본 6개와 동일 입력 보완 재시도 1회. 5개 최초 표본과 재시도는 실제 Worker.process를 수정 없이 호출하고 API만 메모리 기록기로 교체했다. 일러스타 표본은 범위를 한 회차로 한정하고 별도 검토 문구를 사용했으므로 동일 조건 통계로 합산하지 않는다. 과거 부산 판매글과 일본 상품은 단계별 처리 정확도용 입력이며 행사 발견 범위를 변경하지 않았다.",
+  "limits": [
+    "무작위 표본이 아니므로 전체 정확도 백분율을 산출하지 않는다.",
+    "캐릭터 두 표본 모두 최종 근거가 TEXT였으며, 이미지 외형만으로 식별하는 정확도는 검증되지 않았다.",
+    "DB 반영을 차단했으므로 저장 성공률을 측정한 것이 아니다. backend 호환성은 코드와 실제 출력값을 대조했다.",
+    "한 번의 보완 재시도를 확인했으며 장기 수렴률이나 전체 행사·작가·상품 재현율은 측정하지 않았다.",
+    "요청 모델은 gpt-6.1-sol이다. 현재 audit.model은 요청값 상수이며 실제 서버 모델 식별을 독립 증명하지 않는다. 모델을 대체하지 않았다."
+  ],
+  "findings": [
+    {
+      "priority": "P1", "title": "원문 열람 감사가 실제 CLI 로그를 잘못 해석한다",
+      "evidence": "sales-comic242의 실제 로그에 판매 원문 307줄의 결과가 있으나 action=other여서 openedUrls=[]가 되어 추출 단계에서 중단됐다. discovery-comic338 검토에서는 여러 성공 결과를 놓치고 접근 실패한 app.comiverse.kr만 openedUrls에 남겼다.",
+      "code": "collector/run.py:133",
+      "impact": "유효한 수집 결과를 차단하고, 접근 시도를 원문 확인으로 잘못 기록할 수 있다.",
+      "remedy": "검색 결과와 원문 열람 결과의 구조를 구분하고, 배치·참조 열기·리디렉션을 지원한다. 성공한 내용 확보와 실패/빈 본문을 별도로 기록하며 검색 결과 URL을 무조건 열람으로 인정해서는 안 된다."
+    },
+    {
+      "priority": "P1", "title": "검토 기준이 텍스트 확정과 이미지 미확인을 분리하지 않는다",
+      "evidence": "character-miku와 보완 재시도 모두 텍스트 연결은 원문과 일치한다고 판정했으나 이미지 미확인을 이유로 ENRICH. character-hina는 동일 SHA256 이미지가 양쪽 호출에 첨부됐지만 웹 이미지 URL 재접근 실패와 해시 독립 검증 불가를 이유로 보류했다.",
+      "code": "collector/graph_worker.py:156",
+      "impact": "이미지 없는 정상 데이터도 반복 보완으로 멈춘다. 일반적인 주의사항이 unresolved에 들어가 완료와 기존 연결 정리까지 막는다.",
+      "remedy": "검토 대상 주장별로 TEXT/IMAGE의 필수 증거를 구분한다. 다운로드·동일 바이트 검증은 서버가, 캐릭터 식별은 모델이 맡는다. 미확인 속성만 별도 보완 작업으로 남긴다."
+    },
+    {
+      "priority": "P1", "title": "모델 스키마와 DB 작품 종류가 불일치한다",
+      "evidence": "character-hina는 work.medium=VTuber 프로젝트를 출력했다. 스키마는 임의 문자열을 허용하지만 backend InterestRules.MEDIA는 게임/애니메이션/만화·웹툰/소설/오리지널·기타만 허용한다.",
+      "code": "collector/graph_worker.py:51; backend/src/main/java/com/boothhana/collection/graph/GraphIdentity.java:26; backend/src/main/java/com/boothhana/interests/InterestRules.java:9",
+      "impact": "캐릭터 이름이 맞아도 향후 승인 시 서버 검증에서 실패한다. 이번 실제 판정은 ENRICH였으므로 DB 예외가 실제 발생했다고 주장하지 않는다.",
+      "remedy": "분류 enum을 단일 계약으로 맞추고 형식 검증 실패를 추출 재생성 피드백으로 전달한다. 게임 외 IP도 명시적으로 분류한다."
+    },
+    {
+      "priority": "P1", "title": "작가 수집과 판매 수집의 상품 단위가 다르다",
+      "evidence": "su수의 원문 두 판매글에는 9개+6개 옵션 행이 있다. CREATOR는 이를 판매글 2개 상품으로 묶었고, SALES는 /g/242의 옵션 9개를 개별 상품으로 만들었다. 두 글 사이의 동일 상품 여부는 판정하지 않았다.",
+      "sources": ["https://comicw.net/g/242", "https://comicw.net/g/916"],
+      "code": "collector/graph_worker.py:77",
+      "impact": "작가별 상품과 행사별 상품의 연결이 어긋나고 여러 캐릭터가 한 상품에 섞일 수 있다.",
+      "remedy": "판매글/판매표와 개별 상품·옵션을 분리하고 두 수집 단계에 같은 옵션 추출·식별 규칙을 적용한다. 옵션 수와 반환 행 수를 대조한다."
+    },
+    {
+      "priority": "P2", "title": "최신 원문과 추출 결과의 차이가 실제로 발생했다",
+      "evidence": "코미버스 배치도를 추출 단계는 V.0.4 - 260924라고 기록했으나 검토 단계와 독립 원문 확인에서 V.1.0 - 261005가 확인됐다. 검토가 이를 잡아 ENRICH로 보류했다. 원인이 캐시인지 추출 오류인지는 확인하지 못했다.",
+      "sources": ["https://comiverse.kr/board/view/227"],
+      "impact": "같은 배치도 URL도 내용이 달라질 수 있다. 코믹월드의 맞는 행사 결과까지 같은 발견 묶음의 보류에 포함된다.",
+      "remedy": "원문 확인시각·본문 버전/해시와 주장별 출처를 저장하고 행사별 판정을 분리한다."
+    },
+    {
+      "priority": "P2", "title": "공식 사이트 본문을 읽지 못하는 경우가 있다",
+      "evidence": "일러스타 표본은 공식 URL 열기에서 본문이 비거나 접근 오류여서 행사 0개/PARTIAL/ENRICH로 끝났다. 독립 웹 도구에서도 제공 공지의 본문은 0줄이었다.",
+      "sources": ["https://illustar.net/notice/mEQ8Nzne"],
+      "remedy": "공개 페이지의 렌더링/공식 대체 출처로 재수집하되 접근 제한을 우회하지 않는다. 미확보와 행사 없음은 별도 집계한다."
+    },
+    {
+      "priority": "P1", "title": "기본 CLI 경로에서 지정 모델 호출 실패",
+      "evidence": "PATH의 npm codex.CMD는 gpt-6.1-sol이 ChatGPT 계정에서 지원되지 않는다는 HTTP400을 반환했다. 같은 요청 모델로 앱에 포함된 codex.exe를 지정했을 때 실제 검색과 구조화 출력이 진행됐다. 첫 실패 로그는 같은 사례 재실행으로 덮어써져 이 관측 기록에만 남는다.",
+      "remedy": "실행 파일 경로와 버전을 고정하고 시작 전 모델 호출·웹 감사 포맷을 확인한다. 다른 모델로 자동 대체하지 않는다."
+    }
+  ],
+  "deployment": false,
+  "productionDatabaseWrites": false,
+  "productionCodeEditedDuringReview": false
+}

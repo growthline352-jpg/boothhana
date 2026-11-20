@@ -23,12 +23,18 @@ from urllib.parse import urlsplit,urlunsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from rules import parse_result, inspect_result, parse_date, MAX_JSON_BYTES, InvalidResult
 from transport import send_batch, endpoint, DeliveryError
+from usage_cooldown import active_cooldown, start_cooldown
 
 ROOT=Path(__file__).resolve().parent
 try: SEOUL=ZoneInfo('Asia/Seoul')
 except ZoneInfoNotFoundError: SEOUL=timezone(timedelta(hours=9),name='Asia/Seoul')
 
 class RunError(RuntimeError): pass
+
+class CliUnavailable(RunError):
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__('Codex CLI unavailable: ' + reason + '; remaining research is deferred')
 
 def utcnow(): return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
 
@@ -38,7 +44,15 @@ def write_json(path: Path, value: dict):
     with temporary.open('wb') as file: file.write(data)
     try: temporary.chmod(0o600)
     except OSError: pass
-    os.replace(temporary,path)
+    # Windows indexers/antivirus can briefly hold the destination without delete-sharing.
+    # Keep the old checkpoint intact and retry only this transient replacement failure.
+    for attempt in range(6):
+        try:
+            os.replace(temporary,path)
+            break
+        except PermissionError:
+            if os.name!='nt' or attempt==5:raise
+            time.sleep(0.02*(2**attempt))
 
 def config(path: Path | None):
     result={'apiBaseUrl':os.getenv('COLLECTOR_API_BASE_URL','http://localhost:8080'),
@@ -120,7 +134,44 @@ def audit_search(path: Path) -> tuple[bool,dict]:
         if e.get('type')=='turn.completed': usage=e.get('usage',{})
     return observed,usage
 
+def terminal_cli_failure(path: Path) -> str | None:
+    """Inspect only CLI error events; never classify fetched/source text as an error."""
+    if not path.is_file() or path.stat().st_size>20*1024*1024:return None
+    reasons={'invalid_json_schema':'INVALID_SCHEMA','usage_limit':'USAGE_LIMIT','usage_limit_reached':'USAGE_LIMIT',
+        'insufficient_quota':'USAGE_LIMIT','authentication_error':'AUTH_REQUIRED',
+        'invalid_api_key':'AUTH_REQUIRED','token_expired':'AUTH_REQUIRED',
+        'refresh_token_reused':'AUTH_REQUIRED','refresh_token_expired':'AUTH_REQUIRED'}
+    def inspect(value):
+        if isinstance(value,dict):
+            for key in ('code','type'):
+                code=value.get(key)
+                if isinstance(code,str) and code.lower() in reasons:return reasons[code.lower()]
+            for child in value.values():
+                reason=inspect(child)
+                if reason:return reason
+        elif isinstance(value,list):
+            for child in value:
+                reason=inspect(child)
+                if reason:return reason
+        elif isinstance(value,str):
+            # HTTP error bodies may be serialized inside the CLI's message field.
+            for code in re.findall(r'"(?:code|type)"\s*:\s*"([a-z_]+)"',value,re.I):
+                if code.lower() in reasons:return reasons[code.lower()]
+            message=value.lower().replace('\u2019',"'")
+            if "you've hit your usage limit" in message:return 'USAGE_LIMIT'
+            if any(text in message for text in ('refresh token has already been used','refresh token has expired',
+                    'refresh token was already used','not logged in','authentication required')):return 'AUTH_REQUIRED'
+        return None
+    for line in path.read_text(encoding='utf-8',errors='replace').splitlines():
+        try:event=json.loads(line)
+        except ValueError:continue
+        if not isinstance(event,dict) or event.get('type') not in ('error','turn.failed'):continue
+        reason=inspect(event)
+        if reason:return reason
+    return None
+
 def canonical_audit_url(value: str) -> str:
+    if not isinstance(value,str):return ''
     try:
         parsed=urlsplit(value.strip())
         if parsed.scheme not in ('http','https') or not parsed.hostname:return ''
@@ -131,7 +182,12 @@ def canonical_audit_url(value: str) -> str:
     except (TypeError,ValueError):return ''
 
 def audit_opened_urls(path: Path) -> list[str]:
-    """Return URLs explicitly opened by completed CLI web actions, not search results."""
+    """Only successful page results, including batched/ref opens; never open attempts.
+
+    Current CLI collapses batch actions to `other` or the first action. A page
+    result has a view reference and the tool's exact line-count summary. Search
+    snippets, even with URLs, are not evidence of a fetched document.
+    """
     opened=[]
     if not path.is_file() or path.stat().st_size>20*1024*1024:return opened
     for line in path.read_text(encoding='utf-8',errors='replace').splitlines():
@@ -140,13 +196,20 @@ def audit_opened_urls(path: Path) -> list[str]:
         item=event.get('item') or {}
         if event.get('type')!='item.completed' or item.get('type') not in ('web_search','web_search_call'):continue
         action=item.get('action') or {}
-        action_type=action.get('type') if isinstance(action,dict) else str(action)
-        values=[item.get('query')]
-        if isinstance(action,dict):values.extend(action.get(key) for key in ('url','uri','query'))
-        if action_type=='search':continue
-        for value in values:
-            normalized=canonical_audit_url(value) if isinstance(value,str) else ''
+        results=item.get('results') or []
+        for result in results:
+            if not isinstance(result,dict):continue
+            ref=str(result.get('ref_id',''))
+            count=re.fullmatch(r'Total lines:\s*(\d+)',str(result.get('snippet','')).strip())
+            if not re.fullmatch(r'turn\w*view\d+',ref) or not count or int(count[1])<2:continue
+            if re.search(r'internal error|access denied|just a moment|captcha|403 forbidden',str(result.get('title','')),re.I):continue
+            normalized=canonical_audit_url(result.get('url',''))
             if normalized and normalized not in opened:opened.append(normalized)
+            # A single successful redirect may prove the original requested URL.
+            # In a batch the first requested URL may have failed: never infer it.
+            if normalized and len(results)==1 and isinstance(action,dict) and action.get('type')=='open_page':
+                requested=canonical_audit_url(action.get('url',''))
+                if requested and requested not in opened:opened.append(requested)
     return opened[:500]
 
 def stop_process(p: subprocess.Popen):
@@ -185,6 +248,10 @@ def output_schema_for_cli(value: dict) -> dict:
     return result
 
 def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | None = None, *, images: list[Path] | None = None, web_search: bool = True) -> tuple[bytes,bool,dict]:
+    cooldown=active_cooldown(cfg)
+    if cooldown:
+        write_json(run_dir/'cli-failure.json',{'reason':'USAGE_LIMIT','retryAt':cooldown['retryAt'],'remainingSeconds':cooldown['remainingSeconds'],'skipped':True})
+        raise CliUnavailable('USAGE_LIMIT')
     executable=shutil.which(cfg['codexExecutable'])
     if not executable: raise RunError('Codex CLI를 찾지 못했습니다. 설치 후 codex login을 실행하세요.')
     auth_root=Path(cfg['codexHome']).expanduser() if cfg['codexHome'] else Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex'))).expanduser()
@@ -227,7 +294,16 @@ def execute_search(cfg: dict, run_dir: Path, prompt: str, schema_path: Path | No
             except BaseException:
                 stop_process(p);raise
         persist_refreshed_auth(auth_file,initial_auth,home/'codex/auth.json')
-        if p.returncode: raise RunError(f'Codex 실행 실패(exit {p.returncode}). 로컬 stderr 로그를 확인하세요.')
+        if p.returncode:
+            reason=terminal_cli_failure(stdout)
+            if reason:
+                details={'reason':reason,'exitCode':p.returncode}
+                if reason=='USAGE_LIMIT':
+                    cooldown=start_cooldown(cfg)
+                    details.update(retryAt=cooldown['retryAt'],remainingSeconds=cooldown['remainingSeconds'])
+                write_json(run_dir/'cli-failure.json',details)
+                raise CliUnavailable(reason)
+            raise RunError(f'Codex 실행 실패(exit {p.returncode}). 로컬 stderr 로그를 확인하세요.')
         if not output.is_file() or output.stat().st_size>MAX_JSON_BYTES: raise RunError('CLI 결과 파일 누락/크기 초과')
         observed,usage=audit_search(stdout)
         raw=output.read_bytes()

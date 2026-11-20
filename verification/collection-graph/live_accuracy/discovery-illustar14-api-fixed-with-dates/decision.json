@@ -1,0 +1,84 @@
+{
+  "leaseToken": "db92926c-5573-4602-b0ef-46d4938996be",
+  "extractionId": "9c36ac36-67b8-49ef-ac0d-3d95a41887e3",
+  "resultHash": "local-evaluation-only",
+  "verdict": "APPROVE",
+  "reason": "행사별 독립 검토: 0:APPROVE",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://api.illustar.net/v1/event/list",
+      "https://illustar.net/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/notice/mEQ8Nzne"
+    ],
+    "usage": {
+      "eventReviews": [
+        {
+          "input_tokens": 46012,
+          "cached_input_tokens": 22656,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 359,
+          "reasoning_output_tokens": 33
+        }
+      ]
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "sha256": "98c13e032ab2b813a51cd2e49000c5f34c2379adea552ee91ad530b81019c2df",
+        "capturedAt": "2026-10-08T11:50:24.020575+00:00",
+        "transportUrl": "https://api.illustar.net/v1/event/list"
+      },
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "sha256": "d6556981ab91b22f1da28a39f9156f284e0940763f6aff39ab5bc8ea862f0a46",
+        "capturedAt": "2026-10-08T11:50:24.146168+00:00",
+        "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+      }
+    ]
+  },
+  "eventDecisions": [
+    {
+      "index": 0,
+      "verdict": "APPROVE",
+      "reason": "available=true이며 생략되지 않은 서버 수집 공식 원문을 대조했다. 행사 목록 id 100은 14회, 2026-10-10~11, 10:00~17:00, 일산 킨텍스 제1전시장 4·5홀을 뒷받침한다. 사무국 공지는 해당 회차의 코스프레·체키·팬미팅 부스 운영과 별도 입장권 필요를 확인한다. 부스 운영 시간 12:00~17:00 및 참가비·권장 판매가를 행사 전체 시간이나 입장료로 오인하지 않았다. 참가자·배치도·최신 변경 여부는 미확인으로 유지했고 전체 수집 완료를 주장하지 않았다. 이번 직접 열기는 API 접근 오류와 공지 본문 공백으로 추가 근거를 확보하지 못했으며, 이를 원문 확인으로 취급하지 않았다.",
+      "audit": {
+        "model": "gpt-6.1-sol",
+        "promptVersion": "graph-3",
+        "schemaVersion": "graph-3",
+        "webSearchObserved": true,
+        "openedUrls": [
+          "https://api.illustar.net/v1/event/list",
+          "https://illustar.net/notice/mEQ8Nzne",
+          "https://api.illustar.net/v1/notice/mEQ8Nzne"
+        ],
+        "usage": {
+          "input_tokens": 46012,
+          "cached_input_tokens": 22656,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 359,
+          "reasoning_output_tokens": 33
+        },
+        "imageHashes": [],
+        "sourceDocuments": [
+          {
+            "url": "https://api.illustar.net/v1/event/list",
+            "sha256": "98c13e032ab2b813a51cd2e49000c5f34c2379adea552ee91ad530b81019c2df",
+            "capturedAt": "2026-10-08T11:50:24.020575+00:00",
+            "transportUrl": "https://api.illustar.net/v1/event/list"
+          },
+          {
+            "url": "https://illustar.net/notice/mEQ8Nzne",
+            "sha256": "d6556981ab91b22f1da28a39f9156f284e0940763f6aff39ab5bc8ea862f0a46",
+            "capturedAt": "2026-10-08T11:50:24.146168+00:00",
+            "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+          }
+        ]
+      }
+    }
+  ]
+}

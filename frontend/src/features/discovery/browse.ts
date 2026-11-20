@@ -1,5 +1,6 @@
 import type { Occurrence } from '../collection/api'
 import { getCategory, type DiscoveryCategory } from './categories'
+import { currentSiteCategory } from './site'
 export type Period = 'upcoming' | 'week' | 'month' | 'all' | 'weekend' | 'nextmonth' | 'custom'
 export interface BrowseState { category: DiscoveryCategory; q: string; region: string; subcategory: string; period: Period; sort: 'date' | 'recent'; page: number; from?: string; to?: string; dateError?: string }
 const RESULT_MODE_KEYS = ['q', 'type', 'period', 'sort', 'page', 'from', 'to'] as const
@@ -11,7 +12,8 @@ export function isDiscoveryResults(pathname: string, params: URLSearchParams): b
 export function searchResultsHref(current: URLSearchParams, category: string, rawQuery: string): string {
   const next = new URLSearchParams(current)
   const query = rawQuery.trim().slice(0, 100)
-  next.set('category', category)
+  if (currentSiteCategory()) next.delete('category')
+  else next.set('category', category)
   next.set('view', 'results')
   next.delete('page')
   if (query) next.set('q', query)
@@ -19,7 +21,7 @@ export function searchResultsHref(current: URLSearchParams, category: string, ra
   return `/discover?${next.toString()}`
 }
 export function parseBrowse(params: URLSearchParams): BrowseState {
-  const category = getCategory(params.get('category'))
+  const category = getCategory(currentSiteCategory() || params.get('category'))
   const subcategory = params.get('type') || ''
   const rawPage = params.get('page') || '0'
   const p = params.get('period')

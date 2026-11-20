@@ -1,0 +1,81 @@
+{
+  "leaseToken": "3f5b151a-d043-469f-a862-15644d85c0ac",
+  "extractionId": "ba5e248e-0aae-4694-8b73-16b47bf91c9b",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "assignments": [
+      {
+        "status": "CONFIRMED",
+        "work": {
+          "id": null,
+          "name": "プロジェクトセカイ カラフルステージ！ feat. 初音ミク",
+          "sourceUrl": "https://www.sega.jp/topics/detail/230228_2/",
+          "medium": "게임",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "character": {
+          "id": null,
+          "name": "初音ミク",
+          "sourceUrl": "https://pjsekai.sega.jp/character/virtualsinger/miku/index.html",
+          "medium": "오리지널·기타",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "evidenceUrl": "https://booth.pm/ja/items/4261580",
+        "evidence": "상품 설명은 COLORFUL LIVE 2nd -Will-의 初音ミク를 모티프로 한 아크릴 키홀더라고 명시한다. 세가 공식 보고서는 해당 공연이 프로젝트 세카이 게임의 라이브임을 확인하며, 게임 공식 캐릭터 페이지에 初音ミク가 등재되어 있다.",
+        "basis": "TEXT",
+        "imageHash": null,
+        "imageRegion": null
+      }
+    ],
+    "unresolved": [],
+    "sources": [
+      {
+        "url": "https://booth.pm/ja/items/4261580",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "판매자 상품 원문에서 상품명과 初音ミク 및 COLORFUL LIVE 2nd -Will- 모티프를 확인했다."
+      },
+      {
+        "url": "https://www.sega.jp/topics/detail/230228_2/",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "COLORFUL LIVE 2nd -Will-가 게임 プロジェクトセカイ カラフルステージ！ feat. 初音ミク의 라이브라고 설명한다."
+      },
+      {
+        "url": "https://pjsekai.sega.jp/character/virtualsinger/miku/index.html",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "初音ミク의 공식 게임 캐릭터 프로필이며 버추얼 싱어로 소개한다. 게임 내 피아프로 캐릭터 설정은 원래 공식 설정과 다르다고 명시한다."
+      },
+      {
+        "url": "https://piapro.net/pages/character",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "初音ミク를 크립톤의 버추얼 싱어 소프트웨어 캐릭터 및 피아프로 캐릭터즈의 구성원으로 소개한다."
+      }
+    ],
+    "imageCoverage": []
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://booth.pm/ja/items/4261580",
+      "https://piapro.net/pages/character",
+      "https://pjsekai.sega.jp/character/virtualsinger/miku/index.html",
+      "https://www.sega.jp/topics/detail/230228_2"
+    ],
+    "usage": {
+      "input_tokens": 101225,
+      "cached_input_tokens": 51200,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 777,
+      "reasoning_output_tokens": 16
+    },
+    "imageHashes": []
+  }
+}

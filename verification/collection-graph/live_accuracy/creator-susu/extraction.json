@@ -1,0 +1,134 @@
+{
+  "leaseToken": "360125ba-c02b-4a6e-a5e8-48315ed18272",
+  "extractionId": "5ffba0b7-a009-4462-9e8c-0499dc7f3aa1",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "profile": {
+      "name": "su수",
+      "kind": "UNKNOWN",
+      "aliases": [],
+      "profileUrl": "https://comicw.net/g/creator/@su%EC%88%98"
+    },
+    "sources": [
+      {
+        "url": "https://comicw.net/g/creator/@su%EC%88%98",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "창작자 이름 su수와 종료상품 2개를 확인했다. 프로필 정보는 등록되어 있지 않아 작가 유형, 별칭 및 외부 공식 계정은 확인하지 못했다."
+      }
+    ],
+    "goods": [
+      {
+        "sourceEntryId": "916",
+        "name": "[5부코/CB_01] 스텔라이브",
+        "summary": "su수의 상품 페이지. 리제, 히나, 타비, 린, 부키, 나나 옵션이 각각 4,000원으로 기재되어 있다.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "엽서/포스터/스티커",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "각 옵션의 표시 가격. 선입금 기간은 종료되었다."
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": "https://comicw.net/g/916",
+        "sources": [
+          {
+            "url": "https://comicw.net/g/916",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수, 상품 제목, 6개 옵션과 각 4,000원 가격을 원문에서 확인했다. 하단에는 선입금 판매 종료가 명시되어 있다."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "옵션별 판매중 표시와 페이지 전체 선입금 종료 표시가 함께 있어 현재 판매 상태는 미확인으로 남겼다.",
+          "행사 현장 판매 여부와 실제 참가일은 확정하지 않았다.",
+          "각 옵션의 구체적인 상품 형태와 이미지 재게시 권리는 확인하지 않았다."
+        ]
+      },
+      {
+        "sourceEntryId": "242",
+        "name": "[3부코/CL_05] 스텔라이브 - 현장수령 선입금",
+        "summary": "su수의 상품 페이지. 나안아 히나·리제·타비·부키·린·나나 및 부키·린·리코 옵션이 각각 4,000원으로 기재되어 있다.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "각 옵션의 표시 가격. 선입금 기간은 종료되었다."
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": "https://comicw.net/g/242",
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수, 상품 제목, 9개 옵션과 각 4,000원 가격을 확인했다. 하단에는 선입금 판매 종료가 명시되어 있다."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "현재 판매 상태는 미확인이다. 선입금 종료를 품절로 해석하지 않았다.",
+          "행사 현장 판매 여부와 실제 참가일은 확정하지 않았다.",
+          "다른 페이지의 동명 옵션과 동일 상품으로 합치지 않았다."
+        ]
+      }
+    ],
+    "eventLeads": [
+      {
+        "sourceUrl": "https://comicw.net/g/916",
+        "evidence": "su수 상품 공지의 행사 정보에 코믹월드 333 부산, 부스 CB_01 및 개최일정이 명시되어 있다. 작가의 실제 참가일은 별도로 확인되지 않았다.",
+        "startDate": "2026-05-16",
+        "endDate": "2026-05-17"
+      },
+      {
+        "sourceUrl": "https://comicw.net/g/242",
+        "evidence": "su수 상품 공지의 행사 정보에 코믹월드 331 부산, 부스 CL_05 및 개최일정이 명시되어 있다. 작가의 실제 참가일은 별도로 확인되지 않았다.",
+        "startDate": "2026-03-28",
+        "endDate": "2026-03-29"
+      }
+    ],
+    "identityDecision": {
+      "action": "KEEP",
+      "canonicalId": null,
+      "evidence": []
+    },
+    "nextPageUrl": null,
+    "coverage": "PARTIAL"
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-2",
+    "schemaVersion": "graph-2",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/creator/@su%EC%88%98"
+    ],
+    "usage": {
+      "input_tokens": 89553,
+      "cached_input_tokens": 56704,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1434,
+      "reasoning_output_tokens": 72
+    },
+    "imageHashes": []
+  }
+}

@@ -1,6 +1,15 @@
 import { listPacks,getPack,deletePack,clearAll,ensureShell,revalidate } from './store.mjs'
 import { safeLink } from './policy.mjs'
 const root=document.querySelector('#content'),status=document.querySelector('#status'),connection=document.querySelector('#connection')
+const params=new URLSearchParams(location.search),embedded=params.get('embedded')==='1'
+if(embedded){document.querySelector('header').style.display='none';document.querySelector('h1').style.display='none'}
+const offlineEvent=params.get('offlineEvent')
+if(!location.hash&&/^[1-9]\d*$/.test(offlineEvent||''))history.replaceState(null,'',location.pathname+location.search+'#'+offlineEvent)
+const homeHref=embedded?'/offline/index.html?embedded=1':'/library?offline=1'
+document.title='부스하나 · 내 보관함'
+document.querySelector('h1').textContent='내 보관함 · 오프라인 저장한 행사'
+document.querySelector('.brand').href='/library'
+document.querySelector('.brand span').textContent='내 보관함'
 let generation=0,urls=new Map(),current=null,query='',selectedOnly=false,expiryTimer=null
 const el=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=String(value);if(cls)n.className=cls;return n}
 const stamp=x=>new Date(x).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})
@@ -45,7 +54,7 @@ function renderParticipants(pack,container){
  append()
 }
 function renderPack(pack){
- dispose();expiryTimer=setTimeout(()=>void load(false),Math.max(0,Math.min(2147483647,pack.expiresAt-Date.now()+10)));root.replaceChildren();const back=el('a','← 저장한 행사 전체');back.href='/offline/index.html';root.append(back,el('h2',pack.name),el('p',meta(pack),'muted'))
+ dispose();expiryTimer=setTimeout(()=>void load(false),Math.max(0,Math.min(2147483647,pack.expiresAt-Date.now()+10)));root.replaceChildren();const back=el('a','← 저장한 행사 전체');back.href=homeHref;root.append(back,el('h2',pack.name),el('p',meta(pack),'muted'))
  if(pack.checkedAt)root.append(el('p','공개 문구·권한 재확인: '+stamp(pack.checkedAt)+' · 기존 만료일은 유지됩니다.','muted'))
  root.append(el('p',`${pack.venue||'장소 미확인'} · ${pack.address||'주소 미확인'}`),el('p',pack.admission||'입장 조건 미확인'))
  for(const d of pack.occurrences)root.append(el('p',`${d.startDate}${d.endDate!==d.startDate?' ~ '+d.endDate:''} · ${d.startTime||'시간 미확인'}${d.endTime?' – '+d.endTime:''}`))
@@ -72,7 +81,7 @@ async function load(checkOnline=true){
  try{
   const id=Number(location.hash.slice(1));if(!id){await home(request);return}
   const pack=await getPack(id);if(request!==generation)return
-  if(!pack){root.replaceChildren(el('p','저장되지 않았거나 만료·삭제된 행사입니다. 인터넷 연결 후 다시 내려받아 주세요.'));const back=el('a','저장된 행사 전체');back.href='/offline/index.html';root.append(back);return}
+  if(!pack){root.replaceChildren(el('p','저장되지 않았거나 만료·삭제된 행사입니다. 인터넷 연결 후 다시 내려받아 주세요.'));const back=el('a','저장된 행사 전체');back.href=homeHref;root.append(back);return}
   current=pack;renderPack(pack)
   if(navigator.onLine&&checkOnline){const result=await revalidate(pack);if(request!==generation)return
    // Always read the committed current copy, not a stale object used to start the request.

@@ -1,0 +1,14 @@
+{
+  "id": "character-miku-enrichment",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "76a2114b-9d9a-40d3-8d08-c057f2c022a0",
+  "leaseToken": "63002538-3fa3-484a-a49a-b75050d55c43",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "ENRICH",
+    "publication": false
+  },
+  "seconds": 54.0
+}

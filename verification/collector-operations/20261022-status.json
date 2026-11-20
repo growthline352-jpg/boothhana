@@ -1,0 +1,71 @@
+{
+  "checkedAt": "2026-10-22T22:38:00+09:00",
+  "scope": "Read-only production collector operations check over existing SSH configuration; no settings or jobs modified",
+  "verdict": "Running infrastructure, blocked AI collection/enrichment; not healthy end-to-end",
+  "evidence": {
+    "api": "Production API container healthy, readiness READY in scheduled job logs",
+    "graph": {
+      "containerState": "Up 3 days",
+      "command": "python graph_worker.py --config /etc/boothhana/graph.json --watch",
+      "featureEnabled": true,
+      "recentError": "CliUnavailable; USAGE_LIMIT; retry in 3600 seconds",
+      "affectedJobKinds": [
+        "DISCOVERY",
+        "CREATOR",
+        "EVENT"
+      ]
+    },
+    "recheck": {
+      "finishedAt": "2026-10-22T22:35:14+09:00",
+      "exitCode": 2,
+      "checked": 0,
+      "saved": 0,
+      "remaining": 525,
+      "cliCalls": 1,
+      "cliBlockedReason": "USAGE_LIMIT",
+      "source": "logs/20261022-223501-recheck.log"
+    },
+    "discovery": {
+      "finishedAt": "2026-10-22T21:20:14+09:00",
+      "exitCode": 2,
+      "receiptsSaved": 0,
+      "cliBlockedReason": "USAGE_LIMIT",
+      "scope": "Regional discovery across categories; not subculture-only",
+      "source": "logs/20261022-212001-discovery.log"
+    },
+    "weekly": {
+      "finishedAt": "2026-10-18T03:04:31+09:00",
+      "exitCode": 2,
+      "cliBlockedReason": "USAGE_LIMIT",
+      "additionalProblems": [
+        "Some image HTTP 404 failures",
+        "Some image format/pixel validation failures"
+      ]
+    },
+    "imageStorage": {
+      "finishedAt": "2026-10-22T22:30:15+09:00",
+      "exitCode": 0,
+      "meaning": "Successful process exit; does not establish a positive number of new images stored"
+    },
+    "graphQueue": {
+      "scope": "All graph job categories, not unique events or subculture-only",
+      "pending": 1384,
+      "waiting": 1729,
+      "stale": 31,
+      "complete": 136,
+      "creatorPending": 596,
+      "creatorWaiting": 1038,
+      "characterPending": 552,
+      "characterWaiting": 270,
+      "salesPending": 122,
+      "salesWaiting": 228,
+      "salesStale": 20
+    }
+  },
+  "notes": [
+    "Local GRAPH_WORKER_KO.md and completion reports describe older non-deployed snapshots; production inspected directly has a newer graph worker and extra cron schedules.",
+    "Container uptime and cron execution alone do not demonstrate successful collection.",
+    "Scheduler retries and stored queues remain in place. No quota reset, model change, deployment, forced collection or database mutation was performed.",
+    "Next operational action is to resolve Codex usage capacity and then confirm that deferred graph/recheck jobs actually save data."
+  ]
+}

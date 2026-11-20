@@ -1,0 +1,12 @@
+{
+  "id": "sales-comic242",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "5c7850da-679c-4772-bdd2-1a7f4a4d8c46",
+  "leaseToken": "859cd728-f2c0-44e5-9858-823cf4e053ee",
+  "state": "FAILED",
+  "errorType": "RunError",
+  "error": "CLI did not report direct source inspection",
+  "seconds": 95.8
+}

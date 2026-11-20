@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>부스하나 부스 상세 개선안</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23a84432'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' fill='white'%3EB%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="부스하나 홈">
+      <img src="/frontend/public/assets/brand/logo.png" alt="" />
+      <span>부스하나</span>
+    </a>
+    <nav aria-label="주요 메뉴">
+      <a href="#">서브컬처</a>
+      <a href="#">박람회</a>
+      <a href="#">축제</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-button" type="button" aria-label="검색"><i class="ph ph-magnifying-glass"></i></button>
+      <button class="profile-button" type="button"><i class="ph ph-user-circle"></i><span>내 정보</span></button>
+    </div>
+  </header>
+
+  <main>
+    <div class="breadcrumb">
+      <a href="#"><i class="ph ph-arrow-left"></i> 제35회 디. 페스타</a>
+      <span>토요일</span>
+    </div>
+
+    <section class="booth-hero" aria-labelledby="booth-title">
+      <div class="hero-copy">
+        <div class="visit-location" aria-label="부스 위치 L-14a">
+          <span>부스 위치</span>
+          <strong>L-14a</strong>
+          <small>SETEC · 10월 3일 토요일</small>
+        </div>
+        <div class="hero-title">
+          <div class="status-line"><span class="verified"><i class="ph ph-seal-check"></i> 공식 참가 확인</span><span>동인 부스</span></div>
+          <h1 id="booth-title">리버스: BOND<br />(yes 장르 no 오타쿠)</h1>
+          <p class="members">화천, N</p>
+          <div class="tags"><span>버디미션 BOND</span><span>Reverse: 1999</span><span>회지</span></div>
+          <p class="summary">버디미션 BOND와 Reverse: 1999를 중심으로 활동하는 창작 부스입니다. 공식 참가 명단과 배치도 기준으로 안내합니다.</p>
+          <div class="primary-actions">
+            <button class="button primary" id="mapButton" type="button"><i class="ph ph-map-trifold"></i> 지도에서 위치 보기</button>
+            <button class="button secondary save-button" type="button"><i class="ph ph-bookmark-simple"></i><span>부스 저장</span></button>
+            <button class="icon-button share-button" type="button" aria-label="부스 공유"><i class="ph ph-share-network"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-gallery" aria-label="부스 대표 이미지">
+        <figure class="gallery-main">
+          <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/299/745594673c3d76132ad32f1f7bd267efaaf55e210213d03ec7d37950c3c8acc2.webp" alt="리버스 BOND 부스 대표 이미지" />
+        </figure>
+        <figure class="gallery-small">
+          <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/254/ceaab54d516bff75b90bad7234f41ae5ec61235a9d57b0fae368efc73d715752.webp" alt="리버스 BOND 부스 출품 이미지" />
+        </figure>
+        <figure class="gallery-small">
+          <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/298/7a02d3074ab4c00aebd7e13051472f4b0c9357cf3d45d0bcf577dcac40af324d.webp" alt="리버스 BOND 부스 출품 이미지" />
+        </figure>
+      </div>
+    </section>
+
+    <nav class="section-tabs" aria-label="부스 상세 메뉴">
+      <a class="active" href="#booths">같은 행사 부스 <span>45</span></a>
+      <a href="#visit">방문 정보</a>
+      <a href="#official">공식 안내</a>
+    </nav>
+
+    <div class="content-layout">
+      <div class="main-column">
+        <section id="booths" class="booths-section">
+          <div class="section-heading">
+            <div><h2>같은 행사 부스</h2><p>부스번호, 부스명, 작품명으로 빠르게 찾아보세요.</p></div>
+            <div class="booth-count"><strong>45</strong>개 참가 부스</div>
+          </div>
+          <div class="booth-toolbar">
+            <label class="booth-search"><i class="ph ph-magnifying-glass"></i><span class="sr-only">부스 검색</span><input id="boothSearch" type="search" placeholder="부스명, 작품명, 부스번호 검색" /></label>
+            <div class="filter-group" role="group" aria-label="부스 필터">
+              <button class="active" type="button" data-booth-filter="all">전체</button>
+              <button type="button" data-booth-filter="zone-l">L 구역</button>
+              <button type="button" data-booth-filter="saved">저장</button>
+            </div>
+          </div>
+
+          <div class="booth-list" aria-live="polite">
+            <article class="booth-row" data-name="hyeongababy IDOLiSH7 L-24b" data-zone="l">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/251/052264612db19e28b20a37080cbc91d67b22f2d60bbd6c7e73767865127c837a.webp" alt="hyeongababy 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">L-24b</span><h3>hyeongababy</h3><p>IDOLiSH7</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="hyeongababy 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="hyeongababy 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+            <article class="booth-row" data-name="Rabbit Hole 유희왕 DM G-06a" data-zone="g">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/271/1b54d01106dd385899f7abc2d0c30ce93293fe5d50e0c476be86e6f4210c333f.webp" alt="Rabbit Hole 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">G-06a</span><h3>Rabbit Hole☆</h3><p>유희왕 DM</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="Rabbit Hole 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="Rabbit Hole 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+            <article class="booth-row" data-name="Mystic Forest 괴담에 떨어져도 출근을 해야 하는구나 O-20b" data-zone="o">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/268/f6b0fcdb7d2cc31389ef40ef988170b1b0b01003a948130ab4d8e30a5019869a.webp" alt="Mystic Forest 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">O-20b</span><h3>Mystic Forest</h3><p>괴담에 떨어져도 출근을 해야 하는구나</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="Mystic Forest 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="Mystic Forest 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+            <article class="booth-row" data-name="sidewalk 포켓몬스터 스칼렛 바이올렛 A-23b" data-zone="a">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/270/dfb9eb75299e2c1c6de4ea5aa687164329040e61d6dc37b1a93d69e0836cbde4.webp" alt="sidewalk 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">A-23b</span><h3>sidewalk</h3><p>포켓몬스터 스칼렛·바이올렛</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="sidewalk 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="sidewalk 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+            <article class="booth-row" data-name="가이카카가 메이저가 되면 좋겠어요 나루토 D-20" data-zone="d">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/257/559233d287891e07531a102d7edde108ec79a2f30842a9ebc82b831d9b7bdbc1.webp" alt="가이카카가 메이저가 되면 좋겠어요 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">D-20</span><h3>가이카카가 메이저가 되면 좋겠어요</h3><p>나루토</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="가이카카가 메이저가 되면 좋겠어요 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="가이카카가 메이저가 되면 좋겠어요 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+            <article class="booth-row" data-name="마법의 돌멩이 스프 화산귀환 S-23" data-zone="s">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/260/217c757105941953e6e3397336dc4e5824f252db7625142c88b31b22c54f6a12.webp" alt="마법의 돌멩이 스프 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">S-23</span><h3>마법의 돌멩이 스프</h3><p>화산귀환</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="마법의 돌멩이 스프 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="마법의 돌멩이 스프 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+            <article class="booth-row" data-name="이 살인축구에서 이사린 블루록 U-29b" data-zone="u">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/263/d4f32aeba9eb50ee4f4ea65443ec37a5c60f3a1afa5cdd3d2d37852d60b79d08.webp" alt="이 살인축구에서 이사린 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">U-29b</span><h3>이 살인축구에서 이사린</h3><p>블루록</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="이 살인축구에서 이사린 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="이 살인축구에서 이사린 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+            <article class="booth-row" data-name="한국효도협회 이세계 착각 헌터 U-19b" data-zone="u">
+              <img src="https://storage.googleapis.com/boothhana2-production-public/verified/catalog/267/9a8fd5e59a5bed0a3d1ff97cc95de4a735181b705a4f93f4f75e9c776b35aaa4.webp" alt="한국효도협회 부스 대표 이미지" />
+              <div class="booth-row-copy"><span class="booth-location">U-19b</span><h3>한국효도협회</h3><p>이세계 착각 헌터</p></div>
+              <div class="booth-row-actions"><button class="row-map" type="button" aria-label="한국효도협회 지도에서 보기"><i class="ph ph-map-pin"></i><span>지도</span></button><button class="row-save" type="button" aria-label="한국효도협회 저장"><i class="ph ph-bookmark-simple"></i></button></div>
+            </article>
+          </div>
+          <div class="empty-booths" hidden><i class="ph ph-storefront"></i><h3>검색 결과가 없어요</h3><p>부스명이나 부스번호를 다시 확인해 주세요.</p></div>
+          <button class="button secondary booth-more" type="button">부스 더 보기 <span>8 / 45</span></button>
+        </section>
+
+        <section id="official" class="official-section">
+          <h2>부스 정보와 공식 안내</h2>
+          <div class="official-grid">
+            <div><h3>참가 작가</h3><p>화천, N</p></div>
+            <div><h3>취급 주제</h3><p>버디미션 BOND, Reverse: 1999</p></div>
+            <div><h3>정보 확인일</h3><p>2026년 9월 26일</p></div>
+            <div><h3>정보 출처</h3><a href="https://dongne.co/events/df2610/circles/171902" target="_blank" rel="noreferrer">공식 참가자 페이지 <i class="ph ph-arrow-up-right"></i></a></div>
+          </div>
+          <details><summary>정보 이용 안내</summary><p>부스 위치와 참가 정보는 공식 행사 페이지 확인 기준입니다. 행사 당일 배치와 운영 여부는 달라질 수 있습니다.</p></details>
+          <div class="minor-actions"><button type="button">부스 정보 신고</button><button type="button">이 부스의 운영자입니다</button></div>
+        </section>
+      </div>
+
+      <aside id="visit" class="visit-panel">
+        <div class="visit-panel-head"><span>방문 정보</span><strong>10.03 토</strong></div>
+        <div class="mini-map" id="miniMap" aria-label="L 구역 부스 위치 미리보기">
+          <div class="map-label">L 구역</div>
+          <div class="map-cells"><span>L-12</span><span>L-13</span><strong>L-14a</strong><span>L-14b</span><span>L-15</span><span>L-16</span></div>
+        </div>
+        <dl>
+          <div><dt>위치</dt><dd>L-14a</dd></div>
+          <div><dt>행사장</dt><dd>SETEC</dd></div>
+          <div><dt>운영</dt><dd>11:00-16:00</dd></div>
+          <div><dt>입장료</dt><dd>10,000원</dd></div>
+        </dl>
+        <button class="button primary full" id="sideMapButton" type="button"><i class="ph ph-navigation-arrow"></i> 배치도에서 확인</button>
+        <button class="button secondary full save-button" type="button"><i class="ph ph-bookmark-simple"></i><span>방문 목록에 저장</span></button>
+        <p class="data-note"><i class="ph ph-info"></i> 공식 등록 정보 기준이며 행사 당일 변경될 수 있어요.</p>
+      </aside>
+    </div>
+  </main>
+
+  <div class="mobile-bar">
+    <div><span>부스 위치</span><strong>L-14a</strong></div>
+    <button class="save-button" type="button" aria-label="부스 저장"><i class="ph ph-bookmark-simple"></i></button>
+    <button class="mobile-map" type="button"><i class="ph ph-map-trifold"></i> 지도 보기</button>
+  </div>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

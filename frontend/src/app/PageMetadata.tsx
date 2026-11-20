@@ -1,14 +1,20 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
-import { pageMetadata, renderMetadata, type PublicCatalogMeta, type PublicParticipantMeta } from '../../seo/metadata.mjs'
+import { categoryFor, pageMetadata, renderMetadata, type PublicCatalogMeta, type PublicParticipantMeta } from '../../seo/metadata.mjs'
+import { categoryRedirect } from '../../seo/category-sites.mjs'
+import { categorySitesActive, currentSiteOrigin } from '../features/discovery/site'
 
 const runtimeEnv = import.meta.env as { VITE_PUBLIC_SITE_URL?: string; VITE_GOOGLE_SITE_VERIFICATION?: string }
 
 export function PageMetadata({ catalog = null, participant = null, unavailable = false }: { catalog?: PublicCatalogMeta | null; participant?: PublicParticipantMeta | null; unavailable?: boolean }) {
   const location = useLocation()
   useEffect(() => {
+    const siteUrl = currentSiteOrigin()
+    const splitSites = categorySitesActive()
+    const destination = categoryRedirect({ origin: siteUrl, path: location.pathname, search: location.search, category: unavailable ? null : categoryFor(catalog?.event), enabled: splitSites })
+    if (destination) { window.location.replace(destination + window.location.hash); return }
     const meta = pageMetadata({ path: location.pathname, search: location.search,
-      siteUrl: runtimeEnv.VITE_PUBLIC_SITE_URL ?? '', verification: runtimeEnv.VITE_GOOGLE_SITE_VERIFICATION ?? '', catalog, participant, unavailable })
+      siteUrl, splitSites, verification: runtimeEnv.VITE_GOOGLE_SITE_VERIFICATION ?? '', catalog, participant, unavailable })
     document.documentElement.lang = 'ko'
     document.head.querySelectorAll('[data-booth-meta]').forEach(node => node.remove())
     document.head.insertAdjacentHTML('beforeend', renderMetadata(meta))

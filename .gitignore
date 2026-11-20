@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 deploy/ubuntu/secrets/
+*.secret
+deploy/ubuntu/api.env
+deploy/ubuntu/collector.env
 
 # Frontend
 node_modules/

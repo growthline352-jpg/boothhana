@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1",
+  "searchStatus": "PARTIAL",
+  "summary": "일러스타 페스 14만 조사했으나 공식 페이지를 직접 열었을 때 본문이 반환되지 않아 행사기간·장소·운영 상태를 원문으로 확정하지 못했습니다. 확인된 행사 결과는 비워 두었습니다. 후속 확인 URL: https://illustar.net/notice/mEQ8Nzne , https://illustar.net/notice/qvnq9Gn7 , https://illustar.net/notice/PzAzk7Qp",
+  "queries": [
+    "site:illustar.net \"14\" \"2026\" \"10\"",
+    "\"일러스타 페스 14\"",
+    "site:illustar.net/notice/mEQ8Nzne",
+    "site:illustar.net \"14\" \"10.10\"",
+    "site.kintex.com 일러스타 2026 14",
+    "site:kintex.com \"일러스타\" \"2026\" \"10\"",
+    "site:illustar.net \"일러스타 페스 14\" \"입장권\""
+  ],
+  "sourceCoverage": [
+    {
+      "channel": "ORGANIZER_OFFICIAL",
+      "status": "INACCESSIBLE",
+      "queries": [
+        "site:illustar.net/notice/mEQ8Nzne",
+        "site:illustar.net \"일러스타 페스 14\" \"입장권\""
+      ],
+      "checkedUrls": [
+        "https://illustar.net/notice/mEQ8Nzne",
+        "https://illustar.net/",
+        "https://illustar.net/notice/qvnq9Gn7",
+        "https://illustar.net/notice/PzAzk7Qp",
+        "https://illustar.net/notice/Lw5bPlA3"
+      ],
+      "notes": "직접 열기에서 본문이 없거나 접근 오류가 발생했습니다. 검색 결과에 나타난 공지 내용은 확정 근거로 사용하지 않았습니다. 제공 URL은 검색 결과상 체키&팬미팅 부스 안내 후보이며 작가 참가 공지로 확정하지 않았습니다."
+    },
+    {
+      "channel": "VENUE_CALENDAR",
+      "status": "NO_RESULTS",
+      "queries": [
+        "site.kintex.com 일러스타 2026 14",
+        "site:kintex.com \"일러스타\" \"2026\" \"10\""
+      ],
+      "checkedUrls": [],
+      "notes": "검색에서 해당 회차의 킨텍스 공식 행사 상세 페이지를 확보하지 못했습니다."
+    }
+  ],
+  "events": []
+}

@@ -25,6 +25,7 @@ const adminLinks: ConsoleLink[] = [
   { to: '/admin/inquiries', label: '문의 내역', icon: 'info' },
   { to: '/admin/ownership', label: '주최자·부스 인증', icon: 'building' },
   { to: '/admin/event-series', label: '행사 회차 연결', icon: 'calendar' },
+  { to:'/admin/subculture/interests',label:'작품·캐릭터 연결',icon:'sparkles' },
   { to: '/admin/subculture', label: '수집 관리', icon: 'grid' },
 ]
 

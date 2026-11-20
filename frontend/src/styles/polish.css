@@ -593,3 +593,5 @@ hr { border: 0; border-top: 1px solid var(--line); }
   .discovery-category-link.is-current { text-decoration: underline; }
   .discovery-filter-chip.is-selected, .visit-view-switch button.is-current { outline: 2px solid Highlight; }
 }
+.catalog-product-media { position: relative; }
+.media-fallback-caption { position: absolute; right: 10px; bottom: 10px; z-index: 1; padding: 5px 8px; border-radius: 6px; background: rgba(32, 43, 58, .78); color: #fff; font-size: 11px; line-height: 1.3; font-weight: 700; }

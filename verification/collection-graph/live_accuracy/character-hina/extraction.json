@@ -1,0 +1,81 @@
+{
+  "leaseToken": "2f5facf9-2366-4f40-9c90-98582b6bac43",
+  "extractionId": "f4777035-5567-4005-9efb-1430502b7b36",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "assignments": [
+      {
+        "status": "CONFIRMED",
+        "work": {
+          "id": null,
+          "name": "스텔라이브",
+          "sourceUrl": "https://stellive.me/about",
+          "medium": "VTuber 프로젝트",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "character": {
+          "id": null,
+          "name": "시라유키 히나",
+          "sourceUrl": "https://stellive.me/news/9365",
+          "medium": "VTuber",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "evidenceUrl": "https://comicw.net/g/242",
+        "evidence": "판매 원문은 스텔라이브 상품으로 명시하고 해당 이미지에 연결된 개별 옵션을 '나안아 히나'로 표시한다. 스텔라이브 공식 원문은 '히나'를 '시라유키 히나'로 함께 표기한다. 이 개별 옵션의 텍스트에 근거해 관계를 확인했다.",
+        "basis": "TEXT",
+        "imageHash": null,
+        "imageRegion": null
+      }
+    ],
+    "unresolved": [],
+    "sources": [
+      {
+        "url": "https://comicw.net/g/242",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "판매 원문에서 스텔라이브 제목과 개별 상품 옵션 '나안아 히나' 및 연결 이미지를 확인했다."
+      },
+      {
+        "url": "https://stellive.me/about",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "스텔라이브를 다양한 캐릭터와 세계관을 기반으로 활동하는 VTuber 회사로 소개한다."
+      },
+      {
+        "url": "https://stellive.me/news/9365",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "공식 생일 굿즈 공지에서 정식 이름 '시라유키 히나'와 약칭 '히나'를 함께 사용한다."
+      }
+    ],
+    "imageCoverage": [
+      {
+        "index": 0,
+        "sha256": "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4",
+        "status": "AVAILABLE"
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-2",
+    "schemaVersion": "graph-2",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/242",
+      "https://stellive.me/news/9365"
+    ],
+    "usage": {
+      "input_tokens": 246944,
+      "cached_input_tokens": 205184,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 844,
+      "reasoning_output_tokens": 49
+    },
+    "imageHashes": [
+      "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "discovery-comic338",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "e1b23d2c-059c-4eb6-8122-38960d9a3351",
+  "leaseToken": "191bd1bd-f742-4181-9f35-135813c56881",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "ENRICH",
+    "publication": false
+  },
+  "seconds": 137.9
+}

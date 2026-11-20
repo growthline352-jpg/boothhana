@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "path": "/discover/1/booths/2629",
+      "status": 200,
+      "title": "10디페 · 제35회 디. 페스타 (토요일) | 부스하나",
+      "description": "제35회 디. 페스타 (토요일) · 2026-10-03 · SETEC · 일반 입장료 10,000원 · 부스 I-20 · 밀재 · 공식 토요일 참가명단. 배정 수량 2부스. 취급 매체: . · 패솔로직·은과 금·술탄의 게임",
+      "canonical": "https://subculture.boothana.kr/discover/1/booths/2629"
+    },
+    {
+      "path": "/discover/754",
+      "status": 200,
+      "title": "쿠키런 그랜드 페스티벌 | 부스하나",
+      "description": "2026-10-24 ~ 2026-10-25 · 서울어린이대공원 · 양일 현장 입장 무료, 연령 제한 없음. 월드 챔피언십 자유석은 무료이며 지정석 500석은 유료다. 마라톤은 별도 참가 티켓이 필요하다. · 쿠키런: 오븐브레이크 출시 10주년을 기념하는 쿠키런 IP 통합 축제. 월드 챔피언십, 마라톤, ",
+      "canonical": "https://subculture.boothana.kr/discover/754"
+    }
+  ]
+}

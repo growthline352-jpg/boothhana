@@ -1,0 +1,77 @@
+{
+  "leaseToken": "63002538-3fa3-484a-a49a-b75050d55c43",
+  "extractionId": "a64a14ce-6cce-4af0-aa51-494ae9e8baae",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "assignments": [
+      {
+        "status": "CONFIRMED",
+        "work": {
+          "id": null,
+          "name": "プロジェクトセカイ カラフルステージ！ feat. 初音ミク",
+          "sourceUrl": "https://www.sega.jp/topics/detail/230228_2/",
+          "medium": "게임",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "character": {
+          "id": null,
+          "name": "初音ミク",
+          "sourceUrl": "https://piapro.net/pages/character",
+          "medium": "버추얼 싱어 캐릭터",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "evidenceUrl": "https://booth.pm/ja/items/4261580",
+        "evidence": "해당 상품 설명은 「プロジェクトセカイ COLORFUL LIVE 2nd -Will-」의 初音ミク를 모티프로 제작한 아크릴 키홀더라고 명시한다. SEGA 공식 원문은 해당 공연이 이 게임의 라이브이며, 게임에 크립톤의 初音ミク가 등장한다고 설명한다. piapro 공식 소개로 캐릭터 정체성을 확인했다.",
+        "basis": "TEXT",
+        "imageHash": null,
+        "imageRegion": null
+      }
+    ],
+    "unresolved": [
+      "첨부 images가 비어 있고 SHA256 manifest가 없어 이미지 기반 분석은 수행하지 않았다. 상품의 실제 외형, 의상 및 구체적인 미쿠 버전은 미확인이다.",
+      "공연 모티프 표기는 해당 공연에서의 상품 판매나 작가 참가를 입증하지 않는다. 행사 판매·참가일은 미확인이다.",
+      "상품 페이지의 피아프로 링크 허가 표기는 이미지 재게시 권리 승인으로 판정하지 않았다."
+    ],
+    "sources": [
+      {
+        "url": "https://booth.pm/ja/items/4261580",
+        "kind": "OTHER",
+        "access": "ORIGINAL",
+        "evidence": "판매자 상품 원문에서 상품명과 COLORFUL LIVE 2nd -Will-의 初音ミク를 모티프로 했다는 설명을 직접 확인했다."
+      },
+      {
+        "url": "https://piapro.net/pages/character",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "初音ミク가 크립톤이 개발한 소프트웨어의 캐릭터이자 버추얼 싱어임을 공식 소개 원문에서 확인했다."
+      },
+      {
+        "url": "https://www.sega.jp/topics/detail/230228_2/",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "공식 보고서 원문에서 COLORFUL LIVE 2nd -Will-와 게임의 관계, 初音ミク의 공연 출연 및 게임 등장을 확인했다."
+      }
+    ],
+    "imageCoverage": []
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-2",
+    "schemaVersion": "graph-2",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://booth.pm/ja/items/4261580",
+      "https://www.sega.jp/topics/detail/230228_2"
+    ],
+    "usage": {
+      "input_tokens": 88269,
+      "cached_input_tokens": 57472,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 765,
+      "reasoning_output_tokens": 0
+    },
+    "imageHashes": []
+  }
+}

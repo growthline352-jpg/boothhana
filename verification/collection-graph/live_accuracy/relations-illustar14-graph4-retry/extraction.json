@@ -1,0 +1,83 @@
+{
+  "leaseToken": "aafa5cf7-0eec-4e41-ae0f-4e8184a9fccb",
+  "extractionId": "69d58d7a-2cf6-4d2a-a71c-7729c12d8eb7",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "subjects": [],
+    "series": {
+      "status": "CONFIRMED",
+      "id": null,
+      "name": "일러스타 페스",
+      "officialUrl": "https://api.illustar.net/v1/event/list",
+      "edition": "14",
+      "evidenceUrl": "https://api.illustar.net/v1/event/list",
+      "evidence": "제공된 available=true 공식 API 원문 전체에서 일러스타 페스 5~15의 별도 회차가 확인된다. id 100은 '일러스타 페스 14 MAIN'으로, 2026년 10월 10~11일 개최를 명시한다. 반복 개최 시리즈로 확인하며, 쁘띠·협업 행사는 합치지 않았다. 이번 도구의 직접 재열람은 접근 오류였다.",
+      "identityEvidence": [
+        {
+          "sourceUrl": "https://api.illustar.net/v1/event/list",
+          "evidence": "제공된 공식 원문에 동일 브랜드의 여러 번호 회차와 대상 14회가 함께 수록되어 신규 시리즈로 식별한다."
+        },
+        {
+          "sourceUrl": "https://illustar.net/notice/mEQ8Nzne",
+          "evidence": "제공된 공식 공지 원문은 일러스타 페스 사무국 명의로 '일러스타 페스 14' 행사장 내부 부스 운영을 안내하여 대상 회차와 브랜드를 연결한다."
+        }
+      ]
+    },
+    "unresolved": [
+      "subjects=[]는 특정 주제가 없음을 확정한 결과가 아니라 미확인 결과다. 공식 행사 소개 https://illustar.net/event-info/layout 의 검색 결과에는 종합 서브컬처 이벤트라는 설명이 있으나 직접 열람한 본문이 비어 있어 원문으로 확인하지 못했다. 제공된 체키&팬미팅 공지는 내부 부스 안내이므로 행사 전체의 작품·캐릭터 주제 근거로 사용하지 않았다."
+    ],
+    "sources": [
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "사용자가 제공한 서버 직접 수집 원문(2026-10-08, available=true, truncated=false)을 검토했다. 여러 회차와 14회가 확인된다. 이번 직접 열기에서는 접근 오류가 발생했다."
+      },
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "사용자가 제공한 서버 직접 수집 공지 원문(2026-10-08, available=true, truncated=false)을 검토했다. 14회 내부 체키&팬미팅 부스 안내이며 특정 작품·캐릭터를 행사 전체 주제로 지정하지 않는다. 이번 직접 열기는 본문이 비어 있었다."
+      },
+      {
+        "url": "https://illustar.net/event-info/layout",
+        "kind": "OFFICIAL",
+        "access": "SEARCH_SNIPPET",
+        "evidence": "검색 결과는 창작 서적·팬시 굿즈 크리에이터 마켓, 음악 공연, 코스플레이를 포함하는 종합 이벤트로 소개한다. 직접 열기는 본문이 비어 있어 이 설명만으로 주제 부재를 확정하지 않았다."
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-4",
+    "schemaVersion": "graph-4",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://api.illustar.net/v1/event/list",
+      "https://illustar.net/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/notice/mEQ8Nzne"
+    ],
+    "usage": {
+      "input_tokens": 109714,
+      "cached_input_tokens": 77696,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 926,
+      "reasoning_output_tokens": 0
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "sha256": "1b1eb73aed62edc87343f2b9bca5c6efb33b6c0dd5d718e184cb28e6a8cbbca8",
+        "capturedAt": "2026-10-08T16:02:30.446414+00:00",
+        "transportUrl": "https://api.illustar.net/v1/event/list"
+      },
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "sha256": "31756ae40736ee43bbcba15db5de5ad5d1f75568bb5aa089bf03a509476b1c68",
+        "capturedAt": "2026-10-08T16:02:30.562153+00:00",
+        "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+      }
+    ]
+  }
+}

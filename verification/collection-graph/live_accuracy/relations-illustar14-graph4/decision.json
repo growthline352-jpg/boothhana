@@ -1,0 +1,40 @@
+{
+  "leaseToken": "309c50a0-5d27-40d4-9fd5-18fd63f46672",
+  "extractionId": "0b4cd47c-00a0-4666-a824-47f61e82fd4c",
+  "resultHash": "local-evaluation-only",
+  "verdict": "ENRICH",
+  "reason": "Every approved source must be directly opened by the reviewer",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-4",
+    "schemaVersion": "graph-4",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://api.illustar.net/v1/event/list",
+      "https://illustar.net/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/notice/mEQ8Nzne"
+    ],
+    "usage": {
+      "input_tokens": 47362,
+      "cached_input_tokens": 23296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 296,
+      "reasoning_output_tokens": 21
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "sha256": "c97d6974e58807e7d414d5a87b6d42100e8fb7a56115386ab73b4bb93374ab2b",
+        "capturedAt": "2026-10-08T16:00:06.729452+00:00",
+        "transportUrl": "https://api.illustar.net/v1/event/list"
+      },
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "sha256": "4454dfb4126e15c3b63e3b215875a5b3b8faf13baa191f33e1911182b9381597",
+        "capturedAt": "2026-10-08T16:00:06.962462+00:00",
+        "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+      }
+    ]
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "leaseToken": "191bd1bd-f742-4181-9f35-135813c56881",
+  "extractionId": "b2db0419-b0ed-4f55-b0a3-f5e72a594344",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "schemaVersion": "1",
+    "searchStatus": "PARTIAL",
+    "summary": "2026년 10월 24~25일 서울·경기 범위에서 공식 원문으로 행사 회차 2건을 확인했다. 추가 후보의 공식 원문 확인과 일부 세부 안내 확인이 남아 있다.",
+    "queries": [
+      "2026 \"10월 24\" \"10월 25\" 서브컬처 행사",
+      "2026 \"10.24\" \"10.25\" 온리전",
+      "2026 10월 24 25 수원메쎄 코믹월드 행사",
+      "2026 10월 24 25 서울 인형 행사",
+      "\"2026\" \"10월 24일\" \"온리전\"",
+      "\"2026\" \"10월 25일\" \"온리전\"",
+      "\"2026\" \"10월\" \"돌프리마켓\"",
+      "\"2026\" \"10월 24\" \"문구전\""
+    ],
+    "sourceCoverage": [
+      {
+        "channel": "ORGANIZER_OFFICIAL",
+        "status": "PARTIAL",
+        "queries": [],
+        "checkedUrls": [
+          "https://comicw.net/e/338/8",
+          "https://litt.ly/comiverse",
+          "https://comiverse.kr/info",
+          "https://comiverse.kr/board/view/227",
+          "https://app.comiverse.kr/",
+          "https://x.com/comiv_official",
+          "https://x.com/OnDongHwan/status/2075414726134190287?ref_src=twsrc%5Etfw"
+        ],
+        "notes": "공식 행사 안내 2건 확인. X 원문은 403으로 접근 불가. 다음 확인 URL: https://comiverse.kr/ticket"
+      },
+      {
+        "channel": "VENUE_CALENDAR",
+        "status": "PARTIAL",
+        "queries": [
+          "2026 10월 24 25 수원메쎄 코믹월드 행사"
+        ],
+        "checkedUrls": [
+          "https://suwonmesse.com/?kboard_id=3&mod=document&uid=523"
+        ],
+        "notes": "검색 결과의 일정이 열린 원문에서 확인되지 않아 독립적인 개최 근거로 사용하지 않았다."
+      },
+      {
+        "channel": "TICKETING",
+        "status": "PARTIAL",
+        "queries": [],
+        "checkedUrls": [
+          "https://comicw.net/shop/",
+          "https://comicw.net/shop/item.php?it_id=1788916238",
+          "https://comiverse.kr/ticket"
+        ],
+        "notes": "코믹월드 해당 회차 가격 원문 확인. 코미버스 예매 상세 확인은 남아 있다."
+      },
+      {
+        "channel": "COMMUNITY_INDEX",
+        "status": "PARTIAL",
+        "queries": [
+          "\"2026\" \"10월 24일\" \"온리전\"",
+          "\"2026\" \"10월 25일\" \"온리전\""
+        ],
+        "checkedUrls": [
+          "https://simugung.tistory.com/1279"
+        ],
+        "notes": "온 동네가 환상향 3 후보 발견. 주최 측 원문 접근 실패로 행사 결과에 포함하지 않았다. 다음 확인 URL: https://x.com/OnDongHwan/status/2075414726134190287"
+      }
+    ],
+    "events": [
+      {
+        "name": "코믹월드 338 수원",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "(주)코믹월드",
+        "edition": "338 수원",
+        "region": "GYEONGGI",
+        "venueName": "수원메쎄 전관",
+        "address": null,
+        "description": "만화 창작품과 회지·팬시·일러스트 등을 전시·판매하는 동인 행사. 코스프레 무대행사도 안내되어 있다.",
+        "admission": "100% 사전예약제. 일반·코스어 입장권 사전예매 7,000원, 정상가 10,000원. 코스어 패키지 사전예매 10,000원, 얼리 입장권 사전예매 14,000원.",
+        "subjects": [
+          "동인 창작",
+          "만화",
+          "일러스트",
+          "코스프레"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-24",
+            "endDate": "2026-10-25",
+            "startTime": "11:00",
+            "endTime": "16:30"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://comicw.net/e/338/8",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "회차 제목은 코믹월드 338 수원. 날짜 2026-10-24~2026-10-25, 장소 수원메쎄 전관. 일반 개장 11:00, 종료 16:30."
+          },
+          {
+            "url": "https://comicw.net/shop/item.php?it_id=1788916238",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "코믹월드 338 수원 입장권 상품 원문에서 사전예약제와 티켓 종류별 가격 확인."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "얼리 입장은 10:30이며 일반 입장 시간과 다르다.",
+          "행사 식순과 판매 가격은 변경될 수 있다.",
+          "개별 작가의 참가일과 해당 행사 판매 상품은 확인하지 않았다.",
+          "회차별 참가 목록·배치도의 공개 여부는 미확인이다."
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://comicw.net/e/338/8",
+            "status": "PUBLISHED",
+            "note": "해당 회차 관람 안내."
+          },
+          {
+            "kind": "PARTICIPANTS",
+            "url": "https://comicw.net/g/boothcut/",
+            "status": "UNKNOWN",
+            "note": "공식 참가 라인업 연결 페이지. 338 회차 목록은 확인하지 못했다."
+          },
+          {
+            "kind": "SALES",
+            "url": "https://comicw.net/shop/item.php?it_id=1788916238",
+            "status": "PUBLISHED",
+            "note": "해당 회차 입장권 판매 안내."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "공식 관람 안내에 개최 예정 일정이 게시되어 있다.",
+          "sourceUrl": "https://comicw.net/e/338/8",
+          "checkedOn": "2026-10-08"
+        }
+      },
+      {
+        "name": "코미버스 2026 가을",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "코미버스 운영위원회 / 코미웍스(다꾸빌리지)",
+        "edition": "2026 가을",
+        "region": "SEOUL",
+        "venueName": "양재 aT센터 제1전시장",
+        "address": null,
+        "description": "1·2차 창작 통합 배포전. 공식 웹카탈로그에 창작·동인 부스와 출판·음악·게임 등의 참가 부문이 공개되어 있다.",
+        "admission": null,
+        "subjects": [
+          "1차 창작",
+          "2차 창작",
+          "만화",
+          "출판",
+          "음악",
+          "게임"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-24",
+            "endDate": "2026-10-25",
+            "startTime": null,
+            "endTime": null
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://litt.ly/comiverse",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "공식 연결 페이지에 1·2차 창작 통합 배포전, 2026년 10월 24~25일, 양재 aT센터 제1전시장 명시. 코미버스 2026 가을 링크 제공."
+          },
+          {
+            "url": "https://comiverse.kr/board/view/227",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "관리자 게시물 제목: [코미버스2026가을] 부스 가배치도 V.0.4 - 260924."
+          },
+          {
+            "url": "https://app.comiverse.kr/",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "공식 홈페이지에서 연결한 웹카탈로그에 부스 번호와 참가 부문·참가일 표기가 공개되어 있다."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "입장 시간과 가격은 미확인이다.",
+          "배치도는 가배치도이므로 변경 가능성이 있다.",
+          "개별 작가의 동일성이나 행사 판매 상품은 확정하지 않았다.",
+          "공식 MD 판매 연결은 차단 호스트 witchform.com이므로 열지 않았다.",
+          "추가 확인 URL: https://comiverse.kr/ticket"
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://litt.ly/comiverse",
+            "status": "PUBLISHED",
+            "note": "날짜·장소와 공식 사이트 연결 확인."
+          },
+          {
+            "kind": "PARTICIPANTS",
+            "url": "https://app.comiverse.kr/",
+            "status": "PUBLISHED",
+            "note": "공식 웹카탈로그. 개별 참가 정보를 전수 검토하지 않았다."
+          },
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://comiverse.kr/board/view/227",
+            "status": "PUBLISHED",
+            "note": "2026 가을 부스 가배치도 V.0.4."
+          },
+          {
+            "kind": "SALES",
+            "url": "https://comiverse.kr/ticket",
+            "status": "PUBLISHED",
+            "note": "입장권 구매 연결 페이지. 가격·시간 상세 확인이 남아 있다."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "공식 연결 페이지에 해당 기간 개최 일정이 게시되어 있다.",
+          "sourceUrl": "https://litt.ly/comiverse",
+          "checkedOn": "2026-10-08"
+        }
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-2",
+    "schemaVersion": "graph-2",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/e/338/8",
+      "https://simugung.tistory.com/1279"
+    ],
+    "usage": {
+      "input_tokens": 249318,
+      "cached_input_tokens": 189696,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3166,
+      "reasoning_output_tokens": 14
+    },
+    "imageHashes": []
+  }
+}

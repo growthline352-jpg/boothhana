@@ -11,6 +11,7 @@ import java.util.*;
 
 @RestController
 public class EventComments {
+    private static final long DFESTA_MAIN_ID=1L, DFESTA_SUNDAY_ID=7L;
     private final JdbcTemplate db;
     private final CatalogPublicationService publications;
     private final CurrentUser current;
@@ -31,17 +32,26 @@ public class EventComments {
         if(input==null || input.requestId()==null || input.body()==null) throw ApiException.badRequest("댓글 내용을 입력해 주세요.");
         String body=input.body().strip();
         if(body.isEmpty() || body.length()>2000 || body.indexOf('\0')>=0) throw ApiException.badRequest("댓글은 1~2,000자로 입력해 주세요.");
+        if(CommentLanguageFilter.containsBlockedTerm(body)) throw ApiException.badRequest("댓글을 등록하지 못했습니다.");
         return body;
     }
     private void visible(long eventId) {
         if(publications.findPublicDetail(eventId).isEmpty()) throw ApiException.notFound("공개된 행사를 찾을 수 없습니다.");
     }
+    private long secondReviewEventId(long eventId) {
+        if(eventId!=DFESTA_MAIN_ID) return eventId;
+        // This edition was collected as two day-specific events. Merge reviews only while both
+        // original publications are public and still identify the same edition.
+        var names=db.queryForList("select p.snapshot_json->'event'->>'name' from subculture_catalog_publication p join subculture_event_candidate e on e.id=p.event_id where p.event_id in (?,?) and e.review_state<>'EXCLUDED'",String.class,DFESTA_MAIN_ID,DFESTA_SUNDAY_ID);
+        return names.size()==2 && names.stream().allMatch(name->name!=null && name.matches("^제35회 디\\.\\s*페스타.*")) ? DFESTA_SUNDAY_ID : eventId;
+    }
     @GetMapping("/api/public/catalog/events/{eventId}/comments")
     public Map<String,Object> list(@PathVariable long eventId, @RequestParam(defaultValue="0") int page) {
         visible(eventId);
         if(page<0 || page>10000) throw ApiException.badRequest("페이지를 확인해 주세요.");
-        var items=db.queryForList("select c.id,c.user_id as \"authorId\",u.display_name as \"authorName\",c.body,c.created_at as \"createdAt\" from event_comment c join app_user u on u.id=c.user_id where c.event_id=? and c.deleted=false order by c.created_at desc,c.id desc limit 20 offset ?",eventId,page*20);
-        return Map.of("items",items,"total",db.queryForObject("select count(*) from event_comment where event_id=? and deleted=false",Long.class,eventId),"page",page,"size",20);
+        long secondEventId=secondReviewEventId(eventId);
+        var items=db.queryForList("select c.id,c.event_id as \"eventId\",c.user_id as \"authorId\",u.display_name as \"authorName\",c.body,c.created_at as \"createdAt\" from event_comment c join app_user u on u.id=c.user_id where c.event_id in (?,?) and c.deleted=false order by c.created_at desc,c.id desc limit 20 offset ?",eventId,secondEventId,page*20);
+        return Map.of("items",items,"total",db.queryForObject("select count(*) from event_comment where event_id in (?,?) and deleted=false",Long.class,eventId,secondEventId),"page",page,"size",20);
     }
     @PostMapping("/api/me/catalog/events/{eventId}/comments")
     @ResponseStatus(HttpStatus.CREATED)

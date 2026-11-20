@@ -1,0 +1,17 @@
+{
+  "model": "gpt-6.1-sol",
+  "promptVersion": "graph-2",
+  "schemaVersion": "graph-2",
+  "webSearchObserved": true,
+  "openedUrls": [
+    "https://illustar.net/notice/mEQ8Nzne"
+  ],
+  "usage": {
+    "input_tokens": 29548,
+    "cached_input_tokens": 14336,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 294,
+    "reasoning_output_tokens": 0
+  },
+  "imageHashes": []
+}

@@ -1,0 +1,11 @@
+Generated with the built-in image_gen tool; transparent background enabled.
+Reference: frontend/public/assets/categories/subculture-3d.webp
+Output: frontend/public/assets/brand/outings/outings-symbol-v1.png
+
+Use case: logo-brand, companion 3D brand symbol.
+Input image is a STYLE REFERENCE for BoothHana's subculture symbol: a premium softly rounded 3D stationery object cluster, three-quarter view, tactile glossy details. Create the companion symbol for BoothHana's integrated popup / fair / festival discovery and date-itinerary service. Change the objects and colors, preserve the family resemblance in rendering and proportions.
+Subject: ONE compact, cohesive logo symbol made of a small ivory folded outing map, two overlapping coral-and-peach admission tickets tucked behind the map, and one coral location pin with an ivory heart inset at the front-right. On the map a single broad simple curved route connects two coral dots, no tiny map labels. Broad rounded objects, clear silhouette, readable at 48px. Tickets have softly notched sides, not text. The heart is a restrained small detail, not a large wedding motif.
+Style: polished isometric 3D miniature, soft ceramic and semi-gloss resin, warm soft studio illumination, natural gentle occlusion, cheerful but sophisticated like the reference. Mostly warm ivory with coral #cf442e and soft peach, a very small muted mint route detail is acceptable. No purple, no black slabs.
+Composition: centered single symbol occupying roughly 88% of a square image with comfortable equal transparent margins; all elements form one connected cluster. No square app icon background, no pedestal, no ground plane, no long cast shadow.
+Text: NONE. Korean brand wordmark will be rendered separately in the website for crisp readability.
+Output: genuine transparent alpha background, no checkerboard baked in, clean edges, no watermark, no variations board.

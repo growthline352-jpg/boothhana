@@ -1,0 +1,84 @@
+{
+  "leaseToken": "94fb5459-a7a2-402a-b12c-ce4349534f14",
+  "extractionId": "609a1607-e51f-40c1-99a9-1a63c11a7496",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "assignments": [
+      {
+        "status": "CONFIRMED",
+        "work": {
+          "id": null,
+          "name": "스텔라이브",
+          "sourceUrl": "https://stellive.me/about",
+          "medium": "오리지널·기타",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "character": {
+          "id": null,
+          "name": "시라유키 히나",
+          "sourceUrl": "https://stellive.me/music/category/278",
+          "medium": "오리지널·기타",
+          "identityDecision": "NEW",
+          "identityEvidence": []
+        },
+        "evidenceUrl": "https://comicw.net/g/242",
+        "evidence": "상품 원문은 스텔라이브 상품으로 명시하고 해당 옵션을 ‘나안아 히나’로 표기한다. 스텔라이브 공식 사이트에서 ‘시라유키 히나 / Shirayuki Hina’를 확인하여 이 상품의 히나를 연결했다.",
+        "basis": "TEXT",
+        "imageHash": null,
+        "imageRegion": null
+      }
+    ],
+    "unresolved": [],
+    "sources": [
+      {
+        "url": "https://comicw.net/g/242",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "판매 등록 원문에서 스텔라이브 표기와 상품 옵션 ‘나안아 히나’를 확인했다."
+      },
+      {
+        "url": "https://stellive.me/about",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "스텔라이브를 VTuber들의 콘텐츠를 제작하는 회사로 소개하며 캐릭터별 세계관과 활동을 설명한다."
+      },
+      {
+        "url": "https://stellive.me/music/category/278",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "공식 음악 목록에 시라유키 히나와 영문명 Shirayuki Hina가 명시되어 있다."
+      }
+    ],
+    "imageCoverage": [
+      {
+        "index": 0,
+        "sha256": "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4",
+        "status": "AVAILABLE"
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/242",
+      "https://stellive.me/",
+      "https://stellive.me/talents",
+      "https://stellive.me/about",
+      "https://stellive.me/music/category/278"
+    ],
+    "usage": {
+      "input_tokens": 145866,
+      "cached_input_tokens": 116352,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 631,
+      "reasoning_output_tokens": 8
+    },
+    "imageHashes": [
+      "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4"
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "leaseToken": "aafa5cf7-0eec-4e41-ae0f-4e8184a9fccb",
+  "extractionId": "69d58d7a-2cf6-4d2a-a71c-7729c12d8eb7",
+  "resultHash": "local-evaluation-only",
+  "verdict": "APPROVE",
+  "reason": "제공된 available=true·truncated=false 공식 API 원문에서 일러스타 페스 5~15의 별도 회차와 id 100 ‘일러스타 페스 14 MAIN’의 2026-10-10~11 개최를 확인했다. 공식 공지도 사무국 명의로 14회와 행사 브랜드를 연결하므로 시리즈 식별 근거가 일치한다. 쁘띠·협업 행사를 합치지 않았고 subjects=[]는 미확인으로 유지했으며 전체 주제나 참가자 목록의 완료를 주장하지 않았다. 직접 재열람은 API 접근 오류·공지 본문 비어 있음으로 원문 확인에 포함하지 않았다. 승인은 제공된 공식 원문으로 확인되는 시리즈 관계에 한정한다.",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-4",
+    "schemaVersion": "graph-4",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://api.illustar.net/v1/event/list",
+      "https://illustar.net/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/notice/mEQ8Nzne"
+    ],
+    "usage": {
+      "input_tokens": 47289,
+      "cached_input_tokens": 23296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 306,
+      "reasoning_output_tokens": 14
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://api.illustar.net/v1/event/list",
+        "sha256": "67dc4e44bc75cfe8d3c9854131be7779b7bf6a89739d32d448907a54d9044f6b",
+        "capturedAt": "2026-10-08T16:03:10.494724+00:00",
+        "transportUrl": "https://api.illustar.net/v1/event/list"
+      },
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "sha256": "4bef0425f19265cc91477a6d1426ddc1a71c52312d3d276fa19874f65d0858e6",
+        "capturedAt": "2026-10-08T16:03:10.561907+00:00",
+        "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+      }
+    ]
+  }
+}

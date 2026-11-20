@@ -1,0 +1,14 @@
+{
+  "id": "character-hina-fixed-retry",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "bbe3f840-e8a4-4f22-9506-dae4039c7168",
+  "leaseToken": "a23d05ed-2ebf-4322-a1df-de5b7e379ec1",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "APPROVE",
+    "publication": false
+  },
+  "seconds": 58.6
+}

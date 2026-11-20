@@ -1,0 +1,45 @@
+{
+  "leaseToken": "a23d05ed-2ebf-4322-a1df-de5b7e379ec1",
+  "extractionId": "8e6a68b5-a415-4010-9a43-c654da97641c",
+  "resultHash": "local-evaluation-only",
+  "verdict": "APPROVE",
+  "reason": "제공된 원문에서 판매글의 #스텔라이브 표기와 개별 옵션 ‘나안아 히나’를 확인했고, 공식 프로필 제목 ‘시라유키 히나’와 본문의 ‘히나’ 호칭으로 TEXT 연결을 검증했다. 공식 ABOUT도 VTuber 그룹과 캐릭터 콘텐츠를 확인해 준다. 후보는 이미지 외형·현장 판매·가격·이미지 공개 권한을 확정하지 않았다.",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": false,
+    "openedUrls": [
+      "https://comicw.net/g/242",
+      "https://stellive.me/about",
+      "https://stellive.me/hina"
+    ],
+    "usage": {
+      "input_tokens": 19693,
+      "cached_input_tokens": 11776,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 144,
+      "reasoning_output_tokens": 20
+    },
+    "imageHashes": [
+      "c6da44a28c681ea7bbf0d57d644a7f26e7b477c63a63c482d09a3d71c5ebd3c4"
+    ],
+    "sourceDocuments": [
+      {
+        "url": "https://comicw.net/g/242",
+        "sha256": "e46c7080485171ce9669de594c2725b26fe76010037e0e86fdc03e4b60dc132f",
+        "capturedAt": "2026-10-08T11:41:22.141992+00:00"
+      },
+      {
+        "url": "https://stellive.me/about",
+        "sha256": "7531ac32e7a26d7660aeb19b1d52e1138431edef682a719f51d95ac8dfe54451",
+        "capturedAt": "2026-10-08T11:41:22.305950+00:00"
+      },
+      {
+        "url": "https://stellive.me/hina",
+        "sha256": "360d2379abb505f4595cb33273a7d60404b2526e209eb907effc1434748d3461",
+        "capturedAt": "2026-10-08T11:41:22.443191+00:00"
+      }
+    ]
+  }
+}

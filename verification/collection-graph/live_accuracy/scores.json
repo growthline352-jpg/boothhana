@@ -1,0 +1,116 @@
+{
+  "populationAccuracy": null,
+  "warning": "Convenience sample; raw extraction agreement is not validated publication accuracy. No API/DB writes.",
+  "cases": [
+    {
+      "id": "character-hina",
+      "state": "REVIEWED",
+      "verdict": "ENRICH",
+      "error": null,
+      "seconds": 89.5,
+      "harness": "Worker.process unchanged"
+    },
+    {
+      "id": "character-miku",
+      "state": "REVIEWED",
+      "verdict": "ENRICH",
+      "error": null,
+      "seconds": 59.2,
+      "harness": "Worker.process unchanged"
+    },
+    {
+      "id": "character-miku-enrichment",
+      "state": "REVIEWED",
+      "verdict": "ENRICH",
+      "error": null,
+      "seconds": 54.0,
+      "harness": "Worker.process unchanged"
+    },
+    {
+      "id": "creator-susu",
+      "state": "REVIEWED",
+      "verdict": "ENRICH",
+      "error": null,
+      "seconds": 75.0,
+      "harness": "Worker.process unchanged"
+    },
+    {
+      "id": "discovery-comic338",
+      "state": "REVIEWED",
+      "verdict": "ENRICH",
+      "error": null,
+      "seconds": 137.9,
+      "harness": "Worker.process unchanged"
+    },
+    {
+      "id": "discovery-illustar14-20261008",
+      "state": "REVIEWED",
+      "verdict": "ENRICH",
+      "error": null,
+      "seconds": 59.1,
+      "harness": "scoped extraction + custom review"
+    },
+    {
+      "id": "sales-comic242",
+      "state": "FAILED",
+      "verdict": null,
+      "error": "CLI did not report direct source inspection",
+      "seconds": 95.8,
+      "harness": "Worker.process unchanged"
+    }
+  ],
+  "eventFacts": {
+    "source": "https://comicw.net/e/338/8",
+    "correct": 6,
+    "total": 6
+  },
+  "salesOptions": {
+    "source": "https://comicw.net/g/242",
+    "expected": 9,
+    "returned": 9,
+    "matchedNames": 9,
+    "correctPrices": 9,
+    "reviewReached": false
+  },
+  "creatorGranularity": {
+    "sources": [
+      "https://comicw.net/g/242",
+      "https://comicw.net/g/916"
+    ],
+    "expectedOptionRowsAcrossForms": 15,
+    "returnedFormRows": 2,
+    "uniqueProductsAcrossForms": null
+  },
+  "characters": [
+    {
+      "case": "character-hina",
+      "nameCorrect": true,
+      "basis": "TEXT",
+      "workMedium": "VTuber 프로젝트",
+      "workMediumAcceptedByBackend": false,
+      "characterMediumLength": 6,
+      "characterMediumWithinBackendLimit": true
+    },
+    {
+      "case": "character-miku",
+      "nameCorrect": true,
+      "basis": "TEXT",
+      "workMedium": "게임",
+      "workMediumAcceptedByBackend": true,
+      "characterMediumLength": 22,
+      "characterMediumWithinBackendLimit": true
+    }
+  ],
+  "auditExamples": {
+    "sales-comic242": {
+      "stage": "extract",
+      "recognizedOpenedUrls": []
+    },
+    "discovery-comic338": {
+      "stage": "review",
+      "recognizedOpenedUrls": [
+        "https://app.comiverse.kr/"
+      ]
+    }
+  }
+}

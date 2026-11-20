@@ -1,3 +1,5 @@
+import { categoryHome } from '../../../seo/category-sites.mjs'
+import { categorySitesActive, currentSiteCategory, currentSiteOrigin } from './site'
 /** v18: explicit taxonomy shared with collector/backend. Do not classify by names. */
 export type CategoryKey = 'subculture' | 'exhibitions' | 'festivals'
 export interface DiscoveryCategory {
@@ -31,10 +33,10 @@ export const categories: readonly DiscoveryCategory[] = [
 export function getCategory(value: string | null | undefined): DiscoveryCategory {
   return categories.find(c => c.key === value) ?? categories[0]
 }
-export function categoryHref(key: CategoryKey) { return `/discover?category=${key}` }
+export function categoryHref(key: CategoryKey) { return categoryHome(key, currentSiteOrigin(), categorySitesActive()) }
 export function activeCategory(pathname: string, search: string): CategoryKey | null {
   if (pathname === '/' || pathname === '/discover' || pathname === '/discover/')
-    return getCategory(new URLSearchParams(search).get('category')).key
+    return currentSiteCategory() || (categorySitesActive() && pathname === '/' && !search ? null : getCategory(new URLSearchParams(search).get('category')).key)
   // Detail category comes from the published event, never a user-supplied query.
   if (/^\/discover\/\d+\/?$/.test(pathname)) return null
   return null

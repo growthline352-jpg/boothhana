@@ -1,0 +1,11 @@
+/* User-selected screenshot, 2026-10-09. */
+.sc-app .sc-main .sc-taste-intro .sc-eyebrow{display:inline-flex;font-size:10px;letter-spacing:1.6px}
+.sc-app .sc-main .sc-taste-intro h1{margin:18px 0}
+.sc-app .sc-main .sc-taste-intro>p{font-size:13px;line-height:1.9}
+.sc-app .sc-main .sc-work-switch>button{font-size:11px;min-height:39px}
+.sc-app .sc-main .sc-taste-result-title>span{font-size:10px;color:#89867f}
+.sc-app .sc-main .sc-taste-card small{font-size:10px;color:#858178}
+.sc-app .sc-main .sc-taste-card h2{font-size:17px}
+.sc-app .sc-main .sc-taste-bottom{justify-content:space-between}
+.sc-app .sc-main .sc-taste-bottom>a{font-size:10px}
+@media(max-width:760px){.sc-app .sc-main .sc-taste-intro>p{font-size:14px}.sc-app .sc-main .sc-work-switch>button{min-height:44px;font-size:12px}.sc-app .sc-main .sc-taste-card h2{font-size:15px}.sc-app .sc-main .sc-taste-card small,.sc-app .sc-main .sc-taste-bottom>a{font-size:12px}}

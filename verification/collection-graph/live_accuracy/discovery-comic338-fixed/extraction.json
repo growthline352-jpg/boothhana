@@ -1,0 +1,264 @@
+{
+  "leaseToken": "d8ba835a-7cd9-4e13-b546-f461894cecdc",
+  "extractionId": "66a71680-1331-44ce-b3e5-6b3481fd8d3c",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "schemaVersion": "1",
+    "searchStatus": "PARTIAL",
+    "summary": "2026-10-24~25 서울·경기 범위에서 공식 원문으로 행사 2건을 확인했다. 추가 공식 자료와 참가 목록 조사가 남아 전체 완료로 표시하지 않는다.",
+    "queries": [
+      "2026 \"10월 24일\" \"10월 25일\" 동인 행사",
+      "2026 10월 24 25 서브컬처 행사 서울 경기",
+      "2026 \"10월\" \"24\" \"25\" \"온리전\"",
+      "2026 \"10월\" \"24\" \"돌프리\"",
+      "2026 \"10월\" \"25\" \"동인\" 행사 서울",
+      "site.suwonmesse.com 2026 코믹월드 10",
+      "코미버스 2026 가을 공식"
+    ],
+    "sourceCoverage": [
+      {
+        "channel": "ORGANIZER_OFFICIAL",
+        "status": "PARTIAL",
+        "queries": [
+          "코미버스 2026 가을 공식"
+        ],
+        "checkedUrls": [
+          "https://comicw.net/e/338/8",
+          "https://comicw.net/map/",
+          "https://comiverse.kr/",
+          "https://comiverse.kr/info",
+          "https://comiverse.kr/board/view/227",
+          "https://www.newswire.co.kr/newsRead.php?no=1039793"
+        ],
+        "notes": "주최 측 안내와 주관사가 제공한 보도자료 원문 확인. 코미버스 행사정보 이미지 내용은 확인하지 못했다. 후속 확인 URL: https://comiverse.kr/uploads/info.webp"
+      },
+      {
+        "channel": "VENUE_CALENDAR",
+        "status": "PARTIAL",
+        "queries": [
+          "site.suwonmesse.com 2026 코믹월드 10"
+        ],
+        "checkedUrls": [
+          "https://suwonmesse.com/",
+          "https://suwonmesse.com/traffic/traffic_guidance/",
+          "https://suwonmesse.com/?kboard_id=3&mod=document&uid=523"
+        ],
+        "notes": "수원메쎄 홈페이지에서 338회 일정을 확인했다. 개별 문서 URL은 열기 오류."
+      },
+      {
+        "channel": "TICKETING",
+        "status": "PARTIAL",
+        "queries": [],
+        "checkedUrls": [
+          "https://comicw.co.kr/shop/1773298224",
+          "https://comiverse.kr/ticket"
+        ],
+        "notes": "코믹월드 338회 안내의 예매 링크는 332회 상품으로 연결됨. 코미버스 티켓 페이지는 이미지 중심이라 가격 미확인."
+      },
+      {
+        "channel": "COMMUNITY_INDEX",
+        "status": "PARTIAL",
+        "queries": [
+          "2026 \"10월\" \"24\" \"25\" \"온리전\"",
+          "2026 \"10월\" \"24\" \"돌프리\"",
+          "2026 \"10월\" \"25\" \"동인\" 행사 서울"
+        ],
+        "checkedUrls": [],
+        "notes": "검색 결과는 발견 단서로만 사용했으며 검색 요약만으로 추가 행사를 확정하지 않았다."
+      }
+    ],
+    "events": [
+      {
+        "name": "코믹월드 338 수원",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "(주)코믹월드",
+        "edition": "338",
+        "region": "GYEONGGI",
+        "venueName": "수원메쎄 전관",
+        "address": "경기도 수원시 권선구 세화로134번길 37",
+        "description": "동아리 창작품 전시·판매 및 교류와 코스프레 무대행사를 운영하는 동인 행사.",
+        "admission": "100% 사전예약제. 일반 입장 11:00, 얼리 입장 10:30. 가격 미확인.",
+        "subjects": [
+          "만화",
+          "회지",
+          "팬시",
+          "일러스트",
+          "코스프레"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-24",
+            "endDate": "2026-10-25",
+            "startTime": "11:00",
+            "endTime": "16:30"
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://comicw.net/e/338/8",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "338 수원 회차의 날짜, 수원메쎄 전관, 일반 개장 11:00 및 종료 16:30, 사전예약제 안내를 직접 확인."
+          },
+          {
+            "url": "https://suwonmesse.com/",
+            "kind": "VENUE",
+            "access": "ORIGINAL",
+            "evidence": "행사 일정에 코믹월드 338 수원과 2026-10-24~25가 기재되어 있으며 시설 주소 확인."
+          },
+          {
+            "url": "https://comicw.net/map/",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "338회 수원 선택 항목과 토요일·일요일 필터가 있는 배치도 페이지 확인. 개별 부스 내용은 미확인."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "안내의 예매 링크는 332회 상품으로 연결되어 338회 가격 근거에서 제외했다.",
+          "안내의 참가업체 링크 https://comicw.co.kr/bbs/fair.php?f=332&n=12 는 다른 회차 번호이며 오류 페이지로 연결된다.",
+          "개별 작가의 참가일 및 해당 회차 판매 상품은 확인하지 않았다."
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://comicw.net/e/338/8",
+            "status": "PUBLISHED",
+            "note": "338회 관람 안내."
+          },
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://comicw.net/map/",
+            "status": "PUBLISHED",
+            "note": "338회 항목 확인. 개별 배치 내용 추가 확인 필요."
+          },
+          {
+            "kind": "PARTICIPANTS",
+            "url": null,
+            "status": "UNKNOWN",
+            "note": "정확한 338회 참가 목록 미확인."
+          },
+          {
+            "kind": "SALES",
+            "url": null,
+            "status": "UNKNOWN",
+            "note": "338회 예매 상품 및 가격 미확인."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "주최 측 안내와 대관처 일정에 개최 예정으로 게시되어 있음.",
+          "sourceUrl": "https://comicw.net/e/338/8",
+          "checkedOn": "2026-10-08"
+        }
+      },
+      {
+        "name": "코미버스 2026 가을",
+        "subcategory": "COMIC_DOUJIN",
+        "organizer": "코미웍스(다꾸빌리지)",
+        "edition": "2026 가을",
+        "region": "SEOUL",
+        "venueName": "양재 aT센터 제1전시장",
+        "address": null,
+        "description": "오리지널·2차 창작 통합 동인 행사. 창작 부스와 출판·음악·게임 특별부스, 작품 열람 공간을 운영할 예정.",
+        "admission": null,
+        "subjects": [
+          "오리지널 창작",
+          "2차 창작",
+          "독립출판",
+          "음악",
+          "인디게임"
+        ],
+        "occurrences": [
+          {
+            "startDate": "2026-10-24",
+            "endDate": "2026-10-25",
+            "startTime": null,
+            "endTime": null
+          }
+        ],
+        "sources": [
+          {
+            "url": "https://www.newswire.co.kr/newsRead.php?no=1039793",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "뉴스 제공자가 다꾸빌리지인 2026-08-05 보도자료 원문. 주관사, 10월 24~25일, 서울 양재 aT센터 제1전시장 및 여러 창작 부스 운영 계획 확인."
+          },
+          {
+            "url": "https://comiverse.kr/board/view/227",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "공식 게시물 제목에서 코미버스2026가을 부스 배치도 V.1.0 - 261005 확인. 배치도 이미지 내용은 미확인."
+          }
+        ],
+        "banners": [],
+        "warnings": [
+          "공식 행사정보 및 티켓 안내가 이미지 중심으로 제공되어 운영 시간과 입장료를 확인하지 못했다.",
+          "후속 원문 확인 URL: https://comiverse.kr/uploads/info.webp",
+          "개별 참가자와 참가일, 행사 판매 상품은 확인하지 않았다."
+        ],
+        "eventFormat": "MULTI_BOOTH",
+        "discoveryLinks": [
+          {
+            "kind": "OFFICIAL",
+            "url": "https://comiverse.kr/info",
+            "status": "PUBLISHED",
+            "note": "공식 행사정보 페이지. 이미지 내용 추가 확인 필요."
+          },
+          {
+            "kind": "FLOOR_PLAN",
+            "url": "https://comiverse.kr/board/view/227",
+            "status": "PUBLISHED",
+            "note": "2026 가을 배치도 게시물 확인."
+          },
+          {
+            "kind": "PARTICIPANTS",
+            "url": "https://app.comiverse.kr",
+            "status": "UNKNOWN",
+            "note": "공식 홈페이지의 웹카탈로그 링크. 회차별 목록 원문은 아직 확인하지 않았다."
+          },
+          {
+            "kind": "SALES",
+            "url": "https://comiverse.kr/ticket",
+            "status": "PUBLISHED",
+            "note": "공식 입장권 안내 페이지. 가격 미확인."
+          }
+        ],
+        "operationStatus": {
+          "state": "SCHEDULED",
+          "note": "주관사 제공 보도자료의 개최 계획과 공식 가을 회차 배치도 게시를 확인.",
+          "sourceUrl": "https://www.newswire.co.kr/newsRead.php?no=1039793",
+          "checkedOn": "2026-10-08"
+        }
+      }
+    ]
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/e/338/8",
+      "https://comicw.co.kr/bbs/fair.php?f=332&n=12",
+      "https://comicw.co.kr/shop/1773298224",
+      "https://suwonmesse.com/traffic/traffic_guidance",
+      "https://comicw.net/map",
+      "https://comiverse.kr/",
+      "https://suwonmesse.com/",
+      "https://comiverse.kr/info",
+      "https://comiverse.kr/board/view/227",
+      "https://comiverse.kr/ticket",
+      "https://www.newswire.co.kr/newsRead.php?no=1039793"
+    ],
+    "usage": {
+      "input_tokens": 441138,
+      "cached_input_tokens": 365440,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 3257,
+      "reasoning_output_tokens": 36
+    },
+    "imageHashes": []
+  }
+}

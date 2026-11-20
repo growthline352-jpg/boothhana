@@ -1,0 +1,24 @@
+{
+  "leaseToken": "360125ba-c02b-4a6e-a5e8-48315ed18272",
+  "extractionId": "5ffba0b7-a009-4462-9e8c-0499dc7f3aa1",
+  "resultHash": "local-evaluation-only",
+  "verdict": "ENRICH",
+  "reason": "공식 원문 3곳을 직접 확인했다. 프로필의 su수와 종료상품 2개, 두 상품의 판매자·제목·카테고리, /916의 6개 옵션과 /242의 9개 옵션별 4,000원은 후보와 일치한다. 행사 정보도 각각 코믹월드 333 부산(CB_01, 2026-05-16~17), 331 부산(CL_05, 2026-03-28~29)과 일치한다. 과거 참고로 분리하고 실제 참가일·현재 판매를 미확인으로 남긴 처리는 타당하다. 다만 상세·옵션 이미지는 검증하지 못해 이미지 속 캐릭터와 상품 형태는 미확인이다. 프로필에는 등록 정보가 없어 기존 data의 ARTIST 분류도 뒷받침되지 않으며, 후보의 UNKNOWN과 차이가 있다. 이미지 확인과 기존 작가 유형의 근거 보강이 필요하다. 이미지 재게시 권리는 확인되지 않았다.",
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-2",
+    "schemaVersion": "graph-2",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/242"
+    ],
+    "usage": {
+      "input_tokens": 39858,
+      "cached_input_tokens": 14976,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 444,
+      "reasoning_output_tokens": 78
+    },
+    "imageHashes": []
+  }
+}

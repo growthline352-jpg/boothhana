@@ -3,9 +3,10 @@ import { authApi } from '../api'
 import { API_BASE_URL, resetCsrfToken } from '../api/client'
 import { AuthContext, type AuthValue } from './auth-context'
 import { AuthSession } from './AuthSession'
+import { disablePush } from '../features/subculture/push'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session] = useState(() => new AuthSession(authApi.me, authApi.logout, resetCsrfToken))
+  const [session] = useState(() => new AuthSession(authApi.me, async()=>{try{await disablePush()}catch{/* Logging out still takes priority if device cleanup fails. */}await authApi.logout()}, resetCsrfToken))
   const [snapshot, setSnapshot] = useState(session.read)
   useEffect(() => {
     const unsubscribe = session.subscribe(setSnapshot)

@@ -1,0 +1,626 @@
+{
+  "leaseToken": "aa254bce-dbd7-4ea3-8990-ddf282b0ee41",
+  "extractionId": "137ed81c-8216-41a5-bd0b-e1a757fbe268",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "profile": {
+      "name": "su수",
+      "kind": "ARTIST",
+      "aliases": [],
+      "profileUrl": "https://comicw.net/g/creator/@su%EC%88%98"
+    },
+    "sources": [
+      {
+        "url": "https://comicw.net/g/creator/@su%EC%88%98",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "공식 창작자 페이지에 su수로 표시되며 연결된 판매 자료는 2개다. 소개와 별칭, 외부 작가 계정은 등록되어 있지 않다."
+      },
+      {
+        "url": "https://comicw.net/g/916",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "판매자 su수의 상품 옵션 6개와 각 4,000원 가격을 확인했다. 선입금은 2026년 5월 15일 종료되었다."
+      },
+      {
+        "url": "https://comicw.net/g/242",
+        "kind": "OFFICIAL",
+        "access": "ORIGINAL",
+        "evidence": "판매자 su수의 상품 옵션 9개와 각 4,000원 가격을 확인했다. 선입금은 2026년 3월 27일 종료되었다."
+      }
+    ],
+    "goods": [
+      {
+        "sourceEntryId": null,
+        "name": "리제",
+        "summary": "5월 등록 판매 자료의 스텔라이브 상품 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "리제"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/916",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 리제, 4,000원. 페이지 하단 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "옵션의 판매중 표시와 별개로 선입금은 종료됨. 현재 판매와 품절 여부는 미확인."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "히나",
+        "summary": "5월 등록 판매 자료의 스텔라이브 상품 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "히나"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/916",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 히나, 4,000원. 페이지 하단 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "옵션의 판매중 표시와 별개로 선입금은 종료됨. 현재 판매와 품절 여부는 미확인."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "타비",
+        "summary": "5월 등록 판매 자료의 스텔라이브 상품 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "타비"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/916",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 타비, 4,000원. 페이지 하단 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "옵션의 판매중 표시와 별개로 선입금은 종료됨. 현재 판매와 품절 여부는 미확인."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "린",
+        "summary": "5월 등록 판매 자료의 스텔라이브 상품 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "린"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/916",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 린, 4,000원. 페이지 하단 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "옵션의 판매중 표시와 별개로 선입금은 종료됨. 현재 판매와 품절 여부는 미확인."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "부키",
+        "summary": "5월 등록 판매 자료의 스텔라이브 상품 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "부키"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/916",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 부키, 4,000원. 페이지 하단 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "옵션의 판매중 표시와 별개로 선입금은 종료됨. 현재 판매와 품절 여부는 미확인."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "나나",
+        "summary": "5월 등록 판매 자료의 스텔라이브 상품 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "나나"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/916",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 나나, 4,000원. 페이지 하단 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "옵션의 판매중 표시와 별개로 선입금은 종료됨. 현재 판매와 품절 여부는 미확인."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "나안아 히나",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "히나"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 나안아 히나, 4,000원, 재고 9개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "나안아 리제",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "리제"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 나안아 리제, 4,000원, 재고 9개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "나안아 타비",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "타비"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 나안아 타비, 4,000원, 재고 9개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "나안아 부키",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "부키"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 나안아 부키, 4,000원, 재고 8개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "나안아 린",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "린"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 나안아 린, 4,000원, 재고 9개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "나안아 나나",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "나나"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 나안아 나나, 4,000원, 재고 9개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "부키",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "부키"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 나안아 부키와 별도로 상품 옵션 부키, 4,000원, 재고 8개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "다른 판매 자료의 동명 옵션과 동일 상품인지 미확인.",
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "린",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "린"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 나안아 린과 별도로 상품 옵션 린, 4,000원, 재고 9개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "다른 판매 자료의 동명 옵션과 동일 상품인지 미확인.",
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      },
+      {
+        "sourceEntryId": null,
+        "name": "리코",
+        "summary": "3월 등록 판매 자료의 아크릴 굿즈 옵션.",
+        "memberName": "su수",
+        "categories": [
+          "아크릴",
+          "굿즈"
+        ],
+        "subjects": [
+          "스텔라이브",
+          "리코"
+        ],
+        "evidenceScope": "PAST_REFERENCE",
+        "price": {
+          "amount": "4000",
+          "currency": "KRW",
+          "checkedOn": "2026-10-08",
+          "note": "종료된 선입금 페이지의 표시 가격"
+        },
+        "saleState": "UNKNOWN",
+        "productUrl": null,
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "kind": "OFFICIAL",
+            "access": "ORIGINAL",
+            "evidence": "판매자 su수. 상품 옵션 리코, 4,000원, 재고 9개 표시. 선입금 종료."
+          }
+        ],
+        "images": [],
+        "warnings": [
+          "과거 주문 페이지의 재고 표시이며 현재 판매 상태를 확인한 것이 아님."
+        ]
+      }
+    ],
+    "productCoverage": [
+      {
+        "sourceUrl": "https://comicw.net/g/916",
+        "optionNames": [
+          "리제",
+          "히나",
+          "타비",
+          "린",
+          "부키",
+          "나나"
+        ],
+        "complete": true
+      },
+      {
+        "sourceUrl": "https://comicw.net/g/242",
+        "optionNames": [
+          "나안아 히나",
+          "나안아 리제",
+          "나안아 타비",
+          "나안아 부키",
+          "나안아 린",
+          "나안아 나나",
+          "부키",
+          "린",
+          "리코"
+        ],
+        "complete": true
+      }
+    ],
+    "eventLeads": [
+      {
+        "sourceUrl": "https://comicw.net/g/916",
+        "evidence": "su수 판매 등록 원문의 행사 정보에 코믹월드 333 부산, 부스 CB_01과 개최일정이 명시됨. 작가의 실제 참가일 및 현장 판매 이행은 미확인.",
+        "startDate": "2026-05-16",
+        "endDate": "2026-05-17"
+      },
+      {
+        "sourceUrl": "https://comicw.net/g/242",
+        "evidence": "su수 판매 등록 원문의 행사 정보에 코믹월드 331 부산, 부스 CL_05와 개최일정이 명시됨. 작가의 실제 참가일 및 현장 판매 이행은 미확인.",
+        "startDate": "2026-03-28",
+        "endDate": "2026-03-29"
+      }
+    ],
+    "identityDecision": {
+      "action": "KEEP",
+      "canonicalId": null,
+      "evidence": []
+    },
+    "nextPageUrl": null,
+    "coverage": "COMPLETE"
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://comicw.net/g/creator/%40su%EC%88%98",
+      "https://comicw.net/g/916",
+      "https://comicw.net/g/242",
+      "https://comicw.net/g/creator/@su%EC%88%98"
+    ],
+    "usage": {
+      "input_tokens": 77663,
+      "cached_input_tokens": 43008,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4681,
+      "reasoning_output_tokens": 53
+    },
+    "imageHashes": []
+  }
+}

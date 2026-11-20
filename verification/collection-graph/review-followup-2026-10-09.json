@@ -1,0 +1,26 @@
+{
+  "scope": "Review of sales continuation confirmation and idempotent push registration fixes, including competing unsubscribe requests",
+  "previousFindingsResolved": ["sales-batch-resets-earlier-confirmations", "same-owner-push-registration-cancels-pending"],
+  "findings": [{
+    "priority": "P2",
+    "confidence": 10,
+    "file": "backend/src/main/java/com/boothhana/interests/NotificationService.java",
+    "line": 37,
+    "title": "Concurrent ownership transfer and unsubscribe acquire locks in opposite order",
+    "trigger": "An old account unsubscribes while another account registers the same device endpoint, with a pending delivery for the old account.",
+    "evidence": "subscribe line 34 updates subculture_push_delivery before line 35 upserts subculture_push_subscription. unsubscribe line 37 updates subculture_push_subscription before subculture_push_delivery. Only subscribe obtains the endpoint advisory lock at line 33.",
+    "impact": "Concurrent requests deadlock and PostgreSQL aborts one transaction with 40P01. ApiExceptionHandler maps it to 409 without retry; browser disablePush unsubscribes even if the DELETE fails.",
+    "reproduction": "ReviewPushConcurrency.java calls the actual service methods on two connections with barriers between existing statements: TRANSFER=SUCCESS; UNSUBSCRIBE=SQLSTATE=40P01.",
+    "recommendation": "Use the same endpoint advisory lock for subscribe and unsubscribe and maintain a consistent subscription/delivery lock order; add a concurrent regression test."
+  }],
+  "validation": {
+    "reproductionLog": "review-push-concurrency.log",
+    "database": "Local isolated boothhana_release_test",
+    "fixtures": "Fixtures temporarily committed for cross-connection visibility, concurrent service transactions rolled back, exact fixture IDs removed in finally",
+    "existingGraphTestReport": "68 passed, 0 skipped, 0 failures (previous fix run)",
+    "fullSuiteRerun": false
+  },
+  "applicationCodeModified": false,
+  "externalPushSent": false,
+  "deployed": false
+}

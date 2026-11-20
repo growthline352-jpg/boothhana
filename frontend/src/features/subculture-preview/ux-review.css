@@ -1,0 +1,122 @@
+/* Shared interaction and readability corrections from the rendered-flow audit. */
+.sc-app{--sc-muted:#626570}
+.sc-page-title>.sc-eyebrow{display:none}
+.sc-app .sc-main p{font-size:14px;line-height:1.8}
+.sc-app .sc-main :is(.sc-meta,.sc-help,.sc-eyebrow,small,.sc-results-summary,.sc-notice-meta,.sc-notice-meta>b,.sc-edition-notice){font-size:12px}
+.sc-app .sc-main :is(.sc-meta,.sc-help,small,.sc-results-summary){color:#626570}
+.sc-app .sc-main :is(.sc-taste-card h2,.sc-subject-card h3,.sc-good-info h3,.sc-creator-heading h3,.sc-home-creator-list h3,.sc-home-event-copy h3){font-size:16px;line-height:1.5}
+.sc-app .sc-main :is(.sc-text-link,.sc-card-bottom>a,.sc-filter-tabs>a,.sc-filter-tabs>button,.sc-detail-tabs>button,.sc-work-switch>button,.sc-work-switch>a,.sc-taste-bottom>a,.sc-home-case-options>button,.sc-custom-edit,.sc-add-custom,.sc-curation-filters>button,.sc-guide-index>button,.sc-text-button){font-size:13px;min-height:44px}
+.sc-app .sc-main :is(.sc-taste-result-title>span,.sc-home-event-guide,.sc-guide-facts,.sc-program-chips>span,.sc-timeline time,.sc-timeline strong,.sc-setting-row strong,.sc-account-work a,.sc-work-selection,.sc-work-section-title>span,.sc-setup-actions>span){font-size:13px}
+.sc-app .sc-main :is(.sc-taste-result-title>span,.sc-work-selection,.sc-home-event-guide){color:#626570}
+.sc-app .sc-header-actions>a{min-width:44px;min-height:44px;justify-content:center}
+.sc-app .sc-icon-button{min-width:44px;min-height:44px}
+.sc-app .sc-text-button{min-height:44px}
+.sc-app .sc-back{min-height:44px;display:inline-flex;align-items:center;font-size:14px}
+.sc-app .sc-filter-tabs{overflow-x:auto;scrollbar-width:thin;gap:22px}
+.sc-filter-tabs>a,.sc-filter-tabs>button,.sc-detail-tabs>button{flex-shrink:0;white-space:nowrap}
+.sc-main :is(input,select,textarea){scroll-margin-top:115px}
+.sc-search-label{display:block;font-size:13px;font-weight:600;margin:0 0 8px}
+.sc-follow.sc-heart-toggle,.sc-follow.sc-heart-toggle.is-small{width:44px;height:44px;min-height:44px;min-width:44px;border:0;border-radius:50%;padding:0;margin:0;background:#fffffff2;color:#716872;display:inline-grid;place-items:center}
+.sc-heart-toggle svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.sc-follow.sc-heart-toggle.is-active{color:#b64e71;background:#fff8fb}
+.sc-heart-toggle.is-active svg{fill:currentColor}
+.sc-subject-card,.sc-creator-card,.sc-home-creator-list>article{position:relative}
+.sc-subject-card>.sc-heart-toggle,.sc-creator-card .sc-heart-toggle{position:absolute;right:20px;top:20px;box-shadow:0 1px 5px #30223715}
+.sc-home-creator-list>article>.sc-heart-toggle{position:absolute;right:10px;top:10px}
+.sc-home-creator-list>article>a{padding-right:38px}
+.sc-identity-hero>div{position:relative}
+.sc-identity-hero>div>.sc-heart-toggle{position:absolute;right:0;top:0}
+.sc-identity-hero>div>h1,.sc-identity-hero>div>.sc-eyebrow{padding-right:52px}
+.sc-subject-card>.sc-heart-toggle{z-index:1}
+.sc-app .sc-toast.is-visible{pointer-events:auto}
+.sc-toast{gap:10px;font-size:14px}
+.sc-toast>span{min-width:0}
+.sc-toast>button{border:0;background:transparent;color:white;font-size:13px;font-weight:650;min-height:44px;flex-shrink:0;padding:4px 8px;text-decoration:underline;text-underline-offset:4px}
+.sc-toast>button[aria-label]{min-width:44px;padding:0;display:grid;place-items:center}
+.sc-following-tools{display:flex;justify-content:flex-end}
+.sc-following-tools>a{display:flex;align-items:center;gap:8px;min-height:44px;font-size:14px}
+.sc-following-works{display:flex;flex-wrap:wrap;gap:12px}
+.sc-following-works>a{display:flex;align-items:center;gap:25px;padding:15px 20px;border:1px solid var(--sc-border);border-radius:8px;min-height:66px}
+.sc-following-works strong{display:block;font-size:16px}
+.sc-custom-followed-avatar{display:grid;place-items:center;aspect-ratio:1;border-radius:9px;background:#eeeaf2;color:#837091;font-size:36px;margin-bottom:13px}
+.sc-home-cases{padding:0;background:#fafafa;border:1px solid #e6e4e9}
+.sc-home-cases>summary{cursor:pointer;min-height:44px;padding:12px 16px;font-size:12px;color:#68606f}
+.sc-home-cases>summary>span{margin-left:12px;font-size:12px;color:#4e4557}
+.sc-home-cases>p,.sc-home-cases>.sc-home-case-options{margin:10px 16px 14px}
+.sc-app .sc-home-cases>p{font-size:12px}
+.sc-taste-bottom{justify-content:flex-end}
+.sc-taste-intro .sc-eyebrow{display:none}
+.sc-taste-intro h1{margin-top:0}
+.sc-interest-edit-tabs{display:flex;gap:8px;border-bottom:1px solid #e6e3e9;margin-bottom:25px}
+.sc-interest-edit-tabs>button{min-height:44px;padding:10px 24px;border:0;border-bottom:2px solid transparent;background:transparent;border-radius:0;font-size:15px}
+.sc-interest-edit-tabs>button[aria-pressed=true]{border-color:#526747;color:#526747;font-weight:700}
+.sc-app .sc-setup-actions .sc-button{min-height:44px;font-size:14px}
+.sc-app .sc-custom-form :is(input,select){font-size:16px}
+.sc-setting-row .sc-switch{height:44px;background:transparent;position:relative}
+.sc-switch:before{content:"";position:absolute;height:27px;inset:8px 0 auto;border-radius:20px;background:#9295a0}
+.sc-switch.is-on:before{background:var(--sc-accent)}
+.sc-switch>span{position:relative}
+.sc-app .sc-guide-content :is(dt,dd,summary){font-size:14px;line-height:1.8}
+.sc-app .sc-note-input{font-size:13px}
+.sc-app .sc-visit-item-actions>label{min-height:44px;font-size:13px}
+.sc-app .sc-account-work h3{font-size:17px}
+.sc-app .sc-mobile-nav>a{font-size:12px}
+@media(max-width:760px){
+  .sc-app .sc-header-inner{gap:8px}.sc-app .sc-header-actions{gap:2px}
+  .sc-app .sc-main{padding-top:22px}
+  .sc-app .sc-page-title{margin-bottom:20px}
+  .sc-app .sc-page-title>p{font-size:14px}
+  .sc-app .sc-main :is(input,select,textarea){font-size:16px}
+  .sc-app .sc-search input{width:0;min-width:0;flex:1}
+  .sc-app .sc-search{gap:5px;padding-left:10px}
+  .sc-app .sc-search>button[type=submit]{padding:10px 12px;font-size:14px;min-height:44px}
+  .sc-app .sc-search>svg{width:18px}
+  .sc-app .sc-main .sc-section-title p{font-size:13px}
+  .sc-app .sc-main .sc-section-title>a{font-size:13px;min-height:44px;flex-shrink:0}
+  .sc-app .sc-subject-card>.sc-heart-toggle{right:11px;top:11px}
+  .sc-app .sc-creators-grid{grid-template-columns:1fr}
+  .sc-app .sc-subject-grid{gap:12px}
+  .sc-app .sc-subject-card{padding:12px}
+  .sc-app .sc-main .sc-subject-card .sc-meta{font-size:12px;line-height:1.5}
+  .sc-app .sc-detail-tabs{overflow-x:auto;gap:15px}
+  .sc-app .sc-detail-tabs>button{font-size:13px;padding-inline:2px}
+  .sc-app .sc-home-shortcuts{display:flex;flex-wrap:wrap;border:0;gap:8px}
+  .sc-app .sc-home-shortcuts>a{border:1px solid var(--sc-border);border-radius:8px;flex:1;min-width:95px;gap:7px;padding:12px 9px;justify-content:center;flex-direction:column;text-align:center}
+  .sc-app .sc-home-shortcuts small,.sc-app .sc-home-shortcuts>a>svg:last-child{display:none}
+  .sc-app .sc-home-shortcuts strong{font-size:12px}
+  .sc-app .sc-home-event-row{gap:12px}.sc-app .sc-home-event-copy>p{font-size:13px}
+  .sc-app .sc-home-event-guide{font-size:0}
+  .sc-app .sc-taste-hero{padding:20px;gap:18px}
+  .sc-app .sc-taste-intro h1{font-size:26px;line-height:1.4;max-width:none}
+  .sc-app .sc-taste-intro>p{font-size:14px}
+  .sc-app .sc-work-switch>button,.sc-app .sc-work-switch>a{font-size:13px}
+  .sc-app .sc-taste-character>span{font-size:12px;min-height:32px}
+  .sc-app .sc-taste-cards{gap:10px}
+  .sc-app .sc-taste-card{padding:9px}
+  .sc-app .sc-taste-card h2{font-size:15px}
+  .sc-app .sc-taste-bottom{align-items:flex-end}
+  .sc-app .sc-home-cases>summary{padding:10px 12px}.sc-home-cases>summary>span{margin-left:6px}
+  .sc-app .sc-visit-item-actions{padding-left:0}
+  .sc-app .sc-toast{bottom:84px;padding:8px 12px;gap:6px;width:calc(100% - 28px);max-width:500px}
+  .sc-app .sc-toast>span{flex:1;font-size:13px}.sc-app .sc-toast button{padding:4px 6px}
+  .sc-app .sc-setup-progress{gap:14px;font-size:12px;flex-wrap:wrap}
+  .sc-app .sc-setup-title h1{font-size:26px}
+  .sc-app .sc-work-options strong{font-size:16px}
+  .sc-app .sc-character-options strong{font-size:15px}
+  .sc-app .sc-work-section-title h2{font-size:20px}
+  .sc-app .sc-setting-row p{font-size:13px}
+  .sc-app .sc-guide-index{gap:7px;flex-wrap:nowrap;overflow-x:auto;padding:14px 0}
+  .sc-guide-index>button{white-space:nowrap;flex-shrink:0}
+  .sc-app .sc-review-form>div{gap:10px;flex-wrap:wrap}
+  .sc-app .sc-review-form>div>span{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.sc-app *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Keep Korean labels intact on narrow phones. */
+.sc-app .sc-main :is(h1,h2,h3){word-break:keep-all;overflow-wrap:break-word}
+@media(max-width:380px){
+ .sc-app .sc-home-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+ .sc-app .sc-home-shortcuts>a{min-width:0;padding:12px 5px}
+ .sc-app .sc-home-shortcuts strong{word-break:keep-all}
+ .sc-app .sc-taste-character>span{font-size:11px}
+}

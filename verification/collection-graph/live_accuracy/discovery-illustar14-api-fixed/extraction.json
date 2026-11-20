@@ -1,0 +1,88 @@
+{
+  "leaseToken": "46c3c6f3-6fc8-4bf1-826a-66a4a7a7d3dc",
+  "extractionId": "71bcd44a-28c2-4712-a89a-e1a7d2ae294b",
+  "contextHash": "local-evaluation-only",
+  "result": {
+    "schemaVersion": "1",
+    "searchStatus": "PARTIAL",
+    "summary": "지정된 일러스타 페스 14회차만 조사했습니다. 제공된 공식 공지 원문으로 회차와 장소는 확인했으나, 행사 개최일을 공식 원문에서 확인하지 못해 기간 조건을 충족하는 확정 행사 결과는 비워 두었습니다. 후속 확인 URL: https://illustar.net/performance-list/mEQ8Nzne",
+    "queries": [
+      "site.illustar.net \"14\" \"2026\" \"10월\"",
+      "site.kintex.com \"일러스타\" \"2026\"",
+      "site.illustar.net \"14\" \"10월 10일\"",
+      "site.illustar.net \"14\" \"2026.10.10\""
+    ],
+    "sourceCoverage": [
+      {
+        "channel": "ORGANIZER_OFFICIAL",
+        "status": "PARTIAL",
+        "queries": [
+          "site.illustar.net \"14\" \"2026\" \"10월\"",
+          "site.illustar.net \"14\" \"10월 10일\"",
+          "site.illustar.net \"14\" \"2026.10.10\""
+        ],
+        "checkedUrls": [
+          "https://illustar.net/notice/mEQ8Nzne",
+          "https://api.illustar.net/v1/notice/mEQ8Nzne",
+          "https://illustar.net"
+        ],
+        "notes": "제공된 available=true 공식 공지 원문은 14회차와 킨텍스 제1전시장 4·5홀을 명시합니다. leadUrl은 작가 공지가 아닌 사무국 공지입니다. 직접 연 웹페이지에서는 본문이 추출되지 않았고 API 원문 열기는 오류가 발생했습니다. 예매 마감일과 체키 부스 운영 시간을 행사 개최일·전체 운영 시간으로 사용하지 않았습니다."
+      },
+      {
+        "channel": "TICKETING",
+        "status": "INACCESSIBLE",
+        "queries": [],
+        "checkedUrls": [
+          "https://illustar.net/performance-list/mEQ8Nzne"
+        ],
+        "notes": "공식 공지에 연결된 해당 회차 입장권 URL을 직접 열었으나 본문이 추출되지 않았습니다. 개최일·입장료·취소 또는 변경 여부의 후속 확인 URL은 https://illustar.net/performance-list/mEQ8Nzne 입니다."
+      },
+      {
+        "channel": "VENUE_CALENDAR",
+        "status": "NO_RESULTS",
+        "queries": [
+          "site.kintex.com \"일러스타\" \"2026\""
+        ],
+        "checkedUrls": [],
+        "notes": "검색에서 해당 회차를 검증할 공식 행사장 일정 페이지를 확보하지 못했습니다."
+      },
+      {
+        "channel": "COMMUNITY_INDEX",
+        "status": "PARTIAL",
+        "queries": [
+          "site.illustar.net \"14\" \"10월 10일\"",
+          "site.illustar.net \"14\" \"2026.10.10\""
+        ],
+        "checkedUrls": [],
+        "notes": "검색에 비공식 행사 목록과 SNS 미러가 노출되었으나 공식 원문을 확인하지 못한 날짜·가격·참가 정보를 확정 근거로 사용하지 않았습니다."
+      }
+    ],
+    "events": []
+  },
+  "audit": {
+    "model": "gpt-6.1-sol",
+    "promptVersion": "graph-3",
+    "schemaVersion": "graph-3",
+    "webSearchObserved": true,
+    "openedUrls": [
+      "https://illustar.net/notice/mEQ8Nzne",
+      "https://api.illustar.net/v1/notice/mEQ8Nzne"
+    ],
+    "usage": {
+      "input_tokens": 97948,
+      "cached_input_tokens": 62592,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1127,
+      "reasoning_output_tokens": 60
+    },
+    "imageHashes": [],
+    "sourceDocuments": [
+      {
+        "url": "https://illustar.net/notice/mEQ8Nzne",
+        "sha256": "d68d1a0835834febce86b50f1a50666e3b22892cfde977e9e2ae8450265b8e9b",
+        "capturedAt": "2026-10-08T11:48:13.601151+00:00",
+        "transportUrl": "https://api.illustar.net/v1/notice/mEQ8Nzne"
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "discovery-comic338-fixed-retry",
+  "requestedModel": "gpt-6.1-sol",
+  "productionWrites": false,
+  "harness": "Worker.process unchanged",
+  "jobId": "6316e094-30e1-43c6-a631-8297050b4047",
+  "leaseToken": "1a5c1539-52c0-4ec5-a965-70330b1bb716",
+  "state": "REVIEWED",
+  "result": {
+    "verdict": "APPROVE",
+    "publication": false
+  },
+  "seconds": 116.9
+}

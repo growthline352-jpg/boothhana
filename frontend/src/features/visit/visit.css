@@ -32,6 +32,7 @@
 .booth-detail-gallery figcaption{position:absolute;left:8px;right:8px;bottom:8px;padding:6px 8px;background:rgba(28,25,22,.76);color:#fff;border-radius:6px;font-size:.65rem;line-height:1.4;overflow-wrap:anywhere}
 .booth-detail-gallery figcaption a{color:#fff;text-decoration:underline}
 .booth-detail-gallery.count-0,.booth-detail-gallery.count-1{display:block}
+.booth-detail-gallery.count-0 img{display:block;height:430px;min-height:0}
 .booth-detail-gallery.count-1 figure{height:100%}
 .booth-detail-placeholder{display:flex;flex-direction:column;justify-content:flex-end;gap:6px;width:100%;height:100%;min-height:430px;padding:30px;background:#eceae4;color:#58524a}
 .booth-detail-placeholder span{margin-bottom:auto;color:var(--accent);font-size:clamp(3rem,7vw,5.5rem);font-weight:900;letter-spacing:-.07em}
@@ -111,3 +112,49 @@
 
 /* Essentials first: avoid stacking ornamental gaps ahead of the shared visit controls. */
 .visit-page>.discovery-back-link{margin-bottom:6px}.visit-summary{margin-top:12px}.visit-summary .eyebrow{margin:0 0 8px}.visit-summary h1{margin:8px 0 14px}.visit-actions{margin-top:12px}.visit-facts>div{padding:5px 0}.visit-unresolved{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:16px 0;max-height:180px;overflow:auto}.visit-unresolved>strong{width:100%}
+
+/* Event detail: one event header, then Home / Booths / Reviews. */
+.visit-page>.visit-summary{display:flex;flex-direction:column;gap:16px;max-width:980px;margin:14px auto 26px}
+.visit-page .visit-poster{width:100%;margin:0}
+.visit-page .visit-poster img{display:block;width:100%;height:min(34vw,330px);min-height:210px;object-fit:contain;background:#f5f2ed;border:1px solid var(--line);border-radius:14px}
+.visit-page .visit-summary-copy{width:100%}
+.visit-page .visit-summary-copy h1{margin:10px 0 12px}
+.visit-page .visit-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:16px 0}
+.visit-page .visit-facts>div{grid-template-columns:72px 1fr;padding:9px 0;border-top:1px solid var(--line)}
+.visit-page .visit-main-tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line);margin:22px 0 20px}
+.visit-page .visit-main-tabs button{width:100%;margin:0;border-top:0;min-height:54px}
+.visit-page .visit-home-map{margin:10px 0 26px}
+.visit-page .visit-home-map .visit-list-heading{margin-bottom:14px}
+.visit-page .visit-home-day{display:flex;align-items:center;gap:12px;max-width:320px;margin:0 0 14px}
+.visit-page .visit-home-day>span{flex:none;font-size:.85rem;color:var(--muted)}
+.visit-page .visit-info{margin-top:24px}
+.visit-page .visit-day-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px}
+.visit-page .visit-day-tabs button{min-width:138px;padding:11px 16px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);font:inherit;font-weight:750;cursor:pointer}
+.visit-page .visit-day-tabs button span{display:block;color:var(--muted);font-size:.73rem;font-weight:500}
+.visit-page .visit-day-tabs button.is-current{border-color:var(--accent);background:#fff2ee;color:var(--accent)}
+.visit-page .visit-day-tabs button:focus-visible,.visit-page .visit-main-tabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.visit-page .visit-condition-row.is-series{grid-template-columns:180px minmax(0,1fr)}
+.visit-page #visit-panel-reviews .event-comments+.event-comments{margin-top:18px}
+@media(max-width:760px){.visit-page .visit-poster img{height:270px;min-height:0}.visit-page .visit-facts{grid-template-columns:1fr}.visit-page .visit-condition-row.is-series{grid-template-columns:1fr}.visit-page .visit-main-tabs button{padding:12px 4px}}
+@media(max-width:480px){.visit-page .visit-poster{display:block}.visit-page .visit-poster img{height:230px}.visit-page .visit-summary{margin:8px 0 18px}.visit-page .visit-day-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.visit-page .visit-day-tabs button{min-width:0}}
+
+/* Override the older public-shell summary grid, which assumed a right-hand poster. */
+.public-shell .visit-page>.visit-summary{display:block;max-width:980px;margin:14px auto 26px;padding:24px 30px}
+.public-shell .visit-page .visit-poster{display:block;width:100%;margin:0 0 20px}
+.public-shell .visit-page .visit-poster img{width:100%;height:220px;object-fit:contain;background:#f5f2ed;border:1px solid var(--line);border-radius:12px}
+.public-shell .visit-page .visit-summary-copy{display:block;width:100%;padding:0}
+.public-shell .visit-page .visit-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;margin:16px 0;border:0}
+.public-shell .visit-page .visit-facts>div,.public-shell .visit-page .visit-facts>div+div{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;padding:11px 0;border:0;border-top:1px solid var(--line)}
+.public-shell .visit-page .visit-facts dt{margin:0}
+.public-shell .visit-page .visit-main-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:24px 0 24px;padding:5px;border:1px solid #cbd5df;border-radius:12px;background:#e8edf2;overflow:visible}
+.public-shell .visit-page .visit-main-tabs button{min-height:52px;padding:12px 8px;border:1px solid transparent;border-radius:8px;background:transparent;box-shadow:none;color:#43566c;font-size:16px;font-weight:700;cursor:pointer}
+.public-shell .visit-page .visit-main-tabs button:not(.is-current):hover{background:#f4f7fa}
+.public-shell .visit-page .visit-main-tabs button.is-current{border-color:#8fa3b9;border-bottom:3px solid #b84532;background:#fff;box-shadow:0 2px 5px rgb(24 45 69 / 12%);color:#172d49;font-weight:800}
+.public-shell .visit-page .visit-condition-row.is-series{grid-template-columns:180px minmax(0,1fr)}
+@media(max-width:780px){.public-shell .visit-page .visit-facts{grid-template-columns:1fr}.public-shell .visit-page .visit-condition-row.is-series{grid-template-columns:1fr}.public-shell .visit-page .visit-poster img{height:210px}}
+@media(max-width:520px){.public-shell .visit-page>.visit-summary{padding:0 0 20px}.public-shell .visit-page .visit-poster{margin:0 0 16px}.public-shell .visit-page .visit-poster img{height:180px;border-radius:12px 12px 0 0}.public-shell .visit-page .visit-poster figcaption,.public-shell .visit-page .visit-summary-copy{padding-inline:18px}.public-shell .visit-page .visit-facts>div,.public-shell .visit-page .visit-facts>div+div{grid-template-columns:66px minmax(0,1fr)}}
+@media(max-width:480px){.booth-detail-gallery.count-0 img{height:220px}}
+.visit-next-discovery { margin: 24px 0; padding: 22px 24px; border: 1px solid #e5e8e7; border-radius: 12px; background: #f6f8f7; }
+.visit-next-discovery h2 { margin: 0 0 8px; font-size: 19px; }
+.visit-next-discovery p { color: #5d6468; font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
+.visit-next-discovery>a { display: inline-block; margin-right: 16px; padding: 10px 0; }

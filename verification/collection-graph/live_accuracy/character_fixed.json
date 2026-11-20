@@ -1,0 +1,34 @@
+{
+  "id": "character-hina-fixed",
+  "kind": "CHARACTERS",
+  "context": {
+    "input": {},
+    "product": {
+      "id": "717cbe3c-b3f5-4d25-b8a0-e598b97da94c",
+      "revision": 1,
+      "legacyProductId": null,
+      "data": {
+        "name": "나안아 히나",
+        "memberName": "su수",
+        "productUrl": null,
+        "subjects": [
+          "스텔라이브"
+        ],
+        "sources": [
+          {
+            "url": "https://comicw.net/g/242",
+            "access": "ORIGINAL",
+            "evidence": "상품 옵션 나안아 히나"
+          }
+        ],
+        "images": [
+          {
+            "imageUrl": "https://comicw.net/data/item/list_242_0_1773984649.jpg",
+            "pageUrl": "https://comicw.net/g/242"
+          }
+        ]
+      }
+    },
+    "identityCandidates": []
+  }
+}
